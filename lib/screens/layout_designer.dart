@@ -2224,18 +2224,18 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       item = getItemAtPath(panelIndex.itemIndexPath) as SheetText;
           // _sheetItemIterator(panelIndex.id, spreadSheetList[currentPageIndex])
           //     as SheetText;
-      
-        if (HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed) {
-          if (selectedIndexPaths[item.id] == null) {
-            selectedIndexPaths.addAll({
-              item.id: panelIndex.copyWith(),
-            });
-          }
-        } else {
-          selectedIndexPaths = {
+      itemInputBlockIndex =-1;
+      if (HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed) {
+        if (selectedIndexPaths[item.id] == null) {
+          selectedIndexPaths.addAll({
             item.id: panelIndex.copyWith(),
-          };
+          });
         }
+      } else {
+        selectedIndexPaths = {
+          item.id: panelIndex.copyWith(),
+        };
+      }
       
       setState(() {
         if(whichPropertyTabIsClicked != 2){
@@ -2611,7 +2611,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             if (last.data is String) {
               final String data = last.data as String;
               if (data == '\n') {
-                ops.removeLast();
+                // ← only strip unstyled newlines
+                if (last.attributes == null) {
+                  ops.removeLast();
+                }
               } else if (data.endsWith('\n')) {
                 final trimmed = data.substring(0, data.length - 1);
                 ops[ops.length - 1] = Operation.insert(trimmed, last.attributes);
@@ -2625,22 +2628,39 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
         } else if (block.function is! InputBlockFunction) {
           final raw = block.function!
-              .result(getItemAtPath, buildCombinedQuillConfiguration, visited: Map.from(visited!));
+              .result(getItemAtPath, buildCombinedQuillConfiguration, visited: Map.from(visited));
 
           // 1) If it’s a Quill Document, pull in its Delta ops (with styling!)
           if (raw is Document) {
             final docDelta = raw.toDelta().toList();
-            // drop a trailing newline if you’re not the last block
             final isLast = blockIdx == inputBlocks.length - 1;
-            for (var op in docDelta) {
-              if (!isLast && op.data is String && (op.data as String).endsWith('\n')) {
-                final txt = (op.data as String).substring(0, (op.data as String).length - 1);
-                mergedDelta.push(Operation.insert(txt, op.attributes));
-              } else {
-                mergedDelta.push(op);
+
+            for (final op in docDelta) {
+              // Only consider stripping when:
+              //  • we’re not on the very last block, AND
+              //  • the op is exactly a single "\n" or ends with "\n",
+              //  • AND it carries *no* attributes
+              if (!isLast
+                  && op.data is String
+                  && op.attributes == null
+                  && (op.data == '\n'
+                      || (op.data as String).endsWith('\n'))) {
+                final data = op.data as String;
+                // if it's exactly "\n", just skip it
+                if (data == '\n') {
+                  continue;
+                }
+                // otherwise drop the last character, which we know is '\n'
+                final trimmed = data.substring(0, data.length - 1);
+                mergedDelta.push(Operation.insert(trimmed));
+                continue;
               }
+
+              // everything else comes through with its styling intact
+              mergedDelta.push(op);
             }
           }
+
           // 2) Otherwise if it’s a number or string, just insert as before
           else if (raw is num || raw is String) {
             final txt = raw.toString();
@@ -2707,7 +2727,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             final String data = last.data as String;
             if (data == '\n') {
               // This block only contains a newline, and it's not the last one → remove it.
-              ops.removeLast();
+              // ← only strip unstyled newlines
+                if (last.attributes == null) {
+                  ops.removeLast();
+                }
             } else if (data.endsWith('\n')) {
               final trimmed = data.substring(0, data.length - 1);
               ops[ops.length - 1] = Operation.insert(trimmed, last.attributes);
@@ -9957,20 +9980,37 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               cardBuilder: (BuildContext context, int index) {
                 var width = (sWidth * wH2DividerPosition - 30);
                 int currentCardIndex = whichTextPropertyTabIsClicked;
+                var ib;
+                var ibfunc;
+                QuillEditorConfigurations? config;
+                if (itemInputBlockIndex !=-1) {
+                  try {
+                    ib =item.inputBlocks[itemInputBlockIndex];
+                    if(ib.function is SumFunction || ib.function is CountFunction){
+                      config = ib.function.getConfigurations(getItemAtPath, buildCombinedQuillConfiguration, setState, customStyleBuilder);
+                      ibfunc = ib.function;
+                      }
+                    
+                  } on Exception catch (e) {
+                    itemInputBlockIndex = -1;
+                    ib = null;
+                    config = null;
+                  }
+                }
 
                 List<TextEditingController> fontTextControllers = [
                   TextEditingController()
                   ..text =
-                      '${(item.textEditorController.getSelectionStyle().attributes['size']?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
+                      '${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes['size']?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
                       ..text =
-                          '${(item.textEditorController.getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
+                          '${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
                   ..text =
-                      '${(item.textEditorController.getSelectionStyle().attributes[WordSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
+                      '${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes[WordSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
                   ..text =
-                      '${(item.textEditorController.getSelectionStyle().attributes[LineHeightAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
+                      '${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes[LineHeightAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
                   ..text =
                       '${item.name}',
@@ -10130,52 +10170,31 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           double parsedValue = double.parse(newValue.toStringAsFixed(4));
                           switch (s) {
                             case 0:
-                              //  item.textEditorController
-                              //   .formatSelection(
-                              // Attribute.clone(
-                              //     Attribute.size,
-                              //     parsedValue.toString()),
-                              // );
-                             if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
+                             if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
                                 p0.updateFontSize( parsedValue);
                               },);} else {
-                                item.inputBlocks[itemInputBlockIndex].updateFontSize( parsedValue,config.controller)
+                                ibfunc.updateFontSize(parsedValue, config!.controller);
                               }
                               break;
                             case 1:
-                              // item.textEditorController
-                              //     .formatSelection(
-                              //   LetterSpacingAttribute(
-                              //       (parsedValue).toString()),
-                              // );
-                              if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
+                              if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
                                 p0.updateLetterSpacing( parsedValue);
                               },);} else {
-                                item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                ibfunc.updateLetterSpacing(parsedValue, config!.controller);
                               }
                               break;
                             case 2:
-                              // item.textEditorController
-                              //     .formatSelection(
-                              //   WordSpacingAttribute(
-                              //       (parsedValue).toString()),
-                              // );
-                              if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
+                              if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
                                 p0.updateWordSpacing( parsedValue);
                               },);} else {
-                                item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                ibfunc.updateWordSpacing(parsedValue, config!.controller);
                               }
                               break;
                             case 3:
-                              // item.textEditorController
-                              //     .formatSelection(
-                              //   LineHeightAttribute(
-                              //       (parsedValue).toString()),
-                              // );
-                              if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
+                              if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
                                 p0.updateLineHeight( parsedValue);
                               },);} else {
-                                item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                ibfunc.updateLineHeight(parsedValue, config!.controller);
                               }
                               break;    
                             default:
@@ -10242,35 +10261,35 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         onFieldSubmitted: (value) {
                           setState(() {
                             print(value);
+                            var parsedValue = double.tryParse(value)??0;
                           switch (s) {
                             case 0:
-                               item.textEditorController
-                                .formatSelection(
-                              Attribute.clone(
-                                  Attribute.size,
-                                  value.toString()),
-                              );
+                               if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
+                                p0.updateFontSize( parsedValue);
+                              },);} else {
+                                ibfunc.updateFontSize(parsedValue, config!.controller);
+                              }
                               break;
                             case 1:
-                              item.textEditorController
-                                  .formatSelection(
-                                LetterSpacingAttribute(
-                                    (value).toString()),
-                              );
+                              if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
+                                p0.updateLetterSpacing( parsedValue);
+                              },);} else {
+                                ibfunc.updateLetterSpacing(parsedValue, config!.controller);
+                              }
                               break;
                             case 2:
-                              item.textEditorController
-                                  .formatSelection(
-                                WordSpacingAttribute(
-                                    (value).toString()),
-                              );
+                              if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
+                                p0.updateWordSpacing( parsedValue);
+                              },);} else {
+                                ibfunc.updateWordSpacing(parsedValue, config!.controller);
+                              }
                               break;
                             case 3:
-                              item.textEditorController
-                                  .formatSelection(
-                                LineHeightAttribute(
-                                    (value).toString()),
-                              );
+                              if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
+                                p0.updateLineHeight( parsedValue);
+                              },);} else {
+                                ibfunc.updateLineHeight(parsedValue, config!.controller);
+                              }
                               break;    
                             default:
                           }
@@ -10315,7 +10334,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       minWidth: 100,
                       minHeight: 30
                     ),
-                    // hoverColor: defaultPalette.extras[0],
+                    hoverColor: defaultPalette.primary,
+                    unfocusedColor: defaultPalette.secondary,
                     onSelected: () {
                       setState(() {
 
@@ -11285,19 +11305,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   }
                   
                   List<Widget> buildFunctionTile(int index, double width, List<InputBlock> inputBlock, {Map<List<InputBlock>, int>? visited}){
-                    var funcBlock = inputBlock[index];
+                    dynamic funcBlock = inputBlock[index];
                     var funcInputBlocks;
                     Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent }) sumFunctionInputBlocks;
                     Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent }) inputBlockFunctionInputBlocks =(List<InputBlock> inBlock, int inx , { SheetFunction? parent})=> Container(color:defaultPalette.extras[1]);
                     print(inputBlock[index].function);
-                    if (inputBlock[index].function is SumFunction) {
-                     funcInputBlocks =  (inputBlock[index].function as SumFunction).inputBlocks;
-                    } else if (inputBlock[index].function is ColumnFunction) {
-                      funcInputBlocks =  (inputBlock[index].function as ColumnFunction).inputBlocks;
-                    } else if (inputBlock[index].function is InputBlockFunction) {
-                      funcInputBlocks =  (inputBlock[index].function! as InputBlockFunction).inputBlocks;
-                    } else if (inputBlock[index].function is CountFunction) {
-                      funcInputBlocks =  (inputBlock[index].function! as CountFunction).inputBlocks;
+                    switch (funcBlock.function.runtimeType) {
+                      case SumFunction || ColumnFunction || CountFunction || AverageFunction:
+                        funcInputBlocks =  (funcBlock.function).inputBlocks;
+                        break;
+                      default:
                     }
                     // print('buildFunctionTile'+funcBlock.function.runtimeType.toString());
                     visited ??={};
@@ -11318,20 +11335,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             key: ValueKey(inx),
                           );
                           }
-                          final block = inBlock[inx];
+                          dynamic block = inBlock[inx];
                           // If the block has a function, don't try to fetch an item at the indexPath
                           final hasFunction = block.function != null;
                           SheetFunction? sheetFunction;
-                          int length =2;
-                           if (inBlock[inx].function is SumFunction) {
-                            sheetFunction =(inBlock[inx].function as SumFunction);
-                            length = (inBlock[inx].function as SumFunction).inputBlocks.length;
-                          } else if (inBlock[inx].function is ColumnFunction) {
-                            sheetFunction =(inBlock[inx].function as ColumnFunction);
-                            length = (inBlock[inx].function as ColumnFunction).inputBlocks.length;
-                          } else if (inBlock[inx].function is CountFunction) {
-                            sheetFunction =(inBlock[inx].function as CountFunction);
-                            length = (inBlock[inx].function as CountFunction).inputBlocks.length;
+                          dynamic length =2;
+                          switch (block.function.runtimeType) {
+                            case SumFunction || ColumnFunction || CountFunction || AverageFunction:
+                              sheetFunction =(block.function);
+                              length = (block.function)!.inputBlocks.length;
+                              break;
+                            default:
                           }
                           // print(inBlock[inx].function.runtimeType);
                           // print('parent: ${parent}');
@@ -11353,7 +11367,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               ); // fail-safe
                             }
                           }
-                          // print('SUMFUNCTIONINPUTTILE');
                           return ReorderableDragStartListener(
                             key: ValueKey(inx+2),
                             index: inx,
@@ -11519,7 +11532,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       child: Row(
                                                       children: [
                                                         const SizedBox(width: 3),
-                                                        
+                                                        Icon(parent is ColumnFunction && parent.func == 'count' 
+                                                          ? TablerIcons.tallymarks: TablerIcons.sum,
+                                                          size:14,
+                                                          color: defaultPalette.primary
+                                                          ),
+                                                        const SizedBox(width: 3),
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
@@ -11530,7 +11548,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 color: defaultPalette.extras[0],
                                                               ),
                                                               children: [
-                                                                TextSpan(text: parent is ColumnFunction? ' ${parent.func}: ': ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                 TextSpan(
                                                                   text: '${(parent is ColumnFunction && parent.func == 'count')? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText() :SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
@@ -11541,6 +11558,33 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             maxLines: 1,
                                                           ),
                                                         ),
+                                                        if(parent is AverageFunction)
+                                                        ...[
+                                                          Icon(  TablerIcons.tallymarks,
+                                                          size:14,
+                                                          color: defaultPalette.primary
+                                                          ),
+                                                           Expanded(
+                                                          child: RichText(
+                                                            text: TextSpan(
+                                                              style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 12,
+                                                                color: defaultPalette.extras[0],
+                                                              ),
+                                                              children: [
+                                                                TextSpan(
+                                                                  text: '${AverageFunction(inputBlocks: inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}',
+                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                        ),
+                                                        ],
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
@@ -12557,14 +12601,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         
                     ////
                     ////
-                    var config; 
-                    if (funcBlock.function is SumFunction) {
-                      config = (funcBlock.function as SumFunction).getConfigurations(getItemAtPath, buildCombinedQuillConfiguration, setState, customStyleBuilder);
-                    }
                                               
                     // return for funtionTileBlock
                     switch (funcBlock.function.runtimeType) {
-                      case SumFunction || CountFunction:
+                      case SumFunction || CountFunction || AverageFunction:
                         return [ 
                           if(funcBlock.isExpanded)
                           Container(
@@ -12737,7 +12777,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   color: defaultPalette.extras[0],
                                                 ),
                                                 children: [
-                                                  TextSpan(text:(funcBlock.function is SumFunction? ' sum: ':' count: '),style: TextStyle(color:Color(0xffB388EB)),),
+                                                  TextSpan(text:' ${funcBlock.function.name}: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                   TextSpan(
                                                     text: '${inputBlock[index].function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
                                                     style: TextStyle(color:defaultPalette.primary),
@@ -13744,12 +13784,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   );
                 }
 
-                TextEditingController hexController = TextEditingController()..text ='${item.textEditorController.getSelectionStyle().attributes['color']?.value ?? '#00000000'}';
+                TextEditingController hexController = TextEditingController()..text ='${(itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes['color']?.value ?? '#00000000'}';
                 
                 int crossAxisCount = 4;
                 var iconWidth = (width / crossAxisCount)-4.6;
                 var fCrossAxisCount = width < 200 ? 1 : width > 300 ? width > 420 ? 4 : 3 : 2;
-                Color fontHex =hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value ?? defaultPalette.extras[0].hex);
+                Color fontHex = hexToColor((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes['color']?.value ?? defaultPalette.extras[0].hex);
                 
                 return Stack(
                   children: [
@@ -13851,18 +13891,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 durationMS: 500,
                                 scrollSpeed: 1,
                                 builder: (context, controller, physics) {
-                                  var ib;
-                                  QuillEditorConfigurations? config;
-                                  if (itemInputBlockIndex !=-1) {
-                                    try {
-                                      ib =item.inputBlocks[itemInputBlockIndex];
-                                      if(ib is SumFunction){config = ib.getConfigurations(getItemAtPath, buildCombinedQuillConfiguration, setState, customStyleBuilder);}
-                                    } on Exception catch (e) {
-                                      itemInputBlockIndex = -1;
-                                      ib = null;
-                                      config = null;
-                                    }
-                                  }
+                                  
                                   return SingleChildScrollView(
                                   controller: controller,
                                   physics: physics,
@@ -13924,7 +13953,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        (ib == null || ib is! SumFunction)
+                                        (ibfunc == null)
                                         ? Expanded(
                                           child: Text(item.textEditorController.getPlainText(),
                                             textAlign: TextAlign.start,
@@ -13966,6 +13995,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       fontWeight: FontWeight.w400,
                                                       letterSpacing: -0.5,
                                                     ),
+                                                    hoverColor: defaultPalette.primary,
+                                                    unfocusedColor: defaultPalette.secondary,
                                                     icon:TablerIcons.cursor_text,
                                                     onSelected: () {
                                                       _findItem();
@@ -13981,9 +14012,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       letterSpacing: -0.5,
                                                     ),
                                                     icon: ibl.value.function!.name == 'sum'? TablerIcons.sum:TablerIcons.tallymarks,
+                                                    hoverColor: defaultPalette.primary,
+                                                    unfocusedColor: defaultPalette.secondary,
                                                     onSelected: () {
                                                       setState(() {
                                                         itemInputBlockIndex = ibl.key;
+                                                        print('IIBI: '+ itemInputBlockIndex.toString());
                                                       });
                                                     },
                                                   ),
@@ -13992,11 +14026,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     boxShadow: [
                                                       BoxShadow(
                                                         color: defaultPalette
-                                                            .black,
-                                                        blurRadius: 2,
+                                                            .black.withOpacity(0.2),
+                                                        blurRadius: 20,
                                                       )
                                                     ],
                                                     color: defaultPalette.primary,
+                                                    border:Border.all(width:2),
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                             10)),
@@ -14005,7 +14040,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     d.globalPosition.dy+20))
                                               .show(context);
                                             },
-                                            child: Icon(TablerIcons.cursor_text)))
+                                            child: Icon(
+                                              ibfunc ==null
+                                              ? TablerIcons.cursor_text
+                                              : ibfunc ==null
+                                                ? TablerIcons.sum
+                                                : TablerIcons.tallymarks,
+                                              size: 20
+                                            )))
                                         ],
                                         ),
                                       ),
@@ -14157,11 +14199,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           boxShadow: [
                                                             BoxShadow(
                                                               color: defaultPalette
-                                                                  .black,
-                                                              blurRadius: 2,
+                                                                  .black.withOpacity(0.2),
+                                                              blurRadius: 20,
                                                             )
                                                           ],
                                                           color: defaultPalette.primary,
+                                                          border:Border.all(width:2),
                                                           borderRadius:
                                                               BorderRadius.circular(
                                                                   10)),
@@ -14219,7 +14262,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         setState(() {
                                          if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
                                             p0.toggleVisibility();
-                                          },);} 
+                                          },);}
                                         });
                                       },
                                       animationCurve: Curves.easeInOutExpo,
@@ -14425,15 +14468,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         buttonWidth: iconWidth,
                                         toggleOnTap: true,
                                         isTapped: getIsToggled(
-                                            item.textEditorController
+                                            (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                 .getSelectionStyle()
-                                                .attributes,
+                                                .attributes ,
                                             Attribute.bold),
                                         onClick: () {
-                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                             p0.toggleBold();
-                                          });}  else {
-                                            item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                          });} else {
+                                            
+                                            ibfunc.toggleBold(config!.controller);
                                           }
                                         },
                                         topLayerChild: const Icon(
@@ -14448,15 +14492,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       buttonWidth: iconWidth,
                                       toggleOnTap: true,
                                       isTapped: getIsToggled(
-                                          item.textEditorController
+                                          (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                               .getSelectionStyle()
                                               .attributes,
                                           Attribute.italic),
                                       onClick: () {
-                                       if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                       if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                             p0.toggleItalic();
                                           });} else {
-                                            item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                            
+                                            ibfunc.toggleItalic(config!.controller);
                                           }
                                       },
                                       topLayerChild: const Icon(
@@ -14471,17 +14516,18 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       buttonWidth: iconWidth,
                                       toggleOnTap: true,
                                       isTapped: getIsToggled(
-                                                item.textEditorController
+                                                (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                     .getSelectionStyle()
                                                     .attributes,
                                                 Attribute
                                                     .underline),
                                       onClick:  () {
-                                       if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                       if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                           p0.toggleUnderline();
-                                        });} else {
-                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                        }
+                                        });}  else {
+                                            
+                                            ibfunc.toggleUnderline(config!.controller);
+                                          }
                                       },
                                       topLayerChild: const Icon(
                                         TablerIcons.underline,
@@ -14495,16 +14541,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       buttonWidth: iconWidth,
                                       toggleOnTap: true,
                                       isTapped: getIsToggled(
-                                          item.textEditorController
+                                          (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                               .getSelectionStyle()
                                               .attributes,
                                           Attribute.strikeThrough),
                                       onClick: () {
-                                       if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                       if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                           p0.toggleStrikeThrough();
                                         });} else {
-                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                        }
+                                            
+                                            ibfunc.toggleStrikeThrough(config!.controller);
+                                          }
                                       },
                                       topLayerChild: const Icon(
                                         TablerIcons.strikethrough,
@@ -14525,16 +14572,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         buttonWidth: iconWidth,
                                         toggleOnTap: true,
                                         isTapped: getIsToggled(
-                                            item.textEditorController
+                                            (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                 .getSelectionStyle()
                                                 .attributes,
                                             Attribute.leftAlignment),
                                         onClick:  () {
-                                           if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                           if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                               p0.alignLeft();
                                             });} else {
-                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                            }
+                                            
+                                            ibfunc.alignLeft(config!.controller);
+                                          }
                                             },
                                         topLayerChild: const Icon(
                                           TablerIcons.align_left,
@@ -14548,16 +14596,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       buttonWidth: iconWidth,
                                       toggleOnTap: true,
                                       isTapped: getIsToggled(
-                                                item.textEditorController
+                                                (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                     .getSelectionStyle()
                                                     .attributes,
                                                 Attribute.centerAlignment),
                                       onClick: () {
-                                       if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                       if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                           p0.alignCenter();
                                         });} else {
-                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                        }
+                                            
+                                            ibfunc.alignCenter(config!.controller);
+                                          }
                                       },
                                       topLayerChild: const Icon(
                                         TablerIcons.align_center,
@@ -14571,16 +14620,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       buttonWidth: iconWidth,
                                       toggleOnTap: true,
                                       isTapped: getIsToggled(
-                                          item.textEditorController
+                                          (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                               .getSelectionStyle()
                                               .attributes,
                                           Attribute.rightAlignment),
                                       onClick:  () {
-                                           if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                           if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                               p0.alignRight();
                                             });} else {
-                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                            }
+                                            
+                                            ibfunc.alignRight(config!.controller);
+                                          }
                                             },
                                       topLayerChild: const Icon(
                                         TablerIcons.align_right,
@@ -14594,15 +14644,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       buttonWidth: iconWidth,
                                       toggleOnTap: true,
                                       isTapped: getIsToggled(
-                                          item.textEditorController
+                                          (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                               .getSelectionStyle()
                                               .attributes,
                                           Attribute.justifyAlignment),
                                       onClick: () {
-                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                             p0.alignJustify();
-                                          });} else {
-                                            item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                          });}  else {
+                                            
+                                            ibfunc.alignJustify(config!.controller);
                                           }
                                         },
                                       topLayerChild: const Icon(
@@ -14624,23 +14675,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         buttonWidth: iconWidth,
                                         toggleOnTap: true,
                                         isTapped: getIsToggled(
-                                            item.textEditorController
+                                            (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                 .getSelectionStyle()
                                                 .attributes,
                                             Attribute.blockQuote),
                                         onClick: () {
-                                          // final currentValue = item.textEditorController
-                                          //     .getSelectionStyle()
-                                          //     .attributes
-                                          //     .containsKey(Attribute.blockQuote.key);
-                                          // item.textEditorController.formatSelection(
-                                          //   currentValue ? Attribute.clone(Attribute.blockQuote, null) : Attribute.blockQuote,
-                                          // );
-                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                           p0.toggleBlockQuote();
                                         });} else {
-                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                        }
+                                            
+                                            ibfunc.toggleBlockQuote(config!.controller);
+                                          }
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.quote,
@@ -14655,15 +14700,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         buttonWidth: iconWidth,
                                         toggleOnTap: true,
                                         isTapped: getIsToggled(
-                                            item.textEditorController
+                                            (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                 .getSelectionStyle()
                                                 .attributes,
                                             Attribute.codeBlock),
                                         onClick: () {
-                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                             p0.toggleCodeBlock();
                                           });} else {
-                                            item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                            
+                                            ibfunc.toggleCodeBlock(config!.controller);
                                           }
                                         },
                                         topLayerChild: const Icon(
@@ -14679,16 +14725,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         buttonWidth: iconWidth,
                                         toggleOnTap: true,
                                         isTapped: getIsToggled(
-                                          item.textEditorController
+                                          (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                               .getSelectionStyle()
                                               .attributes,
                                           Attribute.ul),
                                         onClick: () {
-                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                           p0.toggleUnorderedList();
                                         });} else {
-                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                        }
+                                            
+                                            ibfunc.toggleUnorderedList(config!.controller);
+                                          }
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.list,
@@ -14703,16 +14750,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         buttonWidth: iconWidth,
                                         toggleOnTap: true,
                                         isTapped: getIsToggled(
-                                          item.textEditorController
+                                          (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                               .getSelectionStyle()
                                               .attributes,
                                           Attribute.ol),
                                         onClick: () {
-                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                         if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                           p0.toggleOrderedList();
                                         });} else {
-                                          item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                        }
+                                            
+                                            ibfunc.toggleOrderedList(config!.controller);
+                                          }
                                         },
                                         topLayerChild: const Icon(
                                           TablerIcons.list_numbers,
@@ -14735,16 +14783,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               iconWidth * 2,
                                           toggleOnTap: true,
                                           isTapped: getIsToggled(
-                                              item.textEditorController
+                                              (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                   .getSelectionStyle()
                                                   .attributes,
                                               Attribute.subscript),
                                           onClick: () {
-                                           if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                           if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                               p0.toggleSubscript();
                                             });} else {
-                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                            }
+                                            
+                                            ibfunc.toggleSubscript(config!.controller);
+                                          }
                                           },
                                           topLayerChild: Icon(
                                             TablerIcons.subscript,
@@ -14759,18 +14808,18 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               iconWidth * 2,
                                           toggleOnTap: true,
                                           isTapped: getIsToggled(
-                                              item.textEditorController
+                                              (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                   .getSelectionStyle()
                                                   .attributes,
                                               Attribute
                                                   .superscript),
                                           onClick: () {
                                             
-                                           if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0){
+                                           if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0){
                                               p0.toggleSuperscript();
                                             });} else {
-                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                            }
+                                            ibfunc.toggleSuperscript(config!.controller);
+                                          }
                                           },
                                           
                                           topLayerChild: Icon(
@@ -14886,20 +14935,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 width:0.2
                                               )
                                               ),
-                                              child: Text((item.textEditorController
+                                              child: Text(((itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                     .getSelectionStyle()
                                                     .attributes[Attribute.font.key]
                                                     ?.value
                                                     ?.replaceAll( RegExp(r'_regular'), '') ?? 'mixFonts'),
                                                   style: TextStyle(
                                                     fontSize: 12,
-                                                  fontFamily: (item.textEditorController
+                                                  fontFamily: ((itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                     .getSelectionStyle()
                                                     .attributes[
                                                         Attribute.font.key]
                                                   ?.value )
                                                   ),        
-                                                          ),
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -14976,13 +15025,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               controller: hexController,
                                               onSubmitted: (value) {
                                                 setState(() {
-                                                  item.textEditorController
-                                                .formatSelection(
-                                                  ColorAttribute(
-                                                  value),
-                                                  );
+                                                  if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
+                                                      p0.updateColor(hexToColor(value));
+                                                    },);} else {
+                                                      ibfunc.updateColor(hexToColor(value), config!.controller);
+                                                    }
                                                   hexController.text =
-                                                      '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+                                                      '${(itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes['color']?.value}';
                                                 
                                                 });
                                               },
@@ -15021,7 +15070,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             border:const Border.fromBorderSide(
                                               BorderSide.none,
                                             ),
-                                            color: hexToColor(item.textEditorController
+                                            color: hexToColor((itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                               .getSelectionStyle()
                                               .attributes['color']
                                               ?.value),
@@ -15042,15 +15091,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               highlightColor: defaultPalette.primary,
                                               onTap: () {
                                                 EyeDropper.enableEyeDropper(context, (p0) {
-                                                  Color color = (p0?? hexToColor(item.textEditorController.getSelectionStyle().attributes['color']?.value) );
+                                                  Color color = (p0?? hexToColor((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes['color']?.value) );
                                                   setState(() {
-                                                   if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
+                                                   if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
                                                       p0.updateColor(color);
                                                     },);} else {
-                                                      item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                                      ibfunc.updateColor(color, config!.controller);
                                                     }
                                                   hexController.text =
-                                                      '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+                                                      '${(itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes['color']?.value}';
                                                 
                                                 });
                                                 },);
@@ -15095,13 +15144,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ),
                                         onChanged: (value) {
                                           setState(() {
-                                           if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
+                                           if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
                                               p0.updateColor(value.toColor());
                                             },);} else {
-                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                            }
+                                                      ibfunc.updateColor(value.toColor(), config!.controller);
+                                                    }
                                             hexController.text =
-                                                '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+                                                '${(itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes['color']?.value}';
                                           
                                           });
                                           },
@@ -15120,13 +15169,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                               onChanged: (HSVColor value) {
                                                 setState(() {
-                                                   if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
+                                                   if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
                                               p0.updateColor(value.toColor());
                                             },);} else {
-                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                            }
+                                                      ibfunc.updateColor(value.toColor(), config!.controller);
+                                                    }
                                                     hexController.text =
-                                              '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+                                              '${(itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes['color']?.value}';
                                             });
                                                   },
                                                 ),
@@ -15142,13 +15191,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         .alpha,
                                     onChanged: (int value) {
                                       setState(() {
-                                       if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
-                                              p0.updateColor(fontHex.withAlpha(value));
-                                            },);} else {
-                                              item.inputBlocks[itemInputBlockIndex].toggleLock()
-                                            }
-                                        hexController.text =
-                                            '${item.textEditorController.getSelectionStyle().attributes['color']?.value}';
+                                       if(itemInputBlockIndex == -1){ 
+                                        updateSheetTextProperties((p0) {
+                                        p0.updateColor(fontHex.withAlpha(value));
+                                      },);} else {
+                                        ibfunc.updateColor(fontHex.withAlpha(value), config!.controller);
+                                      }
+                                      hexController.text =
+                                          '${(itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes['color']?.value}';
                                       });
                                     },
                                   ),
@@ -15283,8 +15333,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         padding: const EdgeInsets.only(top:6, left:4, right:4, bottom: 0),
                                                         child: TextButton(
                                                           style: TextButton.styleFrom(
-                                                          backgroundColor: item
-                                                              .textEditorController
+                                                          backgroundColor: (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                               .getSelectionStyle()
                                                               .attributes[
                                                                   Attribute
@@ -15308,10 +15357,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       ),
                                                     ),
                                                     onPressed: () {
-                                                     if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
+                                                     if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
                                                         p0.updateFontFamily(GoogleFonts.getFont( fontName).fontFamily??'Clear');
                                                       },);} else {
-                                                        item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                                        ibfunc.updateFontFamily(GoogleFonts.getFont( fontName).fontFamily??'Clear', config!.controller);
                                                       }
                                                       setState(() {});
                                                     },
@@ -15319,8 +15368,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       fontName,
                                                       textAlign: TextAlign.center,
                                                       style: GoogleFonts.getFont(
-                                                          fontName,
-                                                          fontSize: 14),
+                                                        fontName,
+                                                        fontSize: 14),
                                                       maxLines: 1,
                                                     )),
                                               );
@@ -15420,8 +15469,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                           bottom: index ==fontsInCategory.length-1?5: 0),
                                                                   child: TextButton(
                                                                     style: TextButton.styleFrom(
-                                                                      backgroundColor: item
-                                                                        .textEditorController
+                                                                      backgroundColor: (itemInputBlockIndex == -1?item.textEditorController:config!.controller)
                                                                         .getSelectionStyle()
                                                                         .attributes[Attribute.font.key]
                                                                         ?.value == GoogleFonts.getFont(fontName).fontFamily
@@ -15435,10 +15483,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                           ),
                                                                     ),
                                                                     onPressed: () {
-                                                                     if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
+                                                                     if(itemInputBlockIndex == -1){ updateSheetTextProperties((p0) {
                                                                         p0.updateFontFamily(fontName);
-                                                                      },);} else {
-                                                                        item.inputBlocks[itemInputBlockIndex].toggleLock()
+                                                                      },);} else{
+                                                                        ibfunc.updateFontFamily(fontName, config!.controller);
                                                                       }
                                                                       setState(() {});
                                                                     },
@@ -15966,6 +16014,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   ),
                                                                 ),
                                                               ),
+                                                              for (int i =0;i<2;i++)
                                                               MouseRegion(
                                                                 cursor:SystemMouseCursors.click,
                                                                 child: GestureDetector(
@@ -15977,7 +16026,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                           blockIndex: [-2], 
                                                                           id: 'yo',
                                                                           useConst: false,
-                                                                          function: CountFunction(inputBlocks:[])
+                                                                          function: i==0
+                                                                          ? CountFunction(inputBlocks:[])
+                                                                          : AverageFunction(inputBlocks: [])
                                                                           ));
                                                                       }
                                                                       // inputBlockExpansionList.add(true);
@@ -15994,8 +16045,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       children:[
                                                                         SizedBox(width:8),
                                                                         Expanded(child: 
-                                                                        Text(
-                                                                          'count',
+                                                                        Text( i==0
+                                                                        ? 'count'
+                                                                        : 'average',
                                                                           maxLines: 1,
                                                                           overflow: TextOverflow.ellipsis,
                                                                           style: GoogleFonts.lexend(

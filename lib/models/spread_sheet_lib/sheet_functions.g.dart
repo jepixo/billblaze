@@ -55,15 +55,20 @@ class SumFunctionAdapter extends TypeAdapter<SumFunction> {
     };
     return SumFunction(
       (fields[2] as List).cast<InputBlock>(),
+      (fields[3] as List)
+          .map((dynamic e) => (e as Map).cast<String, dynamic>())
+          .toList(),
     );
   }
 
   @override
   void write(BinaryWriter writer, SumFunction obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(2)
       ..write(obj.inputBlocks)
+      ..writeByte(3)
+      ..write(obj.resultJson)
       ..writeByte(0)
       ..write(obj.returnType)
       ..writeByte(1)
@@ -95,19 +100,24 @@ class ColumnFunctionAdapter extends TypeAdapter<ColumnFunction> {
       inputBlocks: (fields[2] as List).cast<InputBlock>(),
       func: fields[3] as String,
       axisLabel: fields[4] as String,
+      resultJson: (fields[5] as List)
+          .map((dynamic e) => (e as Map).cast<String, dynamic>())
+          .toList(),
     );
   }
 
   @override
   void write(BinaryWriter writer, ColumnFunction obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(2)
       ..write(obj.inputBlocks)
       ..writeByte(3)
       ..write(obj.func)
       ..writeByte(4)
       ..write(obj.axisLabel)
+      ..writeByte(5)
+      ..write(obj.resultJson)
       ..writeByte(0)
       ..write(obj.returnType)
       ..writeByte(1)
@@ -137,15 +147,20 @@ class CountFunctionAdapter extends TypeAdapter<CountFunction> {
     };
     return CountFunction(
       inputBlocks: (fields[2] as List).cast<InputBlock>(),
+      resultJson: (fields[3] as List)
+          .map((dynamic e) => (e as Map).cast<String, dynamic>())
+          .toList(),
     );
   }
 
   @override
   void write(BinaryWriter writer, CountFunction obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(2)
       ..write(obj.inputBlocks)
+      ..writeByte(3)
+      ..write(obj.resultJson)
       ..writeByte(0)
       ..write(obj.returnType)
       ..writeByte(1)
@@ -200,6 +215,49 @@ class InputBlockFunctionAdapter extends TypeAdapter<InputBlockFunction> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is InputBlockFunctionAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class AverageFunctionAdapter extends TypeAdapter<AverageFunction> {
+  @override
+  final int typeId = 22;
+
+  @override
+  AverageFunction read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return AverageFunction(
+      inputBlocks: (fields[2] as List).cast<InputBlock>(),
+      resultJson: (fields[3] as List)
+          .map((dynamic e) => (e as Map).cast<String, dynamic>())
+          .toList(),
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, AverageFunction obj) {
+    writer
+      ..writeByte(4)
+      ..writeByte(2)
+      ..write(obj.inputBlocks)
+      ..writeByte(3)
+      ..write(obj.resultJson)
+      ..writeByte(0)
+      ..write(obj.returnType)
+      ..writeByte(1)
+      ..write(obj.name);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AverageFunctionAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
