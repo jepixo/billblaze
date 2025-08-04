@@ -46,6 +46,9 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
+import 'package:iconify_flutter_plus/icons/carbon.dart';
+import 'package:iconify_flutter_plus/icons/tabler.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
@@ -9842,9 +9845,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           _relinkBlock(inner, Map<String,int>.from(visited));
         }
       }
-      else if (fn is SumFunction) {
+      else if (fn is SumFunction || fn is AverageFunction) {
+        dynamic fnblk = fn!;
         print('is SumFunction');
-        for (final inner in fn.inputBlocks) {
+        for (final inner in fnblk.inputBlocks) {
           _relinkBlock(inner,Map<String,int>.from(visited));
         }
       }
@@ -9986,7 +9990,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 if (itemInputBlockIndex !=-1) {
                   try {
                     ib =item.inputBlocks[itemInputBlockIndex];
-                    if(ib.function is SumFunction || ib.function is CountFunction){
+                    if(ib.function is SumFunction || ib.function is CountFunction || ib.function is AverageFunction){
                       config = ib.function.getConfigurations(getItemAtPath, buildCombinedQuillConfiguration, setState, customStyleBuilder);
                       ibfunc = ib.function;
                       }
@@ -11311,7 +11315,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent }) inputBlockFunctionInputBlocks =(List<InputBlock> inBlock, int inx , { SheetFunction? parent})=> Container(color:defaultPalette.extras[1]);
                     print(inputBlock[index].function);
                     switch (funcBlock.function.runtimeType) {
-                      case SumFunction || ColumnFunction || CountFunction || AverageFunction:
+                      case SumFunction || ColumnFunction || CountFunction || AverageFunction || InputBlockFunction:
                         funcInputBlocks =  (funcBlock.function).inputBlocks;
                         break;
                       default:
@@ -11341,7 +11345,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           SheetFunction? sheetFunction;
                           dynamic length =2;
                           switch (block.function.runtimeType) {
-                            case SumFunction || ColumnFunction || CountFunction || AverageFunction:
+                            case SumFunction || ColumnFunction || CountFunction || AverageFunction || InputBlockFunction:
                               sheetFunction =(block.function);
                               length = (block.function)!.inputBlocks.length;
                               break;
@@ -11532,7 +11536,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       child: Row(
                                                       children: [
                                                         const SizedBox(width: 3),
-                                                        Icon(parent is ColumnFunction && parent.func == 'count' 
+                                                        Icon((parent is ColumnFunction && parent.func == 'count' ) || parent is CountFunction
                                                           ? TablerIcons.tallymarks: TablerIcons.sum,
                                                           size:14,
                                                           color: defaultPalette.primary
@@ -11549,7 +11553,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               ),
                                                               children: [
                                                                 TextSpan(
-                                                                  text: '${(parent is ColumnFunction && parent.func == 'count')? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText() :SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}',
+                                                                  text: '${(parent is ColumnFunction && parent.func == 'count')
+                                                                  ? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText() 
+                                                                  : SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -11560,10 +11566,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         ),
                                                         if(parent is AverageFunction)
                                                         ...[
-                                                          Icon(  TablerIcons.tallymarks,
+                                                          Iconify(  Carbon.chart_average,
                                                           size:14,
-                                                          color: defaultPalette.primary
+                                                          color: Color(0xffB388EB)
                                                           ),
+                                                          const SizedBox(width: 4),
                                                            Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
@@ -11595,7 +11602,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 color: defaultPalette.extras[0],
                                                               ),
                                                               children: [
-                                                                TextSpan(text: 'index: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                                                TextSpan(text: 'inx:  ',style: TextStyle(
+                                                                  color:  Color(0xff3993DD)
+                                                                  ),),
                                                                 TextSpan(
                                                                   text: '${(inx).clamp(0, double.infinity)}',
                                                                   style: TextStyle(color:defaultPalette.primary),
@@ -11621,7 +11630,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
                                       if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
                                       inputBlockFunctionInputBlocks(inBlock, inx,parent : parent),
-                                      if(!inBlock[inx].useConst && (inBlock[inx].function is SumFunction || inBlock[inx].function is ColumnFunction|| inBlock[inx].function is CountFunction))
+                                      if(!inBlock[inx].useConst 
+                                      && (inBlock[inx].function is SumFunction || 
+                                      inBlock[inx].function is ColumnFunction|| 
+                                      inBlock[inx].function is CountFunction|| 
+                                      inBlock[inx].function is AverageFunction))
                                       GestureDetector(
                                         onTap:(){
                                           setState(() {
@@ -11951,6 +11964,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       child: Row(
                                                       children: [
                                                         const SizedBox(width: 3),
+                                                        Icon(((parent is ColumnFunction && parent.func == 'count')|| parent is CountFunction)
+                                                          ? TablerIcons.tallymarks: TablerIcons.sum,
+                                                          size:14,
+                                                          color: defaultPalette.primary
+                                                          ),
+                                                        const SizedBox(width: 3),
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
@@ -11961,13 +11980,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 color: defaultPalette.extras[0],
                                                               ),
                                                               children: [
-                                                                TextSpan(text: parent is SumFunction || (parent is ColumnFunction && parent.func =='sum')
-                                                                ? 'sum: '
-                                                                : parent is CountFunction || (parent is ColumnFunction && parent.func =='count')
-                                                                  ? 'count: '
-                                                                  : parent is InputBlockFunction
-                                                                    ? 'str: ':'',
-                                                                style: TextStyle(color:Color(0xffB388EB)),),
                                                                 TextSpan(
                                                                   text: '${(((parent is ColumnFunction && parent.func == 'count')|| parent is CountFunction)? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)): SumFunction(inBlock.sublist(0,inx+1))).result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
@@ -11978,6 +11990,34 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             maxLines: 1,
                                                           ),
                                                         ),
+                                                        if(parent is AverageFunction)
+                                                        ...[
+                                                          Iconify(  Carbon.chart_average,
+                                                          size:14,
+                                                          color: Color(0xffB388EB)
+                                                          ),
+                                                          const SizedBox(width: 4),
+                                                           Expanded(
+                                                          child: RichText(
+                                                            text: TextSpan(
+                                                              style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 12,
+                                                                color: defaultPalette.extras[0],
+                                                              ),
+                                                              children: [
+                                                                TextSpan(
+                                                                  text: '${AverageFunction(inputBlocks: inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}',
+                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                        ),
+                                                        ],
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
@@ -12066,28 +12106,24 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               key: ValueKey(inx),
                             );
                           }
-                          final block = inBlock[inx];
+                          dynamic block = inBlock[inx];
                           // If the block has a function, don't try to fetch an item at the indexPath
                           final hasFunction = block.function != null;
                           SheetFunction? sheetFunction;
                           int length =2;
                           
                           if (hasFunction) {
-                            if (sheetFunction is SumFunction) {
-                              sheetFunction =(inBlock[inx].function as  SumFunction);
-                              length = (inBlock[inx].function as  SumFunction).inputBlocks.length;
-                            } else if (sheetFunction is ColumnFunction) {
-                              sheetFunction =(inBlock[inx].function as  ColumnFunction);
-                              length = (inBlock[inx].function as  ColumnFunction).inputBlocks.length;
-                            } else if (sheetFunction is InputBlockFunction) {
-                              sheetFunction =(inBlock[inx].function as  InputBlockFunction);
-                              length = (inBlock[inx].function as  InputBlockFunction).inputBlocks.length;
-                            } 
+                            switch (block.function.runtimeType) {
+                            case SumFunction || ColumnFunction || CountFunction || AverageFunction || InputBlockFunction:
+                              sheetFunction =(block.function);
+                              length = (block.function)!.inputBlocks.length;
+                              break;
+                            default:
+                          }
                             
                           }
                           String? delta;
                           SheetText? itemAtPath;
-                          print('useConst: '+inBlock[inx].useConst.toString());
                           if (!hasFunction || inBlock[inx].useConst) {
                             try {
                               final item = getItemAtPath(block.indexPath);
@@ -12222,13 +12258,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       GestureDetector(
                                         onTap:(){
                                           setState(() {
-                                            if (inBlock[inx].function is SumFunction) {
-                                              selectedInputBlocks =(inBlock[inx].function as SumFunction).inputBlocks;
-                                            } else if (inBlock[inx].function is ColumnFunction) {
-                                              selectedInputBlocks =(inBlock[inx].function as ColumnFunction).inputBlocks;
-                                            } else if (inBlock[inx].function is InputBlockFunction) {
-                                              selectedInputBlocks =(inBlock[inx].function as InputBlockFunction).inputBlocks;
-                                            } 
+                                            switch (block.function.runtimeType) {
+                                              case SumFunction || CountFunction || AverageFunction:
+                                                
+                                                selectedInputBlocks = (block.function)!.inputBlocks;
+                                                break;
+                                              default:
+                                            }
                                           });
                                         },
                                         child: Stack(
@@ -12439,7 +12475,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       child: Row(
                                                       children: [
                                                         const SizedBox(width: 3),
-                                                        
+                                                        parent is InputBlockFunction
+                                                          ? Iconify(Carbon.string_text,
+                                                          size:14,
+                                                          color: defaultPalette.primary):Icon((parent is ColumnFunction && parent.func == 'count' ) || parent is CountFunction
+                                                          ? TablerIcons.tallymarks
+                                                          : TablerIcons.sum,
+                                                          size:14,
+                                                          color: defaultPalette.primary
+                                                          ),
+                                                        const SizedBox(width: 3),
                                                                Expanded(
                                                                 child: RichText(
                                                                   text: TextSpan(
@@ -12451,14 +12496,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                     ),
                                                                     children: [
                                                                       
-                                                                      TextSpan(text: parent is SumFunction || (parent is ColumnFunction && parent.func =='sum')
-                                                                      ? ' sum: '
-                                                                      : parent is CountFunction || (parent is ColumnFunction && parent.func =='count')
-                                                                        ? ' count: '
-                                                                        : ' str: '
-                                                                      ,style: TextStyle(color:Color(0xffB388EB)),),
                                                                       TextSpan(
-                                                                        text: '${(parent is ColumnFunction && parent.func == 'count')
+                                                                        text: '${
+                                                                          parent is InputBlockFunction
+                                                                        ? InputBlockFunction(inputBlocks:inBlock.sublist(0,inx+1), label: '').getConfigurations(buildCombinedQuillConfiguration).controller.document.toPlainText()
+                                                                        :(parent is ColumnFunction && parent.func == 'count')
                                                                         ? CountFunction(inputBlocks:inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText() 
                                                                         : SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}',
                                                                         style: TextStyle(color:defaultPalette.primary),
@@ -12469,6 +12511,34 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   maxLines: 1,
                                                                 ),
                                                               ),
+                                                         if(parent is AverageFunction)
+                                                        ...[
+                                                          Iconify(  Carbon.chart_average,
+                                                          size:14,
+                                                          color: Color(0xffB388EB)
+                                                          ),
+                                                          const SizedBox(width: 4),
+                                                           Expanded(
+                                                          child: RichText(
+                                                            text: TextSpan(
+                                                              style: GoogleFonts.lexend(
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 12,
+                                                                color: defaultPalette.extras[0],
+                                                              ),
+                                                              children: [
+                                                                TextSpan(
+                                                                  text: '${AverageFunction(inputBlocks: inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}',
+                                                                  style: TextStyle(color:defaultPalette.primary),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                        ),
+                                                        ],
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
@@ -13727,16 +13797,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 GestureDetector(
                                                   onTap:(){
                                                     setState(() {
-                                                      if (inputBlock[index].function is SumFunction) {
-                                                         selectedInputBlocks = (inputBlock[index].function as SumFunction).inputBlocks;
-                                                      } else if (inputBlock[index].function is CountFunction) {
-                                                         selectedInputBlocks = (inputBlock[index].function as CountFunction).inputBlocks;
-                                                      } else if (inputBlock[index].function is ColumnFunction) {
-                                                         selectedInputBlocks = (inputBlock[index].function as ColumnFunction).inputBlocks;
-                                                      } else if (inputBlock[index].function is InputBlockFunction) {
-                                                         selectedInputBlocks = (inputBlock[index].function as InputBlockFunction).inputBlocks;
+                                                      switch (inputBlock[index].function.runtimeType) {
+                                                        
+                                                        case SumFunction || ColumnFunction || CountFunction || AverageFunction:
+                                                          dynamic iblk = (inputBlock[index].function)!;
+                                                          selectedInputBlocks =  iblk.inputBlocks;
+                                                          break;
+                                                        default:
                                                       }
-                                                     
                                                       
                                                      
                                                     });
@@ -14011,13 +14079,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       fontWeight: FontWeight.w400,
                                                       letterSpacing: -0.5,
                                                     ),
-                                                    icon: ibl.value.function!.name == 'sum'? TablerIcons.sum:TablerIcons.tallymarks,
+                                                    icon: ibl.value.function!.name == 'sum'
+                                                    ? TablerIcons.sum
+                                                    : ibl.value.function!.name == 'count'
+                                                      ? TablerIcons.tallymarks
+                                                      : null,
                                                     hoverColor: defaultPalette.primary,
                                                     unfocusedColor: defaultPalette.secondary,
                                                     onSelected: () {
                                                       setState(() {
                                                         itemInputBlockIndex = ibl.key;
-                                                        print('IIBI: '+ itemInputBlockIndex.toString());
                                                       });
                                                     },
                                                   ),
@@ -14040,14 +14111,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     d.globalPosition.dy+20))
                                               .show(context);
                                             },
-                                            child: Icon(
+                                            child: ibfunc is AverageFunction
+                                            ? Iconify( Carbon.chart_average,
+                                              size: 20): Icon(
                                               ibfunc ==null
                                               ? TablerIcons.cursor_text
-                                              : ibfunc ==null
+                                              : ibfunc is SumFunction
                                                 ? TablerIcons.sum
-                                                : TablerIcons.tallymarks,
+                                                :TablerIcons.tallymarks,
                                               size: 20
-                                            )))
+                                            ))),
                                         ],
                                         ),
                                       ),

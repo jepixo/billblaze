@@ -51,6 +51,8 @@ class SheetFunction {
         return CountFunction.fromMap(map);
       case 'inputBlock':
         return InputBlockFunction.fromMap(map);
+      case 'average':
+        return AverageFunction.fromMap(map);
 
       // Add more subclasses here if needed
       default:
