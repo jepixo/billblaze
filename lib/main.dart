@@ -54,12 +54,10 @@ Future<void> main() async {
   Hive.registerAdapter(IndexPathAdapter());
   Hive.registerAdapter(InputBlockAdapter());
   Hive.registerAdapter(SheetFunctionAdapter());
-  Hive.registerAdapter(SumFunctionAdapter());
   Hive.registerAdapter(RequiredTextAdapter());
   Hive.registerAdapter(ColumnFunctionAdapter());
-  Hive.registerAdapter(CountFunctionAdapter());
   Hive.registerAdapter(InputBlockFunctionAdapter());
-  Hive.registerAdapter(AverageFunctionAdapter());
+  Hive.registerAdapter(UniStatFunctionAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   // await Hive.deleteBoxFromDisk('fetchedLayoutBox');

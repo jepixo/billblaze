@@ -1,11 +1,15 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 
 import 'dart:convert';
+import 'dart:math';
 
+import 'package:billblaze/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 
@@ -43,14 +47,12 @@ class SheetFunction {
   static SheetFunction fromMap(Map<String, dynamic> map) {
     print('SheetFunction type: '+map['type']);
     switch (map['type']) {
-      case 'sum':
-        return SumFunction.fromMap(map);
       case 'column':
         return ColumnFunction.fromMap(map);
-      case 'count':
-        return CountFunction.fromMap(map);
       case 'inputBlock':
         return InputBlockFunction.fromMap(map);
+      case 'unistat':
+        return UniStatFunction.fromMap(map);
 
       // Add more subclasses here if needed
       default:
@@ -63,15 +65,26 @@ class SheetFunction {
 
 }
 
-@HiveType(typeId:17)
-class SumFunction extends SheetFunction with QuillFormattingMixin{
+@HiveType(typeId: 17)
+class UniStatFunction extends SheetFunction with QuillFormattingMixin {
   @HiveField(2)
   List<InputBlock> inputBlocks;
+
   @HiveField(3)
-  List<Map<String, dynamic>> resultJson =[];
+  List<Map<String, dynamic>> resultJson = [];
 
-  SumFunction( this.inputBlocks,[this.resultJson = const []]) : super(1, 'sum');
+  @HiveField(4)
+  String func;
 
+  UniStatFunction({
+    required this.inputBlocks,
+    this.resultJson = const [],
+    required this.func,
+  }) : super(1, 'unistat');
+
+  // ──────────────────────────────
+  // MAIN RESULT ENTRYPOINT
+  // ──────────────────────────────
   @override
   dynamic result(
     Function getItemAtPath,
@@ -79,127 +92,336 @@ class SumFunction extends SheetFunction with QuillFormattingMixin{
     List<SheetListBox>? spreadSheet,
     Map<List<InputBlock>, int>? visited,
   }) {
-    double sum = 0;
     visited ??= {};
-
-    // recursion guard
     visited[inputBlocks] = (visited[inputBlocks] ?? 0) + 1;
+
     if (visited[inputBlocks]! > 50) {
       return 'recursion detected';
     }
 
+    // Extract all numeric values first
+    final (values,count) = _collectValues(getItemAtPath, buildCombinedQuillConfiguration,
+        spreadSheet: spreadSheet, visited: visited);
+    // print(count);
+    // Compute based on `func`
+    String newText;
+    switch (func.toLowerCase()) {
+      case 'sum':
+        newText = _sum(values).toString();
+        break;
+      case 'product':
+        newText = _product(values).toString();
+        break;
+      case 'count':
+        newText = count.toString();
+        break;
+      case 'min':
+        newText = values.isEmpty
+            ? '0'
+            : values.reduce(min).toString();
+      case 'max':
+        newText = values.isEmpty
+            ? '0'
+            : values.reduce(max).toString();
+      case 'average':
+      case 'mean':
+        newText = _average(values).toString();
+        break;
+      case 'median':
+        newText = _median(values).toString();
+        break;
+      case 'mode':
+        newText = _mode(values).toString();
+        break;
+      case 'range':
+        newText = _range(values).toString();
+        break;
+      case 'range ratio':
+        newText = values.isEmpty || values.reduce(min) == 0
+            ? 'NaN'
+            : (values.reduce(max) / values.reduce(min)).toString();
+        break;
+      case 'variance':
+        newText = _variance(values).toString();
+        break;
+      case 'stddev':
+      case 'standard deviation':
+        newText = _stdDev(values).toString();
+        break;
+      case 'mad':
+      case 'mean absolute deviation':
+        newText = _mad(values).toString();
+        break;
+      case 'skewness':
+        print('skew: '+_skewness(values).toString());
+        newText = _skewness(values).toString();
+        break;
+      case 'kurtosis':
+        newText = _kurtosis(values).toString();
+        break;
+      case 'geomean':
+      case 'geometric mean':
+        newText = values.isEmpty
+            ? '0'
+            : pow(values.fold(1.0, (a, b) => a * b), 1 / values.length).toString();
+        break;
+
+      case 'harmean':
+      case 'harmonic mean':
+        newText = values.isEmpty
+            ? '0'
+            : (values.length / values.map((x) => 1 / x).reduce((a, b) => a + b)).toString();
+        break;
+
+      case 'quadratic mean':
+      case 'quadratic mean [rms]':
+        newText = values.isEmpty
+            ? '0'
+            : sqrt(values.map((x) => x * x).reduce((a, b) => a + b) / values.length).toString();
+        break;
+
+      case 'sum of cubes':
+        newText = values.isEmpty
+            ? '0'
+            : values.map((x) => x * x * x).reduce((a, b) => a + b).toString();
+        break;
+
+      case 'root mean cube':
+        newText = values.isEmpty
+            ? '0'
+            : pow(
+                  values.map((x) => x * x * x).reduce((a, b) => a + b) / values.length,
+                  1 / 3,
+                ).toString();
+        break;
+
+      case 'sum of squares':
+        newText = values.isEmpty
+            ? '0'
+            : values.map((x) => x * x).reduce((a, b) => a + b).toString();
+        break;
+
+      case 'quartile 1':
+        newText = _percentile(values, 25).toString(); // default to median if p not set
+        break;
+      case 'quartile 2':
+        final q1 = _percentile(values, 50);
+        newText = '$q1';
+        break;
+      case 'quartile 3':
+        final q3 = _percentile(values, 75);
+        newText = '$q3';
+        break;
+      default:
+        newText = 'NaN';
+        break;
+    }
+
+    // Preserve styling in resultJson
+    final oldDelta = Delta.fromJson(resultJson);
+    final oldOps = oldDelta.toList();
+    final newDelta = _applyStylingFromOldOps(oldOps, newText);
+
+    // Update resultJson if changed
+    final newJson = newDelta.toJson();
+    if (newJson != resultJson) {
+      resultJson = newJson;
+    }
+
+    return Document.fromDelta(newDelta);
+  }
+
+  // ──────────────────────────────
+  // VALUE COLLECTION
+  // ──────────────────────────────
+  (List<double>, int) _collectValues(
+    Function getItemAtPath,
+    Function buildCombinedQuillConfiguration, {
+    List<SheetListBox>? spreadSheet,
+    Map<List<InputBlock>, int>? visited,
+  }) {
+    final values = <double>[];
+    int baseCount =0;
     for (final block in inputBlocks) {
       dynamic raw;
 
-      // 1) nested formula
+      // Nested function handling
       if (block.function != null && !block.useConst) {
         if (block.function is InputBlockFunction) {
-          raw = (block.function as InputBlockFunction).getConfigurations(
-            buildCombinedQuillConfiguration,
-            spreadSheet: spreadSheet,
-            visited: visited,
-            ).controller.document;
-        } else{
+          raw = (block.function as InputBlockFunction)
+              .getConfigurations(buildCombinedQuillConfiguration,
+                  spreadSheet: spreadSheet, visited: visited)
+              .controller
+              .document;
+        } else {
           raw = block.function!.result(
             getItemAtPath,
             buildCombinedQuillConfiguration,
             spreadSheet: spreadSheet,
-            visited: Map.from(visited),
+            visited: Map.from(visited!),
           );
         }
-      }
-      else {
-        // 2) live editor text
+        // Special: if block.function is ColumnFunction with func=='count'
+        if (block.function is ColumnFunction &&
+            (block.function as ColumnFunction).func == 'count') {
+          final Document c = block.function!.result(
+            getItemAtPath,
+            buildCombinedQuillConfiguration,
+            spreadSheet: spreadSheet,
+            visited: Map.from(visited!),
+          );
+           baseCount += (double.tryParse(c.toPlainText())??0.0).toInt();
+        }
+      } else {
         final item = spreadSheet == null
-          ? getItemAtPath(block.indexPath)
-          : getItemAtPath(block.indexPath, spreadSheet);
+            ? getItemAtPath(block.indexPath)
+            : getItemAtPath(block.indexPath, spreadSheet);
 
         if (item is SheetText) {
-          raw = item.textEditorConfigurations.controller
-            .document
-            .toPlainText()
-            .trim();
+          raw = item.textEditorConfigurations.controller.document
+              .toPlainText()
+              .trim();
         } else if (item is SheetTextBox) {
           raw = Document.fromDelta(
-            Delta.fromJson(item.textEditorController as List)
-          ).toPlainText().trim();
+                  Delta.fromJson(item.textEditorController as List))
+              .toPlainText()
+              .trim();
         }
+        baseCount++;
       }
 
-      // now normalize whatever raw is
+      // Normalize to double
       if (raw is num) {
-        sum += raw.toDouble();
+        values.add(raw.toDouble());
       } else if (raw is String) {
-        sum += double.tryParse(raw) ?? 0.0;
+        final parsed = double.tryParse(raw);
+        if (parsed != null) values.add(parsed);
       } else if (raw is Document) {
-        sum += double.tryParse(raw.toPlainText().trim()) ?? 0.0;
+        final parsed = double.tryParse(raw.toPlainText().trim());
+        if (parsed != null) values.add(parsed);
+      } else {
+        values.add(0);
       }
     }
 
-    // ─── preserve styling in resultJson ─────────────────────────────────
-    // final oldDelta = Delta.fromJson(resultJson);
-    // // grab the first op’s attrs if any
-    // final firstAttrs = oldDelta.isNotEmpty ? oldDelta.toList().first.attributes : null;
+    return (values,baseCount);
+  }
 
-    // // build new one-op delta
-    // final newDelta = Delta()..insert(
-    //   '${sum}\n',
-    //   firstAttrs,
-    // );
-    final oldDelta = Delta.fromJson(resultJson);
-    final oldOps = oldDelta.toList();
-    var newText = sum.toString();
-    // 2) We’ll build a brand‐new Delta:
+  // ──────────────────────────────
+  // BASIC METRICS
+  // ──────────────────────────────
+  double _sum(List<double> values) => values.fold(0.0, (a, b) => a + b);
+  double _product(List<double> values) =>
+      values.fold(1.0, (a, b) => a * b);
+  double _average(List<double> values) =>
+      values.isEmpty ? 0.0 : _sum(values) / values.length;
+
+  double _median(List<double> values) {
+    if (values.isEmpty) return 0.0;
+    final sorted = [...values]..sort();
+    final mid = sorted.length ~/ 2;
+    return sorted.length.isOdd
+        ? sorted[mid]
+        : (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+
+  double _mode(List<double> values) {
+    if (values.isEmpty) return 0.0;
+    final freq = <double, int>{};
+    for (var v in values) freq[v] = (freq[v] ?? 0) + 1;
+    return freq.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+  }
+
+  double _range(List<double> values) =>
+      values.isEmpty ? 0.0 : (values.reduce(max) - values.reduce(min));
+
+  double _variance(List<double> values) {
+    if (values.isEmpty) return 0.0;
+    final mean = _average(values);
+    return _average(values.map((v) => pow(v - mean, 2).toDouble()).toList());
+  }
+
+  double _stdDev(List<double> values) => sqrt(_variance(values));
+
+  double _mad(List<double> values) {
+    if (values.isEmpty) return 0.0;
+    final mean = _average(values);
+    final deviations = values.map((v) => (v - mean).abs()).toList();
+    return _average(deviations);
+  }
+
+  double _skewness(List<double> values) {
+    if (values.isEmpty) return 0.0;
+    final mean = _average(values);
+    final sd = _stdDev(values);
+    if (sd == 0) return 0.0;
+    final n = values.length;
+    final sumCubed =
+        values.fold(0.0, (a, v) => a + pow(v - mean, 3).toDouble());
+    return (n / ((n - 1) * (n - 2))) * (sumCubed / pow(sd, 3));
+  }
+
+  double _kurtosis(List<double> values) {
+    if (values.isEmpty) return 0.0;
+    final mean = _average(values);
+    final sd = _stdDev(values);
+    if (sd == 0) return 0.0;
+    final n = values.length;
+    final sumFourth =
+        values.fold(0.0, (a, v) => a + pow(v - mean, 4).toDouble());
+    return (n * (n + 1) / ((n - 1) * (n - 2) * (n - 3))) *
+            (sumFourth / pow(sd, 4)) -
+        (3 * pow(n - 1, 2) / ((n - 2) * (n - 3)));
+  }
+
+  double _percentile(List<double> values, double p) {
+    if (values.isEmpty) return 0.0;
+    final sorted = [...values]..sort();
+    final rank = (p / 100) * (sorted.length - 1);
+    final lower = rank.floor();
+    final upper = rank.ceil();
+    return lower == upper
+        ? sorted[lower]
+        : sorted[lower] + (sorted[upper] - sorted[lower]) * (rank - lower);
+  }
+
+  // ──────────────────────────────
+  // STYLING PRESERVATION
+  // ──────────────────────────────
+  Delta _applyStylingFromOldOps(List<Operation> oldOps, String newText) {
     final newDelta = Delta();
-    int written = 0; // how many chars of newText we've consumed
+    int written = 0;
 
-    // 3) Replay old attribute spans:
     for (final op in oldOps) {
-      if (written >= newText.length) break; // no more new text to style
-
+      if (written >= newText.length) break;
       final data = op.data;
       final attrs = op.attributes;
       if (data is String && data.isNotEmpty) {
-        // how many chars this old-op covered:
         final span = data.length;
-        // how many chars we can take from newText under this span:
         final take = (newText.length - written).clamp(0, span);
-        // grab that substring:
         final slice = newText.substring(written, written + take);
         if (slice.isNotEmpty) {
           newDelta.insert(slice, attrs);
           written += take;
         }
       }
-      // if op was an embed or something else, you can handle here…
     }
 
-    // 4) If there’s any leftover newText (should be rare), just insert unstyled:
     if (written < newText.length) {
       newDelta.insert(newText.substring(written));
     }
 
-    // 5) Finally, append the newline “\n”:
-    //    We want to preserve whatever styling the old trailing newline had:
-    //    search the oldOps *in reverse* for the first op whose data ends in '\n'
-    Map<String,dynamic>? newlineAttrs;
+    // preserve last \n attributes if any
+    Map<String, dynamic>? newlineAttrs;
     for (final op in oldOps.reversed) {
       if (op.data is String && (op.data as String).endsWith('\n')) {
         newlineAttrs = op.attributes;
         break;
       }
     }
-    // default to no attributes if none found:
     newDelta.insert('\n', newlineAttrs);
 
-    final newJson = newDelta.toJson();
-    if (newJson != resultJson) {
-      resultJson = newJson;
-    }
-
-    // return the same type you were using (e.g. String or Document)
-    // if external code expects String, return resultJson; otherwise:
-    return Document.fromDelta(newDelta);
+    return newDelta;
   }
 
   QuillEditorConfigurations getConfigurations (
@@ -235,22 +457,123 @@ class SumFunction extends SheetFunction with QuillFormattingMixin{
   
   @override
   Map<String, dynamic> toMap() => {
-        'type': 'sum',
+        'type': 'unistat',
         'returnType': returnType,
         'name': name,
         'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
         'resultJson': resultJson,
+        'func': func
       };
 
-  factory SumFunction.fromMap(Map<String, dynamic> map) => SumFunction(
-        (map['inputBlocks'] as List)
+  factory UniStatFunction.fromMap(Map<String, dynamic> map) => UniStatFunction(
+        inputBlocks:  (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
             .toList(),
-        map['resultJson']
+        resultJson:  map['resultJson'],
+        func: map['func'],
       );
   
-  
+  static final Map<String, IconData> availableFunctions = {
+    'sum': TablerIcons.sum,
+    'count': TablerIcons.tallymarks,
+    'average': TablerIcons.math_avg,
+    'median': TablerIcons.layout_align_middle,
+    'mode': TablerIcons.list_numbers,
+    'min': TablerIcons.arrow_down,
+    'max': TablerIcons.arrow_up, 
+    'range': TablerIcons.arrows_horizontal,
+    'range ratio': TablerIcons.slash,
+    'product': TablerIcons.x,
+    'standard deviation': TablerIcons.chart_donut,
+    'variance': TablerIcons.chart_arcs,
+    'mean absolute deviation': TablerIcons.wave_saw_tool, // Mean Absolute Deviation
+    'skewness': TablerIcons.arrow_curve_right,
+    'kurtosis': TablerIcons.chart_bar,
+    'geometric mean': TablerIcons.circle_letter_g,
+    'harmonic mean': TablerIcons.circle_letter_h,
+    'quadratic mean': TablerIcons.circle_letter_q,
+    'sum of cubes': TablerIcons.cube,
+    'root mean cube': TablerIcons.cube_off,
+    'sum of squares': TablerIcons.bolt,
+    'quartile 1': TablerIcons.number_1_small,
+    'quartile 2': TablerIcons.number_2_small,
+    'quartile 3': TablerIcons.number_3_small,
+  };
 
+  static const Map<String, List<String>> functionCategories = {
+  'Basic Statistics': [
+    'sum',
+    'count',
+    'product',
+    'average',
+    'median',
+    'mode',
+    'min',
+    'max',
+  ],
+  'Dispersion Measures': [
+    'range',
+    'range ratio',
+    'standard deviation',
+    'variance',
+    'mean absolute deviation',
+    'quartile 1',
+    'quartile 2',
+    'quartile 3'
+  ],
+  'Shape Descriptors': [
+    'skewness',
+    'kurtosis',
+  ],
+  'Means': [
+    'geometric mean',
+    'harmonic mean',
+    'quadratic mean',
+    'root mean cube',
+  ],
+  'Transform Sums': [
+    'sum of squares',
+    'sum of cubes',
+  ],
+};
+
+
+  void switchFunc(BuildContext context, Function setStateCallback, Offset position) {
+    final entries = UniStatFunction.functionCategories.entries.map((category) {
+    return MenuItem.submenu(
+      label: category.key,
+      style: GoogleFonts.lexend(color: defaultPalette.primary),
+      hoverColor: defaultPalette.extras[0],
+      unfocusedColor: defaultPalette.primary.withOpacity(0.05),
+      items: category.value.map((funcName) {
+        final icon = UniStatFunction.availableFunctions[funcName];
+        return MenuItem(
+          label: funcName,
+          icon: icon,
+          style: GoogleFonts.lexend(color: defaultPalette.primary),
+          hoverColor: defaultPalette.extras[0],
+          unfocusedColor: defaultPalette.primary.withOpacity(0.05),
+          onSelected: () {
+            setStateCallback(() {
+              func = funcName;
+            });
+          },
+        );
+      }).toList(),
+    );
+  }).toList();
+
+  ContextMenu(
+    entries: entries,
+    boxDecoration: BoxDecoration(
+      color: defaultPalette.extras[0],
+      borderRadius: BorderRadius.circular(10),
+      boxShadow: [BoxShadow(color: defaultPalette.black, blurRadius: 2)],
+    ),
+    position: position, // Update with actual cursor pos
+  ).show(context);
+  }
+  
 
 }
 
@@ -277,18 +600,7 @@ class ColumnFunction extends SheetFunction {
     List<SheetListBox>? spreadSheet,
     Map<List<InputBlock>, int>? visited,
   }) {
-    switch (func) {
-      case 'sum':
-      // print(inputBlocks);
-      var sumfunc = SumFunction(inputBlocks);
-        // print(sumfunc.result(getItemAtPath, spreadSheet: spreadSheet).toString());
-        return SumFunction(inputBlocks).result(getItemAtPath, buildCombinedQuillConfiguration, spreadSheet: spreadSheet, visited: visited);
-      
-      case 'count':
-        return CountFunction(inputBlocks: inputBlocks).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: spreadSheet,visited: visited);
-      default:
-      return 0;
-    }
+    return UniStatFunction(inputBlocks:inputBlocks, func:func).result(getItemAtPath, buildCombinedQuillConfiguration);
   }
 
   @override
@@ -314,155 +626,45 @@ class ColumnFunction extends SheetFunction {
 
       );
 
-}
-
-@HiveType(typeId:20)
-class CountFunction extends SheetFunction with QuillFormattingMixin{
-  @HiveField(2)
-  List<InputBlock> inputBlocks;
-  @HiveField(3)
-  List<Map<String, dynamic>> resultJson =[];
-
-  @override
-  dynamic result(
-    Function getItemAtPath,
-    Function buildCombinedQuillConfiguration, {
-    List<SheetListBox>? spreadSheet,
-    Map<List<InputBlock>, int>? visited,
-  }) {
-    int count = 0;
-
-    for (final block in inputBlocks) {
-      // Case A: nested ColumnFunction(…, func: 'count')
-      if (block.function is ColumnFunction &&
-          (block.function as ColumnFunction).func == 'count' &&
-          !block.useConst) {
-        final nested = (block.function as ColumnFunction).result(
-          getItemAtPath,
-          buildCombinedQuillConfiguration,
-          spreadSheet: spreadSheet,
-          visited: visited == null ? null : Map.from(visited),
+    void switchFunc(BuildContext context, Function setStateCallback, Offset position) {
+    final entries = UniStatFunction.functionCategories.entries.map((category) {
+    return MenuItem.submenu(
+      label: category.key,
+      style: GoogleFonts.lexend(color: defaultPalette.primary),
+      hoverColor: defaultPalette.extras[0],
+      unfocusedColor: defaultPalette.primary.withOpacity(0.05),
+      items: category.value.map((funcName) {
+        final icon = UniStatFunction.availableFunctions[funcName];
+        return MenuItem(
+          label: funcName,
+          icon: icon,
+          style: GoogleFonts.lexend(color: defaultPalette.primary),
+          hoverColor: defaultPalette.extras[0],
+          unfocusedColor: defaultPalette.primary.withOpacity(0.05),
+          onSelected: () {
+            setStateCallback(() {
+              func = funcName;
+            });
+          },
         );
-        if (double.tryParse(nested.toPlainText()) != null) {
-          count += double.tryParse(nested.toPlainText())!.toInt();
-          continue;
-        }
-      }
+      }).toList(),
+    );
+  }).toList();
 
-      // Otherwise each block counts as 1
-      count += 1;
-    }
-
-    // ─── preserve styling in resultJson ─────────────────────────────────
-    final oldDelta = Delta.fromJson(resultJson);
-    final oldOps = oldDelta.toList();
-    var newText = count.toString();
-    // 2) We’ll build a brand‐new Delta:
-    final newDelta = Delta();
-    int written = 0; // how many chars of newText we've consumed
-
-    // 3) Replay old attribute spans:
-    for (final op in oldOps) {
-      if (written >= newText.length) break; // no more new text to style
-
-      final data = op.data;
-      final attrs = op.attributes;
-      if (data is String && data.isNotEmpty) {
-        // how many chars this old-op covered:
-        final span = data.length;
-        // how many chars we can take from newText under this span:
-        final take = (newText.length - written).clamp(0, span);
-        // grab that substring:
-        final slice = newText.substring(written, written + take);
-        if (slice.isNotEmpty) {
-          newDelta.insert(slice, attrs);
-          written += take;
-        }
-      }
-      // if op was an embed or something else, you can handle here…
-    }
-
-    // 4) If there’s any leftover newText (should be rare), just insert unstyled:
-    if (written < newText.length) {
-      newDelta.insert(newText.substring(written));
-    }
-
-    // 5) Finally, append the newline “\n”:
-    //    We want to preserve whatever styling the old trailing newline had:
-    //    search the oldOps *in reverse* for the first op whose data ends in '\n'
-    Map<String,dynamic>? newlineAttrs;
-    for (final op in oldOps.reversed) {
-      if (op.data is String && (op.data as String).endsWith('\n')) {
-        newlineAttrs = op.attributes;
-        break;
-      }
-    }
-    // default to no attributes if none found:
-    newDelta.insert('\n', newlineAttrs);
-
-    final newJson = newDelta.toJson();
-    if (newJson != resultJson) {
-      resultJson = newJson;
-    }
-
-    // Return the same type as your sum: a Quill Document
-    return Document.fromDelta(newDelta);
-  }
-
-    QuillEditorConfigurations getConfigurations (
-    Function getItemAtPath,
-    Function buildCombinedQuillConfiguration,
-    Function setState,
-    Function customStyleBuilder,
-    {
-    List<SheetListBox>? spreadSheet,
-    Map<List<InputBlock>, int>? visited,
-  }) {
-    return QuillEditorConfigurations(
-      controller: QuillController(
-        document: result(getItemAtPath, buildCombinedQuillConfiguration), 
-        selection: TextSelection.collapsed(offset: 0),
-        onReplaceText: (_, __, ___) {
-          // setState(() {});
-          return true;
-        },
-        ),
-        enableScribble: true,
-        enableSelectionToolbar: true,
-        autoFocus: true,
-        contextMenuBuilder: (context, rawEditorState) {
-          return Container();
-        },
-        customStyleBuilder: (attribute) {
-          return customStyleBuilder(attribute); // Default style
-        },
-      );
+  ContextMenu(
+    entries: entries,
+    boxDecoration: BoxDecoration(
+      color: defaultPalette.extras[0],
+      borderRadius: BorderRadius.circular(10),
+      boxShadow: [BoxShadow(color: defaultPalette.black, blurRadius: 2)],
+    ),
+    position: position, // Update with actual cursor pos
+  ).show(context);
   }
  
-
-  CountFunction(
-    {required this.inputBlocks,this.resultJson = const []}
-  ):super(1,'count');
-
-   @override
-  Map<String, dynamic> toMap() => {
-        'type': 'count',
-        'returnType': returnType,
-        'name': name,
-        'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
-        'resultJson': resultJson,
-      };
-
-  factory CountFunction.fromMap(Map<String, dynamic> map) => CountFunction(
-        inputBlocks: (map['inputBlocks'] as List)
-            .map((e) => InputBlock.fromMap(e))
-            .toList(),
-        resultJson: map['resultJson'],
-      );
-
 }
 
-@HiveType(typeId: 21)
+@HiveType(typeId: 20)
 class InputBlockFunction extends SheetFunction {
   @HiveField(2)
   List<InputBlock> inputBlocks;
@@ -511,199 +713,6 @@ class InputBlockFunction extends SheetFunction {
 
 }
 
-@HiveType(typeId: 22)
-class AverageFunction extends SheetFunction with QuillFormattingMixin {
-  @HiveField(2)
-  List<InputBlock> inputBlocks;
-  @HiveField(3)
-  List<Map<String, dynamic>> resultJson =[];
-
-  AverageFunction(
-    {required this.inputBlocks,this.resultJson = const []}
-  ):super(1,'average');
-
-  @override
-  dynamic result(
-    Function getItemAtPath,
-    Function buildCombinedQuillConfiguration, {
-    List<SheetListBox>? spreadSheet,
-    Map<List<InputBlock>, int>? visited,
-  }) {
-    double sum = 0;
-    visited ??= {};
-
-    // recursion guard
-    visited[inputBlocks] = (visited[inputBlocks] ?? 0) + 1;
-    if (visited[inputBlocks]! > 50) {
-      return 'recursion detected';
-    }
-
-    for (final block in inputBlocks) {
-      dynamic raw;
-
-      // 1) nested formula
-      if (block.function != null && !block.useConst) {
-        if (block.function is InputBlockFunction) {
-          raw = (block.function as InputBlockFunction).getConfigurations(
-            buildCombinedQuillConfiguration,
-            spreadSheet: spreadSheet,
-            visited: visited,
-            ).controller.document;
-        } else{
-          raw = block.function!.result(
-            getItemAtPath,
-            buildCombinedQuillConfiguration,
-            spreadSheet: spreadSheet,
-            visited: Map.from(visited),
-          );
-        }
-      }
-      else {
-        // 2) live editor text
-        final item = spreadSheet == null
-          ? getItemAtPath(block.indexPath)
-          : getItemAtPath(block.indexPath, spreadSheet);
-
-        if (item is SheetText) {
-          raw = item.textEditorConfigurations.controller
-            .document
-            .toPlainText()
-            .trim();
-        } else if (item is SheetTextBox) {
-          raw = Document.fromDelta(
-            Delta.fromJson(item.textEditorController as List)
-          ).toPlainText().trim();
-        }
-      }
-
-      // now normalize whatever raw is
-      if (raw is num) {
-        sum += raw.toDouble();
-      } else if (raw is String) {
-        sum += double.tryParse(raw) ?? 0.0;
-      } else if (raw is Document) {
-        sum += double.tryParse(raw.toPlainText().trim()) ?? 0.0;
-      }
-    }
-
-    // ─── preserve styling in resultJson ─────────────────────────────────
-    // final oldDelta = Delta.fromJson(resultJson);
-    // // grab the first op’s attrs if any
-    // final firstAttrs = oldDelta.isNotEmpty ? oldDelta.toList().first.attributes : null;
-
-    // // build new one-op delta
-    // final newDelta = Delta()..insert(
-    //   '${sum}\n',
-    //   firstAttrs,
-    // );
-    final avg = sum/inputBlocks.length;
-    final oldDelta = Delta.fromJson(resultJson);
-    final oldOps = oldDelta.toList();
-    var newText = avg.toString();
-    // 2) We’ll build a brand‐new Delta:
-    final newDelta = Delta();
-    int written = 0; // how many chars of newText we've consumed
-
-    // 3) Replay old attribute spans:
-    for (final op in oldOps) {
-      if (written >= newText.length) break; // no more new text to style
-
-      final data = op.data;
-      final attrs = op.attributes;
-      if (data is String && data.isNotEmpty) {
-        // how many chars this old-op covered:
-        final span = data.length;
-        // how many chars we can take from newText under this span:
-        final take = (newText.length - written).clamp(0, span);
-        // grab that substring:
-        final slice = newText.substring(written, written + take);
-        if (slice.isNotEmpty) {
-          newDelta.insert(slice, attrs);
-          written += take;
-        }
-      }
-      // if op was an embed or something else, you can handle here…
-    }
-
-    // 4) If there’s any leftover newText (should be rare), just insert unstyled:
-    if (written < newText.length) {
-      newDelta.insert(newText.substring(written));
-    }
-
-    // 5) Finally, append the newline “\n”:
-    //    We want to preserve whatever styling the old trailing newline had:
-    //    search the oldOps *in reverse* for the first op whose data ends in '\n'
-    Map<String,dynamic>? newlineAttrs;
-    for (final op in oldOps.reversed) {
-      if (op.data is String && (op.data as String).endsWith('\n')) {
-        newlineAttrs = op.attributes;
-        break;
-      }
-    }
-    // default to no attributes if none found:
-    newDelta.insert('\n', newlineAttrs);
-
-    final newJson = newDelta.toJson();
-    if (newJson != resultJson) {
-      resultJson = newJson;
-    }
-
-    // return the same type you were using (e.g. String or Document)
-    // if external code expects String, return resultJson; otherwise:
-    return Document.fromDelta(newDelta);
-  }
-
-    QuillEditorConfigurations getConfigurations (
-    Function getItemAtPath,
-    Function buildCombinedQuillConfiguration,
-    Function setState,
-    Function customStyleBuilder,
-    {
-    List<SheetListBox>? spreadSheet,
-    Map<List<InputBlock>, int>? visited,
-  }) {
-    return QuillEditorConfigurations(
-      controller: QuillController(
-        document: result(getItemAtPath, buildCombinedQuillConfiguration), 
-        selection: TextSelection.collapsed(offset: 0),
-        onReplaceText: (_, __, ___) {
-          // setState(() {});
-          return true;
-        },
-        ),
-        enableScribble: true,
-        enableSelectionToolbar: true,
-        autoFocus: true,
-        contextMenuBuilder: (context, rawEditorState) {
-          return Container();
-        },
-        customStyleBuilder: (attribute) {
-          return customStyleBuilder(attribute); // Default style
-        },
-      );
-  }
- 
-
-  
-
-  @override
-  Map<String, dynamic> toMap() => {
-        'type':'average',
-        'returnType': returnType,
-        'name': name,
-        'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
-        'resultJson': resultJson,
-      };
-
-  factory AverageFunction.fromMap(Map<String, dynamic> map) => AverageFunction(
-        inputBlocks: (map['inputBlocks'] as List)
-            .map((e) => InputBlock.fromMap(e))
-            .toList(),
-        resultJson: map['resultJson']
-      );
-  
-  
-}
 
 ///
 ///

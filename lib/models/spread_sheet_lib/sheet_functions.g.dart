@@ -43,32 +43,35 @@ class SheetFunctionAdapter extends TypeAdapter<SheetFunction> {
           typeId == other.typeId;
 }
 
-class SumFunctionAdapter extends TypeAdapter<SumFunction> {
+class UniStatFunctionAdapter extends TypeAdapter<UniStatFunction> {
   @override
   final int typeId = 17;
 
   @override
-  SumFunction read(BinaryReader reader) {
+  UniStatFunction read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return SumFunction(
-      (fields[2] as List).cast<InputBlock>(),
-      (fields[3] as List)
+    return UniStatFunction(
+      inputBlocks: (fields[2] as List).cast<InputBlock>(),
+      resultJson: (fields[3] as List)
           .map((dynamic e) => (e as Map).cast<String, dynamic>())
           .toList(),
+      func: fields[4] as String,
     );
   }
 
   @override
-  void write(BinaryWriter writer, SumFunction obj) {
+  void write(BinaryWriter writer, UniStatFunction obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(2)
       ..write(obj.inputBlocks)
       ..writeByte(3)
       ..write(obj.resultJson)
+      ..writeByte(4)
+      ..write(obj.func)
       ..writeByte(0)
       ..write(obj.returnType)
       ..writeByte(1)
@@ -81,7 +84,7 @@ class SumFunctionAdapter extends TypeAdapter<SumFunction> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is SumFunctionAdapter &&
+      other is UniStatFunctionAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
@@ -135,52 +138,9 @@ class ColumnFunctionAdapter extends TypeAdapter<ColumnFunction> {
           typeId == other.typeId;
 }
 
-class CountFunctionAdapter extends TypeAdapter<CountFunction> {
-  @override
-  final int typeId = 20;
-
-  @override
-  CountFunction read(BinaryReader reader) {
-    final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{
-      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
-    };
-    return CountFunction(
-      inputBlocks: (fields[2] as List).cast<InputBlock>(),
-      resultJson: (fields[3] as List)
-          .map((dynamic e) => (e as Map).cast<String, dynamic>())
-          .toList(),
-    );
-  }
-
-  @override
-  void write(BinaryWriter writer, CountFunction obj) {
-    writer
-      ..writeByte(4)
-      ..writeByte(2)
-      ..write(obj.inputBlocks)
-      ..writeByte(3)
-      ..write(obj.resultJson)
-      ..writeByte(0)
-      ..write(obj.returnType)
-      ..writeByte(1)
-      ..write(obj.name);
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CountFunctionAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
-
 class InputBlockFunctionAdapter extends TypeAdapter<InputBlockFunction> {
   @override
-  final int typeId = 21;
+  final int typeId = 20;
 
   @override
   InputBlockFunction read(BinaryReader reader) {
@@ -215,49 +175,6 @@ class InputBlockFunctionAdapter extends TypeAdapter<InputBlockFunction> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is InputBlockFunctionAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
-
-class AverageFunctionAdapter extends TypeAdapter<AverageFunction> {
-  @override
-  final int typeId = 22;
-
-  @override
-  AverageFunction read(BinaryReader reader) {
-    final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{
-      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
-    };
-    return AverageFunction(
-      inputBlocks: (fields[2] as List).cast<InputBlock>(),
-      resultJson: (fields[3] as List)
-          .map((dynamic e) => (e as Map).cast<String, dynamic>())
-          .toList(),
-    );
-  }
-
-  @override
-  void write(BinaryWriter writer, AverageFunction obj) {
-    writer
-      ..writeByte(4)
-      ..writeByte(2)
-      ..write(obj.inputBlocks)
-      ..writeByte(3)
-      ..write(obj.resultJson)
-      ..writeByte(0)
-      ..write(obj.returnType)
-      ..writeByte(1)
-      ..write(obj.name);
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is AverageFunctionAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
