@@ -12,6 +12,7 @@ import 'package:billblaze/components/blend_mask.dart';
 import 'package:billblaze/components/widgets/custom_toast.dart';
 import 'package:billblaze/components/widgets/pickers/eye_dropper.dart';
 import 'package:billblaze/components/widgets/minimap_scrollbar_widget.dart';
+import 'package:billblaze/components/widgets/search_bar.dart';
 import 'package:billblaze/home.dart';
 import 'package:billblaze/components/widgets/pickers/hsv_picker.dart';
 import 'package:billblaze/components/widgets/pickers/wheel_picker.dart';
@@ -248,6 +249,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   final FocusNode layoutNamefocusNode = FocusNode();
   final FocusNode decorationNameFocusNode = FocusNode();
   final FocusNode itemDecorationNameFocusNode = FocusNode();
+  final FocusNode functionSearchFocusNode = FocusNode();
   List<FocusNode> fontFocusNodes = List.generate(7, (e)=>FocusNode());
   zz.TransformationController transformationcontroller = zz.TransformationController();
   List<GlobalKey> globalKeys = [];
@@ -268,6 +270,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   TextEditingController columnDecorationNameController = TextEditingController();
   TextEditingController decorationSearchController = TextEditingController();
   TextEditingController textFieldSearchController = TextEditingController();
+  TextEditingController functionSearchController = TextEditingController();
   String key = '';
   // int keyIndex = 0;
   int pageCount = 0;
@@ -11381,7 +11384,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         Container(
                                           // margin: const EdgeInsets.only(top: 10),
                                           padding: EdgeInsets.symmetric(vertical: 2),
-                                          height: parent is UniStatFunction && (parent.func !='count')?60:32,
+                                          height: (parent is UniStatFunction && (parent.func !='count')) || (parent is ColumnFunction && (parent.func !='count'))?60:32,
                                           width: width,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(0),
@@ -11407,7 +11410,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       ),
                                                     ),
                                                   // the number inside the field display
-                                                  if(parent is UniStatFunction && (parent.func !='count'))
+                                                  if((parent is UniStatFunction && (parent.func !='count'))|| (parent is ColumnFunction && (parent.func !='count')))
                                                   Expanded(
                                                     flex: 4,
                                                     child: Container(
@@ -11471,7 +11474,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 ],
                                               ),
                                               //sum cumulative and individual index
-                                              if(parent is UniStatFunction && (parent.func !='count'))
+                                              if((parent is UniStatFunction && (parent.func !='count'))|| (parent is ColumnFunction && (parent.func !='count')))
                                               Row(
                                                 children: [
 
@@ -11533,7 +11536,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       children: [
                                                         const SizedBox(width: 3),
                                                         Icon((parent is! InputBlockFunction)
-                                                          ? UniStatFunction.availableFunctions[parent.func]: TablerIcons.function,
+                                                          ? UniStatFunction.availableFunctions[parent is ColumnFunction?parent.func: (parent as UniStatFunction).func]: TablerIcons.function,
                                                           size:14,
                                                           color: defaultPalette.primary
                                                           ),
@@ -11552,7 +11555,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                   // text: "
                                                                   // ${(parent is ColumnFunction && parent.func == 'count')
                                                                   // ?
-                                                                   text:'${UniStatFunction(inputBlocks:inBlock.sublist(0,inx+1), func: parent.func).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText() }',
+                                                                   text:'${UniStatFunction(inputBlocks:inBlock.sublist(0,inx+1), func: parent is ColumnFunction?parent.func: (parent as UniStatFunction).func).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText() }',
                                                                   // : SumFunction(inBlock.sublist(0,inx+1)).result(getItemAtPath,buildCombinedQuillConfiguration, spreadSheet: null).toPlainText()}
                                                                   // ",
                                                                   style: TextStyle(color:defaultPalette.primary),
@@ -11771,7 +11774,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                     ),
                                                                     children: [
                                                                       if(sheetFunction is UniStatFunction)
-                                                                      TextSpan(text: ' ${sheetFunction.func}: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                                      TextSpan(text: '${sheetFunction.func.replaceAll('root mean cube', 'rmc').replaceAll('quadratic', 'q')
+                                                                      .replaceAll('range ratio','rg ratio')
+                                                                      .replaceAll('standard deviation','stddev')
+                                                                      .replaceAll('mean absolute deviation', 'mad')
+                                                                      .replaceAll('sum of cubes', '∑i^3')
+                                                                      .replaceAll('sum of squares', 'energy')
+                                                                      .replaceAll('geometric','geo').replaceAll('harmonic','har')}: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                                       TextSpan(
                                                                         text: '${block.function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
                                                                         style: TextStyle(color:defaultPalette.primary),
@@ -11813,7 +11822,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             child: GestureDetector(
                                                               onTapDown:(d)=> (sheetFunction as UniStatFunction).switchFunc(context, setState,d.globalPosition),
                                                               child: Text(
-                                                                (sheetFunction as UniStatFunction).func,
+                                                                '${(sheetFunction as UniStatFunction).func.replaceAll('root mean cube', 'rmc').replaceAll('quadratic', 'q')
+                                                                      .replaceAll('standard deviation','stddev')
+                                                                      .replaceAll('mean absolute deviation', 'mad')
+                                                                      .replaceAll('sum of cubes', '∑i^3')
+                                                                      .replaceAll('sum of squares', 'energy')
+                                                                      .replaceAll('geometric','geo').replaceAll('harmonic','har')} ',
                                                                 textAlign: TextAlign.end,
                                                                 maxLines: 1,
                                                                 overflow: TextOverflow.ellipsis,
@@ -12725,7 +12739,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 child: GestureDetector(
                                                   onTapDown:(d)=> (funcBlock.function as UniStatFunction).switchFunc(context, setState,d.globalPosition),
                                                   child: Text(
-                                                  funcBlock.function!.func.replaceAll('geometric','geo').replaceAll('harmonic','har'),
+                                                  funcBlock.function!.func,
                                                   textAlign: TextAlign.end,
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
@@ -12791,7 +12805,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   color: defaultPalette.extras[0],
                                                 ),
                                                 children: [
-                                                  TextSpan(text:' ${funcBlock.function!.func.replaceAll('geometric','geo').replaceAll('harmonic','har')}: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                                  TextSpan(text:' ${funcBlock.function!.func
+                                                  .replaceAll('root mean cube', 'rmc').replaceAll('quadratic', 'q').replaceAll('range ratio','rg ratio').replaceAll('standard deviation','stddev').replaceAll('mean absolute deviation', 'mad').replaceAll('sum of cubes', '∑i^3').replaceAll('sum of squares', 'energy')
+                                                  .replaceAll('geometric','geo').replaceAll('harmonic','har')}: ',style: TextStyle(color:Color(0xffB388EB)),),
                                                   TextSpan(
                                                     text: '${inputBlock[index].function!.result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
                                                     style: TextStyle(color:defaultPalette.primary),
@@ -13011,51 +13027,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               highlightColor: defaultPalette.secondary,
                                               splashColor: defaultPalette.secondary,
                                               onTapDown:(d){
-                                                ContextMenu(
-                                                  entries: [
-                                                    MenuItem(
-                                                      label: 'sum',
-                                                      style: GoogleFonts.lexend(
-                                                        fontWeight: FontWeight.w300,
-                                                        color: defaultPalette.primary,
-                                                      ),
-                                                      hoverColor: defaultPalette.extras[0],
-                                                    onSelected: () {
-                                                      setState(() {
-                                                        (funcBlock.function as ColumnFunction).func = 'sum';
-                                                      });
-                                                      
-                                                    },
-                                                    ),
-                                                    MenuItem(label: 'count',
-                                                    style: GoogleFonts.lexend(
-                                                        fontWeight: FontWeight.w300,
-                                                        color: defaultPalette.primary,
-                                                      ),
-                                                    hoverColor: defaultPalette.extras[0],
-                                                    onSelected: () {
-                                                      setState(() {
-                                                        (funcBlock.function as ColumnFunction).func = 'count';
-                                                      });
-                                                    },
-                                                    ),
-                                                  ],
-                                                  boxDecoration: BoxDecoration(
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: defaultPalette
-                                                              .black,
-                                                          blurRadius: 2,
-                                                        )
-                                                      ],
-                                                      color: defaultPalette.extras[0],
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10)),
-                                                  position: Offset(
-                                                      d.globalPosition.dx,
-                                                      d.globalPosition.dy+20))
-                                              .show(context);
+                                                (funcBlock.function as ColumnFunction).switchFunc(context, setState, d.globalPosition);
                                                 },
                                                 child: Row(
                                                   children: [
@@ -13064,7 +13036,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       size: 12,
                                                     ),
                                                     Text(
-                                                      (funcBlock.function as ColumnFunction).func,
+                                                      '${(funcBlock.function as ColumnFunction).func.replaceAll('root mean cube', 'rmc').replaceAll('quadratic', 'q').replaceAll('range ratio','rg ratio').replaceAll('standard deviation','stddev').replaceAll('mean absolute deviation', 'mad').replaceAll('sum of cubes', '∑i^3').replaceAll('sum of squares', 'energy')
+                                                  .replaceAll('geometric','geo').replaceAll('harmonic','har')} '
+                                                  ,
                                                       style: GoogleFonts.lexend(
                                                         letterSpacing: -1,
                                                         fontWeight: FontWeight.w400,
@@ -15964,7 +15938,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         const SizedBox(height: 40),
                                                         if(isMathFunctionLibraryToggled)
                                                         Container(
-                                                          height:200,
+                                                          height:300,
                                                           width: width+13,
                                                           margin: EdgeInsets.only(top:15, left:5, right:5, bottom:5),
                                                           decoration: BoxDecoration(borderRadius: BorderRadius.circular(8).copyWith(
@@ -15972,93 +15946,124 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                     bottomRight: Radius.circular(15)
                                                                   ),
                                                           color:defaultPalette.primary,),
-                                                          child: ScrollConfiguration(
-                                                            behavior: ScrollBehavior().copyWith(scrollbars: false),
-                                                            child: DynMouseScroll(
-                                                              durationMS: 500,
-                                                              scrollSpeed: 1,
-                                                              builder: (context, controller, physics) {
-                                                                return ScrollbarUltima(
-                                                                  alwaysShowThumb: true,
-                                                                  controller: controller,
-                                                                  scrollbarPosition:
-                                                                      ScrollbarPosition.right,
-                                                                  backgroundColor: defaultPalette.primary,
-                                                                  isDraggable: true,
-                                                                  maxDynamicThumbLength: 90,
-                                                                  minDynamicThumbLength: 50,
-                                                                  thumbBuilder:
-                                                                      (context, animation, widgetStates) {
-                                                                    return Container(
-                                                                      margin: EdgeInsets.only(right:2, top:3, bottom:3),
-                                                                      decoration: BoxDecoration(
-                                                                          color: defaultPalette.extras[0],
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(2)),
-                                                                      width: 5,
-                                                                    );
+                                                          child: Column(
+                                                            children: [
+                                                              SizedBox(height:30),
+                                                              Padding(
+                                                                padding: EdgeInsets.only(right:4),
+                                                                child: ExpandableSearchBar(
+                                                                  onTap: () {
+                                                                    
                                                                   },
-                                                                  child: SingleChildScrollView(
-                                                                    controller:controller,
-                                                                    physics:physics,
-                                                                    padding: EdgeInsets.only(right:5,),
-                                                                    child: Column(
-                                                                      children:[
-                                                                        SizedBox(height:30),
-                                                                        if (selectedInputBlocks !=null)
-                                                                        ...UniStatFunction.availableFunctions.entries.toList().map((funcEntry)=>MouseRegion(
-                                                                          cursor:SystemMouseCursors.click,
-                                                                          child: GestureDetector(
-                                                                            onTap:(){
-                                                                              setState(() {
-                                                                                if (selectedInputBlocks !=null) {
-                                                                                  selectedInputBlocks!.add(InputBlock(
-                                                                                    indexPath: IndexPath(index: -1277), 
-                                                                                    blockIndex: [-2], 
-                                                                                    id: 'yo',
-                                                                                    useConst: false,
-                                                                                    function: UniStatFunction(inputBlocks:[], func:funcEntry.key)
-                                                                                    ));
-                                                                                }
-                                                                                // inputBlockExpansionList.add(true);
-                                                                              
-                                                                            });
-                                                                            },
-                                                                            child: Container(
-                                                                              width: width,
-                                                                              height:30,
-                                                                              margin:EdgeInsets.all(4),
-                                                                              decoration: BoxDecoration(color:defaultPalette.extras[0],
-                                                                              borderRadius:BorderRadius.circular(5),),
-                                                                              child: Row(
-                                                                                children:[
-                                                                                  SizedBox(width:3),
-                                                                                  Icon(funcEntry.value, size:15, color:defaultPalette.primary),
-                                                                                  SizedBox(width:3),
-                                                                                  Expanded(child: 
-                                                                                  Text(
-                                                                                    funcEntry.key,
-                                                                                    maxLines: 1,
-                                                                                    overflow: TextOverflow.ellipsis,
-                                                                                    style: GoogleFonts.lexend(
-                                                                                      height: 0.9,
-                                                                                      fontSize:14,
-                                                                                      color: Colors.white,
-                                                                                      letterSpacing: -1,
-                                                                                      fontWeight: FontWeight.w500),
+                                                                  onChange: (value) {
+                                                                    setState(() {
+                                                                      // functionSearchController.text = value;
+                                                                    });
+                                                                  },
+                                                                  width:  width-8,
+                                                                  hintText: "search functions...",
+                                                                  editTextController: functionSearchController,
+                                                                  focusNode: functionSearchFocusNode,
+                                                                  boxShadow: [],
+                                                                  iconBackgroundColor: defaultPalette.primary,
+                                                                  iconColor: defaultPalette.extras[0],
+                                                                  iconSize: 18,
+                                                                  backgroundColor: defaultPalette.primary,
+                                                                
+                                                                ),
+                                                              ),
+                                                              Expanded(
+                                                                child: ScrollConfiguration(
+                                                                  behavior: ScrollBehavior().copyWith(scrollbars: false),
+                                                                  child: DynMouseScroll(
+                                                                    durationMS: 500,
+                                                                    scrollSpeed: 1,
+                                                                    builder: (context, controller, physics) {
+                                                                      return ScrollbarUltima(
+                                                                        alwaysShowThumb: true,
+                                                                        controller: controller,
+                                                                        scrollbarPosition:
+                                                                            ScrollbarPosition.right,
+                                                                        backgroundColor: defaultPalette.primary,
+                                                                        isDraggable: true,
+                                                                        maxDynamicThumbLength: 90,
+                                                                        minDynamicThumbLength: 50,
+                                                                        thumbBuilder:
+                                                                            (context, animation, widgetStates) {
+                                                                          return Container(
+                                                                            margin: EdgeInsets.only(right:2, top:3, bottom:3),
+                                                                            decoration: BoxDecoration(
+                                                                                color: defaultPalette.extras[0],
+                                                                                borderRadius:
+                                                                                    BorderRadius.circular(2)),
+                                                                            width: 5,
+                                                                          );
+                                                                        },
+                                                                        child: SingleChildScrollView(
+                                                                          controller:controller,
+                                                                          physics:physics,
+                                                                          padding: EdgeInsets.only(right:5,),
+                                                                          child: Column(
+                                                                            children:[
+                                                                              if (selectedInputBlocks !=null)
+                                                                              ...UniStatFunction.availableFunctions.keys.where((element) {
+                                                                                return element.contains(functionSearchController.text);
+                                                                              },).toList().map((funcKey)=>MouseRegion(
+                                                                                cursor:SystemMouseCursors.click,
+                                                                                child: GestureDetector(
+                                                                                  onTap:(){
+                                                                                    setState(() {
+                                                                                      if (selectedInputBlocks !=null) {
+                                                                                        selectedInputBlocks!.add(InputBlock(
+                                                                                          indexPath: IndexPath(index: -1277), 
+                                                                                          blockIndex: [-2], 
+                                                                                          id: 'yo',
+                                                                                          useConst: false,
+                                                                                          function: UniStatFunction(inputBlocks:[], func:funcKey)
+                                                                                          ));
+                                                                                      }
+                                                                                      // inputBlockExpansionList.add(true);
+                                                                                    
+                                                                                  });
+                                                                                  },
+                                                                                  child: Container(
+                                                                                    width: width,
+                                                                                    height:30,
+                                                                                    margin:EdgeInsets.all(4),
+                                                                                    decoration: BoxDecoration(color:defaultPalette.extras[0],
+                                                                                    borderRadius:BorderRadius.circular(5),),
+                                                                                    child: Row(
+                                                                                      children:[
+                                                                                        SizedBox(width:3),
+                                                                                        Icon(UniStatFunction.availableFunctions[funcKey], size:15, color:defaultPalette.primary),
+                                                                                        SizedBox(width:3),
+                                                                                        Expanded(child: 
+                                                                                        Text(
+                                                                                          funcKey,
+                                                                                          maxLines: 1,
+                                                                                          overflow: TextOverflow.ellipsis,
+                                                                                          style: GoogleFonts.lexend(
+                                                                                            height: 0.9,
+                                                                                            fontSize:14,
+                                                                                            color: Colors.white,
+                                                                                            letterSpacing: -1,
+                                                                                            fontWeight: FontWeight.w500),
+                                                                                          ),
+                                                                                        )
+                                                                                      ]
                                                                                     ),
-                                                                                  )
-                                                                                ]
-                                                                              ),
-                                                                            ),
+                                                                                  ),
+                                                                                ),
+                                                                              )).toList(),
+                                                                            ]
                                                                           ),
-                                                                        )).toList(),
-                                                                      ]
-                                                                    ),
+                                                                        ),
+                                                                      );
+                                                                    }
                                                                   ),
-                                                                );
-                                                              }
-                                                            ),
+                                                                ),
+                                                              ),
+                                                            ],
                                                           )
                                                         ),
                                                         //gradient mesh tile for math functions

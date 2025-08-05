@@ -116,9 +116,13 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
         newText = count.toString();
         break;
       case 'min':
-        newText = values.reduce(min).toString();
+        newText = values.isEmpty
+            ? '0'
+            : values.reduce(min).toString();
       case 'max':
-        newText = values.reduce(max).toString();
+        newText = values.isEmpty
+            ? '0'
+            : values.reduce(max).toString();
       case 'average':
       case 'mean':
         newText = _average(values).toString();
@@ -157,39 +161,60 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
         break;
       case 'geomean':
       case 'geometric mean':
-        newText =  pow(values.fold(1.0, (a, b) => a * b), 1 / values.length).toString();
+        newText = values.isEmpty
+            ? '0'
+            : pow(values.fold(1.0, (a, b) => a * b), 1 / values.length).toString();
+        break;
+
       case 'harmean':
       case 'harmonic mean':
-        newText =  (values.length / values.map((x) => 1 / x).reduce((a, b) => a + b)).toString();
-      case 'quadratic mean (rms)':
+        newText = values.isEmpty
+            ? '0'
+            : (values.length / values.map((x) => 1 / x).reduce((a, b) => a + b)).toString();
+        break;
+
+      case 'quadratic mean':
+      case 'quadratic mean [rms]':
         newText = values.isEmpty
             ? '0'
             : sqrt(values.map((x) => x * x).reduce((a, b) => a + b) / values.length).toString();
         break;
+
       case 'sum of cubes':
-        newText = values.map((x) => x * x * x).reduce((a, b) => a + b).toString();
+        newText = values.isEmpty
+            ? '0'
+            : values.map((x) => x * x * x).reduce((a, b) => a + b).toString();
         break;
+
       case 'root mean cube':
         newText = values.isEmpty
             ? '0'
-            : pow(values.map((x) => x * x * x).reduce((a, b) => a + b) / values.length, 1 / 3)
-                .toString();
+            : pow(
+                  values.map((x) => x * x * x).reduce((a, b) => a + b) / values.length,
+                  1 / 3,
+                ).toString();
         break;
-      case 'energy (sum of squares)':
-        newText = values.map((x) => x * x).reduce((a, b) => a + b).toString();
+
+      case 'sum of squares':
+        newText = values.isEmpty
+            ? '0'
+            : values.map((x) => x * x).reduce((a, b) => a + b).toString();
         break;
-      case 'percentile (p)':
-        newText = _percentile(values, 50).toString(); // default to median if p not set
+
+      case 'quartile 1':
+        newText = _percentile(values, 25).toString(); // default to median if p not set
         break;
-      case 'quartiles (q1,q3)':
-        final q1 = _percentile(values, 25);
+      case 'quartile 2':
+        final q1 = _percentile(values, 50);
+        newText = '$q1';
+        break;
+      case 'quartile 3':
         final q3 = _percentile(values, 75);
-        newText = '$q1, $q3';
+        newText = '$q3';
         break;
       default:
         newText = 'NaN';
         break;
-
     }
 
     // Preserve styling in resultJson
@@ -274,6 +299,8 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
       } else if (raw is Document) {
         final parsed = double.tryParse(raw.toPlainText().trim());
         if (parsed != null) values.add(parsed);
+      } else {
+        values.add(0);
       }
     }
 
@@ -462,48 +489,89 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
     'mean absolute deviation': TablerIcons.wave_saw_tool, // Mean Absolute Deviation
     'skewness': TablerIcons.arrow_curve_right,
     'kurtosis': TablerIcons.chart_bar,
-    'geometric mean': TablerIcons.octagon_off,
+    'geometric mean': TablerIcons.circle_letter_g,
     'harmonic mean': TablerIcons.circle_letter_h,
-    'quadratic mean (rms)': TablerIcons.ripple,
+    'quadratic mean': TablerIcons.circle_letter_q,
     'sum of cubes': TablerIcons.cube,
     'root mean cube': TablerIcons.cube_off,
-    'energy (sum of squares)': TablerIcons.bolt,
-    'percentile (p)': TablerIcons.percentage,
-    'quartiles (q1,q3)': TablerIcons.layout_list,
+    'sum of squares': TablerIcons.bolt,
+    'quartile 1': TablerIcons.number_1_small,
+    'quartile 2': TablerIcons.number_2_small,
+    'quartile 3': TablerIcons.number_3_small,
   };
 
-  void switchFunc(BuildContext context, Function setStateCallback, Offset position) {
-    final menuItems = availableFunctions.entries.map((entry) {
-      return MenuItem(
-        label: entry.key,
-        icon: entry.value,
-        style: GoogleFonts.lexend(
-          fontWeight: FontWeight.w300,
-          color: defaultPalette.primary,
-        ),
-        hoverColor: defaultPalette.extras[0],
-        onSelected: () {
-          setStateCallback(() {
-            func = entry.key;
-          });
-        },
-      );
-    }).toList();
+  static const Map<String, List<String>> functionCategories = {
+  'Basic Statistics': [
+    'sum',
+    'count',
+    'product',
+    'average',
+    'median',
+    'mode',
+    'min',
+    'max',
+  ],
+  'Dispersion Measures': [
+    'range',
+    'range ratio',
+    'standard deviation',
+    'variance',
+    'mean absolute deviation',
+    'quartile 1',
+    'quartile 2',
+    'quartile 3'
+  ],
+  'Shape Descriptors': [
+    'skewness',
+    'kurtosis',
+  ],
+  'Means': [
+    'geometric mean',
+    'harmonic mean',
+    'quadratic mean',
+    'root mean cube',
+  ],
+  'Transform Sums': [
+    'sum of squares',
+    'sum of cubes',
+  ],
+};
 
-    ContextMenu(
-      entries: menuItems,
-      boxDecoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: defaultPalette.black,
-            blurRadius: 2,
-          )
-        ],
-        color: defaultPalette.extras[0],
-        borderRadius: BorderRadius.circular(10),
-      ),
-      position: position,
-    ).show(context);
+
+  void switchFunc(BuildContext context, Function setStateCallback, Offset position) {
+    final entries = UniStatFunction.functionCategories.entries.map((category) {
+    return MenuItem.submenu(
+      label: category.key,
+      style: GoogleFonts.lexend(color: defaultPalette.primary),
+      hoverColor: defaultPalette.extras[0],
+      unfocusedColor: defaultPalette.primary.withOpacity(0.05),
+      items: category.value.map((funcName) {
+        final icon = UniStatFunction.availableFunctions[funcName];
+        return MenuItem(
+          label: funcName,
+          icon: icon,
+          style: GoogleFonts.lexend(color: defaultPalette.primary),
+          hoverColor: defaultPalette.extras[0],
+          unfocusedColor: defaultPalette.primary.withOpacity(0.05),
+          onSelected: () {
+            setStateCallback(() {
+              func = funcName;
+            });
+          },
+        );
+      }).toList(),
+    );
+  }).toList();
+
+  ContextMenu(
+    entries: entries,
+    boxDecoration: BoxDecoration(
+      color: defaultPalette.extras[0],
+      borderRadius: BorderRadius.circular(10),
+      boxShadow: [BoxShadow(color: defaultPalette.black, blurRadius: 2)],
+    ),
+    position: position, // Update with actual cursor pos
+  ).show(context);
   }
   
 
@@ -558,6 +626,42 @@ class ColumnFunction extends SheetFunction {
 
       );
 
+    void switchFunc(BuildContext context, Function setStateCallback, Offset position) {
+    final entries = UniStatFunction.functionCategories.entries.map((category) {
+    return MenuItem.submenu(
+      label: category.key,
+      style: GoogleFonts.lexend(color: defaultPalette.primary),
+      hoverColor: defaultPalette.extras[0],
+      unfocusedColor: defaultPalette.primary.withOpacity(0.05),
+      items: category.value.map((funcName) {
+        final icon = UniStatFunction.availableFunctions[funcName];
+        return MenuItem(
+          label: funcName,
+          icon: icon,
+          style: GoogleFonts.lexend(color: defaultPalette.primary),
+          hoverColor: defaultPalette.extras[0],
+          unfocusedColor: defaultPalette.primary.withOpacity(0.05),
+          onSelected: () {
+            setStateCallback(() {
+              func = funcName;
+            });
+          },
+        );
+      }).toList(),
+    );
+  }).toList();
+
+  ContextMenu(
+    entries: entries,
+    boxDecoration: BoxDecoration(
+      color: defaultPalette.extras[0],
+      borderRadius: BorderRadius.circular(10),
+      boxShadow: [BoxShadow(color: defaultPalette.black, blurRadius: 2)],
+    ),
+    position: position, // Update with actual cursor pos
+  ).show(context);
+  }
+ 
 }
 
 @HiveType(typeId: 20)
