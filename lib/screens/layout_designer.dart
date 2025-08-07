@@ -2848,7 +2848,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   }
 
 
-  ////BUUILDDDDDDDD
+  ///BUUILDDDDDD
   ///BUILDDDDD
   ///BUILDDDDDDD
   @override
@@ -6499,103 +6499,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   
   Widget buildSheetTextWidget(SheetText sheetText) {
     
-    DateTime? extractDateFromDelta(Document doc) {
-    final plainText = doc.toPlainText().toLowerCase();
-
-    // Month name map
-    final monthMap = {
-      'january': 1, 'jan': 1,
-      'february': 2, 'feb': 2,
-      'march': 3, 'mar': 3,
-      'april': 4, 'apr': 4,
-      'may': 5,
-      'june': 6, 'jun': 6,
-      'july': 7, 'jul': 7,
-      'august': 8, 'aug': 8,
-      'september': 9, 'sep': 9, 'sept': 9,
-      'october': 10, 'oct': 10,
-      'november': 11, 'nov': 11,
-      'december': 12, 'dec': 12,
-    };
-
-    int? day;
-    int? month;
-    int? year;
-
-    // 1. Find first 1-2 digit number NOT immediately followed by another digit (i.e., not part of a longer number)
-    final dayMatch = RegExp(r'(?<!\d)(\d{1,2})(?=\D)').firstMatch(plainText);
-    if (dayMatch != null) {
-      day = int.tryParse(dayMatch.group(1)!);
-    }
-
-    // 2. Find 4-digit year
-    final yearMatch = RegExp(r'\b(\d{4})\b').firstMatch(plainText);
-    if (yearMatch != null) {
-      year = int.tryParse(yearMatch.group(1)!);
-    }
-
-    // 3. Check for month by name
-    final monthMatch = RegExp(
-      r'\b(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sept|sep|october|oct|november|nov|december|dec)\b',
-      caseSensitive: false,
-    ).firstMatch(plainText);
-
-    if (monthMatch != null) {
-      final name = monthMatch.group(0)!.toLowerCase();
-      month = monthMap[name];
-    }
-
-    // 4. If no textual month found, find second 1-2 digit group (distinct from day)
-    if (month == null) {
-      final allSmallNums = RegExp(r'(?<!\d)(\d{1,2})(?!\d)').allMatches(plainText).toList();
-      // print(day?.toString());
-      // print(allSmallNums.toString());
-      if (allSmallNums.length >= 2) {
-        final first = allSmallNums[0].group(1)!;
-        final second = allSmallNums[1].group(1)!;
-        // print(day?.toString());
-        // if (day?.toString() == first) {
-          // print('yea same');
-          month = int.tryParse(second);
-        // }
-      }
-    }
-
-    // Final validation
-    if (day != null && month != null && year != null) {
-      try {
-        return DateTime(year, month, day);
-      } catch (_) {
-        return null;
-      }
-    }
-
-    return null;
-  }
-
-    TimeOfDay? extractTimeFromDelta(Document doc) {
-      final plainText = doc.toPlainText();
-
-      // Match: 2 digits + non-digit + 2 digits
-      final regex = RegExp(r'(\d{1,2})\D+(\d{1,2})');
-
-      final match = regex.firstMatch(plainText);
-
-      if (match != null) {
-        try {
-          int hour = int.parse(match.group(1)!);
-          int minute = int.parse(match.group(2)!);
-
-          if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
-            return TimeOfDay(hour: hour, minute: minute);
-          }
-        } catch (_) {
-          return null;
-        }
-      }
-
-      return null;
-    }
     // print(sheetText.type);
     var extractedDate = null;
     if (sheetText.type == SheetTextType.date) {
@@ -6861,583 +6764,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               ],
               if(sheetText.type == SheetTextType.phone)
               ...[const SizedBox(width: 2),
-              ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: 20),
-                  child: CountryCodePicker(
-                    padding: EdgeInsets.only(left:2, right:4),
-                    insetPadding: EdgeInsets.all(100),
-                    flagWidth: 16,
-                    // hideMainText: true,
-                    margin: EdgeInsets.only(right:2),
-                    alignLeft: false,
-                    mode: CountryCodePickerMode.dialog,
-                    onChanged: (country) {
-                      print('Country code selected: ${country.code}');
-                    },
-                    initialSelection: 'AW',
-                    elevation: 1,
-                    shadowColor: defaultPalette.extras[0].withOpacity(0.3),
-                    surfaceTintColor: defaultPalette.extras[0],
-                    barrierColor: defaultPalette.extras[0].withOpacity(0.3),
-                    showFlag: true,
-                    showDropDownButton: false,
-                    dialogBackgroundColor: defaultPalette.primary,
-                    dialogTextStyle:  GoogleFonts.lexend(
-                      fontSize: 15,
-                      letterSpacing: -1,
-                      color: defaultPalette.extras[0],
-                      fontWeight: FontWeight.w400,
-                    ),
-                    textStyle:  GoogleFonts.lexend(
-                      fontSize: 12,
-                      letterSpacing: -1,
-                      color: defaultPalette.extras[0],
-                      fontWeight: FontWeight.w600,
-                    ),
-                    searchStyle:  GoogleFonts.lexend(
-                      fontSize: 15,
-                      letterSpacing: -1,
-                      color: defaultPalette.extras[0],
-                      fontWeight: FontWeight.w400,
-                    ),
-                    searchDecoration: InputDecoration(
-                      labelStyle: GoogleFonts.lexend(
-                        fontSize: 24,
-                        // fontWeight: FontWeight.w600,
-                        color: defaultPalette.extras[0],
-                      ),
-                      hintStyle: GoogleFonts.lexend(
-                        fontSize: 15,
-                        color: defaultPalette.extras[0].withOpacity(0.6),
-                      ),
-                      errorStyle: GoogleFonts.lexend(
-                        fontSize: 15,
-                        color: defaultPalette.extras[0].withOpacity(0.6),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
-                        borderRadius: BorderRadius.circular(8)
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
-                        borderRadius: BorderRadius.circular(8)
-                      )
-                    ),
-                    
-                  ),
-                )],
-              
+                buildPhonePickerButton(
+                  context: context,
+                  sheetText: sheetText,
+                ),  
+              ],
               if(sheetText.type == SheetTextType.date)
               ...[
                 const SizedBox(width: 2),
-                Material(
-                  color: defaultPalette.primary,
-                  child: InkWell(
-                    child: Icon(TablerIcons.pencil, size: 18),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: extractedDate ?? DateTime.now(),
-                        firstDate: DateTime(1800),
-                        lastDate: DateTime(2100),
-                        barrierColor: defaultPalette.extras[0].withOpacity(0.5),
-                        builder: (context, child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            inputDecorationTheme: InputDecorationTheme(
-                              labelStyle: GoogleFonts.lexend(
-                                fontSize: 12,
-                                // fontWeight: FontWeight.w600,
-                                color: defaultPalette.extras[0],
-                              ),
-                              hintStyle: GoogleFonts.lexend(
-                                fontSize: 15,
-                                color: defaultPalette.extras[0].withOpacity(0.6),
-                              ),
-                              errorStyle: GoogleFonts.lexend(
-                                fontSize: 15,
-                                color: defaultPalette.extras[0].withOpacity(0.6),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
-                                borderRadius: BorderRadius.circular(8)
-                              )
-                            ),
-                            
-                            textTheme: Theme.of(context).textTheme.copyWith(
-                              titleLarge: GoogleFonts.lexend(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
-                                color: defaultPalette.black,
-                              ),
-                              headlineSmall: GoogleFonts.lexend(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: defaultPalette.black,
-                              ),
-                              headlineMedium: GoogleFonts.lexend(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: defaultPalette.black,
-                              ),
-                            ),
-                            textButtonTheme: TextButtonThemeData(
-                              
-                              style: ButtonStyle(
-                  
-                                textStyle: WidgetStateProperty.all(
-                                  GoogleFonts.lexend(
-                                    fontSize: 15,
-                                    letterSpacing: -1,
-                                  ),
-                                ),
-                                foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
-                              ),
-                            ),
-                            datePickerTheme: DatePickerThemeData(
-                              backgroundColor: defaultPalette.primary,
-                              rangePickerBackgroundColor: defaultPalette.tertiary,
-                              elevation: 20,
-                              // Selected date/year/month
-                              dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return defaultPalette.tertiary;
-                                }
-                                return null;
-                              }),
-                              locale: const Locale('en', 'IN'),
-                              todayBorder: BorderSide.none,
-                              todayBackgroundColor:  WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return defaultPalette.tertiary;
-                                } else {
-                                  return defaultPalette.primary;
-                                }
-                                return null;
-                              }),
-                              todayForegroundColor:  WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return defaultPalette.primary;
-                                } else {
-                                  return defaultPalette.extras[0];
-                                }
-                                return null;
-                              }),
-                              yearForegroundColor: WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return defaultPalette.primary;
-                                }
-                                return null;
-                              }),
-                              yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return defaultPalette.tertiary;
-                                } else {
-                                  return defaultPalette.transparent;
-                                }
-                                return null;
-                              }),
-                              dividerColor: defaultPalette.extras[0].withOpacity(0.4),
-                              confirmButtonStyle:  ButtonStyle(
-                              textStyle: WidgetStateProperty.all(
-                                GoogleFonts.lexend(
-                                  fontSize: 15,
-                                  letterSpacing: -1,
-                                  color: defaultPalette.tertiary,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              overlayColor: WidgetStateProperty.resolveWith((states) {
-                                  if (states.contains(WidgetState.hovered)) {
-                                    return defaultPalette.extras[0].withOpacity(0.08); // hover color
-                                  }
-                                  if (states.contains(WidgetState.pressed)) {
-                                    return defaultPalette.tertiary.withOpacity(0.2); // splash/press
-                                  }
-                                  return null;
-                                }),
-                                splashFactory: InkRipple.splashFactory,
-                              ),
-                              cancelButtonStyle:  ButtonStyle(
-                              textStyle: WidgetStateProperty.all(
-                                GoogleFonts.lexend(
-                                  fontSize: 15,
-                                  letterSpacing: -1,
-                                  color: defaultPalette.tertiary,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              overlayColor: WidgetStateProperty.resolveWith((states) {
-                                  if (states.contains(WidgetState.hovered)) {
-                                    return defaultPalette.extras[0].withOpacity(0.08); // hover color
-                                  }
-                                  if (states.contains(WidgetState.pressed)) {
-                                    return defaultPalette.tertiary.withOpacity(0.2); // splash/press
-                                  }
-                                  return null;
-                                }),
-                                splashFactory: InkRipple.splashFactory,
-                              ),
-                              yearStyle: GoogleFonts.lexend(
-                                fontSize: 15,
-                                color: defaultPalette.tertiary,
-                                letterSpacing: -1,
-                              ),
-                              dayStyle: GoogleFonts.lexend(
-                                fontSize: 15,
-                                color: defaultPalette.tertiary,
-                                letterSpacing: -1,
-                              ),
-                              weekdayStyle: GoogleFonts.lexend(
-                                fontSize: 14,
-                                letterSpacing: -1,
-                                color: defaultPalette.tertiary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              headerHeadlineStyle: GoogleFonts.lexend(
-                                fontSize: 30,
-                                letterSpacing: -1,
-                                color: defaultPalette.tertiary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              rangePickerHeaderHeadlineStyle: GoogleFonts.lexend(
-                                fontSize: 14,
-                                letterSpacing: -1,
-                                color: defaultPalette.tertiary,
-                                // fontWeight: FontWeight.w600,
-                              ),
-                              rangePickerHeaderHelpStyle: GoogleFonts.lexend(
-                                fontSize: 14,
-                                letterSpacing: -1,
-                                color: defaultPalette.tertiary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              headerHelpStyle: GoogleFonts.lexend(
-                                fontSize: 14,
-                                letterSpacing: -1,
-                                color: defaultPalette.tertiary,
-                                // fontWeight: FontWeight.w600,
-                              ),
-                              // Optional border radius:
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16), // <- This is the border
-                              ),
-                            ),
-                          ),
-                          child: child!,
-                        );
-                      },
-                      );
-                      if (picked != null) {
-                        final controller = sheetText.textEditorConfigurations.controller;
-                        final doc = controller.document;
-                        final delta = doc.toDelta();
-                        final plainText = doc.toPlainText();
-                        final formattedDay = picked.day.toString().padLeft(2, '0');
-                        final formattedMonth = picked.month.toString().padLeft(2, '0');
-                        final formattedYear = picked.year.toString();
-                        final formattedDate ='${formattedDay}/${formattedMonth}/${formattedYear}';
-                        if (plainText.trim().toLowerCase().isEmpty) {
-                          print('object');
-                          controller.replaceText(0, 0, formattedDate, TextSelection.collapsed(offset:0));
-                        } else  if (plainText.trim().toLowerCase().length<5) {
-                          controller.replaceText(0, plainText.trim().toLowerCase().length, formattedDate, TextSelection.collapsed(offset:0));
-                        }
-                        Map<String, dynamic>? getAttrsAt(int offset) {
-                          int current = 0;
-                          for (final op in delta.toList()) {
-                            final text = op.data is String ? op.data as String : '';
-                            if (current + text.length > offset) return op.attributes;
-                            current += text.length;
-                          }
-                          return null;
-                        }
-
-                        // Mappings
-                        final monthMap = {
-                          1: 'January', 2: 'February', 3: 'March', 4: 'April',
-                          5: 'May', 6: 'June', 7: 'July', 8: 'August',
-                          9: 'September', 10: 'October', 11: 'November', 12: 'December'
-                        };
-
-                        
-                        final monthNames = monthMap.values.map((e) => e.toLowerCase()).toList();
-
-                        int? offsetDay, offsetMonth, offsetYear;
-                        String? dayStr, monthStr, yearStr;
-
-                        // 1. Day (first 1-2 digit standalone)
-                        final dayMatch = RegExp(r'\b(\d{1,2})(st|nd|rd|th)?\b(?!\d)').firstMatch(plainText);
-                        if (dayMatch != null) {
-                          dayStr = dayMatch.group(1)!;
-                          offsetDay = plainText.indexOf(dayStr, 0);
-                        }
-
-                        // 2. Year (4-digit)
-                        final yearMatch = RegExp(r'\b(\d{4})\b').firstMatch(plainText);
-                        if (yearMatch != null) {
-                          yearStr = yearMatch.group(1)!;
-                          offsetYear = plainText.indexOf(yearStr);
-                        }
-
-                        // 3. Month (try name first)
-                        final monthNameMatch = RegExp(
-                          r'\b(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sept|sep|october|oct|november|nov|december|dec)\b',
-                          caseSensitive: false,
-                        ).firstMatch(plainText);
-
-                        if (monthNameMatch != null) {
-                          monthStr = monthNameMatch.group(0)!;
-                          offsetMonth = plainText.indexOf(monthStr, 0);
-                        } else {
-                          // fallback: second standalone 1-2 digit number
-                          final smallNums = RegExp(r'\b(\d{1,2})\b(?!\d)').allMatches(plainText).toList();
-                          if (smallNums.length >= 2) {
-                            final first = smallNums[0].group(1)!;
-                            final second = smallNums[1].group(1)!;
-                            if (dayStr != null && first == dayStr) {
-                              monthStr = second;
-                              offsetMonth = plainText.indexOf(second, offsetDay! + dayStr.length);
-                            }
-                          }
-                        }
-
-                        if (yearStr != null && offsetYear != null) {
-                          controller.replaceText(
-                            offsetYear,
-                            yearStr.length,
-                            Delta()..insert(formattedYear, getAttrsAt(offsetYear)),
-                            TextSelection.collapsed(offset: 0),
-                          );
-                        }
-
-                        if (monthStr != null && offsetMonth != null) {
-                          final replacement = monthNameMatch != null ? monthMap[picked.month]! : formattedMonth;
-                          controller.replaceText(
-                            offsetMonth,
-                            monthStr.length,
-                            Delta()..insert(replacement, getAttrsAt(offsetMonth)),
-                            TextSelection.collapsed(offset: 0),
-                          );
-                        }
-
-                        if (dayStr != null && offsetDay != null) {
-                          controller.replaceText(
-                            offsetDay,
-                            dayStr.length,
-                            Delta()..insert(formattedDay, getAttrsAt(offsetDay)),
-                            TextSelection.collapsed(offset: 0),
-                          );
-                        }
-
-                      }
-                    },
-                  ),
-                )
+                buildDatePickerButton(context: context, sheetText: sheetText)
               ],
               if(sheetText.type == SheetTextType.time)
               ...[
                 const SizedBox(width: 2),
-                Material(
-                  color: defaultPalette.primary,
-                  child: InkWell(
-                    child: const Icon(TablerIcons.pencil, size: 18),
-                    onTap: () async {
-                      final picked = await showTimePicker(
-                        context: context,
-                        initialTime: extractTimeFromDelta(sheetText.textEditorController.document) ?? TimeOfDay.now(),
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              inputDecorationTheme: InputDecorationTheme(
-                              labelStyle: GoogleFonts.lexend(
-                                fontSize: 24,
-                                // fontWeight: FontWeight.w600,
-                                color: defaultPalette.extras[0],
-                              ),
-                              hintStyle: GoogleFonts.lexend(
-                                fontSize: 15,
-                                color: defaultPalette.extras[0].withOpacity(0.6),
-                              ),
-                              errorStyle: GoogleFonts.lexend(
-                                fontSize: 15,
-                                color: defaultPalette.extras[0].withOpacity(0.6),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
-                                borderRadius: BorderRadius.circular(8)
-                              )
-                            ),
-                            
-                            textTheme: Theme.of(context).textTheme.copyWith(
-                              titleLarge: GoogleFonts.lexend(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
-                                color: defaultPalette.black,
-                              ),
-                              titleMedium: GoogleFonts.lexend(
-                                fontSize: 48,
-                                fontWeight: FontWeight.w600,
-                                color: defaultPalette.black,
-                              ),
-                              
-                              titleSmall: GoogleFonts.lexend(
-                                fontSize: 48,
-                                fontWeight: FontWeight.w600,
-                                color: defaultPalette.black,
-                              ),
-                              headlineSmall: GoogleFonts.lexend(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: defaultPalette.black,
-                              ),
-                              headlineMedium: GoogleFonts.lexend(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: defaultPalette.black,
-                              ),
-                              bodyLarge: GoogleFonts.lexend(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: defaultPalette.black,
-                              ),
-                              displayLarge: GoogleFonts.lexend(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: defaultPalette.black,
-                              ),
-                              headlineLarge: GoogleFonts.lexend(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: defaultPalette.black,
-                              ),
-                            ),
-                            textButtonTheme: TextButtonThemeData(
-                              
-                              style: ButtonStyle(
-                  
-                                textStyle: WidgetStateProperty.all(
-                                  GoogleFonts.lexend(
-                                    fontSize: 15,
-                                    letterSpacing: -1,
-                                  ),
-                                ),
-                                foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
-                              ),
-                            ),
-                            timePickerTheme: TimePickerThemeData(
-                                backgroundColor: defaultPalette.primary,
-                                hourMinuteTextStyle: GoogleFonts.lexend(
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.w600,
-                                  color: defaultPalette.extras[0],
-                                  letterSpacing: -1,
-                                ),
-                                dayPeriodTextStyle: GoogleFonts.lexend(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: defaultPalette.extras[0],
-                                  letterSpacing: -1,
-                                ),
-                                helpTextStyle: GoogleFonts.lexend(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w400,
-                                  color: defaultPalette.extras[0],
-                                  letterSpacing: -1,
-                                ),
-                                entryModeIconColor: defaultPalette.extras[0],
-                                dialHandColor: defaultPalette.tertiary,
-                                dialBackgroundColor: defaultPalette.primary,
-                                hourMinuteColor: defaultPalette.primary,
-                                timeSelectorSeparatorTextStyle: WidgetStatePropertyAll(GoogleFonts.lexend(
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.w400,
-                                  color: defaultPalette.extras[0],
-                                  letterSpacing: -1,
-                                ),)
-                              ),
-                              
-                            ),
-                            child: Localizations.override(
-                              context: context,
-                              locale: const Locale('en', 'GB'), // DD/MM/YYYY and 24-hour format
-                              child: child!,
-                            ),
-                          );
-                        },
-                      
-                      );
-                      if (picked != null) {
-                        final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-                        final controller = sheetText.textEditorConfigurations.controller;
-                        final plainText = controller.document.toPlainText();
-                        if (plainText.trim().toLowerCase().isEmpty) {
-                          // print('object');
-                          controller.replaceText(0, 0, formattedTime, TextSelection.collapsed(offset:0));
-                        }
-                        final match = RegExp(r'(\d{1,2})\D+(\d{1,2})').firstMatch(plainText);
-                        
-                        if (match == null) {
-                          final now = TimeOfDay.now();
-                          final formatted = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-                          final originalDelta = controller.document.toDelta();
-                          final attrs = originalDelta.isNotEmpty ? originalDelta.first.attributes : null;
-
-                          controller.replaceText(
-                            0,
-                            controller.document.length - 1,
-                            Delta()..insert(formatted, attrs),
-                            TextSelection.collapsed(offset: formatted.length),
-                          );
-                        } else {
-                          final hourStr = picked.hour.toString().padLeft(2, '0');
-                          final minuteStr = picked.minute.toString().padLeft(2, '0');
-                          final delta = controller.document.toDelta();
-
-                          int docOffset = 0;
-                          int hourOffset = -1;
-                          int minuteOffset = -1;
-                          int hourLength = match.group(1)!.length;
-                          int minuteLength = match.group(2)!.length;
-                          int hourIndex = match.start + plainText.substring(match.start).indexOf(match.group(1)!);
-                          int minuteIndex = match.start + plainText.substring(match.start).indexOf(match.group(2)!);
-
-                          // Traverse the delta to find attribute-preserving offsets
-                          for (final op in delta.toList()) {
-                            final insert = op.data;
-                            final length = insert is String ? insert.length : 1;
-
-                            if (hourOffset == -1 && docOffset + length >= hourIndex) {
-                              hourOffset = docOffset + (hourIndex - docOffset);
-                            }
-
-                            if (minuteOffset == -1 && docOffset + length >= minuteIndex) {
-                              minuteOffset = docOffset + (minuteIndex - docOffset);
-                            }
-
-                            docOffset += length;
-                          }
-
-                          if (hourOffset != -1 && minuteOffset != -1) {
-                            controller.replaceText(
-                              hourOffset,
-                              hourLength,
-                              hourStr,
-                              TextSelection.collapsed(offset: hourOffset + hourStr.length),
-                            );
-                            controller.replaceText(
-                              minuteOffset,
-                              minuteLength,
-                              minuteStr,
-                              TextSelection.collapsed(offset: minuteOffset + minuteStr.length),
-                            );
-                          }
-                        }
-
-                      }
-                    },
-                  ),
-                )
+                buildTimePickerButton(context: context, sheetText: sheetText)
               ],
             ],
           ),
@@ -8610,11 +7950,28 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               Expanded(
                 child: Row(
                   children: [
+                    if(sheetTable.columnData[columnLabelToNumber(sheetTableCell.id[0])].size >5)
+                    ...[if(sheetText.type == SheetTextType.time && !sheetText.locked)
+                    ...[
+                      const SizedBox(width: 2),
+                      buildTimePickerButton(context: context, sheetText: sheetText, useIcon: true)
+                    ],
+                    if(sheetText.type == SheetTextType.date && !sheetText.locked)
+                    ...[
+                      const SizedBox(width: 2),
+                      buildDatePickerButton(context: context, sheetText: sheetText, useIcon: true)
+                    ],
+                    if(sheetText.type == SheetTextType.phone && !sheetText.locked && sheetTable.columnData[columnLabelToNumber(sheetTableCell.id[0])].size >35)
+                    ...[
+                      const SizedBox(width: 2),
+                      buildPhonePickerButton(context: context, sheetText: sheetText)
+                    ],
+                    if(sheetText.type == SheetTextType.string || sheetText.locked)
                      Icon(sheetText.locked?
                        TablerIcons.lock:
                       TablerIcons.cursor_text,
                       size: 14,
-                    ),
+                    ),],
                     Expanded(
                       child: KeyedSubtree(
                         key: ValueKey(sheetText.id),
@@ -8733,8 +8090,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
           ))
       ],
-    );
-                                       
+    );  
   }
 
   QuillEditorConfigurations copyWithFontSize20(QuillEditorConfigurations original) {
@@ -9401,12 +8757,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             // Allow temporary replacement
             controller.onReplaceText = (int index, int length, Object? data) => true;
 
-            controller.replaceText(
-              0,
-              controller.document.length - 1,
-              Delta()..insert(formatted, attrs),
-              TextSelection.collapsed(offset: formatted.length),
-            );
+            final newDelta = Delta();
+            if (formatted.isNotEmpty) {
+              newDelta.insert(formatted, attrs);
+            }
+
+            if (newDelta.isNotEmpty) {
+              controller.replaceText(
+                0,
+                controller.document.length - 1,
+                newDelta,
+                TextSelection.collapsed(offset: formatted.length),
+              );
+            }
             }
 
             // Enforce rules for future edits
@@ -9985,13 +9348,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 int currentCardIndex = whichTextPropertyTabIsClicked;
                 var ib;
                 var ibfunc;
+                var ibfuncname;
                 QuillEditorConfigurations? config;
                 if (itemInputBlockIndex !=-1) {
                   try {
                     ib =item.inputBlocks[itemInputBlockIndex];
-                    if(ib.function is UniStatFunction){
+                    if(ib.function is UniStatFunction || ib.function is ColumnFunction){
                       config = ib.function.getConfigurations(getItemAtPath, buildCombinedQuillConfiguration, setState, customStyleBuilder);
                       ibfunc = ib.function;
+                      ibfuncname = ib.function.func;
                       }
                     
                   } on Exception catch (e) {
@@ -11319,7 +10684,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         break;
                       default:
                     }
-                    // print('buildFunctionTile'+funcBlock.function.runtimeType.toString());
                     visited ??={};
                     visited[inputBlock] = (visited[inputBlock]??0)+1;
                     if((visited[inputBlock]??0)>5){
@@ -11981,12 +11345,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               ),
                                                               children: [
                                                                 TextSpan(
-                                                                  text: '${( UniStatFunction(
+                                                                  text: '${(parent is! InputBlockFunction)
+                                                                ?( UniStatFunction(
                                                                     inputBlocks: inBlock.sublist(0,inx+1), 
                                                                     func:(parent is ColumnFunction)
                                                                       ? parent.func
                                                                       : (parent as UniStatFunction).func))
-                                                                      .result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()}',
+                                                                      .result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()
+                                                                  :InputBlockFunction(inputBlocks:inBlock.sublist(0,inx+1), label: (parent).label).getConfigurations(buildCombinedQuillConfiguration)}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -12695,6 +12061,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ),
                                 ),
                                 ),
+                              
                               ],
                             ),
                           ),
@@ -13243,7 +12610,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              (getItemAtPath(inputBlock[index].indexPath) as SheetText).name,
+                                              (){if(getItemAtPath(inputBlock[index].indexPath) is! SheetText) inputBlock.removeAt(index);
+                                                return (getItemAtPath(inputBlock[index].indexPath) as SheetText).name;}(),
                                               textAlign: TextAlign.end,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -13448,6 +12816,24 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         
                         ];
                       
+                      case BiStatFunction:
+                        return (funcBlock.function as BiStatFunction).buildPrimaryFunctionBlock(
+                          context,
+                          funcBlock, 
+                          selectedInputBlocks, 
+                          width, 
+                          setState, 
+                          inputBlock, 
+                          index, 
+                          item, 
+                          Offset(sWidth - (sWidth*wH2DividerPosition)-(sWidth/4),40),
+                          sHeight-80,
+                          buildCombinedQuillConfiguration, 
+                          getItemAtPath, 
+                          customStyleBuilder,
+                          uniStatFunctionInputBlocks,
+                          showPositionedTextFieldOverlay
+                          );
                       
                       default:
                         return [
@@ -13982,18 +13368,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   ),
                                                   for(var ibl in item.inputBlocks.asMap().entries.toList())
                                                   if(ibl.value.function != null && ibl.value.function is! InputBlockFunction)
-                                                  MenuItem(
-                                                    label: ibl.value.function!.name ,
+                                                  (){
+                                                    dynamic func = ibl.value.function!;
+                                                    return MenuItem(
+                                                    label: func.func,
                                                       style: GoogleFonts.lexend(
                                                       color: defaultPalette.extras[0],
                                                       fontWeight: FontWeight.w400,
                                                       letterSpacing: -0.5,
                                                     ),
-                                                    icon: ibl.value.function!.name == 'sum'
-                                                    ? TablerIcons.sum
-                                                    : ibl.value.function!.name == 'count'
-                                                      ? TablerIcons.tallymarks
-                                                      : null,
+                                                    icon: UniStatFunction.availableFunctions[func.func],
                                                     hoverColor: defaultPalette.primary,
                                                     unfocusedColor: defaultPalette.secondary,
                                                     onSelected: () {
@@ -14001,7 +13385,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         itemInputBlockIndex = ibl.key;
                                                       });
                                                     },
-                                                  ),
+                                                  );}()
                                                 ],
                                                 boxDecoration: BoxDecoration(
                                                     boxShadow: [
@@ -14024,9 +13408,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             child:Icon(
                                               ibfunc ==null
                                               ? TablerIcons.cursor_text
-                                              : ibfunc.func == 'sum'
-                                                ? TablerIcons.sum
-                                                :TablerIcons.tallymarks,
+                                              : UniStatFunction.availableFunctions[ibfuncname],
                                               size: 20
                                             ) )),
                                         ],
@@ -14241,9 +13623,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       second: true,
                                       onChanged: (value) {
                                         setState(() {
-                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
+                                         updateSheetTextProperties((p0) {
                                             p0.toggleVisibility();
-                                          },);}
+                                          },);
                                         });
                                       },
                                       animationCurve: Curves.easeInOutExpo,
@@ -14304,14 +13686,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           // } else {
                                           //   item.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(item.type.index, item.textEditorConfigurations.controller);
                                           // }
-                                         if(itemInputBlockIndex != -1){ updateSheetTextProperties((p0) {
+                                          updateSheetTextProperties((p0) {
                                             p0.toggleLock();
                                             if (p0.locked) {
                                                   p0.textEditorConfigurations.controller.onReplaceText = (int _,int_x, Object? _r) => false;
                                                 } else {
                                                   p0.textEditorConfigurations.controller.onReplaceText = getReplaceTextFunctionForType(p0.type.index, p0.textEditorConfigurations.controller);
                                                 }
-                                          },);}
+                                          },);
                                           FocusManager.instance.primaryFocus?.unfocus();
                                         });
                                       },
@@ -15972,6 +15354,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 
                                                                 ),
                                                               ),
+                                                              SizedBox(height:4),
                                                               Expanded(
                                                                 child: ScrollConfiguration(
                                                                   behavior: ScrollBehavior().copyWith(scrollbars: false),
@@ -16036,6 +15419,55 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                                       children:[
                                                                                         SizedBox(width:3),
                                                                                         Icon(UniStatFunction.availableFunctions[funcKey], size:15, color:defaultPalette.primary),
+                                                                                        SizedBox(width:3),
+                                                                                        Expanded(child: 
+                                                                                        Text(
+                                                                                          funcKey,
+                                                                                          maxLines: 1,
+                                                                                          overflow: TextOverflow.ellipsis,
+                                                                                          style: GoogleFonts.lexend(
+                                                                                            height: 0.9,
+                                                                                            fontSize:14,
+                                                                                            color: Colors.white,
+                                                                                            letterSpacing: -1,
+                                                                                            fontWeight: FontWeight.w500),
+                                                                                          ),
+                                                                                        )
+                                                                                      ]
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                              )).toList(),
+                                                                              ...BiStatFunction.availableFunctions.keys.where((element) {
+                                                                                return element.contains(functionSearchController.text);
+                                                                              },).toList().map((funcKey)=>MouseRegion(
+                                                                                cursor:SystemMouseCursors.click,
+                                                                                child: GestureDetector(
+                                                                                  onTap:(){
+                                                                                    setState(() {
+                                                                                      if (selectedInputBlocks !=null) {
+                                                                                        selectedInputBlocks!.add(InputBlock(
+                                                                                          indexPath: IndexPath(index: -1277), 
+                                                                                          blockIndex: [-2], 
+                                                                                          id: 'yo',
+                                                                                          useConst: false,
+                                                                                          function: BiStatFunction(inputBlocksX:[], inputBlocksY:[], func:funcKey)
+                                                                                          ));
+                                                                                      }
+                                                                                      // inputBlockExpansionList.add(true);
+                                                                                    
+                                                                                  });
+                                                                                  },
+                                                                                  child: Container(
+                                                                                    width: width,
+                                                                                    height:30,
+                                                                                    margin:EdgeInsets.all(4),
+                                                                                    decoration: BoxDecoration(color:defaultPalette.extras[0],
+                                                                                    borderRadius:BorderRadius.circular(5),),
+                                                                                    child: Row(
+                                                                                      children:[
+                                                                                        SizedBox(width:3),
+                                                                                        Icon(BiStatFunction.availableFunctions[funcKey], size:15, color:defaultPalette.primary),
                                                                                         SizedBox(width:3),
                                                                                         Expanded(child: 
                                                                                         Text(
@@ -27661,156 +27093,156 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   }
 
   // 1) Top‐level entry point
-SheetTable buildInvoiceTable({
-  required SheetType type,
-  required String tableId,
-  required String parentId,
-  required SuperDecoration decoration,
-  required IndexPath indexPath,
-}) {
-  // a) headers & counts
-  final headers = _getInvoiceHeaders(type);
-  final rowCount = 2;
-  final colCount = headers.length;
+  SheetTable buildInvoiceTable({
+    required SheetType type,
+    required String tableId,
+    required String parentId,
+    required SuperDecoration decoration,
+    required IndexPath indexPath,
+  }) {
+    // a) headers & counts
+    final headers = _getInvoiceHeaders(type);
+    final rowCount = 2;
+    final colCount = headers.length;
 
-  // b) skeleton rows & columns
-  final rowData = List.generate(rowCount, (r) {
-    return SheetTableRow(
-      id:             'RW-${Uuid().v4()}',
-      parentId:       tableId,
-      size:           r == 0 ? 30 : 35,
-      rowDecoration:  decoration.id,
-      indexPath:      IndexPath(parent: indexPath, index: r),
-      rowInputBlocks: <InputBlock>[],
-    );
-  });
-
-  final columnData = List.generate(colCount, (c) {
-    final isHidden = c >= colCount - 3;
-    return SheetTableColumn(
-      id:               'CL-${Uuid().v4()}',
-      parentId:         tableId,
-      size:             100,
-      columnDecoration: decoration.id,
-      indexPath:        IndexPath(parent: indexPath, index: c),
-      hide:             isHidden,
-      columnInputBlocks:<InputBlock>[],
-    );
-  });
-
-  // c) cells + hook up input-blocks
-  final cellData = _generateInvoiceCellData(
-    parentId:          tableId,
-    decoration:        decoration,
-    tableIndexPath:    indexPath,
-    headers:           headers,
-    rowData:           rowData,
-    columnData:        columnData,
-  );
-
-  // d) assemble
-  return SheetTable(
-    id:                    tableId,
-    parentId:              parentId,
-    name:                  'itemSheet',
-    cellData:              cellData,
-    rowData:               rowData,
-    columnData:            columnData,
-    pinnedRows:            1,
-    pinnedColumns:         1,
-    sheetTableDecoration:  decoration,
-    sheetTablebgDecoration:newSuperDecoration(placeholder: false),
-    indexPath:             indexPath,
-  );
-}
-
-// 2) headers chooser
-List<String> _getInvoiceHeaders(SheetType type) {
-  const hidden = ['Cost Price','Profit','Profit %'];
-  switch (type) {
-    case SheetType.taxInvoice:    return [ 'Item Description','HSN Code','Quantity','Unit','Rate','Discount','Taxable Value','CGST %','CGST Amt','SGST %','SGST Amt','Total', ...hidden ];
-    case SheetType.billOfSupply:  return [ 'Item Description','HSN/SAC Code','Quantity','Unit','Rate','Discount','Total', ...hidden ];
-    case SheetType.creditNote:
-    case SheetType.debitNote:     return [ 'Item Description','Original Invoice No','Original Date','HSN/SAC','Qty','Rate','Taxable Value','CGST','SGST','IGST','Total Difference', ...hidden ];
-    case SheetType.proformaInvoice: return [ 'Item Description','Quantity','Unit','Rate','Amount','Remarks', ...hidden ];
-    default:                       return [ 'Item','Qty','Rate','Total', ...hidden ];
-  }
-}
-
-// 3) cell generator (hooks blocks into rowData/columnData)
-List<List<SheetTableCell>> _generateInvoiceCellData({
-  required String                      parentId,
-  required SuperDecoration             decoration,
-  required IndexPath                   tableIndexPath,
-  required List<String>                headers,
-  required List<SheetTableRow>         rowData,
-  required List<SheetTableColumn>      columnData,
-}) {
-  final rows = rowData.length;
-  final cols = headers.length;
-
-  // temporary block‐lists
-  final rowInputLists = List.generate(rows, (_) => <InputBlock>[]);
-  final colInputLists = List.generate(cols, (_) => <InputBlock>[]);
-
-  final cells = List.generate(rows, (r) {
-    final rowIP = IndexPath(parent: tableIndexPath, index: r);
-    return List.generate(cols, (c) {
-      final isHeader = r == 0;
-      final cellIP = IndexPath(parent: rowIP, index: c);
-      final newId  = 'TX-${Uuid().v4()}';
-
-      // single block per cell
-      final ib = InputBlock(
-        id:         newId,
-        indexPath:  cellIP,
-        blockIndex: [-2],
+    // b) skeleton rows & columns
+    final rowData = List.generate(rowCount, (r) {
+      return SheetTableRow(
+        id:             'RW-${Uuid().v4()}',
+        parentId:       tableId,
+        size:           r == 0 ? 30 : 35,
+        rowDecoration:  decoration.id,
+        indexPath:      IndexPath(parent: indexPath, index: r),
+        rowInputBlocks: <InputBlock>[],
       );
-      
-
-      // prepare initial delta
-      final docDelta = Delta()..insert(isHeader ? '${headers[c]}\n' : '\n');
-      final sheetText = addTextField(
-        id:                         newId,
-        parentId:                   parentId,
-        docString:                  docDelta.toJson(),
-        findItem:                   _findItem,
-        textFieldTapDown:           textFieldTapDown,
-        getReplaceTextFunctionForType: getReplaceTextFunctionForType,
-        textDecoration:             decoration,
-        hide:                       false,
-        name:                       '${numberToColumnLabel(c+1)}${r+1}',
-        indexPath:                  cellIP,
-        inputBlocks:               [ ib ],
-        locked:                     isHeader,
-      );
-      var sheetTableCell = SheetTableCell(
-        id:        '${numberToColumnLabel(c+1)}${r+1}',
-        parentId:  parentId,
-        sheetItem: sheetText,
-        rowSpan:   1,
-        colSpan:   1,
-        indexPath: rowIP,
-      );
-      var ibl = ib.copyWith(
-                                        function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
-                                      );  
-      rowInputLists[r].add(ibl);
-      colInputLists[c].add(ibl);
-      return sheetTableCell;
     });
-  });
 
-  // inject back into your rowData & columnData
-  for (var r = 0; r < rows; r++) {
-    rowData[r].rowInputBlocks = rowInputLists[r];
-  }
-  for (var c = 0; c < cols; c++) {
-    columnData[c].columnInputBlocks = colInputLists[c];
+    final columnData = List.generate(colCount, (c) {
+      final isHidden = c >= colCount - 3;
+      return SheetTableColumn(
+        id:               'CL-${Uuid().v4()}',
+        parentId:         tableId,
+        size:             100,
+        columnDecoration: decoration.id,
+        indexPath:        IndexPath(parent: indexPath, index: c),
+        hide:             isHidden,
+        columnInputBlocks:<InputBlock>[],
+      );
+    });
+
+    // c) cells + hook up input-blocks
+    final cellData = _generateInvoiceCellData(
+      parentId:          tableId,
+      decoration:        decoration,
+      tableIndexPath:    indexPath,
+      headers:           headers,
+      rowData:           rowData,
+      columnData:        columnData,
+    );
+
+    // d) assemble
+    return SheetTable(
+      id:                    tableId,
+      parentId:              parentId,
+      name:                  'itemSheet',
+      cellData:              cellData,
+      rowData:               rowData,
+      columnData:            columnData,
+      pinnedRows:            1,
+      pinnedColumns:         1,
+      sheetTableDecoration:  decoration,
+      sheetTablebgDecoration:newSuperDecoration(placeholder: false),
+      indexPath:             indexPath,
+    );
   }
 
-  return cells;
-}
+  // 2) headers chooser
+  List<String> _getInvoiceHeaders(SheetType type) {
+    const hidden = ['Cost Price','Profit','Profit %'];
+    switch (type) {
+      case SheetType.taxInvoice:    return [ 'Item Description','HSN Code','Quantity','Unit','Rate','Discount','Taxable Value','CGST %','CGST Amt','SGST %','SGST Amt','Total', ...hidden ];
+      case SheetType.billOfSupply:  return [ 'Item Description','HSN/SAC Code','Quantity','Unit','Rate','Discount','Total', ...hidden ];
+      case SheetType.creditNote:
+      case SheetType.debitNote:     return [ 'Item Description','Original Invoice No','Original Date','HSN/SAC','Qty','Rate','Taxable Value','CGST','SGST','IGST','Total Difference', ...hidden ];
+      case SheetType.proformaInvoice: return [ 'Item Description','Quantity','Unit','Rate','Amount','Remarks', ...hidden ];
+      default:                       return [ 'Item','Qty','Rate','Total', ...hidden ];
+    }
+  }
+
+  // 3) cell generator (hooks blocks into rowData/columnData)
+  List<List<SheetTableCell>> _generateInvoiceCellData({
+    required String                      parentId,
+    required SuperDecoration             decoration,
+    required IndexPath                   tableIndexPath,
+    required List<String>                headers,
+    required List<SheetTableRow>         rowData,
+    required List<SheetTableColumn>      columnData,
+  }) {
+    final rows = rowData.length;
+    final cols = headers.length;
+
+    // temporary block‐lists
+    final rowInputLists = List.generate(rows, (_) => <InputBlock>[]);
+    final colInputLists = List.generate(cols, (_) => <InputBlock>[]);
+
+    final cells = List.generate(rows, (r) {
+      final rowIP = IndexPath(parent: tableIndexPath, index: r);
+      return List.generate(cols, (c) {
+        final isHeader = r == 0;
+        final cellIP = IndexPath(parent: rowIP, index: c);
+        final newId  = 'TX-${Uuid().v4()}';
+
+        // single block per cell
+        final ib = InputBlock(
+          id:         newId,
+          indexPath:  cellIP,
+          blockIndex: [-2],
+        );
+        
+
+        // prepare initial delta
+        final docDelta = Delta()..insert(isHeader ? '${headers[c]}\n' : '\n');
+        final sheetText = addTextField(
+          id:                         newId,
+          parentId:                   parentId,
+          docString:                  docDelta.toJson(),
+          findItem:                   _findItem,
+          textFieldTapDown:           textFieldTapDown,
+          getReplaceTextFunctionForType: getReplaceTextFunctionForType,
+          textDecoration:             decoration,
+          hide:                       false,
+          name:                       '${numberToColumnLabel(c+1)}${r+1}',
+          indexPath:                  cellIP,
+          inputBlocks:               [ ib ],
+          locked:                     isHeader,
+        );
+        var sheetTableCell = SheetTableCell(
+          id:        '${numberToColumnLabel(c+1)}${r+1}',
+          parentId:  parentId,
+          sheetItem: sheetText,
+          rowSpan:   1,
+          colSpan:   1,
+          indexPath: rowIP,
+        );
+        var ibl = ib.copyWith(
+                                          function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                                        );  
+        rowInputLists[r].add(ibl);
+        colInputLists[c].add(ibl);
+        return sheetTableCell;
+      });
+    });
+
+    // inject back into your rowData & columnData
+    for (var r = 0; r < rows; r++) {
+      rowData[r].rowInputBlocks = rowInputLists[r];
+    }
+    for (var c = 0; c < cols; c++) {
+      columnData[c].columnInputBlocks = colInputLists[c];
+    }
+
+    return cells;
+  }
 
   List<SheetTableColumn> generateInvoiceColumns(
     String parentId,
@@ -27831,7 +27263,6 @@ List<List<SheetTableCell>> _generateInvoiceCellData({
       );
     });
   }
-
 
   void applySpans(SheetTable sheetTable) {
       final rows = sheetTable.cellData.length;
@@ -27876,7 +27307,669 @@ List<List<SheetTableCell>> _generateInvoiceCellData({
       }
     }
   }
-                            
+
+  DateTime? extractDateFromDelta(Document doc) {
+    final plainText = doc.toPlainText().toLowerCase();
+
+    // Month name map
+    final monthMap = {
+      'january': 1, 'jan': 1,
+      'february': 2, 'feb': 2,
+      'march': 3, 'mar': 3,
+      'april': 4, 'apr': 4,
+      'may': 5,
+      'june': 6, 'jun': 6,
+      'july': 7, 'jul': 7,
+      'august': 8, 'aug': 8,
+      'september': 9, 'sep': 9, 'sept': 9,
+      'october': 10, 'oct': 10,
+      'november': 11, 'nov': 11,
+      'december': 12, 'dec': 12,
+    };
+
+    int? day;
+    int? month;
+    int? year;
+
+    // 1. Find first 1-2 digit number NOT immediately followed by another digit (i.e., not part of a longer number)
+    final dayMatch = RegExp(r'(?<!\d)(\d{1,2})(?=\D)').firstMatch(plainText);
+    if (dayMatch != null) {
+      day = int.tryParse(dayMatch.group(1)!);
+    }
+
+    // 2. Find 4-digit year
+    final yearMatch = RegExp(r'\b(\d{4})\b').firstMatch(plainText);
+    if (yearMatch != null) {
+      year = int.tryParse(yearMatch.group(1)!);
+    }
+
+    // 3. Check for month by name
+    final monthMatch = RegExp(
+      r'\b(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sept|sep|october|oct|november|nov|december|dec)\b',
+      caseSensitive: false,
+    ).firstMatch(plainText);
+
+    if (monthMatch != null) {
+      final name = monthMatch.group(0)!.toLowerCase();
+      month = monthMap[name];
+    }
+
+    // 4. If no textual month found, find second 1-2 digit group (distinct from day)
+    if (month == null) {
+      final allSmallNums = RegExp(r'(?<!\d)(\d{1,2})(?!\d)').allMatches(plainText).toList();
+      // print(day?.toString());
+      // print(allSmallNums.toString());
+      if (allSmallNums.length >= 2) {
+        final first = allSmallNums[0].group(1)!;
+        final second = allSmallNums[1].group(1)!;
+        // print(day?.toString());
+        // if (day?.toString() == first) {
+          // print('yea same');
+          month = int.tryParse(second);
+        // }
+      }
+    }
+
+    // Final validation
+    if (day != null && month != null && year != null) {
+      try {
+        return DateTime(year, month, day);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  TimeOfDay? extractTimeFromDelta(Document doc) {
+    final plainText = doc.toPlainText();
+
+    // Match: 2 digits + non-digit + 2 digits
+    final regex = RegExp(r'(\d{1,2})\D+(\d{1,2})');
+
+    final match = regex.firstMatch(plainText);
+
+    if (match != null) {
+      try {
+        int hour = int.parse(match.group(1)!);
+        int minute = int.parse(match.group(2)!);
+
+        if (hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
+          return TimeOfDay(hour: hour, minute: minute);
+        }
+      } catch (_) {
+        return null;
+      }
+    }
+
+    return null;
+  }
+  
+  Widget buildTimePickerButton({
+    required BuildContext context,
+    required SheetText sheetText,
+    bool useIcon = false,
+  }) {
+    return Material(
+      color: defaultPalette.primary,
+      child: InkWell(
+        child: Icon(useIcon? TablerIcons.clock_hour_4:TablerIcons.pencil, size: useIcon?14:18),
+        onTap: () async {
+          await _handleTimePickerTap(
+            context: context,
+            sheetText: sheetText,
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _handleTimePickerTap({
+  required BuildContext context,
+  required SheetText sheetText,
+}) async {
+  final picked = await showTimePicker(
+    context: context,
+    initialTime: extractTimeFromDelta(sheetText.textEditorController.document) ?? TimeOfDay.now(),
+    builder: (context, child) {
+      return Theme(
+        data: Theme.of(context).copyWith(
+          inputDecorationTheme: InputDecorationTheme(
+            labelStyle: GoogleFonts.lexend(
+              fontSize: 24,
+              color: defaultPalette.extras[0],
+            ),
+            hintStyle: GoogleFonts.lexend(
+              fontSize: 15,
+              color: defaultPalette.extras[0].withOpacity(0.6),
+            ),
+            errorStyle: GoogleFonts.lexend(
+              fontSize: 15,
+              color: defaultPalette.extras[0].withOpacity(0.6),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          textTheme: Theme.of(context).textTheme.copyWith(
+            titleLarge: GoogleFonts.lexend(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: defaultPalette.black,
+            ),
+            titleMedium: GoogleFonts.lexend(
+              fontSize: 48,
+              fontWeight: FontWeight.w600,
+              color: defaultPalette.black,
+            ),
+            titleSmall: GoogleFonts.lexend(
+              fontSize: 48,
+              fontWeight: FontWeight.w600,
+              color: defaultPalette.black,
+            ),
+            headlineSmall: GoogleFonts.lexend(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: defaultPalette.black,
+            ),
+            headlineMedium: GoogleFonts.lexend(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: defaultPalette.black,
+            ),
+            bodyLarge: GoogleFonts.lexend(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: defaultPalette.black,
+            ),
+            displayLarge: GoogleFonts.lexend(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: defaultPalette.black,
+            ),
+            headlineLarge: GoogleFonts.lexend(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: defaultPalette.black,
+            ),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: ButtonStyle(
+              textStyle: WidgetStateProperty.all(
+                GoogleFonts.lexend(
+                  fontSize: 15,
+                  letterSpacing: -1,
+                ),
+              ),
+              foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
+            ),
+          ),
+          timePickerTheme: TimePickerThemeData(
+            backgroundColor: defaultPalette.primary,
+            hourMinuteTextStyle: GoogleFonts.lexend(
+              fontSize: 48,
+              fontWeight: FontWeight.w600,
+              color: defaultPalette.extras[0],
+              letterSpacing: -1,
+            ),
+            dayPeriodTextStyle: GoogleFonts.lexend(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: defaultPalette.extras[0],
+              letterSpacing: -1,
+            ),
+            helpTextStyle: GoogleFonts.lexend(
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: defaultPalette.extras[0],
+              letterSpacing: -1,
+            ),
+            entryModeIconColor: defaultPalette.extras[0],
+            dialHandColor: defaultPalette.tertiary,
+            dialBackgroundColor: defaultPalette.primary,
+            hourMinuteColor: defaultPalette.primary,
+            timeSelectorSeparatorTextStyle: WidgetStatePropertyAll(
+              GoogleFonts.lexend(
+                fontSize: 48,
+                fontWeight: FontWeight.w400,
+                color: defaultPalette.extras[0],
+                letterSpacing: -1,
+              ),
+            ),
+          ),
+        ),
+        child: Localizations.override(
+          context: context,
+          locale: const Locale('en', 'GB'), // DD/MM/YYYY and 24-hour format
+          child: child!,
+        ),
+      );
+    },
+  );
+
+  if (picked != null) {
+    final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+    final controller = sheetText.textEditorConfigurations.controller;
+    final plainText = controller.document.toPlainText();
+
+    if (plainText.trim().toLowerCase().isEmpty) {
+      controller.replaceText(0, 0, formattedTime, TextSelection.collapsed(offset: 0));
+    }
+
+    final match = RegExp(r'(\d{1,2})\D+(\d{1,2})').firstMatch(plainText);
+
+    if (match == null) {
+      final now = TimeOfDay.now();
+      final formatted = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      final originalDelta = controller.document.toDelta();
+      final attrs = originalDelta.isNotEmpty ? originalDelta.first.attributes : null;
+
+      controller.replaceText(
+        0,
+        controller.document.length - 1,
+        Delta()..insert(formatted, attrs),
+        TextSelection.collapsed(offset: formatted.length),
+      );
+    } else {
+      final hourStr = picked.hour.toString().padLeft(2, '0');
+      final minuteStr = picked.minute.toString().padLeft(2, '0');
+      final delta = controller.document.toDelta();
+
+      int docOffset = 0;
+      int hourOffset = -1;
+      int minuteOffset = -1;
+      int hourLength = match.group(1)!.length;
+      int minuteLength = match.group(2)!.length;
+      int hourIndex = match.start + plainText.substring(match.start).indexOf(match.group(1)!);
+      int minuteIndex = match.start + plainText.substring(match.start).indexOf(match.group(2)!);
+
+      for (final op in delta.toList()) {
+        final insert = op.data;
+        final length = insert is String ? insert.length : 1;
+
+        if (hourOffset == -1 && docOffset + length >= hourIndex) {
+          hourOffset = docOffset + (hourIndex - docOffset);
+        }
+
+        if (minuteOffset == -1 && docOffset + length >= minuteIndex) {
+          minuteOffset = docOffset + (minuteIndex - docOffset);
+        }
+
+        docOffset += length;
+      }
+
+      if (hourOffset != -1 && minuteOffset != -1) {
+        controller.replaceText(
+          hourOffset,
+          hourLength,
+          hourStr,
+          TextSelection.collapsed(offset: hourOffset + hourStr.length),
+        );
+        controller.replaceText(
+          minuteOffset,
+          minuteLength,
+          minuteStr,
+          TextSelection.collapsed(offset: minuteOffset + minuteStr.length),
+        );
+      }
+    }
+  }
+}
+
+  Widget buildDatePickerButton({
+    required BuildContext context,
+    required SheetText sheetText,
+    bool useIcon = false,
+  }) {
+    return Material(
+      color: defaultPalette.primary,
+      child: InkWell(
+        child: Icon(useIcon? TablerIcons.calendar_event: TablerIcons.pencil, size: useIcon?14:18),
+        onTap: () async {
+          await _handleDatePickerTap(
+            context: context,
+            sheetText: sheetText,
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _handleDatePickerTap({
+    required BuildContext context,
+    required SheetText sheetText,
+  }) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: extractDateFromDelta(sheetText.textEditorController.document) ?? DateTime.now(),
+      firstDate: DateTime(1800),
+      lastDate: DateTime(2100),
+      barrierColor: defaultPalette.extras[0].withOpacity(0.5),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            inputDecorationTheme: InputDecorationTheme(
+              labelStyle: GoogleFonts.lexend(
+                fontSize: 12,
+                color: defaultPalette.extras[0],
+              ),
+              hintStyle: GoogleFonts.lexend(
+                fontSize: 15,
+                color: defaultPalette.extras[0].withOpacity(0.6),
+              ),
+              errorStyle: GoogleFonts.lexend(
+                fontSize: 15,
+                color: defaultPalette.extras[0].withOpacity(0.6),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            textTheme: Theme.of(context).textTheme.copyWith(
+              titleLarge: GoogleFonts.lexend(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: defaultPalette.black,
+              ),
+              headlineSmall: GoogleFonts.lexend(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: defaultPalette.black,
+              ),
+              headlineMedium: GoogleFonts.lexend(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: defaultPalette.black,
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: ButtonStyle(
+                textStyle: WidgetStateProperty.all(
+                  GoogleFonts.lexend(fontSize: 15, letterSpacing: -1),
+                ),
+                foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
+              ),
+            ),
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: defaultPalette.primary,
+              rangePickerBackgroundColor: defaultPalette.tertiary,
+              elevation: 20,
+              dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return defaultPalette.tertiary;
+                }
+                return null;
+              }),
+              locale: const Locale('en', 'IN'),
+              todayBorder: BorderSide.none,
+              todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return defaultPalette.tertiary;
+                } else {
+                  return defaultPalette.primary;
+                }
+              }),
+              todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return defaultPalette.primary;
+                } else {
+                  return defaultPalette.extras[0];
+                }
+              }),
+              yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return defaultPalette.primary;
+                }
+                return null;
+              }),
+              yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return defaultPalette.tertiary;
+                } else {
+                  return defaultPalette.transparent;
+                }
+              }),
+              dividerColor: defaultPalette.extras[0].withOpacity(0.4),
+              confirmButtonStyle: ButtonStyle(
+                textStyle: WidgetStateProperty.all(
+                  GoogleFonts.lexend(
+                    fontSize: 15,
+                    letterSpacing: -1,
+                    color: defaultPalette.tertiary,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+              cancelButtonStyle: ButtonStyle(
+                textStyle: WidgetStateProperty.all(
+                  GoogleFonts.lexend(
+                    fontSize: 15,
+                    letterSpacing: -1,
+                    color: defaultPalette.tertiary,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+              yearStyle: GoogleFonts.lexend(
+                fontSize: 15,
+                color: defaultPalette.tertiary,
+                letterSpacing: -1,
+              ),
+              dayStyle: GoogleFonts.lexend(
+                fontSize: 15,
+                color: defaultPalette.tertiary,
+                letterSpacing: -1,
+              ),
+              weekdayStyle: GoogleFonts.lexend(
+                fontSize: 14,
+                letterSpacing: -1,
+                color: defaultPalette.tertiary,
+                fontWeight: FontWeight.w600,
+              ),
+              headerHeadlineStyle: GoogleFonts.lexend(
+                fontSize: 30,
+                letterSpacing: -1,
+                color: defaultPalette.tertiary,
+                fontWeight: FontWeight.w600,
+              ),
+              rangePickerHeaderHeadlineStyle: GoogleFonts.lexend(
+                fontSize: 14,
+                letterSpacing: -1,
+                color: defaultPalette.tertiary,
+              ),
+              rangePickerHeaderHelpStyle: GoogleFonts.lexend(
+                fontSize: 14,
+                letterSpacing: -1,
+                color: defaultPalette.tertiary,
+                fontWeight: FontWeight.w600,
+              ),
+            headerHelpStyle: GoogleFonts.lexend(
+              fontSize: 14,
+              letterSpacing: -1,
+              color: defaultPalette.tertiary,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+        child: child!,
+      );
+    },
+  );
+
+  if (picked != null) {
+    // 🔹 EXACTLY your original update code
+    final controller = sheetText.textEditorConfigurations.controller;
+    final doc = controller.document;
+    final delta = doc.toDelta();
+    final plainText = doc.toPlainText();
+    final formattedDay = picked.day.toString().padLeft(2, '0');
+    final formattedMonth = picked.month.toString().padLeft(2, '0');
+    final formattedYear = picked.year.toString();
+    final formattedDate = '${formattedDay}/${formattedMonth}/${formattedYear}';
+
+    if (plainText.trim().toLowerCase().isEmpty) {
+      print('object');
+      controller.replaceText(0, 0, formattedDate, TextSelection.collapsed(offset: 0));
+    } else if (plainText.trim().toLowerCase().length < 5) {
+      controller.replaceText(0, plainText.trim().toLowerCase().length, formattedDate, TextSelection.collapsed(offset: 0));
+    }
+
+    Map<String, dynamic>? getAttrsAt(int offset) {
+      int current = 0;
+      for (final op in delta.toList()) {
+        final text = op.data is String ? op.data as String : '';
+        if (current + text.length > offset) return op.attributes;
+        current += text.length;
+      }
+      return null;
+    }
+
+    final monthMap = {
+      1: 'January', 2: 'February', 3: 'March', 4: 'April',
+      5: 'May', 6: 'June', 7: 'July', 8: 'August',
+      9: 'September', 10: 'October', 11: 'November', 12: 'December'
+    };
+
+    final monthNames = monthMap.values.map((e) => e.toLowerCase()).toList();
+
+    int? offsetDay, offsetMonth, offsetYear;
+    String? dayStr, monthStr, yearStr;
+
+    final dayMatch = RegExp(r'\b(\d{1,2})(st|nd|rd|th)?\b(?!\d)').firstMatch(plainText);
+    if (dayMatch != null) {
+      dayStr = dayMatch.group(1)!;
+      offsetDay = plainText.indexOf(dayStr, 0);
+    }
+
+    final yearMatch = RegExp(r'\b(\d{4})\b').firstMatch(plainText);
+    if (yearMatch != null) {
+      yearStr = yearMatch.group(1)!;
+      offsetYear = plainText.indexOf(yearStr);
+    }
+
+    final monthNameMatch = RegExp(
+      r'\b(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sept|sep|october|oct|november|nov|december|dec)\b',
+      caseSensitive: false,
+    ).firstMatch(plainText);
+
+    if (monthNameMatch != null) {
+      monthStr = monthNameMatch.group(0)!;
+      offsetMonth = plainText.indexOf(monthStr, 0);
+    } else {
+      final smallNums = RegExp(r'\b(\d{1,2})\b(?!\d)').allMatches(plainText).toList();
+      if (smallNums.length >= 2) {
+        final first = smallNums[0].group(1)!;
+        final second = smallNums[1].group(1)!;
+        if (dayStr != null && first == dayStr) {
+          monthStr = second;
+          offsetMonth = plainText.indexOf(second, offsetDay! + dayStr.length);
+        }
+      }
+    }
+
+    if (yearStr != null && offsetYear != null) {
+      controller.replaceText(
+        offsetYear,
+        yearStr.length,
+        Delta()..insert(formattedYear, getAttrsAt(offsetYear)),
+        TextSelection.collapsed(offset: 0),
+      );
+    }
+
+    if (monthStr != null && offsetMonth != null) {
+      final replacement = monthNameMatch != null ? monthMap[picked.month]! : formattedMonth;
+      controller.replaceText(
+        offsetMonth,
+        monthStr.length,
+        Delta()..insert(replacement, getAttrsAt(offsetMonth)),
+        TextSelection.collapsed(offset: 0),
+      );
+    }
+
+    if (dayStr != null && offsetDay != null) {
+      controller.replaceText(
+        offsetDay,
+        dayStr.length,
+        Delta()..insert(formattedDay, getAttrsAt(offsetDay)),
+        TextSelection.collapsed(offset: 0),
+      );
+    }
+  }
+}
+
+  Widget buildPhonePickerButton({
+    required BuildContext context,
+    required SheetText sheetText,
+  }) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 20),
+      child: CountryCodePicker(
+        padding: const EdgeInsets.only(left: 2, right: 4),
+        insetPadding: const EdgeInsets.all(100),
+        flagWidth: 16,
+        margin: const EdgeInsets.only(right: 2),
+        alignLeft: false,
+        mode: CountryCodePickerMode.dialog,
+        onChanged: (country) {
+          print('Country code selected: ${country.code}');
+        },
+        initialSelection: 'AW',
+        elevation: 1,
+        shadowColor: defaultPalette.extras[0].withOpacity(0.3),
+        surfaceTintColor: defaultPalette.extras[0],
+        barrierColor: defaultPalette.extras[0].withOpacity(0.3),
+        showFlag: true,
+        showDropDownButton: false,
+        dialogBackgroundColor: defaultPalette.primary,
+        dialogTextStyle: GoogleFonts.lexend(
+          fontSize: 15,
+          letterSpacing: -1,
+          color: defaultPalette.extras[0],
+          fontWeight: FontWeight.w400,
+        ),
+        textStyle: GoogleFonts.lexend(
+          fontSize: 12,
+          letterSpacing: -1,
+          color: defaultPalette.extras[0],
+          fontWeight: FontWeight.w600,
+        ),
+        searchStyle: GoogleFonts.lexend(
+          fontSize: 15,
+          letterSpacing: -1,
+          color: defaultPalette.extras[0],
+          fontWeight: FontWeight.w400,
+        ),
+        searchDecoration: InputDecoration(
+          labelStyle: GoogleFonts.lexend(
+            fontSize: 24,
+            color: defaultPalette.extras[0],
+          ),
+          hintStyle: GoogleFonts.lexend(
+            fontSize: 15,
+            color: defaultPalette.extras[0].withOpacity(0.6),
+          ),
+          errorStyle: GoogleFonts.lexend(
+            fontSize: 15,
+            color: defaultPalette.extras[0].withOpacity(0.6),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+    );
+  }
+
 }
 
   TextStyle customStyleBuilder(attribute) {

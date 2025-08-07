@@ -178,3 +178,52 @@ class InputBlockFunctionAdapter extends TypeAdapter<InputBlockFunction> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+class BiStatFunctionAdapter extends TypeAdapter<BiStatFunction> {
+  @override
+  final int typeId = 21;
+
+  @override
+  BiStatFunction read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return BiStatFunction(
+      inputBlocksX: (fields[2] as List).cast<InputBlock>(),
+      inputBlocksY: (fields[3] as List).cast<InputBlock>(),
+      resultJson: (fields[4] as List)
+          .map((dynamic e) => (e as Map).cast<String, dynamic>())
+          .toList(),
+      func: fields[5] as String,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, BiStatFunction obj) {
+    writer
+      ..writeByte(6)
+      ..writeByte(2)
+      ..write(obj.inputBlocksX)
+      ..writeByte(3)
+      ..write(obj.inputBlocksY)
+      ..writeByte(4)
+      ..write(obj.resultJson)
+      ..writeByte(5)
+      ..write(obj.func)
+      ..writeByte(0)
+      ..write(obj.returnType)
+      ..writeByte(1)
+      ..write(obj.name);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BiStatFunctionAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
