@@ -10675,8 +10675,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   List<Widget> buildFunctionTile(int index, double width, List<InputBlock> inputBlock, {Map<List<InputBlock>, int>? visited}){
                     dynamic funcBlock = inputBlock[index];
                     var funcInputBlocks;
-                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent }) uniStatFunctionInputBlocks;
-                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent }) inputBlockFunctionInputBlocks =(List<InputBlock> inBlock, int inx , { SheetFunction? parent})=> Container(color:defaultPalette.extras[1]);
+                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent,}) uniStatFunctionInputBlocks=(List<InputBlock> inBlock, int inx , { SheetFunction? parent,})=> Container(color:defaultPalette.extras[1]);
+                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent,}) inputBlockFunctionInputBlocks =(List<InputBlock> inBlock, int inx , { SheetFunction? parent,})=> Container(color:defaultPalette.extras[1]);
                     // print(inputBlock[index].function);
                     switch (funcBlock.function.runtimeType) {
                       case UniStatFunction || ColumnFunction || InputBlockFunction:
@@ -10696,7 +10696,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     }
                     ////
                     ////
-                        uniStatFunctionInputBlocks = (List<InputBlock> inBlock, int inx, {SheetFunction? parent}){
+                        uniStatFunctionInputBlocks = (List<InputBlock> inBlock, int inx, {SheetFunction? parent,}){
                           if (inx < 0 || inx >= inBlock.length) {
                             return SizedBox.shrink(
                             key: ValueKey(inx),
@@ -10745,10 +10745,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       // const SizedBox(height: 45),
                                       if (inBlock[inx].useConst)
                                       ...[
+                                        SizedBox(height:5),
                                         Container(
                                           // margin: const EdgeInsets.only(top: 10),
                                           padding: EdgeInsets.symmetric(vertical: 2),
-                                          height: (parent is UniStatFunction && (parent.func !='count')) || (parent is ColumnFunction && (parent.func !='count'))?60:32,
+                                          height: (parent is UniStatFunction && (parent.func !='count')) || (parent is ColumnFunction && (parent.func !='count'))
+                                            ? 60
+                                            :32,
                                           width: width,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(0),
@@ -10769,12 +10772,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       style: GoogleFonts.lexend(
                                                         letterSpacing: -1,
                                                         fontWeight: FontWeight.w500,
-                                                        fontSize: 18,
+                                                        fontSize:18,
                                                         color: defaultPalette.primary,
                                                       ),
                                                     ),
                                                   // the number inside the field display
                                                   if((parent is UniStatFunction && (parent.func !='count'))|| (parent is ColumnFunction && (parent.func !='count')))
+                                                  
                                                   Expanded(
                                                     flex: 4,
                                                     child: Container(
@@ -10839,6 +10843,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                               //sum cumulative and individual index
                                               if((parent is UniStatFunction && (parent.func !='count'))|| (parent is ColumnFunction && (parent.func !='count')))
+                                              
                                               Row(
                                                 children: [
 
@@ -10861,7 +10866,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       topLayerChild: Row(
                                                         children: [
                                                           const SizedBox(width: 2),
-                                                          Icon(inBlock[inx].useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size: 12, color: defaultPalette.extras[0]),
+                                                          Icon(inBlock[inx].useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size:12, color: defaultPalette.extras[0]),
                                                           
                                                         ],
                                                       ),
@@ -10869,10 +10874,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         color: defaultPalette.extras[0],
                                                         border: Border.all(color: defaultPalette.extras[0]),
                                                       ),
-                                                      depth: 2,
-                                                      subfac: 2,
-                                                      buttonHeight: 24,
-                                                      buttonWidth: 20,
+                                                      depth:2,
+                                                      subfac:2,
+                                                      buttonHeight:24,
+                                                      buttonWidth:20,
                                                       onClick: () {
                                                         setState(() {
                                                           inBlock[inx].useConst= !inBlock[inx].useConst;
@@ -10888,6 +10893,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       },
                                                     ),
                                                   ],
+                                                  // if(!isBiStat)
                                                   Expanded(
                                                     child: Container(
                                                       margin: EdgeInsets.all(2).copyWith(top:4),
@@ -10968,7 +10974,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       ],
 
                                       if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
-                                      inputBlockFunctionInputBlocks(inBlock, inx,parent : parent),
+                                      inputBlockFunctionInputBlocks(inBlock, inx,parent : parent,),
+                                      if(!inBlock[inx].useConst && inBlock[inx].function is BiStatFunction)
+                                      (inBlock[inx].function as BiStatFunction).buildSecondaryFunctionBlock(
+                                        context, 
+                                        inBlock[inx], 
+                                        selectedInputBlocks, 
+                                        width, setState, inBlock, 
+                                        inx, item, 
+                                        Offset(sWidth - (sWidth*wH2DividerPosition)-(sWidth/4),40),
+                                        sHeight-80,
+                                        buildCombinedQuillConfiguration, getItemAtPath, 
+                                        customStyleBuilder, uniStatFunctionInputBlocks, 
+                                        showPositionedTextFieldOverlay),
                                       if(!inBlock[inx].useConst 
                                       && (inBlock[inx].function is UniStatFunction||
                                       inBlock[inx].function is ColumnFunction))
@@ -10985,7 +11003,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           children:[
                                             if(inBlock[inx].isExpanded)
                                             Padding(
-                                              padding: const EdgeInsets.only(top:28.0),
+                                              padding: const EdgeInsets.only(top:9.0),
                                               child: buildFunctionTile(inx, width,inBlock, visited:visited==null?null: Map<List<InputBlock>,int>.from(visited))[0],
                                             ),
                                             AnimatedMeshGradient(
@@ -11352,7 +11370,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       ? parent.func
                                                                       : (parent as UniStatFunction).func))
                                                                       .result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()
-                                                                  :InputBlockFunction(inputBlocks:inBlock.sublist(0,inx+1), label: (parent).label).getConfigurations(buildCombinedQuillConfiguration)}',
+                                                                  :InputBlockFunction(inputBlocks:inBlock.sublist(0,inx+1), label: (parent).label).getConfigurations(buildCombinedQuillConfiguration).controller.document.toPlainText()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -11596,7 +11614,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       ],
 
                                       if(!inBlock[inx].useConst && (inBlock[inx].function is UniStatFunction || inBlock[inx].function is ColumnFunction))
-                                      uniStatFunctionInputBlocks(inBlock, inx,parent:parent ),
+                                      uniStatFunctionInputBlocks(inBlock, inx,parent:parent, ),
+                                      if(!inBlock[inx].useConst && inBlock[inx].function is BiStatFunction)
+                                      (inBlock[inx].function as BiStatFunction).buildSecondaryFunctionBlock(
+                                        context, 
+                                        inBlock[inx], 
+                                        selectedInputBlocks, 
+                                        width, setState, inBlock, 
+                                        inx, item, 
+                                        Offset(sWidth - (sWidth*wH2DividerPosition)-(sWidth/4),40),
+                                        sHeight-80,
+                                        buildCombinedQuillConfiguration, getItemAtPath, 
+                                        customStyleBuilder, uniStatFunctionInputBlocks, 
+                                        showPositionedTextFieldOverlay),
                                       if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
                                       GestureDetector(
                                         onTap:(){
@@ -11615,7 +11645,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           children:[
                                             if(inBlock[inx].isExpanded)
                                             Padding(
-                                              padding: const EdgeInsets.only(top:23.0),
+                                              padding: const EdgeInsets.only(top:9.0),
                                               child: buildFunctionTile(inx, width,inBlock,visited:visited==null?null: Map<List<InputBlock>,int>.from(visited))[0],
                                             ),
                                             AnimatedMeshGradient(
@@ -11760,7 +11790,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               ..blendMode = BlendMode.dst
                                                             ),
                                                           ),
-                                                        
                                                         Expanded(
                                                           flex:4,
                                                           child: Container(
@@ -11817,14 +11846,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       ),
                                                       child: Row(
                                                       children: [
-                                                        const SizedBox(width: 3),
-                                                        parent is InputBlockFunction
-                                                          ? Iconify(Carbon.string_text,
-                                                          size:14,
-                                                          color: defaultPalette.primary):Icon(
-                                                            (parent is ColumnFunction && parent.func == 'count' ) || (parent is UniStatFunction && parent.func =='count')
-                                                          ? TablerIcons.tallymarks
-                                                          : TablerIcons.sum,
+                                                        const SizedBox(width: 3), 
+                                                        Icon((parent is! InputBlockFunction)
+                                                          ? UniStatFunction.availableFunctions[
+                                                            (parent is ColumnFunction)?parent.func: (parent as UniStatFunction).func]: TablerIcons.function,
                                                           size:14,
                                                           color: defaultPalette.primary
                                                           ),
@@ -11839,7 +11864,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       color: defaultPalette.extras[0],
                                                                     ),
                                                                     children: [
-                                                                      
                                                                       TextSpan(
                                                                         text: '${
                                                                           parent is InputBlockFunction
@@ -11893,8 +11917,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             Positioned(
                                               top:54,
                                               child: Row(
-                                                children: [
-                                                  if (inBlock[inx].useConst !=item.id) 
+                                                children: [ 
                                                   ...[
                                                     const SizedBox(width: 3),
                                                     ElevatedLayerButton(
@@ -11996,7 +12019,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         return [ 
                           if(funcBlock.isExpanded)
                           Container(
-                            padding: EdgeInsets.only(top:57, left:0, right:0,bottom: 0),
+                            padding: EdgeInsets.only(top:57+10, left:0, right:0,bottom: 0),
                             width: width+13,
                             child: Column(
                               children: [
@@ -12096,6 +12119,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ),
                                   child: Column(
                                     children: [
+                                      SizedBox(height: 15,),
                                       //the title of function
                                       Row(
                                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -12121,33 +12145,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(width: 3),
-                                          //remove function button 
-                                          Padding(
-                                            padding: const EdgeInsets.only(top:4),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(99999),
-                                              child: Material(
-                                                color: defaultPalette.transparent,
-                                                child: InkWell(
-                                                  hoverColor: defaultPalette.primary,
-                                                  splashColor: defaultPalette.primary,
-                                                  highlightColor: defaultPalette.primary,
-                                                  onTap: () {
-                                                    setState(() {
-                                                      inputBlock.removeAt(index);
-                                                      // inputBlockExpansionList.removeAt(index);
-                                                    });
-                                                  },
-                                                  child: Icon(
-                                                    TablerIcons.x,
-                                                    size: 17,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 3),
+                                          const SizedBox(width: 8),
                                         ],
                                       ),
                                       
@@ -12265,14 +12263,51 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               });
                             },
                           ),
-                                  
+                          Positioned(
+                            left:81,
+                            child: ElevatedLayerButton(
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(5),
+                                  topLeft: Radius.circular(5),
+                                  bottomRight: Radius.circular(10),
+                                  bottomLeft: Radius.circular(10),
+                                ),
+                                animationDuration: const Duration(milliseconds: 100),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: defaultPalette.secondary,
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                topLayerChild: Row(
+                                  children: [
+                                    const SizedBox(width: 2),
+                                    Icon(funcBlock.useConst?TablerIcons.cursor_text:TablerIcons.x, size: 12, color: defaultPalette.extras[0]),
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                depth: 2,
+                                subfac: 2,
+                                buttonHeight: 24,
+                                buttonWidth: 20,
+                                onClick: () {
+                                  setState(() {
+                                    inputBlock.removeAt(index);
+                                  // inputBlockExpansionList.removeAt(index);
+                                });
+                                },
+                              ),
+                          ),
+            
                         ];
     
                       case ColumnFunction:
                         return [
                           if(funcBlock.isExpanded)
                           Container(
-                            padding: EdgeInsets.only(top:57, left:0, right:0,bottom: 0),
+                            padding: EdgeInsets.only(top:57+15, left:0, right:0,bottom: 0),
                             child: Column(
                               children: [
                                 Container(
@@ -12335,6 +12370,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ),
                                   child: Column(
                                     children: [
+                                      SizedBox(height: 15,),
                                       //the title of function
                                       Row(
                                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -12354,33 +12390,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(width: 3),
-                                          //remove function button 
-                                          Padding(
-                                            padding: const EdgeInsets.only(top:4),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(99999),
-                                              child: Material(
-                                                color: defaultPalette.transparent,
-                                                child: InkWell(
-                                                  hoverColor: defaultPalette.primary,
-                                                  splashColor: defaultPalette.primary,
-                                                  highlightColor: defaultPalette.primary,
-                                                  onTap: () {
-                                                    setState(() {
-                                                      inputBlock.removeAt(index);
-                                                      // inputBlockExpansionList.removeAt(index);
-                                                    });
-                                                  },
-                                                  child: Icon(
-                                                    TablerIcons.x,
-                                                    size: 17,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 3),
+                                          const SizedBox(width: 8),
                                         ],
                                       ),
                                       
@@ -12534,14 +12544,51 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               });
                             },
                           ),
-                          
+                          Positioned(
+                            left:81,
+                            child: ElevatedLayerButton(
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(5),
+                                  topLeft: Radius.circular(5),
+                                  bottomRight: Radius.circular(10),
+                                  bottomLeft: Radius.circular(10),
+                                ),
+                                animationDuration: const Duration(milliseconds: 100),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: defaultPalette.secondary,
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                topLayerChild: Row(
+                                  children: [
+                                    const SizedBox(width: 2),
+                                    Icon(funcBlock.useConst?TablerIcons.cursor_text:TablerIcons.x, size: 12, color: defaultPalette.extras[0]),
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                depth: 2,
+                                subfac: 2,
+                                buttonHeight: 24,
+                                buttonWidth: 20,
+                                onClick: () {
+                                  setState(() {
+                                    inputBlock.removeAt(index);
+                                  // inputBlockExpansionList.removeAt(index);
+                                });
+                                },
+                              ),
+                          ),
+    
                         ];
                       
                       case InputBlockFunction:
                         return [
                           if(funcBlock.isExpanded)
                           Container(
-                            padding: EdgeInsets.only(top:57, left:0, right:0,bottom: 0),
+                            padding: EdgeInsets.only(top:57+15, left:0, right:0,bottom: 0),
                             child: Column(
                               children: [
                                 Container(
@@ -12604,6 +12651,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ),
                                   child: Column(
                                     children: [
+                                      SizedBox(height: 15,),
                                       //the title of function
                                       Row(
                                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -12624,33 +12672,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(width: 3),
-                                          //remove function button 
-                                          Padding(
-                                            padding: const EdgeInsets.only(top:4),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(99999),
-                                              child: Material(
-                                                color: defaultPalette.transparent,
-                                                child: InkWell(
-                                                  hoverColor: defaultPalette.primary,
-                                                  splashColor: defaultPalette.primary,
-                                                  highlightColor: defaultPalette.primary,
-                                                  onTap: () {
-                                                    setState(() {
-                                                      inputBlock.removeAt(index);
-                                                      // inputBlockExpansionList.removeAt(index);
-                                                    });
-                                                  },
-                                                  child: Icon(
-                                                    TablerIcons.x,
-                                                    size: 17,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 3),
+                                          const SizedBox(width: 8),
+                                          
                                         ],
                                       ),
                                       
@@ -12813,7 +12836,44 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 },
                               ),
                           ),
-                        
+                          Positioned(
+                            left:funcBlock.id !=item.id? 100:81,
+                            child: ElevatedLayerButton(
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(5),
+                                  topLeft: Radius.circular(5),
+                                  bottomRight: Radius.circular(10),
+                                  bottomLeft: Radius.circular(10),
+                                ),
+                                animationDuration: const Duration(milliseconds: 100),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: defaultPalette.secondary,
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                topLayerChild: Row(
+                                  children: [
+                                    const SizedBox(width: 2),
+                                    Icon(funcBlock.useConst?TablerIcons.cursor_text:TablerIcons.x, size: 12, color: defaultPalette.extras[0]),
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                depth: 2,
+                                subfac: 2,
+                                buttonHeight: 24,
+                                buttonWidth: 20,
+                                onClick: () {
+                                  setState(() {
+                                    inputBlock.removeAt(index);
+                                  // inputBlockExpansionList.removeAt(index);
+                                });
+                                },
+                              ),
+                          ),
+    
                         ];
                       
                       case BiStatFunction:

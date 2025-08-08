@@ -59,19 +59,22 @@ class UniStatFunctionAdapter extends TypeAdapter<UniStatFunction> {
           .map((dynamic e) => (e as Map).cast<String, dynamic>())
           .toList(),
       func: fields[4] as String,
+      formatter: (fields[5] as Map?)?.cast<String, dynamic>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, UniStatFunction obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(2)
       ..write(obj.inputBlocks)
       ..writeByte(3)
       ..write(obj.resultJson)
       ..writeByte(4)
       ..write(obj.func)
+      ..writeByte(5)
+      ..write(obj.formatter)
       ..writeByte(0)
       ..write(obj.returnType)
       ..writeByte(1)

@@ -22,6 +22,8 @@ class InputBlock {
   SheetFunction? function;
   @HiveField(5)
   bool useConst;
+  @HiveField(6)
+  int lockMode;
 
   InputBlock( {
     required this.indexPath,
@@ -30,6 +32,7 @@ class InputBlock {
     this.function,
     this.isExpanded = false,
     this.useConst = true,
+    this.lockMode = 0,
   });
 
   @override
@@ -44,7 +47,8 @@ class InputBlock {
         'id': id,
         'isExpanded': isExpanded,
         'function': function?.toMap(), // null-safe
-        'useConst': useConst
+        'useConst': useConst,
+        'lockMode': lockMode,
       };
       print(map);
     return map;
@@ -64,6 +68,7 @@ class InputBlock {
           ? SheetFunction.fromMap(map['function'])
           : null,
       useConst: map['useConst'],
+      lockMode: map['lockMode'],
     );
   }
 
@@ -79,6 +84,7 @@ class InputBlock {
     bool? isExpanded,
     SheetFunction? function,
     bool? useConst,
+    int? lockMode, 
   }) {
     return InputBlock(
       indexPath:indexPath ?? this.indexPath,
@@ -87,6 +93,7 @@ class InputBlock {
       isExpanded:isExpanded ?? this.isExpanded,
       function:function ?? this.function,
       useConst:useConst ?? this.useConst,
+      lockMode: lockMode ?? this.lockMode,
     );
   }
 }
