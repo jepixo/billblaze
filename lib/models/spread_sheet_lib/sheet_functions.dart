@@ -2,10 +2,11 @@
 
 import 'dart:convert';
 import 'dart:math';
-
+import 'package:intl/intl.dart';
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/components/elevated_button.dart';
 import 'package:billblaze/models/layout_model.dart';
+import 'package:billblaze/util/numeric_input_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
@@ -81,10 +82,14 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
   @HiveField(4)
   String func;
 
+  @HiveField(5)
+  Map<String, dynamic>? formatter;
+
   UniStatFunction({
     required this.inputBlocks,
     this.resultJson = const [],
     required this.func,
+    this.formatter,
   }) : super(1, 'unistat');
 
   // ──────────────────────────────
@@ -223,6 +228,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
     }
 
     // Preserve styling in resultJson
+    newText = applyFormatting(newText);
     final oldDelta = Delta.fromJson(resultJson);
     final oldOps = oldDelta.toList();
     final newDelta = _applyStylingFromOldOps(oldOps, newText);
@@ -440,7 +446,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
   }) {
     return QuillEditorConfigurations(
       controller: QuillController(
-        document: result(getItemAtPath, buildCombinedQuillConfiguration), 
+        document: (result(getItemAtPath, buildCombinedQuillConfiguration)), 
         selection: TextSelection.collapsed(offset: 0),
         onReplaceText: (_, __, ___) {
           // setState(() {});
@@ -459,6 +465,11 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
       );
   }
   
+  String applyFormatting(dynamic number){
+    final numberFormatter = NumberFormatUtils.fromMap(formatter??NumberFormatUtils.toMap(NumberFormat()));
+    var parsed = double.tryParse(number) ?? 0.0;
+    return numberFormatter.format(parsed);
+  }
   
   @override
   Map<String, dynamic> toMap() => {
@@ -467,7 +478,8 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
         'name': name,
         'inputBlocks': inputBlocks.map((e) => e.toMap()).toList(),
         'resultJson': resultJson,
-        'func': func
+        'func': func,
+        'formatter': formatter,
       };
 
   factory UniStatFunction.fromMap(Map<String, dynamic> map) => UniStatFunction(
@@ -476,6 +488,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
             .toList(),
         resultJson:  map['resultJson'],
         func: map['func'],
+        formatter: map['formatter'],
       );
   
   static final Map<String, IconData> availableFunctions = {
@@ -487,9 +500,9 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
     'min': TablerIcons.arrow_down,
     'max': TablerIcons.arrow_up, 
     'range': TablerIcons.arrows_horizontal,
-    'range ratio': TablerIcons.slash,
+    'range ratio': TablerIcons.grid_goldenratio,
     'product': TablerIcons.x,
-    'standard deviation': TablerIcons.chart_donut,
+    'standard deviation': TablerIcons.chart_sankey,
     'variance': TablerIcons.chart_arcs,
     'mean absolute deviation': TablerIcons.wave_saw_tool, // Mean Absolute Deviation
     'skewness': TablerIcons.arrow_curve_right,
@@ -497,8 +510,8 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
     'geometric mean': TablerIcons.circle_letter_g,
     'harmonic mean': TablerIcons.circle_letter_h,
     'quadratic mean': TablerIcons.circle_letter_q,
-    'sum of cubes': TablerIcons.cube,
-    'root mean cube': TablerIcons.cube_off,
+    'sum of cubes': TablerIcons.cube_plus,
+    'root mean cube': TablerIcons.cube_unfolded,
     'sum of squares': TablerIcons.bolt,
     'quartile 1': TablerIcons.number_1_small,
     'quartile 2': TablerIcons.number_2_small,
@@ -595,7 +608,16 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
   @HiveField(5)
   List<Map<String, dynamic>> resultJson =[];
 
-  ColumnFunction({required this.inputBlocks, required this.func, required this.axisLabel,this.resultJson = const []}) : super(0, 'column');
+  @HiveField(6)
+  bool lockMode = false;
+
+  ColumnFunction({
+    required this.inputBlocks, 
+    required this.func, 
+    required this.axisLabel,
+    this.resultJson = const [],
+    this.lockMode = false
+    }) : super(0, 'column');
 
   @override
   dynamic result(Function getItemAtPath,
@@ -763,6 +785,8 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
 
   @HiveField(5)
   String func;
+
+  bool isX = true;
 
   BiStatFunction({
     required this.inputBlocksX,
@@ -1044,10 +1068,10 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
     'growth rate': TablerIcons.trending_up,
     'exponent': TablerIcons.superscript,
     'log ratio': TablerIcons.math_function,
-    'weighted average': TablerIcons.sum,
-    'proportionality':TablerIcons.percentage,
-    'change percentage': TablerIcons.percentage,
-    'weighted percentage': TablerIcons.percentage,
+    'weighted average': TablerIcons.weight,
+    'proportionality':TablerIcons.protocol,
+    'change percentage': TablerIcons.switch_3,
+    'weighted percentage': TablerIcons.scale_outline,
   };
 
   static const Map<String, List<String>> functionCategories = {
@@ -1094,6 +1118,9 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
     Function customStyleBuilder,
     Function uniStatFunctionInputBlocks,
     Function showPositionedTextFieldOverlay,
+    {
+      bool isSecondary = false,
+    }
 
     ){
       final (valuesX, countX) = _collectValues(inputBlocksX, getItemAtPath, buildCombinedQuillConfiguration,
@@ -1129,9 +1156,9 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
               ),
               child: Column(
                 children: [
+                  SizedBox(height: 15,),
                   //the title of function
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
                         child: Text(
@@ -1148,11 +1175,9 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                           ),
                         ),
                       ),
-                      const SizedBox(width:10),
-                      
+                      const SizedBox(width:8),
                     ],
                   ),
-                  SizedBox(height: 5,),
                   //sum/count and index
 
                   Row(
@@ -1253,26 +1278,14 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                     ),
                     //reorderable for functioninputblockchildren
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         //num and sumfold of valuesX
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('  num',
-                              textAlign: TextAlign.end,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.lexend(
-                                letterSpacing: -1,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 14,
-                                height: 1,
-                                color: defaultPalette.extras[0],
-                              ),
-                              ),
-                               Row(
+                              Row(
                                  children: [
                                    Expanded(
                                      child: Container(
@@ -1298,6 +1311,31 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                    ),
                                  ],
                                ),
+                               Row(
+                                children: [
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setStateCallBack((){
+                                          isX = true;
+                                        });
+                                      },
+                                      child: Text('  X',
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.lexend(
+                                        letterSpacing: -1,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
+                                        height: 1,
+                                        color:isX? defaultPalette.tertiary: defaultPalette.extras[0],
+                                      ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                               
                             
                             ],
@@ -1314,25 +1352,6 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Row(
-                                children: [
-                                  Expanded(
-                                    child: Text('percent',
-                                    textAlign: TextAlign.end,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.lexend(
-                                      letterSpacing: -1,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14,
-                                      height: 1,
-                                      color: defaultPalette.extras[0],
-                                    ),
-                                    ),
-                                  ),
-                                  SizedBox(width:5)
-                                ],
-                              ),
-                               Row(
                                  children: [
                                    Expanded(
                                      child: Container(
@@ -1358,6 +1377,32 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                    ),
                                  ],
                                ),
+                               Row(
+                                children: [
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setStateCallBack((){
+                                          isX = false;
+                                        });
+                                      },
+                                      child: Text('Y',
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.lexend(
+                                        letterSpacing: -1,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
+                                        height: 1,
+                                        color: !isX? defaultPalette.tertiary:defaultPalette.extras[0],
+                                      ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width:5)
+                                ],
+                              ),
                             
                             ],
                           ),
@@ -1365,6 +1410,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                       ],
                     ),
                   ),
+                  SizedBox(height: 5,),
                   //the reorderable tiles for x and y 
                   Container(
                     width: width,
@@ -1373,7 +1419,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                       // border:Border.all()
                       borderRadius: BorderRadius.circular(10)
                     ),
-                    padding: EdgeInsets.symmetric(horizontal: 3),
+                    // padding: EdgeInsets.symmetric(horizontal: 3),
                     //reorderable for functioninputblockchildren
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1381,7 +1427,10 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                         //reorderable for X
                         Expanded(
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8).copyWith(
+                              topLeft: Radius.circular(0),
+                              topRight: Radius.circular(0),
+                            ),
                             child: Column(
                               children: [
                                 ScrollConfiguration(
@@ -1396,21 +1445,21 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                         scrollDirection: Axis.vertical,
                                         scrollController:controller,
                                         physics:physics,
-                                        itemCount: inputBlocksX.length,
+                                        itemCount:isX? inputBlocksX.length:inputBlocksY.length,
                                         onReorder: (oldIndex, newIndex) {
                                           setStateCallBack(() {
                                             if (newIndex > oldIndex) {
                                               newIndex -= 1;
                                             }
-                                            final sheetItem = inputBlocksX.removeAt(oldIndex);
+                                            final sheetItem = (isX? inputBlocksX: inputBlocksY).removeAt(oldIndex);
                                             // buildlistw
-                                            inputBlocksX.insert(newIndex, sheetItem);
+                                            (isX? inputBlocksX:inputBlocksY).insert(newIndex, sheetItem);
                                           });
                                         },
                                         proxyDecorator: (child, index, animation) {
                                           return Container(child: child); },
                                         itemBuilder: (context, inx) {
-                                            return uniStatFunctionInputBlocks(inputBlocksX, inx, parent:UniStatFunction(inputBlocks: inputBlocksY, func: 'sum') );
+                                            return uniStatFunctionInputBlocks((isX? inputBlocksX: inputBlocksY), inx, parent:UniStatFunction(inputBlocks: (isX? inputBlocksX: inputBlocksY), func: 'sum'), );
                                             
                                         });
                                       }
@@ -1418,7 +1467,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                   ),
                                 //add field or function inside the expansion of a function tile
                                 Material(
-                                  color: defaultPalette.extras[0],
+                                  color: defaultPalette.primary,
                                   child: InkWell(
                                     hoverColor: defaultPalette.primary.withOpacity(0.08),
                                     splashColor: defaultPalette.primary.withOpacity(0.08),
@@ -1428,17 +1477,16 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                     context:context,
                                     position:overlayPosition,
                                     width: width,
-                                    inputBlocks: inputBlocksX,
+                                    inputBlocks: (isX? inputBlocksX: inputBlocksY),
                                     height: overlayHeight,
                                     );
                                   },
                                     child: Container(
                                       width:width,
-                                      padding: const EdgeInsets.symmetric(vertical: 3.0),
                                       child: Icon(
                                       TablerIcons.plus,
                                       size: 18,
-                                      color:defaultPalette.primary
+                                      color:defaultPalette.extras[0]
                                     ),
                                     ),
                                   ),
@@ -1448,84 +1496,11 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                             ),
                           ),
                         ),
-                        //% icon in between
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal:3),
-                          child: Icon(TablerIcons.percentage,size:15, color: defaultPalette.transparent,),
-                        ),
-                        //reorderable for Y
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Column(
-                              children: [
-                                ScrollConfiguration(
-                                  behavior: ScrollBehavior().copyWith(scrollbars: false),
-                                  child: DynMouseScroll(
-                                    durationMS: 500,
-                                    scrollSpeed: 1,
-                                    builder: (context, controller, physics) {
-                                      return ReorderableListView.builder(
-                                        shrinkWrap: true,
-                                        buildDefaultDragHandles: false,
-                                        scrollDirection: Axis.vertical,
-                                        scrollController:controller,
-                                        physics:physics,
-                                        itemCount: inputBlocksY.length,
-                                        onReorder: (oldIndex, newIndex) {
-                                          setStateCallBack(() {
-                                            if (newIndex > oldIndex) {
-                                              newIndex -= 1;
-                                            }
-                                            final sheetItem = inputBlocksY.removeAt(oldIndex);
-                                            // buildlistw
-                                            inputBlocksY.insert(newIndex, sheetItem);
-                                          });
-                                        },
-                                        proxyDecorator: (child, index, animation) {
-                                          return Container(child: child); },
-                                          itemBuilder: (context, inx) {
-                                            return uniStatFunctionInputBlocks(inputBlocksY, inx, parent:UniStatFunction(inputBlocks: inputBlocksY, func: 'sum') );
-                                            
-                                        });
-                                      }
-                                    ),
-                                  ),
-                                //add field or function inside the expansion of a function tile
-                                Material(
-                                  color: defaultPalette.extras[0],
-                                  child: InkWell(
-                                    hoverColor: defaultPalette.primary.withOpacity(0.08),
-                                    splashColor: defaultPalette.primary.withOpacity(0.08),
-                                    highlightColor: defaultPalette.primary.withOpacity(0.08),
-                                    onTap: () {
-                                    showPositionedTextFieldOverlay(
-                                    context:context,
-                                    position:overlayPosition,
-                                    width: width,
-                                    inputBlocks: inputBlocksY,
-                                    height: overlayHeight,
-                                    );
-                                  },
-                                    child: Container(
-                                      width:width,
-                                      padding: const EdgeInsets.symmetric(vertical: 3.0),
-                                      child: Icon(
-                                      TablerIcons.plus,
-                                      size: 18,
-                                      color:defaultPalette.primary
-                                    ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                       
                       ],
                     ),
                   ),
-                  SizedBox(height: 4,),
+                  // SizedBox(height: 4,),
                   ],
                   
                   ],
@@ -1625,6 +1600,494 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                       
   }
   
+  Widget buildSecondaryFunctionBlock(
+    BuildContext context,
+    InputBlock funcBlock,
+    List<InputBlock>? selectedInputBlocks,
+    double width,
+    Function setStateCallBack,
+    List<InputBlock> inputBlock,
+    int index,
+    SheetText item,
+    Offset overlayPosition,
+    double overlayHeight,
+    Function buildCombinedQuillConfiguration,
+    Function getItemAtPath,
+    Function customStyleBuilder,
+    Function uniStatFunctionInputBlocks,
+    Function showPositionedTextFieldOverlay,
+    {
+      bool isSecondary = false,
+    }
+
+    ){
+      final (valuesX, countX) = _collectValues(inputBlocksX, getItemAtPath, buildCombinedQuillConfiguration,
+        );
+    final (valuesY, countY) = _collectValues(inputBlocksY, getItemAtPath, buildCombinedQuillConfiguration,
+        );
+    return 
+      AnimatedMeshGradient(
+          colors: [
+              // defaultPalette.extras[0],
+              defaultPalette.primary,
+              defaultPalette.primary,
+              defaultPalette.primary,
+              selectedInputBlocks ==inputBlocksX? defaultPalette.extras[0]: defaultPalette.primary,
+            ],
+          options: AnimatedMeshGradientOptions(
+              amplitude: 5,
+              grain: 0.1,
+              frequency: 15,
+              
+            ),
+        child: Container(
+          width: width,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8).copyWith(
+              bottomRight: Radius.circular(funcBlock.isExpanded?0:8),
+              bottomLeft: Radius.circular(funcBlock.isExpanded?0:8) 
+            ),
+          ),
+          child: Column(
+            children: [
+              SizedBox(height: 5,),
+              //the title of function
+              Row(
+                children: [
+                   const SizedBox(width: 4),
+                  Text(
+                    index.toString(),
+                    textAlign: TextAlign.end,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.lexend(
+                      letterSpacing: -1,
+                      fontWeight: FontWeight.w500,
+                      fontSize:18,
+                      color: defaultPalette.extras[0],
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      func,
+                      textAlign: TextAlign.end,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.lexend(
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18,
+                        height: 1,
+                        color: defaultPalette.extras[0],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width:8),
+                ],
+              ),
+              //sum/count and index
+            
+              Row(
+                children: [
+                   const SizedBox(width: 2),
+                  ElevatedLayerButton(
+                  isTapped: funcBlock.isExpanded,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(5),
+                    topLeft: Radius.circular(5),
+                    bottomRight: Radius.circular(10),
+                    bottomLeft: Radius.circular(10),
+                  ),
+                  animationDuration: const Duration(milliseconds: 100),
+                  animationCurve: Curves.ease,
+                  topDecoration: BoxDecoration(
+                    color: defaultPalette.primary,
+                    border: Border.all(color: defaultPalette.extras[0]),
+                  ),
+                  topLayerChild: Row(
+                    children: [
+                      Expanded(child: Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0])),
+                    ],
+                  ),
+                  baseDecoration: BoxDecoration(
+                    color: defaultPalette.extras[0],
+                    border: Border.all(color: defaultPalette.extras[0]),
+                  ),
+                  depth: 2,
+                  subfac: 2,
+                  buttonHeight: 24,
+                  buttonWidth: 20,
+                  onClick: () {
+                    setStateCallBack(() {
+                      // inputBlockExpansionList[index] = !// inputBlockExpansionList[index];
+                      inputBlock[index].isExpanded =!inputBlock[index].isExpanded;
+                    });
+                  },
+                ),
+                   const SizedBox(width: 2),
+                  ElevatedLayerButton(
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(5),
+                        topLeft: Radius.circular(5),
+                        bottomRight: Radius.circular(10),
+                        bottomLeft: Radius.circular(10),
+                      ),
+                      animationDuration: const Duration(milliseconds: 100),
+                      animationCurve: Curves.ease,
+                      topDecoration: BoxDecoration(
+                        color: defaultPalette.secondary,
+                        border: Border.all(color: defaultPalette.extras[0]),
+                      ),
+                      topLayerChild: Row(
+                        children: [
+                          const SizedBox(width: 2),
+                          Icon(funcBlock.useConst?TablerIcons.cursor_text:TablerIcons.x, size: 12, color: defaultPalette.extras[0]),
+                          
+                        ],
+                      ),
+                      baseDecoration: BoxDecoration(
+                        color: defaultPalette.extras[0],
+                        border: Border.all(color: defaultPalette.extras[0]),
+                      ),
+                      depth: 2,
+                      subfac: 2,
+                      buttonHeight: 24,
+                      buttonWidth: 20,
+                      onClick: () {
+                        setStateCallBack(() {
+                        inputBlock.removeAt(index);
+                        // inputBlockExpansionList.removeAt(index);
+                      });
+                      },
+                    ),
+          
+                  Expanded(
+                    child: Container(
+                      margin: EdgeInsets.all(2),
+                      padding: EdgeInsets.all(1),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        color: defaultPalette.extras[0],
+                      ),
+                      child: Row(
+                      children: [
+                        const SizedBox(width: 3),
+                        Icon(BiStatFunction.availableFunctions[func], color:defaultPalette.primary, size:14),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: GoogleFonts.lexend(
+                                letterSpacing: -1,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                                color: defaultPalette.extras[0],
+                              ),
+                              children: [
+                                // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                TextSpan(
+                                  text: getConfigurations(getItemAtPath,buildCombinedQuillConfiguration, setStateCallBack, customStyleBuilder).controller.document.toPlainText(),
+                                  style: TextStyle(color:defaultPalette.primary),
+                                ),
+                              ],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: GoogleFonts.lexend(
+                                letterSpacing: -1,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                                color: defaultPalette.extras[0],
+                              ),
+                              children: [
+                                TextSpan(text: 'xInx: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                TextSpan(
+                                  text: '0-${(inputBlocksX.length - 1).clamp(0, double.infinity)}',
+                                  style: TextStyle(color:defaultPalette.primary),
+                                ),
+                              ],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                         Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: GoogleFonts.lexend(
+                                letterSpacing: -1,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                                color: defaultPalette.extras[0],
+                              ),
+                              children: [
+                                TextSpan(text: 'yInx: ',style: TextStyle(color: Color(0xff3993DD)),),
+                                TextSpan(
+                                  text: '0-${(inputBlocksY.length - 1).clamp(0, double.infinity)}',
+                                  style: TextStyle(color:defaultPalette.primary),
+                                ),
+                              ],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                      ],
+                    ),
+                    ),
+                  ),
+                
+                ],
+              ),
+              SizedBox(height: 5,),
+              if(funcBlock.isExpanded)
+              ...[
+              //the label tiles for folded vsalues of x and y
+              Container(
+                width: width,
+                decoration:BoxDecoration(
+                  color:defaultPalette.transparent,
+                  // border:Border.all()
+                ),
+                //reorderable for functioninputblockchildren
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    //num and sumfold of valuesX
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                             children: [
+                               Expanded(
+                                 child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: double.tryParse(valuesX.fold<double>(0, (a, b) => a + b).toString()) ==null? Color(0xffFF7477) :defaultPalette.secondary,
+                                  ),
+                                  padding: EdgeInsets.symmetric(horizontal:4),
+                                  margin: EdgeInsets.all(4).copyWith(bottom: 4),
+                                  child: Text(
+                                    valuesX.fold<double>(0, (a, b) => a + b).toString(),
+                                      textAlign: TextAlign.start,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.lexend(
+                                        letterSpacing: -1,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
+                                        color: defaultPalette.extras[0],
+                                      ),
+                                    ),
+                                ),
+                               ),
+                             ],
+                           ),
+                           Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setStateCallBack((){
+                                      isX = true;
+                                    });
+                                  },
+                                  child: Text('  X',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.lexend(
+                                    letterSpacing: -1,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
+                                    height: 1,
+                                    color:isX? defaultPalette.tertiary: defaultPalette.extras[0],
+                                  ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          
+                        
+                        ],
+                      ),
+                    ),
+                    //% icon in between
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Icon(TablerIcons.percentage,size:15),
+                    ),
+                    //percent and sumfold of valuesY
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Row(
+                             children: [
+                               Expanded(
+                                 child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: double.tryParse(valuesY.fold<double>(0, (a, b) => a + b).toString()) ==null? Color(0xffFF7477) :defaultPalette.secondary,
+                                  ),
+                                  padding: EdgeInsets.symmetric(horizontal:4),
+                                  margin: EdgeInsets.all(4).copyWith(bottom: 4),
+                                  child: Text(
+                                      valuesY.fold<double>(0, (a, b) => a + b).toString(),
+                                      textAlign: TextAlign.end,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.lexend(
+                                        letterSpacing: -1,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 14,
+                                        color: defaultPalette.extras[0],
+                                    ),
+                                  ),
+                                ),
+                               ),
+                             ],
+                           ),
+                           Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setStateCallBack((){
+                                      isX = false;
+                                    });
+                                  },
+                                  child: Text('Y',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.lexend(
+                                    letterSpacing: -1,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
+                                    height: 1,
+                                    color: !isX? defaultPalette.tertiary:defaultPalette.extras[0],
+                                  ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width:5)
+                            ],
+                          ),
+                        
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 5,),
+              //the reorderable tiles for x and y 
+              Container(
+                width: width,
+                decoration:BoxDecoration(
+                  color:defaultPalette.transparent,
+                  // border:Border.all()
+                  borderRadius: BorderRadius.circular(10)
+                ),
+                // padding: EdgeInsets.symmetric(horizontal: 3),
+                //reorderable for functioninputblockchildren
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    //reorderable for X
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8).copyWith(
+                          topLeft: Radius.circular(0),
+                          topRight: Radius.circular(0),
+                        ),
+                        child: Column(
+                          children: [
+                            ScrollConfiguration(
+                              behavior: ScrollBehavior().copyWith(scrollbars: false),
+                              child: DynMouseScroll(
+                                durationMS: 500,
+                                scrollSpeed: 1,
+                                builder: (context, controller, physics) {
+                                  return ReorderableListView.builder(
+                                    shrinkWrap: true,
+                                    buildDefaultDragHandles: false,
+                                    scrollDirection: Axis.vertical,
+                                    scrollController:controller,
+                                    physics:physics,
+                                    itemCount:isX? inputBlocksX.length:inputBlocksY.length,
+                                    onReorder: (oldIndex, newIndex) {
+                                      setStateCallBack(() {
+                                        if (newIndex > oldIndex) {
+                                          newIndex -= 1;
+                                        }
+                                        final sheetItem = (isX? inputBlocksX: inputBlocksY).removeAt(oldIndex);
+                                        // buildlistw
+                                        (isX? inputBlocksX:inputBlocksY).insert(newIndex, sheetItem);
+                                      });
+                                    },
+                                    proxyDecorator: (child, index, animation) {
+                                      return Container(child: child); },
+                                    itemBuilder: (context, inx) {
+                                        return uniStatFunctionInputBlocks((isX? inputBlocksX: inputBlocksY), inx, parent:UniStatFunction(inputBlocks: (isX? inputBlocksX: inputBlocksY), func: 'sum'), );
+                                        
+                                    });
+                                  }
+                                ),
+                              ),
+                            //add field or function inside the expansion of a function tile
+                            Material(
+                              color: defaultPalette.primary,
+                              child: InkWell(
+                                hoverColor: defaultPalette.primary.withOpacity(0.08),
+                                splashColor: defaultPalette.primary.withOpacity(0.08),
+                                highlightColor: defaultPalette.primary.withOpacity(0.08),
+                                onTap: () {
+                                showPositionedTextFieldOverlay(
+                                context:context,
+                                position:overlayPosition,
+                                width: width,
+                                inputBlocks: (isX? inputBlocksX: inputBlocksY),
+                                height: overlayHeight,
+                                );
+                              },
+                                child: Container(
+                                  width:width,
+                                  child: Icon(
+                                  TablerIcons.plus,
+                                  size: 18,
+                                  color:defaultPalette.extras[0]
+                                ),
+                                ),
+                              ),
+                            ),
+                            
+                          ],
+                        ),
+                      ),
+                    ),
+                   
+                  ],
+                ),
+              ),
+              // SizedBox(height: 4,),
+              ],
+              
+              ],
+          ),
+        ),
+      );
+                      
+  }
   
 
 }

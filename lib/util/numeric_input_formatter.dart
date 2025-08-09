@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 class NumericInputFormatter extends TextInputFormatter {
   final double? maxValue; // Maximum allowed numeric value (optional)
@@ -78,5 +79,64 @@ class NumericInputFormatter extends TextInputFormatter {
       text: formatted,
       selection: TextSelection.collapsed(offset: formatted.length),
     );
+  }
+}
+
+
+class NumberFormatUtils {
+  static Map<String, dynamic> toMap(NumberFormat format) {
+    final Map<String, dynamic> formatMap = {
+      'type': _detectFormatType(format),
+      'locale': format.locale,
+    };
+
+    if (format is NumberFormat) {
+      try {
+        // This will throw if pattern isn't accessible; catch it silently
+        formatMap['pattern'] = format.symbols.DECIMAL_SEP; // placeholder
+      } catch (_) {}
+    }
+
+    if (format is NumberFormat) {
+      // For currency
+      if (format.currencyName != null || format.currencySymbol != null) {
+        formatMap['currencySymbol'] = format.currencySymbol;
+        formatMap['decimalDigits'] = format.decimalDigits;
+      }
+    }
+
+    return formatMap;
+  }
+
+  static NumberFormat fromMap(Map<String, dynamic> map) {
+    final type = map['type'] as String? ?? 'decimal';
+    final locale = map['locale'] as String?;
+    final currencySymbol = map['currencySymbol'] as String?;
+    final decimalDigits = map['decimalDigits'] as int?;
+
+    switch (type) {
+      case 'currency':
+        return NumberFormat.currency(
+          locale: locale,
+          symbol: currencySymbol,
+          decimalDigits: decimalDigits,
+        );
+      case 'percent':
+        return NumberFormat.percentPattern(locale);
+      case 'compact':
+        return NumberFormat.compact(locale: locale);
+      case 'decimal':
+      default:
+        return NumberFormat.decimalPattern(locale);
+    }
+  }
+
+  static String _detectFormatType(NumberFormat format) {
+    final name = format.toString().toLowerCase();
+
+    if (name.contains('currency')) return 'currency';
+    if (name.contains('percent')) return 'percent';
+    if (name.contains('compact')) return 'compact';
+    return 'decimal';
   }
 }

@@ -3673,7 +3673,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                           ),
                                                                           child: GestureDetector(
                                                                             onTap: () {
-                                                                              if ((item.id != 'yo' || item.id != '') ) {
+                                                                              if ((item.id != 'yo' && item.id != '' && !item.parentId.startsWith('TB-')) ) {
                                                                                 
                                                                                 if (label.name !='itemSheet' && label.indexPath.index ==-951) {
                                                                                   setState(() {
@@ -7604,8 +7604,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             MenuItem(
               label: 'delete',
               icon: TablerIcons.trash,
-              hoverColor: defaultPalette.primary.withOpacity(0.8),
+              hoverColor: defaultPalette.primary.withOpacity(0.1),
+              unfocusedColor: defaultPalette.primary.withOpacity(0.1),
               style: GoogleFonts.lexend(
+                color: defaultPalette.extras[0],
                 letterSpacing: -1,
                 fontSize: 12
               ),
@@ -7633,7 +7635,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       blurRadius: 2,
                     )
                   ],
-                  color: defaultPalette.extras[0],
+                  color: defaultPalette.primary,
                   borderRadius:
                       BorderRadius.circular(
                           10)),
@@ -10484,11 +10486,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     ),
                                                     const SizedBox(height: 10),
                                                     Expanded(child: buildOrganizedSheetTextList(filteredList, inputBlocks, oWidth)),
+                                                    
+                                                    mathFunctionsLibrary(width, isOverlay:true,height:oHeight, inputBlocks: inputBlocks),
                                                   ],
                                                 ),
                                               ),
                                             ),
                                           ),
+                                          
                                         ],
                                       ),
                                     ),
@@ -10675,8 +10680,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   List<Widget> buildFunctionTile(int index, double width, List<InputBlock> inputBlock, {Map<List<InputBlock>, int>? visited}){
                     dynamic funcBlock = inputBlock[index];
                     var funcInputBlocks;
-                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent }) uniStatFunctionInputBlocks;
-                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent }) inputBlockFunctionInputBlocks =(List<InputBlock> inBlock, int inx , { SheetFunction? parent})=> Container(color:defaultPalette.extras[1]);
+                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent,}) uniStatFunctionInputBlocks=(List<InputBlock> inBlock, int inx , { SheetFunction? parent,})=> Container(color:defaultPalette.extras[1]);
+                    Widget Function(List<InputBlock> inBlock, int inx, { SheetFunction? parent,}) inputBlockFunctionInputBlocks =(List<InputBlock> inBlock, int inx , { SheetFunction? parent,})=> Container(color:defaultPalette.extras[1]);
                     // print(inputBlock[index].function);
                     switch (funcBlock.function.runtimeType) {
                       case UniStatFunction || ColumnFunction || InputBlockFunction:
@@ -10696,7 +10701,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     }
                     ////
                     ////
-                        uniStatFunctionInputBlocks = (List<InputBlock> inBlock, int inx, {SheetFunction? parent}){
+                        uniStatFunctionInputBlocks = (List<InputBlock> inBlock, int inx, {SheetFunction? parent,}){
                           if (inx < 0 || inx >= inBlock.length) {
                             return SizedBox.shrink(
                             key: ValueKey(inx),
@@ -10745,10 +10750,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       // const SizedBox(height: 45),
                                       if (inBlock[inx].useConst)
                                       ...[
+                                        SizedBox(height:5),
                                         Container(
                                           // margin: const EdgeInsets.only(top: 10),
                                           padding: EdgeInsets.symmetric(vertical: 2),
-                                          height: (parent is UniStatFunction && (parent.func !='count')) || (parent is ColumnFunction && (parent.func !='count'))?60:32,
+                                          height: (parent is UniStatFunction && (parent.func !='count')) || (parent is ColumnFunction && (parent.func !='count'))
+                                            ? 60
+                                            :32,
                                           width: width,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(0),
@@ -10769,12 +10777,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       style: GoogleFonts.lexend(
                                                         letterSpacing: -1,
                                                         fontWeight: FontWeight.w500,
-                                                        fontSize: 18,
+                                                        fontSize:18,
                                                         color: defaultPalette.primary,
                                                       ),
                                                     ),
                                                   // the number inside the field display
                                                   if((parent is UniStatFunction && (parent.func !='count'))|| (parent is ColumnFunction && (parent.func !='count')))
+                                                  
                                                   Expanded(
                                                     flex: 4,
                                                     child: Container(
@@ -10839,6 +10848,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                               //sum cumulative and individual index
                                               if((parent is UniStatFunction && (parent.func !='count'))|| (parent is ColumnFunction && (parent.func !='count')))
+                                              
                                               Row(
                                                 children: [
 
@@ -10861,7 +10871,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       topLayerChild: Row(
                                                         children: [
                                                           const SizedBox(width: 2),
-                                                          Icon(inBlock[inx].useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size: 12, color: defaultPalette.extras[0]),
+                                                          Icon(inBlock[inx].useConst?TablerIcons.cursor_text:TablerIcons.math_integral, size:12, color: defaultPalette.extras[0]),
                                                           
                                                         ],
                                                       ),
@@ -10869,10 +10879,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         color: defaultPalette.extras[0],
                                                         border: Border.all(color: defaultPalette.extras[0]),
                                                       ),
-                                                      depth: 2,
-                                                      subfac: 2,
-                                                      buttonHeight: 24,
-                                                      buttonWidth: 20,
+                                                      depth:2,
+                                                      subfac:2,
+                                                      buttonHeight:24,
+                                                      buttonWidth:20,
                                                       onClick: () {
                                                         setState(() {
                                                           inBlock[inx].useConst= !inBlock[inx].useConst;
@@ -10888,6 +10898,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       },
                                                     ),
                                                   ],
+                                                  // if(!isBiStat)
                                                   Expanded(
                                                     child: Container(
                                                       margin: EdgeInsets.all(2).copyWith(top:4),
@@ -10968,7 +10979,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       ],
 
                                       if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
-                                      inputBlockFunctionInputBlocks(inBlock, inx,parent : parent),
+                                      inputBlockFunctionInputBlocks(inBlock, inx,parent : parent,),
+                                      if(!inBlock[inx].useConst && inBlock[inx].function is BiStatFunction)
+                                      (inBlock[inx].function as BiStatFunction).buildSecondaryFunctionBlock(
+                                        context, 
+                                        inBlock[inx], 
+                                        selectedInputBlocks, 
+                                        width, setState, inBlock, 
+                                        inx, item, 
+                                        Offset(sWidth - (sWidth*wH2DividerPosition)-(sWidth/4),40),
+                                        sHeight-80,
+                                        buildCombinedQuillConfiguration, getItemAtPath, 
+                                        customStyleBuilder, uniStatFunctionInputBlocks, 
+                                        showPositionedTextFieldOverlay),
                                       if(!inBlock[inx].useConst 
                                       && (inBlock[inx].function is UniStatFunction||
                                       inBlock[inx].function is ColumnFunction))
@@ -10985,7 +11008,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           children:[
                                             if(inBlock[inx].isExpanded)
                                             Padding(
-                                              padding: const EdgeInsets.only(top:28.0),
+                                              padding: const EdgeInsets.only(top:9.0),
                                               child: buildFunctionTile(inx, width,inBlock, visited:visited==null?null: Map<List<InputBlock>,int>.from(visited))[0],
                                             ),
                                             AnimatedMeshGradient(
@@ -11352,7 +11375,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       ? parent.func
                                                                       : (parent as UniStatFunction).func))
                                                                       .result(getItemAtPath,buildCombinedQuillConfiguration,).toPlainText()
-                                                                  :InputBlockFunction(inputBlocks:inBlock.sublist(0,inx+1), label: (parent).label).getConfigurations(buildCombinedQuillConfiguration)}',
+                                                                  :InputBlockFunction(inputBlocks:inBlock.sublist(0,inx+1), label: (parent).label).getConfigurations(buildCombinedQuillConfiguration).controller.document.toPlainText()}',
                                                                   style: TextStyle(color:defaultPalette.primary),
                                                                 ),
                                                               ],
@@ -11596,7 +11619,19 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       ],
 
                                       if(!inBlock[inx].useConst && (inBlock[inx].function is UniStatFunction || inBlock[inx].function is ColumnFunction))
-                                      uniStatFunctionInputBlocks(inBlock, inx,parent:parent ),
+                                      uniStatFunctionInputBlocks(inBlock, inx,parent:parent, ),
+                                      if(!inBlock[inx].useConst && inBlock[inx].function is BiStatFunction)
+                                      (inBlock[inx].function as BiStatFunction).buildSecondaryFunctionBlock(
+                                        context, 
+                                        inBlock[inx], 
+                                        selectedInputBlocks, 
+                                        width, setState, inBlock, 
+                                        inx, item, 
+                                        Offset(sWidth - (sWidth*wH2DividerPosition)-(sWidth/4),40),
+                                        sHeight-80,
+                                        buildCombinedQuillConfiguration, getItemAtPath, 
+                                        customStyleBuilder, uniStatFunctionInputBlocks, 
+                                        showPositionedTextFieldOverlay),
                                       if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
                                       GestureDetector(
                                         onTap:(){
@@ -11615,7 +11650,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           children:[
                                             if(inBlock[inx].isExpanded)
                                             Padding(
-                                              padding: const EdgeInsets.only(top:23.0),
+                                              padding: const EdgeInsets.only(top:9.0),
                                               child: buildFunctionTile(inx, width,inBlock,visited:visited==null?null: Map<List<InputBlock>,int>.from(visited))[0],
                                             ),
                                             AnimatedMeshGradient(
@@ -11760,7 +11795,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               ..blendMode = BlendMode.dst
                                                             ),
                                                           ),
-                                                        
                                                         Expanded(
                                                           flex:4,
                                                           child: Container(
@@ -11817,14 +11851,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       ),
                                                       child: Row(
                                                       children: [
-                                                        const SizedBox(width: 3),
-                                                        parent is InputBlockFunction
-                                                          ? Iconify(Carbon.string_text,
-                                                          size:14,
-                                                          color: defaultPalette.primary):Icon(
-                                                            (parent is ColumnFunction && parent.func == 'count' ) || (parent is UniStatFunction && parent.func =='count')
-                                                          ? TablerIcons.tallymarks
-                                                          : TablerIcons.sum,
+                                                        const SizedBox(width: 3), 
+                                                        Icon((parent is! InputBlockFunction)
+                                                          ? UniStatFunction.availableFunctions[
+                                                            (parent is ColumnFunction)?parent.func: (parent as UniStatFunction).func]: TablerIcons.function,
                                                           size:14,
                                                           color: defaultPalette.primary
                                                           ),
@@ -11839,7 +11869,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                       color: defaultPalette.extras[0],
                                                                     ),
                                                                     children: [
-                                                                      
                                                                       TextSpan(
                                                                         text: '${
                                                                           parent is InputBlockFunction
@@ -11893,8 +11922,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             Positioned(
                                               top:54,
                                               child: Row(
-                                                children: [
-                                                  if (inBlock[inx].useConst !=item.id) 
+                                                children: [ 
                                                   ...[
                                                     const SizedBox(width: 3),
                                                     ElevatedLayerButton(
@@ -11996,7 +12024,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         return [ 
                           if(funcBlock.isExpanded)
                           Container(
-                            padding: EdgeInsets.only(top:57, left:0, right:0,bottom: 0),
+                            padding: EdgeInsets.only(top:57+10, left:0, right:0,bottom: 0),
                             width: width+13,
                             child: Column(
                               children: [
@@ -12096,6 +12124,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ),
                                   child: Column(
                                     children: [
+                                      SizedBox(height: 15,),
                                       //the title of function
                                       Row(
                                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -12121,33 +12150,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(width: 3),
-                                          //remove function button 
-                                          Padding(
-                                            padding: const EdgeInsets.only(top:4),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(99999),
-                                              child: Material(
-                                                color: defaultPalette.transparent,
-                                                child: InkWell(
-                                                  hoverColor: defaultPalette.primary,
-                                                  splashColor: defaultPalette.primary,
-                                                  highlightColor: defaultPalette.primary,
-                                                  onTap: () {
-                                                    setState(() {
-                                                      inputBlock.removeAt(index);
-                                                      // inputBlockExpansionList.removeAt(index);
-                                                    });
-                                                  },
-                                                  child: Icon(
-                                                    TablerIcons.x,
-                                                    size: 17,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 3),
+                                          const SizedBox(width: 8),
                                         ],
                                       ),
                                       
@@ -12265,14 +12268,51 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               });
                             },
                           ),
-                                  
+                          Positioned(
+                            left:81,
+                            child: ElevatedLayerButton(
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(5),
+                                  topLeft: Radius.circular(5),
+                                  bottomRight: Radius.circular(10),
+                                  bottomLeft: Radius.circular(10),
+                                ),
+                                animationDuration: const Duration(milliseconds: 100),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: defaultPalette.secondary,
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                topLayerChild: Row(
+                                  children: [
+                                    const SizedBox(width: 2),
+                                    Icon(funcBlock.useConst?TablerIcons.cursor_text:TablerIcons.x, size: 12, color: defaultPalette.extras[0]),
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                depth: 2,
+                                subfac: 2,
+                                buttonHeight: 24,
+                                buttonWidth: 20,
+                                onClick: () {
+                                  setState(() {
+                                    inputBlock.removeAt(index);
+                                  // inputBlockExpansionList.removeAt(index);
+                                });
+                                },
+                              ),
+                          ),
+            
                         ];
     
                       case ColumnFunction:
                         return [
                           if(funcBlock.isExpanded)
                           Container(
-                            padding: EdgeInsets.only(top:57, left:0, right:0,bottom: 0),
+                            padding: EdgeInsets.only(top:57+10, left:0, right:0,bottom: 0),
                             child: Column(
                               children: [
                                 Container(
@@ -12335,6 +12375,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ),
                                   child: Column(
                                     children: [
+                                      SizedBox(height: 15,),
                                       //the title of function
                                       Row(
                                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -12354,33 +12395,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(width: 3),
-                                          //remove function button 
-                                          Padding(
-                                            padding: const EdgeInsets.only(top:4),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(99999),
-                                              child: Material(
-                                                color: defaultPalette.transparent,
-                                                child: InkWell(
-                                                  hoverColor: defaultPalette.primary,
-                                                  splashColor: defaultPalette.primary,
-                                                  highlightColor: defaultPalette.primary,
-                                                  onTap: () {
-                                                    setState(() {
-                                                      inputBlock.removeAt(index);
-                                                      // inputBlockExpansionList.removeAt(index);
-                                                    });
-                                                  },
-                                                  child: Icon(
-                                                    TablerIcons.x,
-                                                    size: 17,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 3),
+                                          const SizedBox(width: 8),
                                         ],
                                       ),
                                       
@@ -12534,14 +12549,51 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               });
                             },
                           ),
-                          
+                          Positioned(
+                            left:81,
+                            child: ElevatedLayerButton(
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(5),
+                                  topLeft: Radius.circular(5),
+                                  bottomRight: Radius.circular(10),
+                                  bottomLeft: Radius.circular(10),
+                                ),
+                                animationDuration: const Duration(milliseconds: 100),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: defaultPalette.secondary,
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                topLayerChild: Row(
+                                  children: [
+                                    const SizedBox(width: 2),
+                                    Icon(funcBlock.useConst?TablerIcons.cursor_text:TablerIcons.x, size: 12, color: defaultPalette.extras[0]),
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                depth: 2,
+                                subfac: 2,
+                                buttonHeight: 24,
+                                buttonWidth: 20,
+                                onClick: () {
+                                  setState(() {
+                                    inputBlock.removeAt(index);
+                                  // inputBlockExpansionList.removeAt(index);
+                                });
+                                },
+                              ),
+                          ),
+    
                         ];
                       
                       case InputBlockFunction:
                         return [
                           if(funcBlock.isExpanded)
                           Container(
-                            padding: EdgeInsets.only(top:57, left:0, right:0,bottom: 0),
+                            padding: EdgeInsets.only(top:57+10, left:0, right:0,bottom: 0),
                             child: Column(
                               children: [
                                 Container(
@@ -12604,6 +12656,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ),
                                   child: Column(
                                     children: [
+                                      SizedBox(height: 15,),
                                       //the title of function
                                       Row(
                                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -12624,33 +12677,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(width: 3),
-                                          //remove function button 
-                                          Padding(
-                                            padding: const EdgeInsets.only(top:4),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(99999),
-                                              child: Material(
-                                                color: defaultPalette.transparent,
-                                                child: InkWell(
-                                                  hoverColor: defaultPalette.primary,
-                                                  splashColor: defaultPalette.primary,
-                                                  highlightColor: defaultPalette.primary,
-                                                  onTap: () {
-                                                    setState(() {
-                                                      inputBlock.removeAt(index);
-                                                      // inputBlockExpansionList.removeAt(index);
-                                                    });
-                                                  },
-                                                  child: Icon(
-                                                    TablerIcons.x,
-                                                    size: 17,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 3),
+                                          const SizedBox(width: 8),
+                                          
                                         ],
                                       ),
                                       
@@ -12813,7 +12841,44 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 },
                               ),
                           ),
-                        
+                          Positioned(
+                            left:funcBlock.id !=item.id? 100:81,
+                            child: ElevatedLayerButton(
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(5),
+                                  topLeft: Radius.circular(5),
+                                  bottomRight: Radius.circular(10),
+                                  bottomLeft: Radius.circular(10),
+                                ),
+                                animationDuration: const Duration(milliseconds: 100),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: defaultPalette.secondary,
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                topLayerChild: Row(
+                                  children: [
+                                    const SizedBox(width: 2),
+                                    Icon(funcBlock.useConst?TablerIcons.cursor_text:TablerIcons.x, size: 12, color: defaultPalette.extras[0]),
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(color: defaultPalette.extras[0]),
+                                ),
+                                depth: 2,
+                                subfac: 2,
+                                buttonHeight: 24,
+                                buttonWidth: 20,
+                                onClick: () {
+                                  setState(() {
+                                    inputBlock.removeAt(index);
+                                  // inputBlockExpansionList.removeAt(index);
+                                });
+                                },
+                              ),
+                          ),
+    
                         ];
                       
                       case BiStatFunction:
@@ -12936,7 +13001,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     }
                                   }
                                   // print(inputBlock[index].useConst);
-                      
+                                  bool isTable = (itemAtPath?.parentId??'yo').startsWith('TB-') && (item.parentId).startsWith('TB-');
                                   final json = delta?.toJson();
                                     return ReorderableDragStartListener(
                                     key: ValueKey(index),
@@ -12954,52 +13019,72 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   buildStyledJsonBlock(json!),
                                                   Container(
                                                     margin: const EdgeInsets.only(top: 10),
-                                                    height: 30,
+                                                    height:isTable?40:30,
                                                     width: width,
                                                     decoration: BoxDecoration(
                                                       borderRadius: BorderRadius.circular(8),
                                                       color: defaultPalette.tertiary,
                                                       border: Border.all(color: defaultPalette.extras[0]),
                                                     ),
-                                                    child: Row(
+                                                    child: Column(
+                                                      mainAxisAlignment: MainAxisAlignment.end,
                                                       children: [
-
-                                                        Expanded(
-                                                          child: Text(
-                                                            itemAtPath?.name??'lol',
-                                                            textAlign: TextAlign.end,
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
-                                                              letterSpacing: -1,
-                                                              fontWeight: FontWeight.w500,
-                                                              fontSize: 18,
-                                                              color: defaultPalette.primary,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 3),
-                                                        ClipRRect(
-                                                          borderRadius: BorderRadius.circular(99999),
-                                                          child: Material(
-                                                            color: defaultPalette.transparent,
-                                                            child: InkWell(
-                                                              hoverColor: defaultPalette.primary,
-                                                              splashColor: defaultPalette.primary,
-                                                              highlightColor: defaultPalette.primary,
-                                                              onTap: () {
+                                                        Row(
+                                                          children: [
+                                                            const SizedBox(width: 4),
+                                                            if(isTable)
+                                                            ElevatedLayerButton(
+                                                              borderRadius: const BorderRadius.only(
+                                                                topRight: Radius.circular(10),
+                                                                topLeft: Radius.circular(10),
+                                                                bottomRight: Radius.circular(10),
+                                                                bottomLeft: Radius.circular(10),
+                                                              ),
+                                                              animationDuration: const Duration(milliseconds: 100),
+                                                              animationCurve: Curves.ease,
+                                                              topDecoration: BoxDecoration(
+                                                                color: defaultPalette.primary,
+                                                                border: Border.all(color: defaultPalette.extras[0]),
+                                                              ),
+                                                              topLayerChild: Row(
+                                                                children: [
+                                                                  const SizedBox(width: 2),
+                                                                  Icon(InputBlock.lockModeIcons[inputBlock[index].lockMode], size: 12, color: defaultPalette.extras[0]),
+                                                                  
+                                                                ],
+                                                              ),
+                                                              baseDecoration: BoxDecoration(
+                                                                color: defaultPalette.extras[0],
+                                                                border: Border.all(color: defaultPalette.extras[0]),
+                                                              ),
+                                                              depth: 1,
+                                                              subfac: 1,
+                                                              buttonHeight: 20,
+                                                              buttonWidth: 20,
+                                                              onClick: () {
                                                                 setState(() {
-                                                                 inputBlock.removeAt(index);
+                                                                  inputBlock[index].lockMode= (inputBlock[index].lockMode+1)%4;
                                                                 });
                                                               },
-                                                              child: Icon(
-                                                                TablerIcons.x,
-                                                                size: 18,
+                                                            ),
+                                                            Expanded(
+                                                              child: Text(
+                                                                itemAtPath?.name??'lol',
+                                                                textAlign: TextAlign.end,
+                                                                maxLines: 1,
+                                                                overflow: TextOverflow.ellipsis,
+                                                                style: GoogleFonts.lexend(
+                                                                  letterSpacing: -1,
+                                                                  fontWeight: FontWeight.w500,
+                                                                  fontSize: 18,
+                                                                  color: defaultPalette.primary,
+                                                                ),
                                                               ),
                                                             ),
-                                                          ),
+                                                            const SizedBox(width: 8),
+                                                          ],
                                                         ),
-                                                        const SizedBox(width: 3),
+
                                                       ],
                                                     ),
                                                   ),
@@ -13086,6 +13171,44 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         },
                                                       ),
                                                   ),
+                                                  Positioned(
+                                                    left:inputBlock[index].id !=item.id?100:81,
+                                                    child: ElevatedLayerButton(
+                                                        borderRadius: const BorderRadius.only(
+                                                          topRight: Radius.circular(5),
+                                                          topLeft: Radius.circular(5),
+                                                          bottomRight: Radius.circular(10),
+                                                          bottomLeft: Radius.circular(10),
+                                                        ),
+                                                        animationDuration: const Duration(milliseconds: 100),
+                                                        animationCurve: Curves.ease,
+                                                        topDecoration: BoxDecoration(
+                                                          color: defaultPalette.secondary,
+                                                          border: Border.all(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        topLayerChild: Row(
+                                                          children: [
+                                                            const SizedBox(width: 2),
+                                                            Icon(TablerIcons.x, size: 12, color: defaultPalette.extras[0]),
+                                                          ],
+                                                        ),
+                                                        baseDecoration: BoxDecoration(
+                                                          color: defaultPalette.extras[0],
+                                                          border: Border.all(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        depth: 2,
+                                                        subfac: 2,
+                                                        buttonHeight: 24,
+                                                        buttonWidth: 20,
+                                                        onClick: () {
+                                                          setState(() {
+                                                            inputBlock.removeAt(index);
+                                                          // inputBlockExpansionList.removeAt(index);
+                                                        });
+                                                        },
+                                                      ),
+                                                  ),
+            
                                                   
                                                 ],
                                                             
@@ -15312,311 +15435,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               //
                                               //
                                               //functions library
-                                               Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Stack(
-                                                      children: [
-                                                        const SizedBox(height: 40),
-                                                        if(isMathFunctionLibraryToggled)
-                                                        Container(
-                                                          height:300,
-                                                          width: width+13,
-                                                          margin: EdgeInsets.only(top:15, left:5, right:5, bottom:5),
-                                                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(8).copyWith(
-                                                                    bottomLeft: Radius.circular(15),
-                                                                    bottomRight: Radius.circular(15)
-                                                                  ),
-                                                          color:defaultPalette.primary,),
-                                                          child: Column(
-                                                            children: [
-                                                              SizedBox(height:30),
-                                                              Padding(
-                                                                padding: EdgeInsets.only(right:4),
-                                                                child: ExpandableSearchBar(
-                                                                  onTap: () {
-                                                                    
-                                                                  },
-                                                                  onChange: (value) {
-                                                                    setState(() {
-                                                                      // functionSearchController.text = value;
-                                                                    });
-                                                                  },
-                                                                  width:  width-8,
-                                                                  hintText: "search functions...",
-                                                                  editTextController: functionSearchController,
-                                                                  focusNode: functionSearchFocusNode,
-                                                                  boxShadow: [],
-                                                                  iconBackgroundColor: defaultPalette.primary,
-                                                                  iconColor: defaultPalette.extras[0],
-                                                                  iconSize: 18,
-                                                                  backgroundColor: defaultPalette.primary,
-                                                                
-                                                                ),
-                                                              ),
-                                                              SizedBox(height:4),
-                                                              Expanded(
-                                                                child: ScrollConfiguration(
-                                                                  behavior: ScrollBehavior().copyWith(scrollbars: false),
-                                                                  child: DynMouseScroll(
-                                                                    durationMS: 500,
-                                                                    scrollSpeed: 1,
-                                                                    builder: (context, controller, physics) {
-                                                                      return ScrollbarUltima(
-                                                                        alwaysShowThumb: true,
-                                                                        controller: controller,
-                                                                        scrollbarPosition:
-                                                                            ScrollbarPosition.right,
-                                                                        backgroundColor: defaultPalette.primary,
-                                                                        isDraggable: true,
-                                                                        maxDynamicThumbLength: 90,
-                                                                        minDynamicThumbLength: 50,
-                                                                        thumbBuilder:
-                                                                            (context, animation, widgetStates) {
-                                                                          return Container(
-                                                                            margin: EdgeInsets.only(right:2, top:3, bottom:3),
-                                                                            decoration: BoxDecoration(
-                                                                                color: defaultPalette.extras[0],
-                                                                                borderRadius:
-                                                                                    BorderRadius.circular(2)),
-                                                                            width: 5,
-                                                                          );
-                                                                        },
-                                                                        child: SingleChildScrollView(
-                                                                          controller:controller,
-                                                                          physics:physics,
-                                                                          padding: EdgeInsets.only(right:5,),
-                                                                          child: Column(
-                                                                            children:[
-                                                                              if (selectedInputBlocks !=null)
-                                                                              ...UniStatFunction.availableFunctions.keys.where((element) {
-                                                                                return element.contains(functionSearchController.text);
-                                                                              },).toList().map((funcKey)=>MouseRegion(
-                                                                                cursor:SystemMouseCursors.click,
-                                                                                child: GestureDetector(
-                                                                                  onTap:(){
-                                                                                    setState(() {
-                                                                                      if (selectedInputBlocks !=null) {
-                                                                                        selectedInputBlocks!.add(InputBlock(
-                                                                                          indexPath: IndexPath(index: -1277), 
-                                                                                          blockIndex: [-2], 
-                                                                                          id: 'yo',
-                                                                                          useConst: false,
-                                                                                          function: UniStatFunction(inputBlocks:[], func:funcKey)
-                                                                                          ));
-                                                                                      }
-                                                                                      // inputBlockExpansionList.add(true);
-                                                                                    
-                                                                                  });
-                                                                                  },
-                                                                                  child: Container(
-                                                                                    width: width,
-                                                                                    height:30,
-                                                                                    margin:EdgeInsets.all(4),
-                                                                                    decoration: BoxDecoration(color:defaultPalette.extras[0],
-                                                                                    borderRadius:BorderRadius.circular(5),),
-                                                                                    child: Row(
-                                                                                      children:[
-                                                                                        SizedBox(width:3),
-                                                                                        Icon(UniStatFunction.availableFunctions[funcKey], size:15, color:defaultPalette.primary),
-                                                                                        SizedBox(width:3),
-                                                                                        Expanded(child: 
-                                                                                        Text(
-                                                                                          funcKey,
-                                                                                          maxLines: 1,
-                                                                                          overflow: TextOverflow.ellipsis,
-                                                                                          style: GoogleFonts.lexend(
-                                                                                            height: 0.9,
-                                                                                            fontSize:14,
-                                                                                            color: Colors.white,
-                                                                                            letterSpacing: -1,
-                                                                                            fontWeight: FontWeight.w500),
-                                                                                          ),
-                                                                                        )
-                                                                                      ]
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                              )).toList(),
-                                                                              ...BiStatFunction.availableFunctions.keys.where((element) {
-                                                                                return element.contains(functionSearchController.text);
-                                                                              },).toList().map((funcKey)=>MouseRegion(
-                                                                                cursor:SystemMouseCursors.click,
-                                                                                child: GestureDetector(
-                                                                                  onTap:(){
-                                                                                    setState(() {
-                                                                                      if (selectedInputBlocks !=null) {
-                                                                                        selectedInputBlocks!.add(InputBlock(
-                                                                                          indexPath: IndexPath(index: -1277), 
-                                                                                          blockIndex: [-2], 
-                                                                                          id: 'yo',
-                                                                                          useConst: false,
-                                                                                          function: BiStatFunction(inputBlocksX:[], inputBlocksY:[], func:funcKey)
-                                                                                          ));
-                                                                                      }
-                                                                                      // inputBlockExpansionList.add(true);
-                                                                                    
-                                                                                  });
-                                                                                  },
-                                                                                  child: Container(
-                                                                                    width: width,
-                                                                                    height:30,
-                                                                                    margin:EdgeInsets.all(4),
-                                                                                    decoration: BoxDecoration(color:defaultPalette.extras[0],
-                                                                                    borderRadius:BorderRadius.circular(5),),
-                                                                                    child: Row(
-                                                                                      children:[
-                                                                                        SizedBox(width:3),
-                                                                                        Icon(BiStatFunction.availableFunctions[funcKey], size:15, color:defaultPalette.primary),
-                                                                                        SizedBox(width:3),
-                                                                                        Expanded(child: 
-                                                                                        Text(
-                                                                                          funcKey,
-                                                                                          maxLines: 1,
-                                                                                          overflow: TextOverflow.ellipsis,
-                                                                                          style: GoogleFonts.lexend(
-                                                                                            height: 0.9,
-                                                                                            fontSize:14,
-                                                                                            color: Colors.white,
-                                                                                            letterSpacing: -1,
-                                                                                            fontWeight: FontWeight.w500),
-                                                                                          ),
-                                                                                        )
-                                                                                      ]
-                                                                                    ),
-                                                                                  ),
-                                                                                ),
-                                                                              )).toList(),
-                                                                            ]
-                                                                          ),
-                                                                        ),
-                                                                      );
-                                                                    }
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          )
-                                                        ),
-                                                        //gradient mesh tile for math functions
-                                                        Container(
-                                                          decoration: BoxDecoration(
-                                                            boxShadow: [
-                                                              BoxShadow(
-                                                                blurRadius: 20,
-                                                                offset: Offset(0, 2),
-                                                                color: defaultPalette.extras[0].withOpacity(0.6)
-                                                              )
-                                                            ],
-                                                          ),
-                                                          child: Padding(
-                                                            padding: const EdgeInsets.only(top: 10),
-                                                            child: ClipRRect(
-                                                              borderRadius: BorderRadius.circular(8).copyWith(
-                                                                      bottomLeft: Radius.circular(15),
-                                                                      bottomRight: Radius.circular(15)
-                                                                    ),
-                                                              child: AnimatedMeshGradient(
-                                                                colors: [
-                                                                    // defaultPalette.extras[0],
-                                                                    defaultPalette.primary,
-                                                                    defaultPalette.primary,
-                                                                    defaultPalette.primary,
-                                                                    defaultPalette.extras[0],
-                                                                  ],
-                                                                options: AnimatedMeshGradientOptions(
-                                                                    amplitude: 10,
-                                                                    grain: 0.1,
-                                                                    frequency: 8,
-                                                                    
-                                                                  ),
-                                                                child: Container(
-                                                                  height: 30,
-                                                                  width: width+13,
-                                                                  decoration: BoxDecoration(
-                                                                    borderRadius: BorderRadius.circular(8).copyWith(
-                                                                      bottomLeft: Radius.circular(15),
-                                                                      bottomRight: Radius.circular(15)
-                                                                    ),
-                                                                    border: Border.all(color: defaultPalette.primary),
-                                                                  ),
-                                                                  child: Row(
-                                                                    children: [
-                                                                      Expanded(
-                                                                        child: BlendMask(
-                                                                          blendMode: BlendMode.exclusion,
-                                                                          child: Text(
-                                                                            'functions',
-                                                                            textAlign: TextAlign.end,
-                                                                            maxLines: 1,
-                                                                            overflow: TextOverflow.ellipsis,
-                                                                            style: GoogleFonts.lexend(
-                                                                              letterSpacing: -1,
-                                                                              fontWeight: FontWeight.w500,
-                                                                              fontSize: 19,
-                                                                              color: defaultPalette.primary,
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                      const SizedBox(width: 15),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        ElevatedLayerButton(
-                                                          borderRadius: const BorderRadius.only(
-                                                            topRight: Radius.circular(5),
-                                                            topLeft: Radius.circular(5),
-                                                            bottomRight: Radius.circular(10),
-                                                            bottomLeft: Radius.circular(10),
-                                                          ),
-                                                          animationDuration: const Duration(milliseconds: 100),
-                                                          animationCurve: Curves.ease,
-                                                          topDecoration: BoxDecoration(
-                                                            color: defaultPalette.primary,
-                                                            border: Border.all(color: defaultPalette.extras[0]),
-                                                          ),
-                                                          topLayerChild: Row(
-                                                            children: [
-                                                              const SizedBox(width: 10),
-                                                              Icon(TablerIcons.variable_plus, size: 15, color: defaultPalette.extras[0]),
-                                                              Expanded(
-                                                                child: Text(
-                                                                  ' math',
-                                                                  maxLines: 1,
-                                                                  style: GoogleFonts.bungee(
-                                                                    fontSize: 12,
-                                                                    color: defaultPalette.extras[0],
-                                                                    letterSpacing: -1,
-                                                                    fontWeight: FontWeight.w500,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          baseDecoration: BoxDecoration(
-                                                            color: defaultPalette.extras[0],
-                                                            border: Border.all(color: defaultPalette.extras[0]),
-                                                          ),
-                                                          depth: 3,
-                                                          subfac: 3,
-                                                          buttonHeight: 24,
-                                                          buttonWidth: 80,
-                                                          onClick: () {
-                                                            setState(() {
-                                                              isMathFunctionLibraryToggled = !isMathFunctionLibraryToggled;
-                                                            });
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ]
-                                               ),
+                                              mathFunctionsLibrary(width),
                                               const SizedBox(
                                                 height:3
                                               ), 
@@ -19122,6 +18941,325 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         },
       ),
     );
+  }
+
+  Widget mathFunctionsLibrary(
+    double width,
+    {
+      bool isOverlay=false,
+      double height=900,
+      List<InputBlock>? inputBlocks,
+    }
+  ) {
+    if (inputBlocks == null) {
+      inputBlocks = selectedInputBlocks;
+    }
+    return  Row(
+      children: [
+        Expanded(
+          child: Stack(
+            children: [
+              const SizedBox(height: 35),
+              if(isMathFunctionLibraryToggled || isOverlay)
+              Container(
+                height:height/3,
+                width: width+13,
+                margin: EdgeInsets.only(top:15, left:isOverlay?0:5, right:isOverlay?0:5, bottom:isOverlay?0:5),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(8).copyWith(
+                          bottomLeft: Radius.circular(15),
+                          bottomRight: Radius.circular(15)
+                        ),
+                color:defaultPalette.primary,),
+                child: Column(
+                  children: [
+                    SizedBox(height:30),
+                    Padding(
+                      padding: EdgeInsets.only(right:4),
+                      child: ExpandableSearchBar(
+                        onTap: () {
+                          
+                        },
+                        onChange: (value) {
+                          setState(() {
+                            // functionSearchController.text = value;
+                          });
+                        },
+                        width:  width-8,
+                        hintText: "search functions...",
+                        editTextController: functionSearchController,
+                        focusNode: functionSearchFocusNode,
+                        boxShadow: [],
+                        iconBackgroundColor: defaultPalette.primary,
+                        iconColor: defaultPalette.extras[0],
+                        iconSize: 18,
+                        backgroundColor: defaultPalette.primary,
+                      
+                      ),
+                    ),
+                    SizedBox(height:4),
+                    Expanded(
+                      child: ScrollConfiguration(
+                        behavior: ScrollBehavior().copyWith(scrollbars: false),
+                        child: DynMouseScroll(
+                          durationMS: 500,
+                          scrollSpeed: 1,
+                          builder: (context, controller, physics) {
+                            return ScrollbarUltima(
+                              alwaysShowThumb: true,
+                              controller: controller,
+                              scrollbarPosition:
+                                  ScrollbarPosition.right,
+                              backgroundColor: defaultPalette.primary,
+                              isDraggable: true,
+                              maxDynamicThumbLength: 90,
+                              minDynamicThumbLength: 50,
+                              thumbBuilder:
+                                  (context, animation, widgetStates) {
+                                return Container(
+                                  margin: EdgeInsets.only(right:2, top:3, bottom:3),
+                                  decoration: BoxDecoration(
+                                      color: defaultPalette.extras[0],
+                                      borderRadius:
+                                          BorderRadius.circular(2)),
+                                  width: 5,
+                                );
+                              },
+                              child: SingleChildScrollView(
+                                controller:controller,
+                                physics:physics,
+                                padding: EdgeInsets.only(right:5,),
+                                child: Column(
+                                  children:[
+                                    if (inputBlocks !=null)
+                                    ...UniStatFunction.availableFunctions.keys.where((element) {
+                                      return element.contains(functionSearchController.text);
+                                    },).toList().map((funcKey)=>MouseRegion(
+                                      cursor:SystemMouseCursors.click,
+                                      child: GestureDetector(
+                                        onTap:(){
+                                          setState(() {
+                                            if (inputBlocks !=null) {
+                                              inputBlocks.add(InputBlock(
+                                                indexPath: IndexPath(index: -1277), 
+                                                blockIndex: [-2], 
+                                                id: 'yo',
+                                                useConst: false,
+                                                function: UniStatFunction(inputBlocks:[], func:funcKey)
+                                                ));
+                                            }
+                                            // inputBlockExpansionList.add(true);
+                                          
+                                        });
+                                        },
+                                        child: Container(
+                                          width: width,
+                                          height:30,
+                                          margin:EdgeInsets.all(4),
+                                          decoration: BoxDecoration(color:defaultPalette.extras[0],
+                                          borderRadius:BorderRadius.circular(5),),
+                                          child: Row(
+                                            children:[
+                                              SizedBox(width:3),
+                                              Icon(UniStatFunction.availableFunctions[funcKey], size:15, color:defaultPalette.primary),
+                                              SizedBox(width:3),
+                                              Expanded(child: 
+                                              Text(
+                                                funcKey,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.lexend(
+                                                  height: 0.9,
+                                                  fontSize:14,
+                                                  color: Colors.white,
+                                                  letterSpacing: -1,
+                                                  fontWeight: FontWeight.w500),
+                                                ),
+                                              )
+                                            ]
+                                          ),
+                                        ),
+                                      ),
+                                    )).toList(),
+                                    ...BiStatFunction.availableFunctions.keys.where((element) {
+                                      return element.contains(functionSearchController.text);
+                                    },).toList().map((funcKey)=>MouseRegion(
+                                      cursor:SystemMouseCursors.click,
+                                      child: GestureDetector(
+                                        onTap:(){
+                                          setState(() {
+                                            if (inputBlocks !=null) {
+                                              inputBlocks.add(InputBlock(
+                                                indexPath: IndexPath(index: -1277), 
+                                                blockIndex: [-2], 
+                                                id: 'yo',
+                                                useConst: false,
+                                                function: BiStatFunction(inputBlocksX:[], inputBlocksY:[], func:funcKey)
+                                                ));
+                                            }
+                                            // inputBlockExpansionList.add(true);
+                                          
+                                        });
+                                        },
+                                        child: Container(
+                                          width: width,
+                                          height:30,
+                                          margin:EdgeInsets.all(4),
+                                          decoration: BoxDecoration(color:defaultPalette.extras[0],
+                                          borderRadius:BorderRadius.circular(5),),
+                                          child: Row(
+                                            children:[
+                                              SizedBox(width:3),
+                                              Icon(BiStatFunction.availableFunctions[funcKey], size:15, color:defaultPalette.primary),
+                                              SizedBox(width:3),
+                                              Expanded(child: 
+                                              Text(
+                                                funcKey,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.lexend(
+                                                  height: 0.9,
+                                                  fontSize:14,
+                                                  color: Colors.white,
+                                                  letterSpacing: -1,
+                                                  fontWeight: FontWeight.w500),
+                                                ),
+                                              )
+                                            ]
+                                          ),
+                                        ),
+                                      ),
+                                    )).toList(),
+                                  ]
+                                ),
+                              ),
+                            );
+                          }
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              ),
+              //gradient mesh tile for math functions
+              Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 20,
+                      offset: Offset(0, 2),
+                      color: defaultPalette.extras[0].withOpacity(0.6)
+                    )
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8).copyWith(
+                            bottomLeft: Radius.circular(isOverlay?8:15),
+                            bottomRight: Radius.circular(isOverlay?8:15)
+                          ),
+                    child: AnimatedMeshGradient(
+                      colors: [
+                          // defaultPalette.extras[0],
+                          defaultPalette.primary,
+                          defaultPalette.primary,
+                          defaultPalette.primary,
+                          defaultPalette.extras[0],
+                        ],
+                      options: AnimatedMeshGradientOptions(
+                          amplitude: 10,
+                          grain: 0.1,
+                          frequency: 8,
+                          
+                        ),
+                      child: Container(
+                        height: 30,
+                        width: width+13,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8).copyWith(
+                            bottomLeft: Radius.circular(isOverlay?8:15),
+                            bottomRight: Radius.circular(isOverlay?8:15)
+                          ),
+                          border: Border.all(color: defaultPalette.primary),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: BlendMask(
+                                blendMode: BlendMode.exclusion,
+                                child: Text(
+                                  'functions',
+                                  textAlign: TextAlign.end,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.lexend(
+                                    letterSpacing: -1,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 19,
+                                    color: defaultPalette.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 15),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if(!isOverlay)
+              ElevatedLayerButton(
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(5),
+                  topLeft: Radius.circular(5),
+                  bottomRight: Radius.circular(10),
+                  bottomLeft: Radius.circular(10),
+                ),
+                animationDuration: const Duration(milliseconds: 100),
+                animationCurve: Curves.ease,
+                topDecoration: BoxDecoration(
+                  color: defaultPalette.primary,
+                  border: Border.all(color: defaultPalette.extras[0]),
+                ),
+                topLayerChild: Row(
+                  children: [
+                    const SizedBox(width: 10),
+                    Icon(TablerIcons.variable_plus, size: 15, color: defaultPalette.extras[0]),
+                    Expanded(
+                      child: Text(
+                        ' math',
+                        maxLines: 1,
+                        style: GoogleFonts.bungee(
+                          fontSize: 12,
+                          color: defaultPalette.extras[0],
+                          letterSpacing: -1,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                baseDecoration: BoxDecoration(
+                  color: defaultPalette.extras[0],
+                  border: Border.all(color: defaultPalette.extras[0]),
+                ),
+                depth: 3,
+                subfac: 3,
+                buttonHeight: 24,
+                buttonWidth: 80,
+                onClick: () {
+                  setState(() {
+                    isMathFunctionLibraryToggled = !isMathFunctionLibraryToggled;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+      ]
+      );
   }
 
   Widget buildDecoratedContainer(

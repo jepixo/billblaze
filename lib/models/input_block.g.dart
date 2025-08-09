@@ -23,13 +23,14 @@ class InputBlockAdapter extends TypeAdapter<InputBlock> {
       function: fields[4] as SheetFunction?,
       isExpanded: fields[3] as bool,
       useConst: fields[5] as bool,
+      lockMode: fields[6] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, InputBlock obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.indexPath)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class InputBlockAdapter extends TypeAdapter<InputBlock> {
       ..writeByte(4)
       ..write(obj.function)
       ..writeByte(5)
-      ..write(obj.useConst);
+      ..write(obj.useConst)
+      ..writeByte(6)
+      ..write(obj.lockMode);
   }
 
   @override
