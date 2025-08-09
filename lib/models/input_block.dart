@@ -1,6 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:hive/hive.dart';
 
 import 'package:billblaze/models/index_path.dart';
@@ -96,4 +98,12 @@ class InputBlock {
       lockMode: lockMode ?? this.lockMode,
     );
   }
+
+  static Map<int,IconData> lockModeIcons = {
+    0:TablerIcons.freeze_row_column,
+    1:TablerIcons.table_row,
+    2:TablerIcons.table_column,
+    3:TablerIcons.table,
+
+  };
 }

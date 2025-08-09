@@ -500,7 +500,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
     'min': TablerIcons.arrow_down,
     'max': TablerIcons.arrow_up, 
     'range': TablerIcons.arrows_horizontal,
-    'range ratio': TablerIcons.slash,
+    'range ratio': TablerIcons.grid_goldenratio,
     'product': TablerIcons.x,
     'standard deviation': TablerIcons.chart_sankey,
     'variance': TablerIcons.chart_arcs,
@@ -608,7 +608,16 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
   @HiveField(5)
   List<Map<String, dynamic>> resultJson =[];
 
-  ColumnFunction({required this.inputBlocks, required this.func, required this.axisLabel,this.resultJson = const []}) : super(0, 'column');
+  @HiveField(6)
+  bool lockMode = false;
+
+  ColumnFunction({
+    required this.inputBlocks, 
+    required this.func, 
+    required this.axisLabel,
+    this.resultJson = const [],
+    this.lockMode = false
+    }) : super(0, 'column');
 
   @override
   dynamic result(Function getItemAtPath,
