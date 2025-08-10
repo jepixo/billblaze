@@ -250,6 +250,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   final FocusNode decorationNameFocusNode = FocusNode();
   final FocusNode itemDecorationNameFocusNode = FocusNode();
   final FocusNode functionSearchFocusNode = FocusNode();
+  final FocusNode funcSearchFocusNode = FocusNode();
   List<FocusNode> fontFocusNodes = List.generate(7, (e)=>FocusNode());
   zz.TransformationController transformationcontroller = zz.TransformationController();
   List<GlobalKey> globalKeys = [];
@@ -271,6 +272,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   TextEditingController decorationSearchController = TextEditingController();
   TextEditingController textFieldSearchController = TextEditingController();
   TextEditingController functionSearchController = TextEditingController();
+  TextEditingController funcSearchController = TextEditingController();
   String key = '';
   // int keyIndex = 0;
   int pageCount = 0;
@@ -2277,7 +2279,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       print('findItem? Yeah not found.'+e.toString());
     });
     } finally{
-      print(selectedIndexPaths);
     }
     
   }
@@ -3237,10 +3238,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       iconSize: 13,
                                       tooltip: 'save the current layout. ',
                                       hoverColor: defaultPalette.secondary,
-                                      onTap: () {
+                                      onTap: () async{
                                           setState(() {
                                             saveLayout();
+                                            
                                           });
+                                          await relinkIndexPathsInInputBlocks();
                                         },
                                       ),
                                       toolBarButton(TablerIcons.upload, 'export',
@@ -4973,7 +4976,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           },
                                                           buttonHeight: 21,
                                                           buttonWidth: (_getPropertiesButtonWidth(
-                                                                  'sheet-list')/3)-2,
+                                                                  'sheet-list')/2)-5,
                                                           borderRadius:
                                                               BorderRadius.circular(5),
                                                           animationDuration: const Duration(
@@ -4995,60 +4998,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           ),
                                                         ),
                                                       ),
-                                                      //cell property tab
-                                                      Positioned(
-                                                        bottom:0,
-                                                        right:(_getPropertiesButtonWidth('text-field')/3) -2 ,
-                                                        child: ElevatedLayerButton(
-                                                          onClick: () {
-                                                            setState(() {
-                                                              if (whichPropertyTabIsClicked != 4) {
-                                                                // var tmpinx = int.tryParse(tableDecorationPath.last.substring(tableDecorationPath.last.indexOf('/') + 1))??-33;
-                                                                whichPropertyTabIsClicked = 4;
-                                                                // _findSheetListItem();
-                                                                decorationIndex = -1;
-                                                                isListDecorationLibraryToggled = false;
-                                                                isListDecorationPropertiesToggled = false;
-                                                                // showDecorationLayers = false;
-                                                                updateSheetDecorationvariables(sheetDecorationMap[tableDecorationPath.last] as SuperDecoration);
-                                                                tableDecorationNameController.text = (sheetDecorationMap[tableDecorationPath.last] as SuperDecoration).name;
-                                                            
-                                                              }
-                                                              if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=1) {
-                                                                  Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
-                                                                  
-                                                                whichTablePropertyTabIsClicked =1;
-                                                              } else {
-                                                                print('heryaa');
-                                                                Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
-                                                                
-                                                              }
-                                                            });
-                                                          },
-                                                          buttonHeight: 21,
-                                                          buttonWidth: (_getPropertiesButtonWidth(
-                                                                  'sheet-list')/3)-2,
-                                                          borderRadius:
-                                                              BorderRadius.circular(5),
-                                                          animationDuration: const Duration(
-                                                              milliseconds: 100),
-                                                          animationCurve: Curves.ease,
-                                                          topDecoration: BoxDecoration(
-                                                            color: Colors.white,
-                                                            border: Border.all(),
-                                                          ),
-                                                          topLayerChild: const Icon(
-                                                            Icons.dataset_outlined,
-                                                            size: 12,
-                                                          ),
-                                                          subfac: 5,
-                                                          depth:1.5,
-                                                          baseDecoration: BoxDecoration(
-                                                            color: defaultPalette.extras[0],
-                                                           
-                                                          ),
-                                                        ),
-                                                      ),
+                                                      
                                                       //table decoration
                                                       Positioned(
                                                         bottom:0, right:3,
@@ -5067,13 +5017,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                               tableDecorationNameController.text = (sheetDecorationMap[tableDecorationPath.last] as SuperDecoration).name;
                                                           
                                                             }
-                                                            if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=2) {
-                                                              Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(2),);
+                                                            if (whichPropertyTabIsClicked == 4 && whichTablePropertyTabIsClicked !=1) {
+                                                              Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
                                                               
-                                                              whichTablePropertyTabIsClicked =2;
+                                                              whichTablePropertyTabIsClicked =1;
                                                             } else {
                                                               print('heryaa');
-                                                              Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(2),);
+                                                              Future.delayed(Durations.short4).then((value) => tablePropertyCardsController.setCardIndex(1),);
                                                               
                                                             }
                                                             decorationIndex = -1;
@@ -5092,7 +5042,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                           },
                                                           buttonHeight: 21,
                                                           buttonWidth:( _getPropertiesButtonWidth(
-                                                            'sheet-list')/3) -2,
+                                                            'sheet-list')/2) -5,
                                                           borderRadius: BorderRadius.circular(5),
                                                           animationDuration: const Duration(
                                                           milliseconds: 100),
@@ -7776,7 +7726,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                             onTap: () {
                                                               var (row, col) = parseCellId(cell.id);
                                                               setState(() {
-                                                                item = cell.sheetItem as SheetText;
+                                                                // item = cell.sheetItem as SheetText;
                                                                 panelIndex.id = cell.sheetItem.id;
                                                                 panelIndex.parentId = cell.sheetItem.parentId;
                                                                 panelIndex.parentIndexPath = sheetTable.indexPath;
@@ -7785,7 +7735,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                 _findSheetTableItem(sheetTable);
                                                                 sheetTableVariables.rowLayerIndex = row;
                                                                 sheetTableVariables.columnLayerIndex = col;
-                                                                whichTablePropertyTabIsClicked = 1;
+                                                                whichTablePropertyTabIsClicked = 0;
                                                                 _findItem();
                                                               });
                                                             },
@@ -7875,24 +7825,131 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       // Look up that neighbor cell
       final neighborCell = sheetTable.getCellFromLabel(neighborLabel);
       if (neighborCell == null) return true;           
-      print(neighborLabel);
+      // print(neighborLabel);
       
       // Check if *its* SheetText is selected
       final neighborItemId = (neighborCell.sheetItem as SheetText).id;
-      print(selectedIndexPaths[neighborItemId]);
+      // print('----------------------');
+      // print(s);
+      // print('$colLabel, $rowNum');
+      // print(neighborLabel);
+      // print(neighborCell);
+      // print(selectedIndexPaths);
+      // print(selectedIndexPaths[neighborItemId]);
+      // print('----------------------');
       return selectedIndexPaths[neighborItemId] == null;
     }
+    
     BorderSide borderSide = BorderSide(
       width:2,
       color:isFormulaMode? defaultPalette.extras[0]:defaultPalette.tertiary,
     );
+    
+    List<InputBlock> applyInputBlocks(
+      List<InputBlock> panelItemBlocks,
+      int sheetCol,int sheetRow,
+      List<InputBlock> inputBlocks,
+    ){
+      for (var ib in panelItemBlocks) {
+          // print('FUNCNN: ${ib}');
+        if (ib.useConst || ib.function is InputBlockFunction) {
+          final srcItem = getItemAtPath(ib.indexPath);
+          if (srcItem is SheetText && srcItem.parentId.startsWith('TB-')) {
+            final srcName = srcItem.name; // e.g. "C5"
+            // print('nuunamee: ${srcName }');
+            // print('nuunamee: ${ib.lockMode}');
+            final srcCol = columnLabelToNumber(
+                srcName.replaceAll(RegExp(r'\d+'), '')); // "C" -> 3
+            final srcRow =
+                int.parse(srcName.replaceAll(RegExp(r'\D+'), '')); // "5" -> 5
+          
+            int newCol = srcCol;
+            int newRow = srcRow;
+          
+            switch (ib.lockMode) {
+              case 3: // both change
+                newCol = sheetCol;
+                newRow = sheetRow;
+                break;
+              case 1: // row constant, change column
+                newCol = sheetCol;
+                break;
+              case 2: // column constant, change row
+                newRow = sheetRow;
+                break;
+              case 0: // both row and column change relative to dragged cell
+                break;
+            }
+            var table = getItemAtPath(srcItem.indexPath.parent!);
+            final newName = '${numberToColumnLabel(newCol+1)}$newRow';
+            
+            // print('nuunamee: ${newName}');
+            final newTargetCell =  (table as SheetTable).getCellFromLabel(newName);
+            final newTargetItem = newTargetCell?.sheetItem;
+            
+              inputBlocks.add(
+                InputBlock(indexPath: newTargetItem?.indexPath?? IndexPath(index:-1277),
+                blockIndex: [-2], 
+                id: newTargetItem?.id??'yo',
+                isExpanded: ib.isExpanded,
+                lockMode: ib.lockMode,
+                useConst: ib.useConst,
+                function: InputBlockFunction(inputBlocks: (newTargetItem as SheetText).inputBlocks, label: newTargetItem.name)
+                ));
+
+          } else {
+            inputBlocks.add(ib);
+            // return inputBlocks;
+          }
+        } else if(ib.function is UniStatFunction)  {
+            List<InputBlock> funcInputBlocks =[];
+            inputBlocks.add(
+              InputBlock(indexPath: IndexPath(index:-2), blockIndex: [-2], id: 'yo', useConst: false,
+              function: (ib.function as UniStatFunction).copyWith(inputBlocks: applyInputBlocks((ib.function as UniStatFunction).inputBlocks, sheetCol, sheetRow, funcInputBlocks))
+              ));
+            // return inputBlocks;
+          } else if(ib.function is BiStatFunction)  {
+            List<InputBlock> funcInputBlocksX =[];
+            List<InputBlock> funcInputBlocksY =[];
+            inputBlocks.add(
+              InputBlock(indexPath: IndexPath(index:-2), blockIndex: [-2], id: 'yo', useConst: false,
+              function: (ib.function as BiStatFunction).copyWith(
+                inputBlocksX: applyInputBlocks((ib.function as BiStatFunction).inputBlocksX, sheetCol, sheetRow, funcInputBlocksX),
+                inputBlocksY: applyInputBlocks((ib.function as BiStatFunction).inputBlocksY, sheetCol, sheetRow, funcInputBlocksY),
+                )
+              ));
+            // return inputBlocks;
+          }
+        }
+      return inputBlocks;
+    }
+    
+    void handleDragEnd() {
+    selectedIndexPaths.forEach((_, panelInx) {
+        if(panelInx.itemIndexPath == item.indexPath) return;
+        final sheetItem = getItemAtPath(panelInx.itemIndexPath);
+        
+        if (sheetItem is SheetText) {
+          sheetItem.inputBlocks.clear();
+          final sheetTextName = sheetItem.name; // e.g. "B2"
+          final sheetCol = columnLabelToNumber(
+              sheetTextName.replaceAll(RegExp(r'\d+'), '')); // "B" -> 2
+          final sheetRow =
+              int.parse(sheetTextName.replaceAll(RegExp(r'\D+'), '')); // "2" -> 2
+          
+          var panelItem = getItemAtPath(panelIndex.itemIndexPath) as SheetText;
+          print(panelItem.inputBlocks);
+          sheetItem.inputBlocks.addAll(applyInputBlocks(panelItem.inputBlocks, sheetCol, sheetRow, []));
+        }
+      });
+    }
 
     return Stack(
       children: [
         MouseRegion(
           onEnter: (event) {
               if (isFormulaMode) {
-                print(sheetTableCell.id);
+                // print(sheetTableCell.id);
                 setState(() {
                   if (selectedIndexPaths[sheetTableCell.sheetItem.id] == null && !HardwareKeyboard.instance.isControlPressed) {
                     selectedIndexPaths.addAll({
@@ -7910,9 +7967,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 });
               }
             },
-          onHover: (event) {
-            if (isFormulaMode) {
-                print(sheetTableCell.id);
+          onExit: (event) {
+              if (isFormulaMode) {
+                // print(sheetTableCell.id);
                 setState(() {
                   if (selectedIndexPaths[sheetTableCell.sheetItem.id] == null && !HardwareKeyboard.instance.isControlPressed) {
                     selectedIndexPaths.addAll({
@@ -7929,8 +7986,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   }
                 });
               }
-            
-          },
+            },
           child: Container(
           decoration: BoxDecoration(
             color: defaultPalette.primary,
@@ -7990,7 +8046,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   ],
                 ),
               ),
-              if( sheetText.inputBlocks.length>1 || sheetText.inputBlocks[0].id != sheetText.id)
+              if((sheetText.inputBlocks.length==1 && sheetText.inputBlocks[0].id != sheetText.id) || sheetText.inputBlocks.length>1 )
                Expanded(
                  child: Row(
                   children: [
@@ -8033,8 +8089,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             cursor: SystemMouseCursors.allScroll,
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => print('tap'),
-              onLongPress: () => print('updating'),
               onHorizontalDragStart:(_) { 
                 setState(() {
                   isFormulaMode = true;
@@ -8047,7 +8101,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       )
                   };
                 });
-                print('start');
+                // print('start');
               
               },
               onVerticalDragStart:(_){ 
@@ -8062,22 +8116,24 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       )
                   };
                 });
-                print('start');
+                // print('start');
               
               },
               onHorizontalDragEnd:(_) { 
                 setState(() {
                   isFormulaMode = false;
-
+                  handleDragEnd();
+                  
                 });
-                print('End');
+                // print('End');
               
               },
               onVerticalDragEnd:(_){ 
                 setState(() {
                   isFormulaMode = false;
+                  handleDragEnd();
                 });
-                print('End');
+                // print('End');
               
               },
               child: SizedBox(
@@ -10379,7 +10435,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           
 
 
-
                           return Positioned(
                             left: position.dx,
                             top: position.dy,
@@ -10487,12 +10542,21 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     const SizedBox(height: 10),
                                                     Expanded(child: buildOrganizedSheetTextList(filteredList, inputBlocks, oWidth)),
                                                     
-                                                    mathFunctionsLibrary(width, isOverlay:true,height:oHeight, inputBlocks: inputBlocks),
+                                                    
                                                   ],
                                                 ),
                                               ),
                                             ),
                                           ),
+                                          mathFunctionsLibrary(
+                                            oWidth, 
+                                            isOverlay:true,
+                                            height:oHeight, 
+                                            inputBlocks: inputBlocks, 
+                                            functionSearchController: funcSearchController,
+                                            functionFocusNode:funcSearchFocusNode,
+                                            updateState: updateState,
+                                            ),
                                           
                                         ],
                                       ),
@@ -10739,6 +10803,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               ); // fail-safe
                             }
                           }
+                          bool isTable = (itemAtPath?.parentId??'yo').startsWith('TB-') && (item.parentId).startsWith('TB-');
+                                  
                           return ReorderableDragStartListener(
                             key: ValueKey(inx+2),
                             index: inx,
@@ -10898,6 +10964,41 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       },
                                                     ),
                                                   ],
+                                                  if(isTable)
+                                                  ...[
+                                                    const SizedBox(width: 2),
+                                                    ElevatedLayerButton(
+                                                    borderRadius: const BorderRadius.only(
+                                                      topRight: Radius.circular(10),
+                                                      topLeft: Radius.circular(10),
+                                                      bottomRight: Radius.circular(10),
+                                                      bottomLeft: Radius.circular(10),
+                                                    ),
+                                                    animationDuration: const Duration(milliseconds: 100),
+                                                    animationCurve: Curves.ease,
+                                                    topDecoration: BoxDecoration(
+                                                      color: defaultPalette.primary,
+                                                      border: Border.all(color: defaultPalette.extras[0]),
+                                                    ),
+                                                    topLayerChild: Row(
+                                                      children: [
+                                                        Expanded(child: Icon(InputBlock.lockModeIcons[inBlock[inx].lockMode], size: 12, color: defaultPalette.extras[0])),
+                                                      ],
+                                                    ),
+                                                    baseDecoration: BoxDecoration(
+                                                      color: defaultPalette.extras[0],
+                                                      border: Border.all(color: defaultPalette.extras[0]),
+                                                    ),
+                                                    depth: 2,
+                                                    subfac: 2,
+                                                    buttonHeight: 24,
+                                                    buttonWidth: 24,
+                                                    onClick: () {
+                                                      setState(() {
+                                                        inBlock[inx].lockMode= (inBlock[inx].lockMode+1)%4;
+                                                      });
+                                                    },
+                                                  ),],
                                                   // if(!isBiStat)
                                                   Expanded(
                                                     child: Container(
@@ -11008,7 +11109,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           children:[
                                             if(inBlock[inx].isExpanded)
                                             Padding(
-                                              padding: const EdgeInsets.only(top:9.0),
+                                              padding: const EdgeInsets.only(top:20.0),
                                               child: buildFunctionTile(inx, width,inBlock, visited:visited==null?null: Map<List<InputBlock>,int>.from(visited))[0],
                                             ),
                                             AnimatedMeshGradient(
@@ -11486,7 +11587,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               break;
                             default:
                           }
-                            
+                          
                           }
                           String? delta;
                           SheetText? itemAtPath;
@@ -11506,6 +11607,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               ); // fail-safe
                             }
                           }
+                          bool isTable = (item.parentId??'yo').startsWith('TB-') && (item.parentId).startsWith('TB-');
+                          // print('isTable: ${(item)}');
                           return ReorderableDragStartListener(
                             key: ValueKey(inx),
                             index: inx,
@@ -11843,7 +11946,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     
                                                     //sum cumulative and individual index
                                                     Container(
-                                                      margin: EdgeInsets.all(2).copyWith(top:0, left:50,bottom: 4),
+                                                      margin: EdgeInsets.all(2).copyWith(top:0, left:isTable?74:50,bottom: 4),
                                                       padding: EdgeInsets.all(3),
                                                       decoration: BoxDecoration(
                                                         borderRadius: BorderRadius.circular(5),
@@ -11997,6 +12100,41 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         });
                                                       },
                                                     ),
+                                                  if(isTable)
+                                                  ...[
+                                                    const SizedBox(width: 2),
+                                                    ElevatedLayerButton(
+                                                    borderRadius: const BorderRadius.only(
+                                                      topRight: Radius.circular(10),
+                                                      topLeft: Radius.circular(10),
+                                                      bottomRight: Radius.circular(10),
+                                                      bottomLeft: Radius.circular(10),
+                                                    ),
+                                                    animationDuration: const Duration(milliseconds: 100),
+                                                    animationCurve: Curves.ease,
+                                                    topDecoration: BoxDecoration(
+                                                      color: defaultPalette.primary,
+                                                      border: Border.all(color: defaultPalette.extras[0]),
+                                                    ),
+                                                    topLayerChild: Row(
+                                                      children: [
+                                                        Expanded(child: Icon(InputBlock.lockModeIcons[inBlock[inx].lockMode], size: 12, color: defaultPalette.extras[0])),
+                                                      ],
+                                                    ),
+                                                    baseDecoration: BoxDecoration(
+                                                      color: defaultPalette.extras[0],
+                                                      border: Border.all(color: defaultPalette.extras[0]),
+                                                    ),
+                                                    depth: 2,
+                                                    subfac: 2,
+                                                    buttonHeight: 24,
+                                                    buttonWidth: 24,
+                                                    onClick: () {
+                                                      setState(() {
+                                                        inBlock[inx].lockMode= (inBlock[inx].lockMode+1)%4;
+                                                      });
+                                                    },
+                                                  ),],
                                                 ],
                                               ),
                                             ),
@@ -12941,7 +13079,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                     }
                     
                   }
-                  // print('inputTile'+inputBlock[index].function.runtimeType.toString());
+                  
                   //Return for inputBlock
                   return Column(
                     children: [
@@ -15435,7 +15573,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               //
                                               //
                                               //functions library
-                                              mathFunctionsLibrary(width),
+                                              mathFunctionsLibrary(width, functionSearchController: functionSearchController,updateState: setState, functionFocusNode:functionSearchFocusNode),
                                               const SizedBox(
                                                 height:3
                                               ), 
@@ -16004,7 +16142,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             duration: Duration(milliseconds: 150),
             backgroundCardScale: 1,
             loop: true,
-            cardCount: 3,
+            cardCount: 2,
             allowUnSwipe: true,
             allowUnlimitedUnSwipe: true,
             initialIndex: whichTablePropertyTabIsClicked,
@@ -16909,7 +17047,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color:whichTablePropertyTabIsClicked==2? defaultPalette.primary: defaultPalette.secondary,
+                        color:whichTablePropertyTabIsClicked==1? defaultPalette.primary: defaultPalette.secondary,
                         border: Border.all(width: 2),
                         borderRadius: BorderRadius.circular(25),
                       ),
@@ -16951,15 +17089,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           titlesData: const FlTitlesData(show: false),
                           gridData: FlGridData(
                             getDrawingVerticalLine: (value) => FlLine(
-                              color: defaultPalette.extras[0].withOpacity(whichTablePropertyTabIsClicked==2?0.6:1),
-                              dashArray:whichTablePropertyTabIsClicked==2? [2,8]:[5, 5],
+                              color: defaultPalette.extras[0].withOpacity(whichTablePropertyTabIsClicked==1?0.6:1),
+                              dashArray:whichTablePropertyTabIsClicked==1? [2,8]:[5, 5],
                               strokeWidth: 1),
                             getDrawingHorizontalLine: (value) => FlLine(
-                              color: defaultPalette.extras[0].withOpacity(whichTablePropertyTabIsClicked==2?0.6:1),
-                              dashArray:whichTablePropertyTabIsClicked==2?[2,8]:[5, 5],
+                              color: defaultPalette.extras[0].withOpacity(whichTablePropertyTabIsClicked==1?0.6:1),
+                              dashArray:whichTablePropertyTabIsClicked==1?[2,8]:[5, 5],
                               strokeWidth: 1),
                             show: true,
-                            horizontalInterval: whichTablePropertyTabIsClicked==2?3:2,
+                            horizontalInterval: whichTablePropertyTabIsClicked==1?3:2,
                             verticalInterval: 30),
                           borderData: FlBorderData(show: false),
                           minY: 0,
@@ -17137,8 +17275,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                   onClick: (){
                                                     setState(() {
                                                     whichTableDecorationIsClicked = 0;
-                                                    tablePropertyCardsController.setCardIndex(2);
-                                                    whichTablePropertyTabIsClicked =2;
+                                                    tablePropertyCardsController.setCardIndex(1);
+                                                    whichTablePropertyTabIsClicked =1;
                                                     _findSheetTableItem(sheetTableItem, updateVariables: false);
                                                   });
                                                   },
@@ -17215,8 +17353,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             child: ElevatedLayerButton(
                                               onClick: (){
                                                 whichTableDecorationIsClicked = 1;
-                                                tablePropertyCardsController.setCardIndex(2);
-                                                whichTablePropertyTabIsClicked =2;
+                                                tablePropertyCardsController.setCardIndex(1);
+                                                whichTablePropertyTabIsClicked =1;
                                                 _findSheetTableItem(sheetTableItem, updateVariables: false);
                                               },
                                               buttonHeight: 50,
@@ -17453,46 +17591,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       const SizedBox(
                                             height:8
                                           ),
-                                      
-                                      //row and column property cards
-                                      ...[
-                                          tableAxisCard(0),
-                                          const SizedBox(
-                                            height:8
-                                          ),
-                                          tableAxisCard(1) 
-                                      ],
-                                      const SizedBox(
-                                            height:5
-                                          ),
-                                      ],
-                                  ));
-                              }
-                            )
-                          )
-                        )
-                      )
-                    )
-                  ],
-                  
-                  if(index==1) ...[
-                    Positioned.fill(
-                      child: Padding(
-                        padding: EdgeInsets.all(15).copyWith(left: 12, right: 14),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: ScrollConfiguration(
-                            behavior: ScrollBehavior().copyWith(scrollbars: false),
-                            child: DynMouseScroll(
-                              durationMS: 500,
-                              scrollSpeed: 1,
-                              builder: (context, controller, physics) {
-                                return SingleChildScrollView(
-                                  controller: controller,
-                                  physics: physics,
-                                  child: Column(
-                                      children:[
-                                        Container(
+                                      //cell
+                                      Container(
                                         margin: EdgeInsets.only(top:4, left:2, right:2),
                                         padding: EdgeInsets.all(5),
                                         decoration: BoxDecoration(
@@ -17501,27 +17601,18 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         border: Border.all(color: defaultPalette.extras[0], width: 2)),
                                         child:  Stack(
                                           children: [
-                                            // Text(sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].indexPath.toString(),
-                                            //       maxLines: 1,
-                                            //       overflow: TextOverflow.ellipsis,
-                                            //       style: GoogleFonts.lexend(
-                                            //         height: 0.9,
-                                            //         fontSize:18,
-                                            //         letterSpacing: -1,
-                                            //         fontWeight: FontWeight.w500),
-                                            //       ),
                                             Positioned(
-                                              right:0,
+                                              right:4,
                                               child: Text((sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].id),
                                                       maxLines: 1,
                                                       overflow: TextOverflow.ellipsis,
                                                       textAlign: TextAlign.center,
-                                                      style: GoogleFonts.mitr(
+                                                      style: GoogleFonts.lexend(
                                                         color:defaultPalette.extras[0].withOpacity(0.1),
                                                         height: 1,
                                                         fontSize:90,
                                                         letterSpacing: -1,
-                                                        fontWeight: FontWeight.w500),
+                                                        fontWeight: FontWeight.w700),
                                                     ),
                                             ),   
                                             Column(
@@ -17533,7 +17624,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               children: [
                                                 const Icon(TablerIcons.border_all,
                                                   size:30,
-                                                  weight: 600,
+                                                  weight: 400,
                                                 ),
                                                 const SizedBox(
                                                   width:3
@@ -17544,7 +17635,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                     mainAxisAlignment: MainAxisAlignment.start,
                                                     children: [
-                                                      Text('cellProperties',
+                                                      Text('cell',
                                                       maxLines: 1,
                                                       overflow: TextOverflow.ellipsis,
                                                       style: GoogleFonts.lexend(
@@ -17572,18 +17663,30 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           ],
                                         ),
                                         ),
+                                      const SizedBox(
+                                            height:8
+                                          ),
+                                      //row and column property cards
+                                      ...[
+                                          tableAxisCard(1),
+                                          const SizedBox(
+                                            height:8
+                                          ),
+                                          tableAxisCard(0) 
                                       ],
-                                    ),
-                                 );
-                               }
-                             ),
-                           ),
-                         ),
-                       ),
-                     )
+                                      const SizedBox(
+                                            height:5
+                                          ),
+                                      ],
+                                  ));
+                              }
+                            )
+                          )
+                        )
+                      )
+                    )
                   ],
-                  
-                  if (index == 2) ...[
+                  if (index == 1) ...[
                   ...buildSuperDecorationSwiperInterface(
                     whichTableDecorationIsClicked ==0
                     ? tableDecorationPath
@@ -18949,6 +19052,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       bool isOverlay=false,
       double height=900,
       List<InputBlock>? inputBlocks,
+      required TextEditingController functionSearchController,
+      required FocusNode functionFocusNode,
+      required Function updateState,
     }
   ) {
     if (inputBlocks == null) {
@@ -18980,7 +19086,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           
                         },
                         onChange: (value) {
-                          setState(() {
+                          updateState(() {
                             // functionSearchController.text = value;
                           });
                         },
@@ -19037,7 +19143,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       cursor:SystemMouseCursors.click,
                                       child: GestureDetector(
                                         onTap:(){
-                                          setState(() {
+                                          updateState(() {
                                             if (inputBlocks !=null) {
                                               inputBlocks.add(InputBlock(
                                                 indexPath: IndexPath(index: -1277), 
@@ -19048,6 +19154,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 ));
                                             }
                                             // inputBlockExpansionList.add(true);
+                                          
+                                        });
+                                        setState(() {
                                           
                                         });
                                         },
@@ -19086,7 +19195,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       cursor:SystemMouseCursors.click,
                                       child: GestureDetector(
                                         onTap:(){
-                                          setState(() {
+                                          updateState(() {
                                             if (inputBlocks !=null) {
                                               inputBlocks.add(InputBlock(
                                                 indexPath: IndexPath(index: -1277), 
@@ -19097,6 +19206,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 ));
                                             }
                                             // inputBlockExpansionList.add(true);
+                                          
+                                        });
+                                        setState(() {
                                           
                                         });
                                         },
@@ -20886,7 +20998,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         top: 136,
         left: showDecorationLayers ? 12.5 : 12,
         child: AnimatedContainer(
-          duration:((whichPropertyTabIsClicked==2?whichTextPropertyTabIsClicked==2:false) ||(whichPropertyTabIsClicked==3?whichListPropertyTabIsClicked==1:false)||(whichPropertyTabIsClicked==4?whichTablePropertyTabIsClicked==2:false)) 
+          duration:((whichPropertyTabIsClicked==2?whichTextPropertyTabIsClicked==2:false) ||(whichPropertyTabIsClicked==3?whichListPropertyTabIsClicked==1:false)||(whichPropertyTabIsClicked==4?whichTablePropertyTabIsClicked==1:false)) 
               ? Durations.medium4:Duration.zero,
           curve: Curves.easeInOut,
           height:

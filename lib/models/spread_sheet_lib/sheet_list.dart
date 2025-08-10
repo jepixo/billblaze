@@ -100,7 +100,8 @@ class SheetListBox extends SheetItem {
 
   /// ♻️ Convert back from a map
   factory SheetListBox.fromMap(Map<String, dynamic> map) {
-    // print('in SheetListFromMap: '+map['id']);
+    print('in SheetListFromMap: '+map['id'].toString());
+    // print('in SheetListFromMap: '+map['indexPath'].toString());
     // print('in SheetListFromMap: '+map['sheetList'].toString());
     return SheetListBox(
       id: map['id'],

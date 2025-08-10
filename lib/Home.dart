@@ -1885,7 +1885,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     );
                                   var box =Boxes.getLayouts();
                                   final gmap = await fetchAndReconstructLayoutModels(ref, overlay);
-                                  overlay.remove();
+                                  
 
                                   for (var lmEntry in gmap.entries) {
                                     final id = lmEntry.key;
@@ -3371,7 +3371,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   color:defaultPalette.primary,
                                                                   border: Border.all(width: 1.2, color:defaultPalette.extras[0]),
                                                                   borderRadius: BorderRadius.circular(10),
-                                                                  image:layoutModel.pdf==null?null: DecorationImage(image:MemoryImage(layoutModel.pdf![indx],),fit: BoxFit.fitWidth),
+                                                                  image:(layoutModel.pdf==null ||(layoutModel.pdf?.isEmpty??false) )?null: DecorationImage(image:MemoryImage(layoutModel.pdf![indx],),fit: BoxFit.fitWidth),
                                                                 ),
                                                               ),
                                                             ),    
