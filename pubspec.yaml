@@ -18,7 +18,7 @@ dependencies:
   firebase_auth: ^4.17.5 
   google_sign_in: ^6.2.1
   provider: any
-  google_fonts: ^4.0.3
+  google_fonts: ^6.3.0
   googleapis: ^14.0.0
   googleapis_auth: ^1.4.1
   flutter_riverpod: ^2.3.6
@@ -26,6 +26,10 @@ dependencies:
   # 
   #sketchy
   iconsax_plus: ^1.0.0
+  flutter_svgl: ^1.2.0
+  hyper_effects: ^0.3.0
+  flutter_inappwebview: 
+  flutter_inappwebview_windows:
   #sketchy
   #comment for web
   google_sign_in_all_platforms: ^0.0.4 

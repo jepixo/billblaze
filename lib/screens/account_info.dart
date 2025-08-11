@@ -1,8 +1,12 @@
+import 'dart:io';
 import 'dart:ui';
+import 'package:billblaze/components/elevated_button.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:billblaze/providers/auth_provider.dart';
+import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AccountInfo extends StatefulWidget {
@@ -68,85 +72,51 @@ class _AccountInfoState extends State<AccountInfo>
 
           return Stack(
             children: [
-              Hero(
-                  tag: 'Acctag',
-                  child: Stack(
-                    children: [
-                      //Switcher for fading when account changes.
-                      AnimatedSwitcher(
-                        duration: Duration(milliseconds: 1500),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          );
-                        },
-                        child: Container(
-                          //I think based on the key the switch is toggled.
-                          key: ValueKey<String>(user?.photoURL ?? ''),
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              //
-                              // Background Blurred Image
-                              //
-                              image: NetworkImage(user?.photoURL ?? ''),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+              Stack(
+                children: [
+                  //Switcher for fading when account changes.
+                  AnimatedSwitcher(
+                    duration: Duration(milliseconds: 1500),
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      );
+                    },
+                    child: Container(
+                      //I think based on the key the switch is toggled.
+                      key: ValueKey<String>(user?.photoURL ?? ''),
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          //
+                          // Background Blurred Image
+                          //
+                          image: NetworkImage(user?.photoURL ?? ''),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(
+                          sigmaX: 8,
+                          sigmaY: 8,
+                        ),
+                        child: SizedBox(
                           width: MediaQuery.of(context).size.width,
                           height: MediaQuery.of(context).size.height,
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(
-                              sigmaX: 8,
-                              sigmaY: 8,
-                            ),
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width,
-                              height: MediaQuery.of(context).size.height,
-                            ),
-                          ),
                         ),
                       ),
-
-                      //
-                      // End Background blur image
-                      //
-                      SafeArea(
-                        //
-                        // Position button to top right and padding
-                        // TOP CLOSE BUTTON
-                        //
-                        child: Container(
-                          alignment: AlignmentDirectional.topEnd,
-                          padding: EdgeInsets.only(top: 5, right: 8),
-
-                          //close button circle deco and icon child.
-                          child: Container(
-                            height: 40,
-                            width: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.black.withOpacity(0.2),
-                            ),
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
-                              child: Icon(
-                                Icons.close,
-                                size: 20,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                        //
-                        // END CLOSE BUTTON
-                        //
-                      ),
-                    ],
-                  )),
+                    ),
+                  ),
+              
+                  //
+                  // End Background blur image
+                  //
+                  
+                ],
+              ),
               //
               //
               //
@@ -229,19 +199,15 @@ class _AccountInfoState extends State<AccountInfo>
                       color: Colors.black.withOpacity(0.2),
                     ),
                     child: GestureDetector(
-                      onTap: () {
-                        ref.read(authRepositoryProvider).googleLogOut();
-                        Navigator.pop(context);
+                      onTap: () async {  
+                          await ref.read(authRepositoryProvider).googleLogOut(ref);
+                        
+                        // Navigator.pop(context);
                       },
-                      child: Hero(
-                        tag: 'addclose',
-                        child: Icon(
-                          Icons.logout,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-
-                        // + icon function.
+                      child: Icon(
+                        Icons.logout,
+                        size: 18,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -250,6 +216,7 @@ class _AccountInfoState extends State<AccountInfo>
                   ),
                 ]),
               ),
+              
             ],
           );
         },

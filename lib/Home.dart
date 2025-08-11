@@ -16,6 +16,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/llama_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
 import 'package:billblaze/repo/llama_repository.dart';
+import 'package:billblaze/screens/account_info.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
@@ -476,6 +477,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         color: defaultPalette.primary,
                       ),
                     ),
+                    _getProfile(context, ref, topPadPosDistance),
                     _getBillsAndCharts(context, ref, topPadPosDistance),
                     _getLayoutAndTemplates(context, ref, topPadPosDistance),
                     AnimatedContainer(
@@ -488,82 +490,85 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       duration: defaultDuration,
                       top: isHomeTab ? topPadPosDistance :10,
                       left: isHomeTab ? 110 : 60,
-                      child: AnimatedTextKit(
-                        key: ValueKey(isHomeTab ?sHeight*sWidth:isHomeTab),
-                        animatedTexts: [
-                          TypewriterAnimatedText("Bill\nBlaze.",
-                              textStyle: GoogleFonts.abrilFatface(
-                                  fontSize: isHomeTab
-                                      ? titleFontSize
-                                      : 20,
-                                  color: defaultPalette.extras[0],
-                                  height: 0.9),
-                              speed: Duration(milliseconds: 100)),
-                          TypewriterAnimatedText("Bill\nBlaze.",
-                              textStyle: GoogleFonts.zcoolKuaiLe(
-                                  fontSize: isHomeTab
-                                      ? titleFontSize
-                                      : 20,
-                                  color: isHomeTab
-                                      ? Colors.black
-                                      : Color(0xFF000000).withOpacity(0.8),
-                                  height: 0.9),
-                              speed: Duration(milliseconds: 100)),
-                          TypewriterAnimatedText("Bill\nBlaze.",
-                              textStyle: GoogleFonts.splash(
-                                  fontSize: isHomeTab
-                                      ? titleFontSize
-                                      : 20,
-                                  color: isHomeTab
-                                      ? Colors.black
-                                      : Color(0xFF000000).withOpacity(0.8),
-                                  height: 0.9),
-                              speed: Duration(milliseconds: 100)),
-                          TypewriterAnimatedText("Bill\nBlaze",
-                              textStyle: GoogleFonts.libreBarcode39ExtendedText(
-                                  fontSize: isHomeTab
-                                      ? titleFontSize / 1.1
-                                      : 20,
-                                  letterSpacing:
-                                      isHomeTab ? -titleFontSize / 4 : 0,
-                                  height: 1),
-                              speed: Duration(milliseconds: 100)),
-                          TypewriterAnimatedText("Bill\nBlaze.",
-                              textStyle: GoogleFonts.redactedScript(
-                                  fontSize: isHomeTab
-                                      ? titleFontSize
-                                      : 20,
-                                  color: isHomeTab
-                                      ? Colors.black
-                                      : Color(0xFF000000).withOpacity(0.8),
-                                  height: 0.9),
-                              speed: Duration(milliseconds: 100)),
-                          TypewriterAnimatedText("Bill\nBlaze.",
-                              textStyle: GoogleFonts.fascinateInline(
-                                  fontSize: isHomeTab
-                                      ? titleFontSize
-                                      : 20,
-                                  color: isHomeTab
-                                      ? Colors.black
-                                      : Color(0xFF000000).withOpacity(0.8),
-                                  height: 0.9),
-                              speed: Duration(milliseconds: 100)),
-                          // TypewriterAnimatedText("Bill\nBlaze.",
-                          //     textStyle: GoogleFonts.nabla(
-                          //         fontSize: isHomeTab
-                          //             ? titleFontSize
-                          //             : titleFontSize / 3,
-                          //         color: isHomeTab
-                          //             ? Colors.black
-                          //             : Color(0xFF000000).withOpacity(0.8),
-                          //         height: 0.9),
-                          //     speed: Duration(milliseconds: 100)),
-                        ],
-                        // totalRepeatCount: 1,
-                        repeatForever: true,
-                        pause: const Duration(milliseconds: 30000),
-                        displayFullTextOnTap: true,
-                        stopPauseOnTap: true,
+                      child: Hero(
+                        tag: 'login',
+                        child: AnimatedTextKit(
+                          key: ValueKey(isHomeTab ?sHeight*sWidth:isHomeTab),
+                          animatedTexts: [
+                            TypewriterAnimatedText("Bill\nBlaze.",
+                                textStyle: GoogleFonts.abrilFatface(
+                                    fontSize: isHomeTab
+                                        ? titleFontSize
+                                        : 20,
+                                    color: defaultPalette.extras[0],
+                                    height: 0.9),
+                                speed: Duration(milliseconds: 100)),
+                            TypewriterAnimatedText("Bill\nBlaze.",
+                                textStyle: GoogleFonts.zcoolKuaiLe(
+                                    fontSize: isHomeTab
+                                        ? titleFontSize
+                                        : 20,
+                                    color: isHomeTab
+                                        ? Colors.black
+                                        : Color(0xFF000000).withOpacity(0.8),
+                                    height: 0.9),
+                                speed: Duration(milliseconds: 100)),
+                            TypewriterAnimatedText("Bill\nBlaze.",
+                                textStyle: GoogleFonts.splash(
+                                    fontSize: isHomeTab
+                                        ? titleFontSize
+                                        : 20,
+                                    color: isHomeTab
+                                        ? Colors.black
+                                        : Color(0xFF000000).withOpacity(0.8),
+                                    height: 0.9),
+                                speed: Duration(milliseconds: 100)),
+                            TypewriterAnimatedText("Bill\nBlaze",
+                                textStyle: GoogleFonts.libreBarcode39ExtendedText(
+                                    fontSize: isHomeTab
+                                        ? titleFontSize / 1.1
+                                        : 20,
+                                    letterSpacing:
+                                        isHomeTab ? -titleFontSize / 4 : 0,
+                                    height: 1),
+                                speed: Duration(milliseconds: 100)),
+                            TypewriterAnimatedText("Bill\nBlaze.",
+                                textStyle: GoogleFonts.redactedScript(
+                                    fontSize: isHomeTab
+                                        ? titleFontSize
+                                        : 20,
+                                    color: isHomeTab
+                                        ? Colors.black
+                                        : Color(0xFF000000).withOpacity(0.8),
+                                    height: 0.9),
+                                speed: Duration(milliseconds: 100)),
+                            TypewriterAnimatedText("Bill\nBlaze.",
+                                textStyle: GoogleFonts.fascinateInline(
+                                    fontSize: isHomeTab
+                                        ? titleFontSize
+                                        : 20,
+                                    color: isHomeTab
+                                        ? Colors.black
+                                        : Color(0xFF000000).withOpacity(0.8),
+                                    height: 0.9),
+                                speed: Duration(milliseconds: 100)),
+                            // TypewriterAnimatedText("Bill\nBlaze.",
+                            //     textStyle: GoogleFonts.nabla(
+                            //         fontSize: isHomeTab
+                            //             ? titleFontSize
+                            //             : titleFontSize / 3,
+                            //         color: isHomeTab
+                            //             ? Colors.black
+                            //             : Color(0xFF000000).withOpacity(0.8),
+                            //         height: 0.9),
+                            //     speed: Duration(milliseconds: 100)),
+                          ],
+                          // totalRepeatCount: 1,
+                          repeatForever: true,
+                          pause: const Duration(milliseconds: 30000),
+                          displayFullTextOnTap: true,
+                          stopPauseOnTap: true,
+                        ),
                       ),
                     ),
                     //
@@ -1075,7 +1080,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             color: defaultPalette.extras[0],
                           ),
                           Icon(
-                            IconsaxPlusLinear.document_text_1,
+                            IconsaxPlusLinear.receipt_1,
                             size: 25,
                             color:  defaultPalette.extras[0],
                           ),
@@ -1085,7 +1090,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             color:  defaultPalette.extras[0],
                           ),
                           Icon(
-                            IconsaxPlusLinear.graph,
+                            IconsaxPlusLinear.user_square,
                             size: 25,
                             color:  defaultPalette.extras[0],
                           ),
@@ -5283,6 +5288,91 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               
   }
   
+  Widget _getProfile(BuildContext context, WidgetRef ref, double topPadPosDistance) {
+    var sHeight = MediaQuery.of(context).size.height;
+    var sWidth = MediaQuery.of(context).size.width;
+    int homeScreenTabIndex = ref.watch(homeScreenTabIndexProvider);
+    bool isHomeTab = homeScreenTabIndex ==0;
+    bool isBillTab = homeScreenTabIndex ==2;
+    bool isProfileTab = homeScreenTabIndex ==3;
+    double dotSize = sHeight/35;
+    // print(sWidth);
+    return AnimatedPositioned(
+      duration: Durations.short2,
+      // top: (topPadPosDistance * 1.08),
+      height: sHeight,
+      child: AnimatedOpacity(
+        opacity: isProfileTab ? 1 : 0,
+        duration: Duration(milliseconds: 100),
+        child: Stack(
+          children: [
+            IgnorePointer(
+              ignoring: !isProfileTab,
+              child: Container(
+                // duration: Durations.extra,
+                height: sHeight,
+                width: sWidth,
+                alignment: Alignment.centerRight,
+                color: isHomeTab
+                    ? Colors.transparent
+                    : Colors.white,
+                padding: EdgeInsets.only(
+                  top: 0,
+                ),
+                //BillGraph
+                child: Opacity(
+                  opacity: 0.35,
+                  child: LineChart(LineChartData(
+                    lineBarsData: [LineChartBarData()],
+                    titlesData: const FlTitlesData(show: false),
+                    gridData: FlGridData(
+                      getDrawingVerticalLine: (value) => FlLine(
+                        color: defaultPalette.extras[0].withOpacity(0.6),
+                        dashArray:[2,8],
+                        strokeWidth: 1),
+                      getDrawingHorizontalLine: (value) => FlLine(
+                        color: defaultPalette.extras[0].withOpacity(0.6),
+                        dashArray:[2,8],
+                        strokeWidth: 1),
+                      show: true,
+                      horizontalInterval: 10,
+                      verticalInterval: 30),
+                    borderData: FlBorderData(show: false),
+                    minY: 0,
+                    maxY: 50,
+                    maxX: dateTimeNow.millisecondsSinceEpoch
+                                .ceilToDouble() /
+                            500 +
+                        250,
+                    minX: dateTimeNow.millisecondsSinceEpoch
+                            .ceilToDouble() /
+                        500)),
+                ),
+                  
+              ),
+            ),
+              
+            //   ),
+            // ),
+            // //
+            //
+            //Bill$€₹
+            AnimatedPositioned(
+              duration: Durations.medium2,
+              width: sWidth-70,
+              height: (sHeight -topPadPosDistance),
+              top: topPadPosDistance,
+              left: 70,
+              child: AccountInfo(),
+            ),
+            
+          ],
+        ),
+      ),
+    );
+  
+  }
+
   List<Widget> datePropertyTile(int s) {
     var sHeight = MediaQuery.of(context).size.height;
     var sWidth = MediaQuery.of(context).size.width;

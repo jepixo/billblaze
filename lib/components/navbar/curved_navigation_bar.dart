@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 typedef _LetIndexPage = bool Function(int value);
 
 class CurvedNavigationBar extends StatefulWidget {
-  final List<Icon> items;
+  final List<Widget> items;
   final int index;
   final Color color;
   final Color? buttonBackgroundColor;
@@ -71,7 +71,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
   late int _endingIndex;
   late double _pos;
   double _buttonHide = 0;
-  late Icon _icon;
+  late Widget _icon;
   late AnimationController _animationController;
   late int _length;
 
@@ -171,11 +171,8 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                           ),
                           topLayerChild: Transform.rotate(
                             angle: -pi/2,
-                            child: Icon(
-                              _icon.icon,
-                              color: widget.buttonIconColor,
-                              size: _icon.size,
-                            ),
+                            child:
+                              _icon,
                           ),
                           baseDecoration: BoxDecoration(
                             color: widget.color,
