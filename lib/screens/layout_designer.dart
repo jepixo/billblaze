@@ -5271,7 +5271,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               // color: Colors.blue,
                                             ),
                                             baseDecoration: BoxDecoration(
-                                              color: Colors.green,
+                                              color: defaultPalette.extras[0],
                                               border: Border.all(),
                                             ),
                                           ),
@@ -5304,7 +5304,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               // color: Colors.amber,
                                             ),
                                             baseDecoration: BoxDecoration(
-                                              color: Colors.green,
+                                              color: defaultPalette.extras[0],
                                               border: Border.all(),
                                             ),
                                           ),
@@ -5336,7 +5336,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               // color: Colors.red,
                                             ),
                                             baseDecoration: BoxDecoration(
-                                              color: Colors.green,
+                                              color: defaultPalette.extras[0],
                                               border: Border.all(),
                                             ),
                                           ),
@@ -5449,7 +5449,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         subfac: 2,
                         depth: 2,
                         baseDecoration: BoxDecoration(
-                          color: Colors.green,
+                          color: defaultPalette.extras[0],
                           border: Border.all(),
                         ),
                       ),

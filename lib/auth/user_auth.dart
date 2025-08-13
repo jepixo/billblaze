@@ -104,7 +104,7 @@ class AuthRepository {
 
     try {
       final userCredential = await _auth.signInWithEmailAndPassword(
-        email: email.trim(),
+        email: email,
         password: password,
       );
 
@@ -134,6 +134,8 @@ class AuthRepository {
     print(st);
   }
 }
+
+  
 
   Future<String> promptForUsername(BuildContext context) async {
     String username = '';

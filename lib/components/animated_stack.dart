@@ -19,6 +19,7 @@ class AnimatedStack extends StatefulWidget {
   final Curve closeAnimationCurve;
   final IconData buttonIcon;
   final bool animateButton;
+  final bool isDisabled;
 
   const AnimatedStack({
     Key? key,
@@ -36,6 +37,7 @@ class AnimatedStack extends StatefulWidget {
     this.buttonIcon = Icons.add,
     this.animateButton = true,
     this.fabIconColor,
+    this.isDisabled = false,
   })  : assert(scaleHeight >= 40),
         super(key: key);
 
@@ -60,7 +62,7 @@ class _AnimatedStackState extends State<AnimatedStack> {
 
     return Scaffold(
       // floatingActionButton:
-      body: Stack(
+      body:widget.isDisabled?widget.foregroundWidget: Stack(
         children: <Widget>[
           Container(
             color: widget.backgroundColor,

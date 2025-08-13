@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>TV Static</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    overflow: hidden;
+    height: 100%;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+</style>
+</head>
+<body>
+<canvas id="static"></canvas>
+<script>
+  const canvas = document.getElementById('static');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function drawStatic() {
+    const imageData = ctx.createImageData(canvas.width, canvas.height);
+    const buffer32 = new Uint32Array(imageData.data.buffer);
+    for (let i = 0; i < buffer32.length; i++) {
+      const val = Math.random() * 255;
+      buffer32[i] = (255 << 24) | (val << 16) | (val << 8) | val;
+    }
+    ctx.putImageData(imageData, 0, 0);
+    requestAnimationFrame(drawStatic);
+  }
+  drawStatic();
+
+  // Audio
+  let audioCtx;
+  let whiteNoise;
+
+  function startStaticSound() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const bufferSize = 2 * audioCtx.sampleRate;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+    whiteNoise = audioCtx.createBufferSource();
+    whiteNoise.buffer = noiseBuffer;
+    whiteNoise.loop = true;
+    whiteNoise.connect(audioCtx.destination);
+    whiteNoise.start(0);
+  }
+  startStaticSound();
+//   window.onload = () => {
+//     startStaticSound();
+    
+//   };
+  // This is the "click to start instantly" fix
+  document.body.addEventListener('click', async () => {
+    if (!audioCtx || audioCtx.state === 'suspended') {
+      if (!audioCtx) startStaticSound();
+      await audioCtx.resume();
+      console.log("Static sound started");
+    }
+  }, { once: true });
+</script>
+</body>
+</html>

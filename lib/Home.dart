@@ -13,13 +13,20 @@ import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_functions.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
+import 'package:billblaze/providers/auth_provider.dart';
 import 'package:billblaze/providers/llama_provider.dart';
+import 'package:billblaze/providers/url_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
 import 'package:billblaze/repo/llama_repository.dart';
 import 'package:billblaze/screens/account_info.dart';
+import 'package:billblaze/util/static_noise.dart';
+import 'package:cool_background_animation/cool_background_animation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
+import 'package:flutter_svgl/flutter_svgl.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as gap;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -65,7 +72,7 @@ final processMessageProvider = StateProvider<String>((ref) {
 });
 
 final aiTokenProvider = StateProvider<String>((ref) {
-  return  'Initializing...';
+  return  'Ask AI...';
 });
 
 
@@ -116,6 +123,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   Map<double, double> monthRevenueMap = {};
   Map<double, double> dayRevenueMap = {};
   String result ='Loading AI';
+  InAppWebViewController? _controller;
   // bool isHomeTab = true;
 
   Key titleMainKey = GlobalKey();
@@ -200,6 +208,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     // recentsCardController.dispose();
     // ref.read(llamaProvider).dispose();
     // LlamaRepository.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -446,6 +455,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     bool isHomeTab = homeScreenTabIndex ==0;
     bool isLayoutTab = homeScreenTabIndex ==1;
     bool isBillTab = homeScreenTabIndex ==2;
+    bool isProfileTab = homeScreenTabIndex ==3;
+
     // print(mapValue(value: sHeight, inMin: 480, inMax: 1186, outMin: 0.18, outMax: 0.1));
     // print(sHeight);
       return Scaffold(
@@ -463,6 +474,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               buttonIcon: IconsaxPlusBold.add,
               columnWidget: Column(),
               bottomWidget: Row(),
+              isDisabled: true,
               foregroundWidget: Container(
               height: sHeight,
               width: sWidth,
@@ -477,7 +489,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         color: defaultPalette.primary,
                       ),
                     ),
-                    _getProfile(context, ref, topPadPosDistance),
+                    _getProfile(context, ref, topPadPosDistance,titleFontSize),
                     _getBillsAndCharts(context, ref, topPadPosDistance),
                     _getLayoutAndTemplates(context, ref, topPadPosDistance),
                     AnimatedContainer(
@@ -488,16 +500,16 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     //BILLBLAZE MAIN TITLE
                     AnimatedPositioned(
                       duration: defaultDuration,
-                      top: isHomeTab ? topPadPosDistance :10,
-                      left: isHomeTab ? 110 : 60,
+                      top: (isHomeTab ) ? topPadPosDistance :10,
+                      left: (isHomeTab ) ? 110 : 60,
                       child: Hero(
                         tag: 'login',
                         child: AnimatedTextKit(
-                          key: ValueKey(isHomeTab ?sHeight*sWidth:isHomeTab),
+                          key: ValueKey((isHomeTab ) ?sHeight*sWidth:(isHomeTab )),
                           animatedTexts: [
                             TypewriterAnimatedText("Bill\nBlaze.",
                                 textStyle: GoogleFonts.abrilFatface(
-                                    fontSize: isHomeTab
+                                    fontSize: (isHomeTab )
                                         ? titleFontSize
                                         : 20,
                                     color: defaultPalette.extras[0],
@@ -505,49 +517,49 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 speed: Duration(milliseconds: 100)),
                             TypewriterAnimatedText("Bill\nBlaze.",
                                 textStyle: GoogleFonts.zcoolKuaiLe(
-                                    fontSize: isHomeTab
+                                    fontSize: (isHomeTab )
                                         ? titleFontSize
                                         : 20,
-                                    color: isHomeTab
+                                    color: (isHomeTab )
                                         ? Colors.black
                                         : Color(0xFF000000).withOpacity(0.8),
                                     height: 0.9),
                                 speed: Duration(milliseconds: 100)),
                             TypewriterAnimatedText("Bill\nBlaze.",
-                                textStyle: GoogleFonts.splash(
-                                    fontSize: isHomeTab
+                                textStyle: GoogleFonts.moiraiOne(
+                                    fontSize: (isHomeTab )
                                         ? titleFontSize
                                         : 20,
-                                    color: isHomeTab
+                                    color: (isHomeTab )
                                         ? Colors.black
                                         : Color(0xFF000000).withOpacity(0.8),
-                                    height: 0.9),
+                                    height: 1),
                                 speed: Duration(milliseconds: 100)),
                             TypewriterAnimatedText("Bill\nBlaze",
                                 textStyle: GoogleFonts.libreBarcode39ExtendedText(
-                                    fontSize: isHomeTab
+                                    fontSize: (isHomeTab )
                                         ? titleFontSize / 1.1
                                         : 20,
                                     letterSpacing:
-                                        isHomeTab ? -titleFontSize / 4 : 0,
+                                        (isHomeTab ) ? -titleFontSize / 4 : 0,
                                     height: 1),
                                 speed: Duration(milliseconds: 100)),
                             TypewriterAnimatedText("Bill\nBlaze.",
                                 textStyle: GoogleFonts.redactedScript(
-                                    fontSize: isHomeTab
+                                    fontSize: (isHomeTab )
                                         ? titleFontSize
                                         : 20,
-                                    color: isHomeTab
+                                    color: (isHomeTab )
                                         ? Colors.black
                                         : Color(0xFF000000).withOpacity(0.8),
                                     height: 0.9),
                                 speed: Duration(milliseconds: 100)),
                             TypewriterAnimatedText("Bill\nBlaze.",
-                                textStyle: GoogleFonts.fascinateInline(
-                                    fontSize: isHomeTab
+                                textStyle: GoogleFonts.silkscreen(
+                                    fontSize: (isHomeTab )
                                         ? titleFontSize
                                         : 20,
-                                    color: isHomeTab
+                                    color: (isHomeTab )
                                         ? Colors.black
                                         : Color(0xFF000000).withOpacity(0.8),
                                     height: 0.9),
@@ -827,7 +839,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       //     topPadGraphDistance +
                       //     topPadCardsDistance
                       ,
-                      right: 6,
+                      right: 50,
                       height: sHeight / 1.1,
                       width: sWidth / 3.6,
                       child: AppinioSwiper(
@@ -888,10 +900,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     alignment: Alignment.center,
                                     decoration: BoxDecoration(
                                       color: index == (currentCardIndex + 1) % 10
-                                          ? Colors.green
+                                          ? defaultPalette.extras[0]
                                           : index == (currentCardIndex + 2) % 10
-                                              ? Colors.green
-                                              : Colors.green,
+                                              ? defaultPalette.extras[0]
+                                              : defaultPalette.extras[0],
                                       border: Border.all(width: 2),
                                       borderRadius: BorderRadius.circular(30),
                                     ),
@@ -970,7 +982,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 width: mapValueDimensionBasedLockOnDesync(40, 45, sWidth, sHeight),
                                                 height: mapValueDimensionBasedLockOnDesync(45, 50, sWidth, sHeight),
                                                 decoration: BoxDecoration(
-                                                  color:defaultPalette.tertiary,
+                                                  color:defaultPalette.extras[0],
                                                   borderRadius: BorderRadius.circular(15),
                                                   border:Border.all(width:2)
                                                   ),
@@ -1070,29 +1082,30 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         height:  70,
                         animationDuration: Duration(milliseconds: 300),
                         buttonBackgroundColor:  defaultPalette.primary,
-                        buttonIconColor: defaultPalette.extras[0],
+                        buttonBaseDecorationColor: defaultPalette.tertiary,
+                        buttonIconColor:defaultPalette.extras[0],
                         backgroundColor: Colors.transparent,
-                        color: defaultPalette.tertiary,
+                        color: defaultPalette.extras[0],
                         items: [
                           Icon(
                             IconsaxPlusLinear.home_2,
                             size: 25,
-                            color: defaultPalette.extras[0],
+                            color: defaultPalette.primary,
                           ),
                           Icon(
                             IconsaxPlusLinear.receipt_1,
                             size: 25,
-                            color:  defaultPalette.extras[0],
+                            color:  defaultPalette.primary,
                           ),
                           Icon(
                             IconsaxPlusLinear.direct,
                             size: 25,
-                            color:  defaultPalette.extras[0],
+                            color:  defaultPalette.primary,
                           ),
                           Icon(
                             IconsaxPlusLinear.user_square,
                             size: 25,
-                            color:  defaultPalette.extras[0],
+                            color:  defaultPalette.primary,
                           ),
                         ],
                         onTap: (index) {
@@ -1110,7 +1123,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 }),
               ),
               // Windows top bar
-              if (Platform.isWindows)
+              if (Platform.isWindows )
               GestureDetector(
                 behavior: HitTestBehavior.translucent,
                 onPanStart: (details) {
@@ -1126,7 +1139,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       children: [
                         AnimatedPositioned(
                           right: 0,
-                          top: 0,
+                          top: !(isProfileTab || isHomeTab)? 0:-80,
                           duration: Durations.short4,
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
@@ -1166,12 +1179,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       border: Border.all(),
                                     ),
                                     topLayerChild: const Icon(
-                                      TablerIcons.rectangle,
+                                      TablerIcons.rectangle_filled,
                                       size: 15,
-                                      // color: Colors.blue,
+                                      color: Colors.blue,
                                     ),
                                     baseDecoration: BoxDecoration(
-                                      color: Colors.green,
+                                      color: defaultPalette.extras[0],
                                       border: Border.all(),
                                     ),
                                   ),
@@ -1200,12 +1213,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       border: Border.all(),
                                     ),
                                     topLayerChild: const Icon(
-                                      TablerIcons.triangle,
+                                      TablerIcons.triangle_filled,
                                       size: 14,
-                                      // color: Colors.amber,
+                                      color: Colors.green,
                                     ),
                                     baseDecoration: BoxDecoration(
-                                      color: Colors.green,
+                                      color: defaultPalette.extras[0],
                                       border: Border.all(),
                                     ),
                                   ),
@@ -1233,12 +1246,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       border: Border.all(),
                                     ),
                                     topLayerChild: const Icon(
-                                      TablerIcons.circle,
+                                      TablerIcons.circle_filled,
                                       size: 15,
-                                      // color: Colors.red,
+                                      color: Colors.red,
                                     ),
                                     baseDecoration: BoxDecoration(
-                                      color: Colors.green,
+                                      color: defaultPalette.extras[0],
                                       border: Border.all(),
                                     ),
                                   ),
@@ -1253,7 +1266,157 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   }),
                 ),
               ),
-              
+              if (Platform.isWindows )
+              Consumer(builder: (context, ref, c) {
+                return Stack(
+                  children: [
+                    AnimatedPositioned(
+                      right: (isProfileTab || isHomeTab)?3:-80,
+                      top: 5,
+                      duration: Durations.short4,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: AnimatedContainer(
+                          duration: Durations.short4,
+                          padding: const EdgeInsets.only(
+                              right: 6, bottom: 0),
+                          margin: const EdgeInsets.only(top: 5),
+                          decoration: const BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                bottomLeft: Radius.circular(12),
+                              )),
+                          child: Column(
+                            children: [
+                              //close button
+                              ElevatedLayerButton(
+                                // isTapped: false,
+                                // toggleOnTap: true,
+                                depth: 3, subfac:3,
+                                onClick: () {
+                                  Future.delayed(Duration.zero)
+                                      .then((y) {
+                                    appWindow.close();
+                                  });
+                                },
+                                buttonHeight: mapValueDimensionBasedLockOnDesync(35, 50, sWidth, sHeight),
+                                buttonWidth: mapValueDimensionBasedLockOnDesync(35, 50, sWidth, sHeight),
+                                borderRadius:
+                                    BorderRadius.circular(50),
+                                animationDuration:
+                                    const Duration(milliseconds: 1),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(),
+                                ),
+                                topLayerChild:  const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      TablerIcons.circle_filled,
+                                      size: 15,
+                                      color: Colors.red,
+                                    ),
+                                    
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(),
+                                ),
+                              ),
+                            SizedBox(height: 7,),
+                              //
+                              //maximize button
+                              ElevatedLayerButton(
+                                // isTapped: false,
+                                // toggleOnTap: true,
+                                depth: 3, subfac:3,
+                                onClick: () {
+                                  Future.delayed(Durations.short1)
+                                      .then((y) {
+                                    appWindow.maximizeOrRestore();
+                                  });
+                                },
+                                buttonHeight: mapValueDimensionBasedLockOnDesync(35, 50, sWidth, sHeight),
+                                buttonWidth: mapValueDimensionBasedLockOnDesync(35, 50, sWidth, sHeight),
+                                borderRadius:
+                                    BorderRadius.circular(50),
+                                animationDuration:
+                                    const Duration(milliseconds: 1),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(),
+                                ),
+                                topLayerChild:  const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      TablerIcons.triangle_filled,
+                                      size: 15,
+                                      color: Colors.green,
+                                    ),
+                                    
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(),
+                                ),
+                              ),
+                              SizedBox(height: 7,),
+                              
+                              //minimize button
+                              ElevatedLayerButton(
+                                // isTapped: false,
+                                // toggleOnTap: true,
+                                depth: 3, subfac: 3,
+                                onClick: () {
+                                  Future.delayed(Duration.zero)
+                                      .then((y) {
+                                    appWindow.minimize();
+                                  });
+                                },
+                                buttonHeight: mapValueDimensionBasedLockOnDesync(35, 50, sWidth, sHeight),
+                                buttonWidth: mapValueDimensionBasedLockOnDesync(35, 50, sWidth, sHeight),
+                                borderRadius:
+                                    BorderRadius.circular(50),
+                                animationDuration:
+                                    const Duration(milliseconds: 10),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(),
+                                ),
+                                topLayerChild: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      TablerIcons.rectangle_filled,
+                                      size: 15,
+                                      color: Colors.blue,
+                                    ),
+                                    
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(),
+                                ),
+                              ),
+                              
+                            ],
+                          ),
+                          //
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }),
             ],
           ));
      
@@ -1274,1773 +1437,1761 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       duration: Durations.short2,
       // top: (topPadPosDistance * 1.08),
       height: sHeight,
-      child: AnimatedOpacity(
-        opacity: isLayoutTab ? 1 : 0,
-        duration: Duration(milliseconds: 100),
-        child: Stack(
-          children: [
-            IgnorePointer(
-              ignoring: !isLayoutTab,
-              child: Container(
-                // duration: Durations.extra,
-                height: sHeight,
-                width: sWidth,
-                alignment: Alignment.centerRight,
-                color: isHomeTab
-                    ? Colors.transparent
-                    : Colors.black.withOpacity(0.06),
-                padding: EdgeInsets.only(
-                  top: 0,
-                ),
-                //layGraph
-                child: LineChart(LineChartData(
-                    lineBarsData: [LineChartBarData()],
-                    titlesData: FlTitlesData(show: false),
-                    gridData: FlGridData(
-                        show: true,
-                        horizontalInterval: 7.8,
-                        verticalInterval: 30),
-                    borderData: FlBorderData(show: false),
-                    minY: 0,
-                    maxY: 50,
-                    maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
-                            500 + 250,
-                    minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
-                        500)),
-              ),
-            ),
-            // AnimatedPositioned(
-            //   duration: Durations.medium2,
-            //   top: mapValueDimensionBased( 70, 90, sWidth,sHeight),
-            //   left: isLayoutTab ? 120 : (sWidth / 1.8),
-            //   child: IgnorePointer(
-            //     ignoring:!isLayoutTab,
-            //     child: Row(
-            //       mainAxisAlignment: MainAxisAlignment.end,
-            //       children: [
-            //         Container(
-            //         decoration: BoxDecoration(
-            //           color: defaultPalette.tertiary,
-            //           shape: BoxShape.circle,
-            //         ),
-            //         child: SizedBox(height: dotSize,width:dotSize),
-            //         ),
-            //         SizedBox(width:4),
-            //         Container(
-            //         decoration: BoxDecoration(
-            //           color: defaultPalette.extras[0],
-            //           shape: BoxShape.circle,
-            //         ),
-            //         child: SizedBox(height: dotSize,width:dotSize),
-            //         ),
-            //         SizedBox(width:4),
-            //         Container(
-            //         decoration: BoxDecoration(
-            //           color: defaultPalette.primary,
-            //           shape: BoxShape.circle,
-            //         ),
-            //         child: SizedBox(height: dotSize, width:dotSize),
-            //         ),
-            //       ]
-                  
-            //     ),
-            //   ),
-            // ),
-            // // //
-            //Layout&
-            AnimatedPositioned(
-              duration: Durations.medium2,
-              width: sWidth,
-              height: (sHeight / 2.5),
-              top: topPadPosDistance + sHeight / 3-(sHeight / 8).clamp(0, 85),
-              right: isLayoutTab ? sWidth - math.min( (sHeight / 8), (sWidth/12)) - 350: (sWidth / 1.8),
-              child: IgnorePointer(
+      child: IgnorePointer(
+        ignoring: !isLayoutTab,
+        child: AnimatedOpacity(
+          opacity: isLayoutTab ? 1 : 0,
+          duration: Duration(milliseconds: 100),
+          child: Stack(
+            children: [
+              IgnorePointer(
                 ignoring: !isLayoutTab,
-                child: Text('&',
-                  textAlign: TextAlign.right,
-                  style: GoogleFonts.greatVibes(
-                    color: Color(0xFF000000).withOpacity(0.2),
-                    fontSize: (sHeight / 2.5).clamp(0, 300),
-                    letterSpacing: -5,
-                    fontWeight: FontWeight.w100,
-                    height: 0.6
+                child: Container(
+                  // duration: Durations.extra,
+                  height: sHeight,
+                  width: sWidth,
+                  alignment: Alignment.centerRight,
+                  color: isHomeTab
+                      ? Colors.transparent
+                      : Colors.black.withOpacity(0.06),
+                  padding: EdgeInsets.only(
+                    top: 0,
+                  ),
+                  //layGraph
+                  child: LineChart(LineChartData(
+                      lineBarsData: [LineChartBarData()],
+                      titlesData: FlTitlesData(show: false),
+                      gridData: FlGridData(
+                          show: true,
+                          horizontalInterval: 7.8,
+                          verticalInterval: 30),
+                      borderData: FlBorderData(show: false),
+                      minY: 0,
+                      maxY: 50,
+                      maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
+                              500 + 250,
+                      minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
+                          500)),
+                ),
+              ),
+              
+              //Layout&
+              // AnimatedPositioned(
+              //   duration: Durations.medium2,
+              //   width: sWidth,
+              //   height: (sHeight / 2.5),
+              //   top: topPadPosDistance + sHeight / 3-(sHeight / 8).clamp(0, 85),
+              //   right: isLayoutTab ? sWidth - math.min( (sHeight / 8), (sWidth/12)) - 350: (sWidth / 1.8),
+              //   child: IgnorePointer(
+              //     ignoring: !isLayoutTab,
+              //     child: Text('&',
+              //       textAlign: TextAlign.right,
+              //       style: GoogleFonts.greatVibes(
+              //         color: Color(0xFF000000).withOpacity(0.2),
+              //         fontSize: (sHeight / 2.5).clamp(0, 300),
+              //         letterSpacing: -5,
+              //         fontWeight: FontWeight.w100,
+              //         height: 0.6
+              //       )
+              //     ),
+              //   ),
+              // ),
+              //layTEXT TITLE
+              AnimatedPositioned(
+                duration: Durations.medium2,
+                left:sWidth / (sWidth / 120),
+                top: isLayoutTab ?  (sHeight / 4) : 0,
+                child: IgnorePointer(
+                  ignoring: !isLayoutTab,
+                  child: Text('Layout',
+                      textAlign: TextAlign.left,
+                      style: GoogleFonts.outfit(
+                          color: defaultPalette.extras[0],
+                          fontSize: math.min( (sHeight / 8).clamp(0, 85), (sWidth/12).clamp(0, 85)),
+                          letterSpacing: -2,
+                          fontWeight: FontWeight.w600,
+                          height: 0.9)),
+                ),
+              ),
+              
+              //  gradient
+              AnimatedPositioned(
+                duration: Durations.extralong1,
+                height: (sHeight/2.5),
+                width: (sWidth/2.05)-70,
+                bottom: sHeight / 18 ,
+                left:(sWidth / 20).clamp( 90, double.infinity),
+                child: IgnorePointer(
+                  ignoring: !isLayoutTab,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: ShaderMask(
+                      shaderCallback: (Rect bounds) {
+                        return const LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            Colors.black,
+                            Colors.transparent,
+                          ],
+                          stops: [0.1, 1.0], // Control where the fade starts/ends
+                        ).createShader(bounds);
+                      },
+                      blendMode: BlendMode.dstIn, // Important for masking
+                      child: Container(
+                        decoration: BoxDecoration(color: 
+                        // Color(0xffc0c0c0),
+                        defaultPalette.primary,
+                        borderRadius: BorderRadius.circular(20)
+                        )
+                      ),
+                    ),
                   )
                 ),
               ),
-            ),
-            //layTEXT TITLE
-            AnimatedPositioned(
-              duration: Durations.medium2,
-              left:sWidth / (sWidth / 120),
-              top: isLayoutTab ?  (sHeight / 4) : 0,
-              child: IgnorePointer(
-                ignoring: !isLayoutTab,
-                child: Text('Layouts\nTemplates',
-                    textAlign: TextAlign.left,
-                    style: GoogleFonts.outfit(
-                        color: defaultPalette.extras[0],
-                        fontSize: math.min( (sHeight / 8).clamp(0, 85), (sWidth/12).clamp(0, 85)),
-                        letterSpacing: -2,
-                        fontWeight: FontWeight.w600,
-                        height: 0.9)),
-              ),
-            ),
-            
-            //  gradient
-            AnimatedPositioned(
-              duration: Durations.extralong1,
-              height: (sHeight/2.5),
-              width: (sWidth/2.05)-70,
-              bottom: sHeight / 18 ,
-              left:(sWidth / 20).clamp( 90, double.infinity),
-              child: IgnorePointer(
-                ignoring: !isLayoutTab,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: ShaderMask(
-                    shaderCallback: (Rect bounds) {
-                      return const LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          Colors.black,
-                          Colors.transparent,
-                        ],
-                        stops: [0.1, 1.0], // Control where the fade starts/ends
-                      ).createShader(bounds);
-                    },
-                    blendMode: BlendMode.dstIn, // Important for masking
-                    child: Container(
-                      decoration: BoxDecoration(color: 
-                      Color(0xffc0c0c0),
-                      borderRadius: BorderRadius.circular(20)
-                      )
-                    ),
-                  ),
-                )
-              ),
-            ),
-            // addLayoutbutton
-            AnimatedPositioned(
-              duration: Durations.medium3,
-              bottom: 1.6*(sHeight / 18),
-              left: (sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2,
-              child: IgnorePointer(
-                ignoring: !isLayoutTab,
-                child: Stack(  
-                  children: [
-                    SizedBox(
-                      height:isLayoutTab? (sHeight/2.5)-50:0,
-                      width: (sWidth/10),
-                    ),
-                    Positioned(
-                      left: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                      bottom: 0,
-                       child: AnimatedContainer(
-                        duration: Durations.medium3,
-                        curve: Curves.easeIn,
-                        height:isLayoutTab? ((sHeight/2.5)-46)/2:0,
-                        width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                        alignment: Alignment.topLeft,
-                        padding: EdgeInsets.only(
-                          top: 5,
-                          left: mapValueDimensionBased( 7, 15, sWidth,sHeight,useWidth: true),
-                          right: mapValueDimensionBased( 7, 15, sWidth,sHeight,useWidth: true),
-                        ),
-                        transform: Matrix4.identity()
-                        ..translate(isLayoutTab
-                              ? 0.0
-                              : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
-                          ..rotateZ( isLayoutTab? 0: -math.pi / 2),
-                        decoration: BoxDecoration(
-                          color: defaultPalette.transparent,
-                          // border: Border.all(),
-                          borderRadius: BorderRadius.circular(
-                            isLayoutTab
-                                ? mapValueDimensionBased( 12, 40, sWidth,sHeight)
-                                : 900 
-                            )
-                          ),
-                        
-                      ),
-                     ),
-                    Positioned(
-                      bottom: 0,
-                      child: AnimatedContainer(
-                        duration: Durations.medium3,
-                         transform: Matrix4.identity()
-                          ..translate(isLayoutTab
-                            ? 0.0
-                            : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
-                          ..rotateZ( isLayoutTab? 0: math.pi / 2),
-                        child: ElevatedLayerButton(
-                            onClick: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                builder: (c) =>  Material(
-                                        child: PopScope(
-                                      child: LayoutDesigner(
-                                        onPop: (pdf) {
-                                        },
-                                      ),
-                                      canPop: false,
-                                    )
-                                  )
-                                )
-                              );
-                            },
-                            buttonHeight: ((sHeight/2.5)-40)/2,
-                            buttonWidth: (sWidth/10),
-                            borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
-                            animationDuration: const Duration(milliseconds: 200),
-                            animationCurve: Curves.ease,
-                            subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                            depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                            topDecoration: BoxDecoration(
-                              color: defaultPalette.primary,
-                              border: Border.all(),
-                            ),
-                            topLayerChild: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  // Icon(
-                                  //   IconsaxPlusLinear.grid_3,
-                                  //   size: 40,
-                                  // ),
-                                  Expanded(
-                                    child: Container(
-                                      alignment: Alignment(-1, -1),
-                                      padding: EdgeInsets.only(
-                                        top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
-                                        left:mapValueDimensionBasedLockOnDesync( 8, 20, sWidth,sHeight),
-                                        right: mapValueDimensionBasedLockOnDesync( 7, 15, sWidth,sHeight,),
-                                      ),
-                                      child: Text(
-                                        'Layout \nNew',
-                                        maxLines: 4,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.start,
-                                        style: GoogleFonts.lexend(
-                                          fontSize: mapValueDimensionBasedLockOnDesync( 15.5, 30, sWidth,sHeight,),
-                                          color: defaultPalette.extras[0],
-                                          letterSpacing: -1,
-                                      
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ]),
-                            baseDecoration: BoxDecoration(
-                              color: defaultPalette.extras[0],
-                              border: Border.all(),
-                            ),
-                          ),
-                      ),
-                    ),
-                      
-                  ],
-                )
-              ),
-            ),
-            // addBillbutton
-            Positioned(
-              // duration: Durations.medium3,
-              bottom: 1.6*(sHeight / 18),
-              left: ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30),
-              child: IgnorePointer(
-                ignoring: !isLayoutTab,
-                child: Stack(  
-                  children: [
-                    SizedBox(
-                      height:isLayoutTab? (sHeight/2.5)-50:0,
-                      width: (sWidth/10),
-                    ),
-                    Positioned(
-                      left: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                      bottom: 0,
-                       child: AnimatedContainer(
-                        duration: Durations.medium3,
-                        curve: Curves.easeIn,
-                        height:isLayoutTab? ((sHeight/2.5)-40)/2:0,
-                        width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                        alignment: Alignment.topLeft,
-                        padding: EdgeInsets.only(
-                          top: 5,
-                          left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
-                        ),
-                        transform: Matrix4.identity()
-                        ..translate(isLayoutTab
-                              ? 0.0
-                              : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
-                          ..rotateZ( isLayoutTab? 0: -math.pi / 2),
-                        decoration: BoxDecoration(
-                          color: defaultPalette.transparent,
-                          // border: Border.all(),
-                          borderRadius:
-                              BorderRadius.circular(
-                                isLayoutTab
-                                    ? mapValueDimensionBased( 12, 40, sWidth,sHeight)
-                                    : 900)),
-                        
-                        
-                      ),
-                     ),
-                    Positioned(
-                      bottom: 0,
-                      child: AnimatedContainer(
-                        duration: Durations.medium3,
-                         transform: Matrix4.identity()
-                          ..translate(isLayoutTab
-                            ? 0.0
-                            : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
-                          ..rotateZ( isLayoutTab? 0: math.pi / 2),
-                        child: ElevatedLayerButton(
-                            onClick: () {
-                             final box = Boxes.getLayouts();
-
-                              for (var key in box.keys) {
-                                final value = box.get(key);
-                                print('Key: $key, Value: $value');
-                              }
-                              final name = Boxes.getBillName();
-                              var key = 'BI-${const Uuid().v4()}';
-                              // keyIndex = box.length;
-                              var lm = LayoutModel(
-                                createdAt: DateTime.now(),
-                                modifiedAt: DateTime.now(),
-                                name: name,
-                                docPropsList: [],
-                                spreadSheetList: [],
-                                id: key,
-                                type: SheetType.taxInvoice.index,
-
-                              );
-                              
-                              box.put(key, lm);
-                              lm.save();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                builder: (c) =>  Material(
-                                        child: PopScope(
-                                      child: LayoutDesigner(
-                                        id: key,
-                                        onPop: (pdf) {
-                                        },
-                                        
-                                      ),
-                                      canPop: false,
-                                    )
-                                  )
-                                )
-                              );
-                            },
-                            buttonHeight: ((sHeight/2.5)-40)/2,
-                            buttonWidth: (sWidth/10),
-                            borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
-                            animationDuration: const Duration(milliseconds: 200),
-                            animationCurve: Curves.ease,
-                            subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                            depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                            topDecoration: BoxDecoration(
-                              color: defaultPalette.primary,
-                              border: Border.all(),
-                            ),
-                            topLayerChild: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      alignment: Alignment(-1, -1),
-                                      padding: EdgeInsets.only(
-                                        top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
-                                        left:mapValueDimensionBasedLockOnDesync( 8, 20, sWidth,sHeight)
-                                      ),
-                                      child: Text(
-                                        'Bill \nNew',
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.start,
-                                        style: GoogleFonts.lexend(
-                                          fontSize: mapValueDimensionBasedLockOnDesync( 15.5, 30, sWidth,sHeight),
-                                          color: defaultPalette.extras[0],
-                                          letterSpacing: -1,
-                                          fontWeight: FontWeight.w400
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ]),
-                            baseDecoration: BoxDecoration(
-                              color: defaultPalette.extras[0],
-                              border: Border.all(),
-                            ),
-                          ),
-                      ),
-                    ),
-                  ],
-                )
-              ),
-            ),
-            // BG templatelbutton
-            Positioned(
-            left:mapValueDimensionBased( 5, 10, sWidth,sHeight)+ ((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
-    
-            bottom: 1.6*(sHeight / 18),
-              child: IgnorePointer(
-                ignoring: !isLayoutTab,
-                child: AnimatedContainer(
+              // addLayoutbutton
+              AnimatedPositioned(
                 duration: Durations.medium3,
-                curve: Curves.easeIn,
-                height:isLayoutTab?((sHeight/2.5)-50-mapValueDimensionBased( 0, 10, sWidth,sHeight))/2:0,
-                width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                padding: EdgeInsets.only(
-                          top: 5,
-                          left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
-                        ),
-                alignment: Alignment.topLeft,
-                transform: Matrix4.identity()
-                        ..translate(isLayoutTab
-                              ? 0.0
-                              : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
-                          ..rotateZ( isLayoutTab? 0: -math.pi / 2),
-                decoration: BoxDecoration(
-                  color: defaultPalette.extras[0],
-                  border: Border.all(),
-                  borderRadius: BorderRadius.circular( mapValueDimensionBased( 12, 40, sWidth,sHeight))),
-                
-                ),
-                
-              ),
-            ),
-            //
-            // Cloud buttons
-            Positioned(
-              // duration: Durations.medium3,
-              bottom: 1.6*(sHeight / 18),
-              left: ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
-              child: IgnorePointer(
-                ignoring: !isLayoutTab,
-                child: Stack(  
-                  children: [
-                    SizedBox(
-                      height:isLayoutTab? (sHeight/2.5)-50:0,
-                      width: (sWidth/10),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      child: Row(
-                        children: [
-                          AnimatedContainer(
-                            duration: Durations.medium3,
-                             transform: Matrix4.identity()
-                              ..translate(isLayoutTab
-                                ? 0.0
-                                : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
-                              ..rotateZ( isLayoutTab? 0: math.pi / 2),
-                            child: ElevatedLayerButton(
-                                onClick: () async {
-                                  OverlayEntry? overlay;
-                                    overlay =  OverlayEntry(builder: (context) => Scaffold(
-                                    backgroundColor: defaultPalette.tertiary,
-                                    body: Stack(
-                                      children: [
-                                        Center(
-                                          child: SizedBox(
-                                            height: 150,
-                                            child: LoadingIndicator(
-                                                indicatorType: Indicator.pacman, /// Required, The loading type of the widget
-                                                colors: [defaultPalette.extras[0],defaultPalette.extras[0],defaultPalette.extras[0]],       /// Optional, The color collections
-                                                strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
-                                                backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
-                                                pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
-                                            ),
-                                          )
-                                        ),
-                                         Positioned(
-                                          bottom: 10,
-                                          left: 0,
-                                          right: 0,
-                                          child: Text(
-                                            ref.watch(processMessageProvider),
-                                            textAlign: TextAlign.center,
-                                            style: GoogleFonts.lexend(
-                                              fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
-                                              color: defaultPalette.extras[0],
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                        if (Platform.isWindows)
-                                          GestureDetector(
-                                            behavior: HitTestBehavior.translucent,
-                                            onPanStart: (details) {
-                                              appWindow.startDragging();
-                                            },
-                                            onDoubleTap: () {
-                                              appWindow.maximizeOrRestore();
-                                            },
-                                            child: SizedBox(
-                                              height: 30,
-                                              child: Consumer(builder: (context, ref, c) {
-                                                return Stack(
-                                                  children: [
-                                                    AnimatedPositioned(
-                                                      right: 0,
-                                                      top: 0,
-                                                      duration: Durations.short4,
-                                                      child: SingleChildScrollView(
-                                                        scrollDirection: Axis.horizontal,
-                                                        child: AnimatedContainer(
-                                                          duration: Durations.short4,
-                                                          padding: const EdgeInsets.only(
-                                                              right: 6, bottom: 0),
-                                                          margin: const EdgeInsets.only(top: 5),
-                                                          decoration: const BoxDecoration(
-                                                              color: Colors.transparent,
-                                                              borderRadius: BorderRadius.only(
-                                                                topLeft: Radius.circular(12),
-                                                                bottomLeft: Radius.circular(12),
-                                                              )),
-                                                          child: Row(
-                                                            children: [
-                                                              //minimize button
-                                                              ElevatedLayerButton(
-                                                                // isTapped: false,
-                                                                // toggleOnTap: true,
-                                                                depth: 2.5, subfac: 2.5,
-                                                                onClick: () {
-                                                                  Future.delayed(Duration.zero)
-                                                                      .then((y) {
-                                                                    appWindow.minimize();
-                                                                  });
-                                                                },
-                                                                buttonHeight: 22,
-                                                                buttonWidth: 22,
-                                                                borderRadius:
-                                                                    BorderRadius.circular(5),
-                                                                animationDuration:
-                                                                    const Duration(milliseconds: 10),
-                                                                animationCurve: Curves.ease,
-                                                                topDecoration: BoxDecoration(
-                                                                  color: Colors.white,
-                                                                  border: Border.all(),
-                                                                ),
-                                                                topLayerChild: const Icon(
-                                                                  TablerIcons.rectangle,
-                                                                  size: 15,
-                                                                  // color: Colors.blue,
-                                                                ),
-                                                                baseDecoration: BoxDecoration(
-                                                                  color: Colors.green,
-                                                                  border: Border.all(),
-                                                                ),
-                                                              ),
-                                                              SizedBox(width: 7,),
-                                                              //
-                                                              //maximize button
-                                                              ElevatedLayerButton(
-                                                                // isTapped: false,
-                                                                // toggleOnTap: true,
-                                                                depth: 2.5, subfac:2.5,
-                                                                onClick: () {
-                                                                  Future.delayed(Durations.short1)
-                                                                      .then((y) {
-                                                                    appWindow.maximizeOrRestore();
-                                                                  });
-                                                                },
-                                                                buttonHeight: 22,
-                                                                buttonWidth: 22,
-                                                                borderRadius:
-                                                                    BorderRadius.circular(5),
-                                                                animationDuration:
-                                                                    const Duration(milliseconds: 1),
-                                                                animationCurve: Curves.ease,
-                                                                topDecoration: BoxDecoration(
-                                                                  color: Colors.white,
-                                                                  border: Border.all(),
-                                                                ),
-                                                                topLayerChild: const Icon(
-                                                                  TablerIcons.triangle,
-                                                                  size: 14,
-                                                                  // color: Colors.amber,
-                                                                ),
-                                                                baseDecoration: BoxDecoration(
-                                                                  color: Colors.green,
-                                                                  border: Border.all(),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          //
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                );
-                                              }),
-                                            ),
-                                          ),
-              
-                                      ],
-                                    ),),);
-                                    Overlay.of(context).insert(
-                                      overlay
-                                    );
-                                  var box =Boxes.getLayouts();
-                                  final gmap = await fetchAndReconstructLayoutModels(ref, overlay);
-                                  
-
-                                  for (var lmEntry in gmap.entries) {
-                                    final id = lmEntry.key;
-                                    final incoming = lmEntry.value as LayoutModel;
-                                    final existing = box.get(id);
-                                    
-
-                                    if (existing != null && (incoming.modifiedAt.isBefore(existing.modifiedAt) ||incoming.createdAt.isBefore(existing.createdAt) )) {
-                                      if (!mounted) return;
-
-                                      final shouldOverwrite = await showDialog<int>(
-                                        context: context,
-                                        builder: (ctx) => AlertDialog(
-                                          backgroundColor: defaultPalette.primary,
-                                          title: Text("Older ${incoming.id.startsWith('LY-')? 'Layout': incoming.type == 0? 'Bill': SheetType.values[incoming.type].name} In The Cloud!",
-                                          style: GoogleFonts.lexend(
-                                              fontSize: 25,
-                                              color: defaultPalette.extras[0],
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          content: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                "Do you want to overwrite it?",
-                                                style: GoogleFonts.lexend(
-                                                  fontSize: 14,
-                                                  color: defaultPalette.extras[0],
-                                                  fontWeight: FontWeight.w400,
-                                                ),
-                                                ),
-                                                SizedBox(height: 4,),
-                                              Column(
-                                                 mainAxisSize: MainAxisSize.min,
-                                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  //incoming lm
-                                                  Row(
-                                                    children: [
-                                                      Icon(TablerIcons.cloud),
-                                                      SizedBox(width: 2,),
-                                                      Text(
-                                                      " ${incoming.name}",
-                                                        style: GoogleFonts.lexend(
-                                                          fontSize: 14, 
-                                                          color: defaultPalette.extras[0],
-                                                          fontWeight: FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  RichText(
-                                                  textAlign: TextAlign.start,
-                                                  maxLines: 1,
-                                                  // overflow: TextOverflow.ellipsis,
-                                                  text: TextSpan(
-                                                    style: GoogleFonts.lexend(
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.w300,
-                                                      letterSpacing: -0.2,
-                                                    ),
-                                                    children: [
-                                                      TextSpan(
-                                                        text: 'Created: ',
-                                                        style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
-                                                      ),
-                                                      TextSpan(
-                                                        text: DateFormat("EEE MMM d, y 'at' h:mm a").format(incoming.createdAt),
-                                                        style: TextStyle(color: defaultPalette.extras[0]),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  ),
-                                                  RichText(
-                                                    textAlign: TextAlign.start,
-                                                    maxLines: 1,
-                                                    // overflow: TextOverflow.ellipsis,
-                                                    text: TextSpan(
-                                                      style: GoogleFonts.lexend(
-                                                        fontSize: 13,
-                                                        fontWeight: FontWeight.w300,
-                                                        letterSpacing: -0.2,
-                                                      ),
-                                                      children: [
-                                                        TextSpan(
-                                                          text: 'Modified: ',
-                                                          style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
-                                                        ),
-                                                        TextSpan(
-                                                          text: DateFormat("EEE MMM d, y 'at' h:mm a").format(incoming.modifiedAt),
-                                                          style: TextStyle(color: defaultPalette.extras[4]),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 4,),
-                                                  //existing lm
-                                                  Row(
-                                                    children: [
-                                                      Icon(TablerIcons.server),
-                                                      SizedBox(width: 2,),
-                                                      Text(
-                                                      " ${existing.name}",
-                                                        style: GoogleFonts.lexend(
-                                                          fontSize: 14, 
-                                                          color: defaultPalette.extras[0],
-                                                          fontWeight: FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  RichText(
-                                                  textAlign: TextAlign.start,
-                                                  maxLines: 1,
-                                                  // overflow: TextOverflow.ellipsis,
-                                                  text: TextSpan(
-                                                    style: GoogleFonts.lexend(
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.w300,
-                                                      letterSpacing: -0.2,
-                                                    ),
-                                                    children: [
-                                                      TextSpan(
-                                                        text: 'Created: ',
-                                                        style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
-                                                      ),
-                                                      TextSpan(
-                                                        text: DateFormat("EEE MMM d, y 'at' h:mm a").format(existing.createdAt),
-                                                        style: TextStyle(color: defaultPalette.extras[0]),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  ),
-                                                  RichText(
-                                                    textAlign: TextAlign.start,
-                                                    maxLines: 1,
-                                                    // overflow: TextOverflow.ellipsis,
-                                                    text: TextSpan(
-                                                      style: GoogleFonts.lexend(
-                                                        fontSize: 13,
-                                                        fontWeight: FontWeight.w300,
-                                                        letterSpacing: -0.2,
-                                                      ),
-                                                      children: [
-                                                        TextSpan(
-                                                          text: 'Modified: ',
-                                                          style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
-                                                        ),
-                                                        TextSpan(
-                                                          text: DateFormat("EEE MMM d, y 'at' h:mm a").format(existing.modifiedAt),
-                                                          style: TextStyle(color: defaultPalette.tertiary),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                
-                                                ],
-                                              )
-                                            ],
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(ctx, 0),
-                                              child: Text("Nah",
-                                              style: GoogleFonts.lexend(
-                                              fontSize: 14,
-                                              color: defaultPalette.extras[0],
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                              ),
-                                            ),
-                                            TextButton(
-                                              
-                                              onPressed: () => Navigator.pop(ctx, 1),
-                                              child: Text("Overwrite",
-                                              style: GoogleFonts.lexend(
-                                              fontSize: 14,
-                                              color: defaultPalette.extras[4],
-                                              fontWeight: FontWeight.w500,
-                                              ),
-                                              ),
-                                            ),
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(ctx, 2),
-                                              child: Text("Keep Both",
-                                              style: GoogleFonts.lexend(
-                                              fontSize: 14,
-                                              color: defaultPalette.tertiary,
-                                              fontWeight: FontWeight.w500,
-                                              ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-
-                                      if (shouldOverwrite == 0) continue;
-                                      if (shouldOverwrite == 1) {
-                                        box.put(id, incoming.copyWith(pdf: existing.pdf));
-                                      } else if (shouldOverwrite ==2) {
-                                        var newId = '${existing.id.substring(0,4)}${Uuid().v4()}';
-                                        var newlm = LayoutModel(
-                                          docPropsList: incoming.docPropsList, 
-                                          spreadSheetList: incoming.spreadSheetList, 
-                                          id: newId, name: incoming.name+'-old', 
-                                          createdAt: incoming.createdAt, 
-                                          modifiedAt: incoming.modifiedAt,
-                                          labelList:incoming.labelList,
-                                          pdf: existing.pdf,
-                                          type: incoming.type,
-
-                                          );
-                                        box.put(newId, newlm);
-                                      }
-                                    } else if (existing ==null){
-                                      box.put(id, incoming.copyWith(pdf: []));
-                                    }
-
-                                  }
-
-                                  setState(() {
-                                    filteredLayoutBox = box.values.toList();
-                                  });
-                                 
-                                },
-                                buttonHeight: ((sHeight/2.5)-40)/2,
-                                buttonWidth: (sWidth/20),
-                                borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
-                                animationDuration: const Duration(milliseconds: 200),
-                                animationCurve: Curves.ease,
-                                subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                                depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                                topDecoration: BoxDecoration(
-                                  color: defaultPalette.primary,
-                                  border: Border.all(),
-                                ),
-                                topLayerChild: Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: Container(
-                                          padding: EdgeInsets.only(
-                                            top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.center,
-                                            children: [
-                                              Icon(TablerIcons.cloud,size: mapValueDimensionBased( 16, 40, sWidth,sHeight),),
-                                              Icon(TablerIcons.download,size: mapValueDimensionBased( 16, 40, sWidth,sHeight),),
-                                            ],
-                                          )
-                                        ),
-                                      ),
-                                    ]),
-                                baseDecoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  // border: Border.all(),
-                                ),
-                              ),
-                          ),
-                          AnimatedContainer(
-                            duration: Durations.medium3,
-                             transform: Matrix4.identity()
-                              ..translate(isLayoutTab
-                                ? 0.0
-                                : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
-                              ..rotateZ( isLayoutTab? 0: math.pi / 2),
-                            child: ElevatedLayerButton(
-                                onClick: () async {
-                                   OverlayEntry? overlay;
-                                    overlay =  OverlayEntry(builder: (context) => Scaffold(
-                                    backgroundColor: defaultPalette.tertiary,
-                                    body: Stack(
-                                      children: [
-                                        Center(
-                                          child: SizedBox(
-                                            height: 150,
-                                            child: LoadingIndicator(
-                                                indicatorType: Indicator.pacman, /// Required, The loading type of the widget
-                                                colors: [defaultPalette.primary,defaultPalette.primary,],       /// Optional, The color collections
-                                                strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
-                                                backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
-                                                pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
-                                            ),
-                                          )
-                                        ),
-                                        Positioned(
-                                          bottom: 10,
-                                          left: 0,
-                                          right: 0,
-                                          child: Text(
-                                            ref.watch(processMessageProvider),
-                                            textAlign: TextAlign.center,
-                                            style: GoogleFonts.lexend(
-                                              fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
-                                              color: defaultPalette.extras[0],
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                        if (Platform.isWindows)
-                                          GestureDetector(
-                                            behavior: HitTestBehavior.translucent,
-                                            onPanStart: (details) {
-                                              appWindow.startDragging();
-                                            },
-                                            onDoubleTap: () {
-                                              appWindow.maximizeOrRestore();
-                                            },
-                                            child: SizedBox(
-                                              height: 30,
-                                              child: Consumer(builder: (context, ref, c) {
-                                                return Stack(
-                                                  children: [
-                                                    AnimatedPositioned(
-                                                      right: 0,
-                                                      top: 0,
-                                                      duration: Durations.short4,
-                                                      child: SingleChildScrollView(
-                                                        scrollDirection: Axis.horizontal,
-                                                        child: AnimatedContainer(
-                                                          duration: Durations.short4,
-                                                          padding: const EdgeInsets.only(
-                                                              right: 6, bottom: 0),
-                                                          margin: const EdgeInsets.only(top: 5),
-                                                          decoration: const BoxDecoration(
-                                                              color: Colors.transparent,
-                                                              borderRadius: BorderRadius.only(
-                                                                topLeft: Radius.circular(12),
-                                                                bottomLeft: Radius.circular(12),
-                                                              )),
-                                                          child: Row(
-                                                            children: [
-                                                              //minimize button
-                                                              ElevatedLayerButton(
-                                                                // isTapped: false,
-                                                                // toggleOnTap: true,
-                                                                depth: 2.5, subfac: 2.5,
-                                                                onClick: () {
-                                                                  Future.delayed(Duration.zero)
-                                                                      .then((y) {
-                                                                    appWindow.minimize();
-                                                                  });
-                                                                },
-                                                                buttonHeight: 22,
-                                                                buttonWidth: 22,
-                                                                borderRadius:
-                                                                    BorderRadius.circular(5),
-                                                                animationDuration:
-                                                                    const Duration(milliseconds: 10),
-                                                                animationCurve: Curves.ease,
-                                                                topDecoration: BoxDecoration(
-                                                                  color: Colors.white,
-                                                                  border: Border.all(),
-                                                                ),
-                                                                topLayerChild: const Icon(
-                                                                  TablerIcons.rectangle,
-                                                                  size: 15,
-                                                                  // color: Colors.blue,
-                                                                ),
-                                                                baseDecoration: BoxDecoration(
-                                                                  color: Colors.green,
-                                                                  border: Border.all(),
-                                                                ),
-                                                              ),
-                                                              SizedBox(width: 7,),
-                                                              //
-                                                              //maximize button
-                                                              ElevatedLayerButton(
-                                                                // isTapped: false,
-                                                                // toggleOnTap: true,
-                                                                depth: 2.5, subfac:2.5,
-                                                                onClick: () {
-                                                                  Future.delayed(Durations.short1)
-                                                                      .then((y) {
-                                                                    appWindow.maximizeOrRestore();
-                                                                  });
-                                                                },
-                                                                buttonHeight: 22,
-                                                                buttonWidth: 22,
-                                                                borderRadius:
-                                                                    BorderRadius.circular(5),
-                                                                animationDuration:
-                                                                    const Duration(milliseconds: 1),
-                                                                animationCurve: Curves.ease,
-                                                                topDecoration: BoxDecoration(
-                                                                  color: Colors.white,
-                                                                  border: Border.all(),
-                                                                ),
-                                                                topLayerChild: const Icon(
-                                                                  TablerIcons.triangle,
-                                                                  size: 14,
-                                                                  // color: Colors.amber,
-                                                                ),
-                                                                baseDecoration: BoxDecoration(
-                                                                  color: Colors.green,
-                                                                  border: Border.all(),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          //
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                );
-                                              }),
-                                            ),
-                                          ),
-              
-                                      ],
-                                    ),),);
-                                    Overlay.of(context).insert(
-                                      overlay
-                                    );
-                                 await authenticateAndSyncLayoutModels(Boxes.getLayouts(), ref, overlay).then((value) {
-                                   overlay?.remove();
-                                 },);
-                                },
-                                buttonHeight: ((sHeight/2.5)-40)/2,
-                                buttonWidth: (sWidth/20),
-                                borderRadius: BorderRadius.circular(mapValueDimensionBased(12, 40, sWidth,sHeight)),
-                                animationDuration: const Duration(milliseconds: 200),
-                                animationCurve: Curves.ease,
-                                subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                                depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
-                                topDecoration: BoxDecoration(
-                                  color: defaultPalette.primary,
-                                  border: Border.all(),
-                                ),
-                                topLayerChild: Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: Container(
-                                          padding: EdgeInsets.only(
-                                            top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.center,
-                                            children: [
-                                              Icon(TablerIcons.cloud, size: mapValueDimensionBasedLockOnDesync( 16, 40, sWidth,sHeight),),
-                                              Icon(TablerIcons.upload, size: mapValueDimensionBasedLockOnDesync( 16, 40, sWidth,sHeight),),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ]),
-                                baseDecoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  // border: Border.all(),
-                                ),
-                              ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                )
-              ),
-            ),
-            //toggle bwteen layouts and templates
-            AnimatedPositioned(
-              duration: Durations.medium3,
-              bottom: 1.6*(sHeight / 18) -sWidth/30,
-              left: isLayoutTab?((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+3*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)):sWidth/2,
-              child: Transform.rotate(
-                alignment: Alignment(-1, -1),
-                angle: -pi/2,
+                bottom: 1.6*(sHeight / 18),
+                left: (sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2,
                 child: IgnorePointer(
                   ignoring: !isLayoutTab,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(),
-                      borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync( 10, 36, sWidth,sHeight),),
-                    ),
-                    child: AnimatedToggleSwitch<bool>.dual(
-                      current: isTemplateView,
-                      first: true,
-                      second: false,
-                      onChanged: (value) {
-                        setState(() {
-                          isTemplateView = value;
-                        });
-                      },
-                      animationCurve:
-                          Curves.easeInOutExpo,
-                      animationDuration:
-                          Durations.medium4,
-                      borderWidth:
-                          2, // backgroundColor is set independently of the current selection
-                      styleBuilder: (value) =>
-                          ToggleStyle(
-                              borderRadius:
-                                  BorderRadius
-                                      .circular(mapValueDimensionBasedLockOnDesync( 9, 35, sWidth,sHeight),),
-                              indicatorBorderRadius:
-                                  BorderRadius.only(
-                                    topLeft:  Radius.circular(!value?8:34) ,
-                                    topRight: Radius.circular(value?8:34) ,
-                                    bottomLeft:Radius.circular(!value?8:34) ,
-                                    bottomRight:  Radius.circular(value?8:34) ,
-                                    ),
-                              indicatorBorder: Border.all(),
-                              borderColor:
-                                  defaultPalette
-                                      .extras[0],
-                              backgroundColor:
-                                  defaultPalette
-                                      .extras[0],
-                              indicatorColor:
-                                  defaultPalette
-                                          .primary), // indicatorColor changes and animates its value with the selection
-                      iconBuilder: (value) {
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Transform.rotate(
-                            angle: pi/2,
-                            child: Icon(
-                                !value? TablerIcons
-                                        .layout
-                                    : TablerIcons
-                                        .template,
-                                size: mapValueDimensionBased( 12,30, sWidth,sHeight),
-                                color: defaultPalette
-                                    .extras[0]),
+                  child: Stack(  
+                    children: [
+                      SizedBox(
+                        height:isLayoutTab? (sHeight/2.5)-50:0,
+                        width: (sWidth/10),
+                      ),
+                      Positioned(
+                        left: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                        bottom: 0,
+                         child: AnimatedContainer(
+                          duration: Durations.medium3,
+                          curve: Curves.easeIn,
+                          height:isLayoutTab? ((sHeight/2.5)-46)/2:0,
+                          width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                          alignment: Alignment.topLeft,
+                          padding: EdgeInsets.only(
+                            top: 5,
+                            left: mapValueDimensionBased( 7, 15, sWidth,sHeight,useWidth: true),
+                            right: mapValueDimensionBased( 7, 15, sWidth,sHeight,useWidth: true),
                           ),
-                        );
-                      },
-                      textBuilder: (value) {
-                        return Text(
-                          value ? 'template'
-                              : 'layout',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              GoogleFonts.lexend(
-                                  fontSize: mapValueDimensionBased( 10, 20, sWidth,sHeight),
-                                  fontWeight: FontWeight.w500,
-                                  color: 
-                                  defaultPalette
-                                      .primary ,
-                                  ),
-                        );
-                      },
-                      height:sWidth/30,
-                      spacing:(sHeight/2.5)-150,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            //quote
-            AnimatedPositioned(
-              duration: Durations.medium2,
-              left:((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/1.5),
-              bottom: isLayoutTab ? 1.6*(sHeight / 18)+(sHeight/2.6)-mapValueDimensionBased( 85, 115, sWidth,sHeight): 0,
-              child: Text(
-                  ' Pay up, \n buttercup!',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  // textAlign: TextAlign.end,
-                  style: GoogleFonts.lexend(
-                    fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
-                    color: defaultPalette.extras[0].withOpacity(0.4),
-                    letterSpacing: -0.2,
-                    height: 1
-                  ),
-                ),
-              ),
-            
-            //LayoutList
-            AnimatedPositioned(
-              duration: Durations.extralong2,
-              top: isLayoutTab
-                  ? Platform.isWindows
-                      ? topPadPosDistance + 10
-                      : 5
-                  : sHeight,
-              right: 2,
-              height: sHeight / 1.1,
-              width: sWidth / 2.05,
-              child: IgnorePointer(
-                ignoring: !isLayoutTab,
-                child: AnimatedOpacity(
-                  duration: Durations.extralong3 * 2,
-                  opacity: isLayoutTab ? 1 : 0,
-                  curve: Curves.bounceInOut,
-                  child: Container(
-                    margin: EdgeInsets.all(15),
-                    padding: EdgeInsets.all(mapValueDimensionBased( 5, 10, sWidth,sHeight)).copyWith(top: 15),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: defaultPalette.primary),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        //my layouts title search bar list page toggle
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '   Layouts',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.start,
-                                style: GoogleFonts.lexend(
-                                  fontSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
-                                  color: defaultPalette.extras[0],
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: -0.2,
-                                ),
-                              ),
+                          transform: Matrix4.identity()
+                          ..translate(isLayoutTab
+                                ? 0.0
+                                : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                            ..rotateZ( isLayoutTab? 0: -math.pi / 2),
+                          decoration: BoxDecoration(
+                            color: defaultPalette.transparent,
+                            // border: Border.all(),
+                            borderRadius: BorderRadius.circular(
+                              isLayoutTab
+                                  ? mapValueDimensionBased( 12, 40, sWidth,sHeight)
+                                  : 900 
+                              )
                             ),
-                            
-                              ExpandableSearchBar(
-                                onTap: () {
-                                  
-                                },
-                                onChange: (value) {
-                                  setState(() {
-                                    if (value.isNotEmpty) {
-                                      filteredLayoutBox = Boxes.getLayouts()
-                                          .values
-                                          .where((i) => i.name.toLowerCase().contains(value.toLowerCase()))
-                                          .toList();
-                                    } else {
-                                      filteredLayoutBox = Boxes.getLayouts()
-                                          .values.toList();
-                                    }
-                                  });
-                                },
-                                hintText: "search layout...",
-                                editTextController: layoutSearchController,
-                                focusNode: layoutSearchFocusNode,
-                                boxShadow: [],
-                                iconBackgroundColor: defaultPalette.primary,
-                                iconColor: defaultPalette.extras[0],
-                                iconSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
-                                backgroundColor: defaultPalette.secondary,
-
-                              ),
-                              SizedBox(width: 3,), 
-                              AnimatedToggleSwitch<bool>.dual(
-                              current: isLayoutTileView,
-                              first: true,
-                              second: false,
-                              onChanged: (value) {
-                                setState(() {
-                                  isLayoutTileView = value;
-                                });
-                              },
-                              animationCurve:
-                                  Curves.easeInOutExpo,
-                              animationDuration:
-                                  Durations.medium4,
-                              borderWidth:
-                                  2, // backgroundColor is set independently of the current selection
-                              styleBuilder: (value) =>
-                                  ToggleStyle(
-                                      borderRadius:
-                                          BorderRadius
-                                              .circular(
-                                                  50),
-                                      indicatorBorderRadius:
-                                          BorderRadius
-                                              .circular(
-                                                  5),
-                                      borderColor:
-                                          defaultPalette
-                                              .secondary,
-                                      backgroundColor:
-                                          defaultPalette
-                                              .secondary,
-                                      indicatorColor:
-                                          defaultPalette
-                                                  .extras[0]), // indicatorColor changes and animates its value with the selection
-                              iconBuilder: (value) {
-                                return Icon(
-                                    value? TablerIcons
-                                            .grip_horizontal
-                                        : TablerIcons
-                                            .grip_vertical,
-                                    size: 12,
-                                    color: defaultPalette
-                                        .primary);
-                              },
-                              textBuilder: (value) {
-                                return Text(
-                                  value ? 'list'
-                                      : 'page',
-                                  style:
-                                      GoogleFonts.bungee(
-                                          fontSize: 12),
+                          
+                        ),
+                       ),
+                      Positioned(
+                        bottom: 0,
+                        child: AnimatedContainer(
+                          duration: Durations.medium3,
+                           transform: Matrix4.identity()
+                            ..translate(isLayoutTab
+                              ? 0.0
+                              : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                            ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                          child: ElevatedLayerButton(
+                              onClick: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                  builder: (c) =>  Material(
+                                          child: PopScope(
+                                        child: LayoutDesigner(
+                                          onPop: (pdf) {
+                                          },
+                                        ),
+                                        canPop: false,
+                                      )
+                                    )
+                                  )
                                 );
                               },
-                              height:mapValueDimensionBased( 22, 32, sWidth,sHeight),
-                              spacing:mapValueDimensionBased( 10, 30, sWidth,sHeight),
-                            ),
-                            SizedBox(width: 5,),                    
-                          ],
-                        ),
-                        SizedBox(height: 10,),
-                        //the layout tiles
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color:  Color(0xffc0c0c0).withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            margin: EdgeInsets.all(5),
-                            child:  ScrollConfiguration(
-                              behavior: ScrollBehavior().copyWith(scrollbars: false),
-                              child: DynMouseScroll(
-                                durationMS: 500,
-                                scrollSpeed: 1,
-                                builder: (context, controller, physics) {
-                                  return ScrollbarUltima(
-                                    alwaysShowThumb: true,
-                                    controller: controller,
-                                    scrollbarPosition:
-                                        ScrollbarPosition.right,
-                                    backgroundColor: defaultPalette.primary,
-                                    isDraggable: true,
-                                    maxDynamicThumbLength: 90,
-                                    minDynamicThumbLength: 50,
-                                    thumbBuilder:
-                                        (context, animation, widgetStates) {
-                                      return Container(
-                                        margin: EdgeInsets.only(right: 3, top: 8,bottom: 8),
-                                        decoration: BoxDecoration(
-                                            color: defaultPalette.primary,
-                                            border: Border.all(),
-                                            borderRadius:
-                                                BorderRadius.circular(15)),
-                                        width: 6,
-                                      );
-                                    },
-                                  child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: ListView.builder(
-                                    padding: EdgeInsets.only(right:0),
-                                  controller: controller,
-                                  physics: physics,
-                                  itemCount:layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length+1: filteredLayoutBox.length+1,
-                                  itemBuilder: (BuildContext context, int i) {
-                                    
-                                    if (i ==(layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length:filteredLayoutBox.length)) {
-                                      return SizedBox(height: 5,);
-                                    }
-                                    final layoutModel = layoutSearchController.text ==''?Boxes.getLayouts().values.toList()[i]: filteredLayoutBox[i];
-                                    if (layoutModel.id.startsWith('BI-')) {
-                                      return SizedBox.shrink();
-                                    }
-                                    if(!isLayoutTileView) {
-                                      return Material(
-                                        color: defaultPalette.transparent,
-                                        child: InkWell(
-                                          hoverColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          highlightColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          splashColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          onTap: () {
-                                            Navigator.push(context, MaterialPageRoute(
-                                              builder: (context) {
-                                                return PopScope(
-                                                  canPop: false,
-                                                  child: LayoutDesigner(
-                                                    id: Boxes.getLayouts().keyAt(i),
-                                                    onPop: (pdf) {
-                                                      setState(() {
-                                                      filteredLayoutBox = Boxes.getLayouts().values.toList();
-                                                    });
-                                                    },
-                                                  ),
-                                                );
-                                              },
-                                            ));
-                                            filteredLayoutBox = Boxes.getLayouts()
-                                          .values.toList();
-                                          },
-                                        child: Container(
-                                          height: 200,
-                                          width: 30,
-                                          margin: EdgeInsets.only(bottom: 10,right: 8),
-                                          color: defaultPalette.transparent,
-                                          child: Row(
-                                            children: [
-                                              //mini layout pdf pages swiper
-                                              SizedBox(
-                                                height: 200,
-                                                width: 150,
-                                                child: AppinioSwiper(
-                                                  cardCount: (layoutModel.spreadSheetList.length.isNaN ||layoutModel.docPropsList.length ==0 )?1:layoutModel.docPropsList.length,
-                                                  backgroundCardCount: 5,
-                                                  backgroundCardOffset: Offset(0.8, 0.8),
-                                                  duration: Duration(milliseconds: 220),
-                                                  backgroundCardScale: 1,
-                                                  loop: true,
-                                                  allowUnSwipe: true,
-                                                  allowUnlimitedUnSwipe: true,
-                                                  initialIndex: 0,  
-                                                  cardBuilder: (context, indx) {
-                                                    // print(layoutModel.pdf?.length);
-                                                    return Stack(
-                                                          children: [
-                                                            //The main bgCOLOR OF THE CARD
-                                                            Positioned.fill(
-                                                              child: AnimatedContainer(
-                                                                duration: Durations.short3,
-                                                                alignment: Alignment.center,
-                                                                margin: EdgeInsets.only(left:8,top:8,bottom: 2),
-                                                                decoration: BoxDecoration(
-                                                                  color:defaultPalette.primary,
-                                                                  border: Border.all(width: 1.2, color:defaultPalette.extras[0], strokeAlign: BorderSide.strokeAlignOutside),
-                                                                  borderRadius: BorderRadius.circular(10),
-                                                                  image:layoutModel.pdf==null?null: DecorationImage(image:MemoryImage(layoutModel.pdf![indx],),fit: BoxFit.fitWidth),
-                                                                ),
-                                                                // foregroundDecoration: BoxDecoration(
-                                                                //   border: Border.all(width: 2, color:defaultPalette.extras[0]),
-                                                                //   borderRadius: BorderRadius.circular(10),
-                                                                // ),
-                                                              ),
-                                                            ),    
-                                                          ],
-                                                    );
-                                                  },),
-                                              ),
-                                              SizedBox(width: 10,),
-                                              //layoutname and created modified
-                                              _getCreatedAndModified(layoutModel, sWidth, sHeight, !isLayoutTileView),
-                                              SizedBox(width:5),
-                                              Column(
-                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                children: [
-                                                  //Make a bill out of the Layout button
-                                                  Tooltip(
-                                                    message: '  Create a Bill based on ${layoutModel.name} layout.  ',
-                                                    textStyle: GoogleFonts.lexend(
-                                                      fontSize: mapValueDimensionBased( 15, 20, sWidth,sHeight),
-                                                      color: defaultPalette.primary,
-                                                      fontWeight: FontWeight.w600,
-                                                      letterSpacing: -0.2,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: defaultPalette.extras[0].withOpacity(0.8),
-                                                      borderRadius: BorderRadius.circular(50)
-                                                    ),
-                                                    child: ElevatedLayerButton(
-                                                      onClick: () {
-                                                        final box = Boxes.getLayouts();
-                                                        final name = Boxes.getBillName();
-                                                        var key = 'BI-${const Uuid().v4()}';
-                                                        var prevLm =box.getAt(i);
-                                                        // keyIndex = box.length;
-                                                        var lm = LayoutModel(
-                                                          createdAt: DateTime.now(),
-                                                          modifiedAt: DateTime.now(),
-                                                          name: name,
-                                                          docPropsList: prevLm?.docPropsList??[],
-                                                          spreadSheetList:prevLm?.spreadSheetList?? [],
-                                                          id: key,
-                                                          type: SheetType.taxInvoice.index,
-                                                          labelList: prevLm?.labelList ??[],
-                                                        );
-                                                        
-                                                        box.put(key, lm);
-                                                        lm.save();
-                                                        ref.read(homeScreenTabIndexProvider.notifier).update((state) => 2,);
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                          builder: (c) =>  Material(
-                                                                  child: PopScope(
-                                                                child: LayoutDesigner(
-                                                                  id: key,
-                                                                  onPop: (pdf) {
-                                                                  },
-                                                                  
-                                                                ),
-                                                                canPop: false,
-                                                              )
-                                                            )
-                                                          )
-                                                        );
-                                                      },
-                                                      buttonHeight: 30,
-                                                      buttonWidth: 30,
-                                                      borderRadius: BorderRadius.circular(50)
-                                                      // .copyWith(
-                                                      //     topLeft: Radius.circular(80),
-                                                      //     bottomRight: Radius.circular(100)
-                                                      //   )
-                                                        ,
-                                                      animationDuration:
-                                                          const Duration(milliseconds: 200),
-                                                      animationCurve: Curves.ease,
-                                                      topDecoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        border: Border.all(),
-                                                      ),
-                                                      subfac: 3,depth: 3,
-                                                      topLayerChild: Icon(
-                                                        TablerIcons.receipt,
-                                                        size: 15,
-                                                      ),
-                                                      baseDecoration: BoxDecoration(
-                                                        color: defaultPalette.extras[0],
-                                                        border: Border.all(),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                
-                                                  //Delete a Layout button
-                                                  SizedBox(height:5),
-                                                  ElevatedLayerButton(
-                                                    onClick: () async {
-                                                      print(filteredLayoutBox);
-                                                      final layoutsBox = Boxes.getLayouts();
-                                                      // Delete the item
-                                                       print(layoutsBox);
-                                                      await layoutsBox
-                                                          .get(layoutsBox.keyAt(i))
-                                                          ?.delete();
-                                                      print('delete');
-                                                      setState(() {
-                                                        filteredLayoutBox = Boxes.getLayouts().values.toList();
-                                                      });
-                                                    },
-                                                    buttonHeight: 45,
-                                                    buttonWidth: 45,
-                                                    borderRadius: BorderRadius.circular(10),
-                                                    animationDuration:
-                                                        const Duration(milliseconds: 200),
-                                                    animationCurve: Curves.ease,
-                                                    topDecoration: BoxDecoration(
-                                                      color: Colors.white,
-                                                      border: Border.all(),
-                                                    ),
-                                                    topLayerChild: Icon(
-                                                      TablerIcons.trash,
-                                                      size: 20,
-                                                    ),
-                                                    subfac: 3,depth: 3,
-                                                    baseDecoration: BoxDecoration(
-                                                      color: defaultPalette.extras[0],
-                                                      border: Border.all(),
-                                                    ),
-                                                  ),
-                                                  
-                                                ],
-                                              ),
-                                              SizedBox(width:5),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                    } else {
-                                      return Material(
-                                        color: defaultPalette.transparent,
-                                        child: InkWell(
-                                          hoverColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          highlightColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          splashColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          onTap: () {
-                                            Navigator.push(context, MaterialPageRoute(
-                                              builder: (context) {
-                                                return PopScope(
-                                                  canPop: false,
-                                                  child: LayoutDesigner(
-                                                    id: Boxes.getLayouts().keyAt(i),
-                                                    onPop: (pdf) {
-                                                      
-                                                    },
-                                                  ),
-                                                );
-                                              },
-                                            ));
-                                          },
-                                        child: Container(
-                                          height: 70,
-                                          width: 30,
-                                          margin: EdgeInsets.only(bottom: 10,right: 8),
-                                          color: defaultPalette.transparent,
-                                          child: Row(
-                                            children: [
-                                              //layoutname
-                                              Expanded(
-                                                child: Padding(
-                                                  padding: const EdgeInsets.only(left:12,top: 0),
-                                                  child: Text(
-                                                    layoutModel.name,
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    textAlign: TextAlign.start,
-                                                    style: GoogleFonts.lexend(
-                                                      fontSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
-                                                      color: defaultPalette.extras[0],
-                                                      fontWeight: FontWeight.w600,
-                                                      letterSpacing: -0.2,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(width: 10,),
-                                              //layoutname and created modified
-                                              _getCreatedAndModified(layoutModel, sWidth, sHeight, !isLayoutTileView),
-                                              SizedBox(width:5),
-                                              Column(
-                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                children: [
-                                                  SizedBox(height:5),
-                                                  //make bill out of a Layout button
-                                                  Tooltip(
-                                                    message: '  Create a Bill based on ${layoutModel.name} layout.  ',
-                                                    textStyle: GoogleFonts.lexend(
-                                                      fontSize: mapValueDimensionBased( 15, 20, sWidth,sHeight),
-                                                      color: defaultPalette.primary,
-                                                      fontWeight: FontWeight.w600,
-                                                      letterSpacing: -0.2,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: defaultPalette.extras[0].withOpacity(0.8),
-                                                      borderRadius: BorderRadius.circular(50)
-                                                    ),
-                                                    child: ElevatedLayerButton(
-                                                      onClick: () {
-                                                        final box = Boxes.getLayouts();
-                                                        final name = Boxes.getBillName();
-                                                        var key = 'BI-${const Uuid().v4()}';
-                                                        var prevLm =box.getAt(i);
-                                                        // keyIndex = box.length;
-                                                        var lm = LayoutModel(
-                                                          createdAt: DateTime.now(),
-                                                          modifiedAt: DateTime.now(),
-                                                          name: name,
-                                                          docPropsList: prevLm?.docPropsList??[],
-                                                          spreadSheetList:prevLm?.spreadSheetList?? [],
-                                                          id: key,
-                                                          type: SheetType.taxInvoice.index,
-                                                          labelList: prevLm?.labelList ??[],
-                                                        );
-                                                        
-                                                        box.put(key, lm);
-                                                        lm.save();
-                                                        ref.read(homeScreenTabIndexProvider.notifier).update((state) => 2,);
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                          builder: (c) =>  Material(
-                                                                  child: PopScope(
-                                                                child: LayoutDesigner(
-                                                                  id: key,
-                                                                  onPop: (pdf) {
-                                                                  },
-                                                                  
-                                                                ),
-                                                                canPop: false,
-                                                              )
-                                                            )
-                                                          )
-                                                        );
-                                                      },
-                                                      buttonHeight: 30,
-                                                      buttonWidth: 30,
-                                                      borderRadius: BorderRadius.circular(100),
-                                                      animationDuration:
-                                                          const Duration(milliseconds: 200),
-                                                      animationCurve: Curves.ease,
-                                                      topDecoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        border: Border.all(),
-                                                      ),
-                                                      subfac: 3,depth: 3,
-                                                      topLayerChild: Icon(
-                                                        TablerIcons.receipt,
-                                                        size: 15,
-                                                      ),
-                                                      baseDecoration: BoxDecoration(
-                                                        color: defaultPalette.extras[0],
-                                                        border: Border.all(),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                
-                                                  //Delete a Layout button
-                                                  SizedBox(height:5),
-                                                  ElevatedLayerButton(
-                                                    onClick: () async {
-                                                      final layoutsBox = Boxes.getLayouts();
-                                                      // Delete the item
-                                                      await layoutsBox
-                                                          .get(layoutsBox.keyAt(i))
-                                                          ?.delete();
-                                                      
-                                                      setState(() {});
-                                                    },
-                                                    buttonHeight: 30,
-                                                    buttonWidth: 30,
-                                                    borderRadius: BorderRadius.circular(10),
-                                                    animationDuration:
-                                                        const Duration(milliseconds: 200),
-                                                    animationCurve: Curves.ease,
-                                                    topDecoration: BoxDecoration(
-                                                      color: Colors.white,
-                                                      border: Border.all(),
-                                                    ),
-                                                    topLayerChild: Icon(
-                                                      TablerIcons.trash,
-                                                      size: 20,
-                                                    ),
-                                                    subfac: 3,depth: 3,
-                                                    baseDecoration: BoxDecoration(
-                                                      color: defaultPalette.extras[0],
-                                                      border: Border.all(),
-                                                    ),
-                                                  ),
-                                                  
-                                                ],
-                                              ),
-                                              SizedBox(width:5),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      );
-                                    
-                                    }
-                                },
-                                ),
+                              buttonHeight: ((sHeight/2.5)-40)/2,
+                              buttonWidth: (sWidth/10),
+                              borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
+                              animationDuration: const Duration(milliseconds: 200),
+                              animationCurve: Curves.ease,
+                              subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                              depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                              topDecoration: BoxDecoration(
+                                color: defaultPalette.primary,
+                                border: Border.all(),
                               ),
-                            );
-                          }
+                              topLayerChild: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    // Icon(
+                                    //   IconsaxPlusLinear.grid_3,
+                                    //   size: 40,
+                                    // ),
+                                    Expanded(
+                                      child: Container(
+                                        alignment: Alignment(-1, -1),
+                                        padding: EdgeInsets.only(
+                                          top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
+                                          left:mapValueDimensionBasedLockOnDesync( 8, 20, sWidth,sHeight),
+                                          right: mapValueDimensionBasedLockOnDesync( 7, 15, sWidth,sHeight,),
+                                        ),
+                                        child: RichText(
+                                          textAlign: TextAlign.start,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          text: TextSpan(
+                                            style: GoogleFonts.lexend(
+                                              fontSize: mapValueDimensionBasedLockOnDesync( 15.5, 30, sWidth,sHeight,),
+                                              color: defaultPalette.extras[3],
+                                              letterSpacing: -1,
+                                            ),
+                                            children: [
+                                              TextSpan(
+                                                text: 'Layout \n',
+                                                style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                              ),
+                                              TextSpan(
+                                                text: "New",
+                                                style: TextStyle(color: defaultPalette.tertiary),
+                                              ),
+                                            ],
+                                          ),
+                                          ),
+                                      ),
+                                    ),
+                                  ]),
+                              baseDecoration: BoxDecoration(
+                                color: defaultPalette.extras[0],
+                                // border: Border.all(),
+                              ),
+                            ),
                         ),
                       ),
                         
-                      ),
-                    ),
-                  ],
-                ),
-                ),
-                   
+                    ],
+                  )
                 ),
               ),
-            ),
+              // addBillbutton
+              Positioned(
+                // duration: Durations.medium3,
+                bottom: 1.6*(sHeight / 18),
+                left: ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+(sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30),
+                child: IgnorePointer(
+                  ignoring: !isLayoutTab,
+                  child: Stack(  
+                    children: [
+                      SizedBox(
+                        height:isLayoutTab? (sHeight/2.5)-50:0,
+                        width: (sWidth/10),
+                      ),
+                      Positioned(
+                        left: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                        bottom: 0,
+                         child: AnimatedContainer(
+                          duration: Durations.medium3,
+                          curve: Curves.easeIn,
+                          height:isLayoutTab? ((sHeight/2.5)-40)/2:0,
+                          width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                          alignment: Alignment.topLeft,
+                          padding: EdgeInsets.only(
+                            top: 5,
+                            left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+                          ),
+                          transform: Matrix4.identity()
+                          ..translate(isLayoutTab
+                                ? 0.0
+                                : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                            ..rotateZ( isLayoutTab? 0: -math.pi / 2),
+                          decoration: BoxDecoration(
+                            color: defaultPalette.transparent,
+                            // border: Border.all(),
+                            borderRadius:
+                                BorderRadius.circular(
+                                  isLayoutTab
+                                      ? mapValueDimensionBased( 12, 40, sWidth,sHeight)
+                                      : 900)),
+                          
+                          
+                        ),
+                       ),
+                      Positioned(
+                        bottom: 0,
+                        child: AnimatedContainer(
+                          duration: Durations.medium3,
+                           transform: Matrix4.identity()
+                            ..translate(isLayoutTab
+                              ? 0.0
+                              : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                            ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                          child: ElevatedLayerButton(
+                              onClick: () {
+                               final box = Boxes.getLayouts();
+        
+                                for (var key in box.keys) {
+                                  final value = box.get(key);
+                                  print('Key: $key, Value: $value');
+                                }
+                                final name = Boxes.getBillName();
+                                var key = 'BI-${const Uuid().v4()}';
+                                // keyIndex = box.length;
+                                var lm = LayoutModel(
+                                  createdAt: DateTime.now(),
+                                  modifiedAt: DateTime.now(),
+                                  name: name,
+                                  docPropsList: [],
+                                  spreadSheetList: [],
+                                  id: key,
+                                  type: SheetType.taxInvoice.index,
+        
+                                );
+                                
+                                box.put(key, lm);
+                                lm.save();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                  builder: (c) =>  Material(
+                                          child: PopScope(
+                                        child: LayoutDesigner(
+                                          id: key,
+                                          onPop: (pdf) {
+                                          },
+                                          
+                                        ),
+                                        canPop: false,
+                                      )
+                                    )
+                                  )
+                                );
+                              },
+                              buttonHeight: ((sHeight/2.5)-40)/2,
+                              buttonWidth: (sWidth/10),
+                              borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
+                              animationDuration: const Duration(milliseconds: 200),
+                              animationCurve: Curves.ease,
+                              subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                              depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                              topDecoration: BoxDecoration(
+                                color: defaultPalette.primary,
+                                border: Border.all(),
+                              ),
+                              topLayerChild: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        alignment: Alignment(-1, -1),
+                                        padding: EdgeInsets.only(
+                                          top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
+                                          left:mapValueDimensionBasedLockOnDesync( 8, 20, sWidth,sHeight)
+                                        ),
+                                        child: RichText(
+                                          textAlign: TextAlign.start,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          text: TextSpan(
+                                            style: GoogleFonts.lexend(
+                                              fontSize: mapValueDimensionBasedLockOnDesync( 15.5, 30, sWidth,sHeight,),
+                                              color: defaultPalette.extras[3],
+                                              letterSpacing: -1,
+                                            ),
+                                            children: [
+                                              TextSpan(
+                                                text: 'Bill \n',
+                                                style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                              ),
+                                              TextSpan(
+                                                text: "New",
+                                                style: TextStyle(color: defaultPalette.extras[3]),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ]),
+                              baseDecoration: BoxDecoration(
+                                color: defaultPalette.extras[0],
+                                // border: Border.all(),
+                              ),
+                            ),
+                        ),
+                      ),
+                    ],
+                  )
+                ),
+              ),
+              // BG templatelbutton
+              Positioned(
+              left:mapValueDimensionBased( 5, 10, sWidth,sHeight)+ ((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
             
-          ],
+              bottom: 1.6*(sHeight / 18),
+                child: IgnorePointer(
+                  ignoring: !isLayoutTab,
+                  child: AnimatedContainer(
+                  duration: Durations.medium3,
+                  curve: Curves.easeIn,
+                  height:isLayoutTab?((sHeight/2.5)-50-mapValueDimensionBased( 0, 10, sWidth,sHeight))/2:0,
+                  width: (sWidth/10)-mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                  padding: EdgeInsets.only(
+                            top: 5,
+                            left:mapValueDimensionBased( 8, 15, sWidth,sHeight)
+                          ),
+                  alignment: Alignment.topLeft,
+                  transform: Matrix4.identity()
+                          ..translate(isLayoutTab
+                                ? 0.0
+                                : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                            ..rotateZ( isLayoutTab? 0: -math.pi / 2),
+                  decoration: BoxDecoration(
+                    color: defaultPalette.extras[0],
+                    // border: Border.all(),
+                    borderRadius: BorderRadius.circular( mapValueDimensionBased( 12, 40, sWidth,sHeight))),
+                  
+                  ),
+                  
+                ),
+              ),
+              //
+              // Cloud buttons
+              Positioned(
+                // duration: Durations.medium3,
+                bottom: 1.6*(sHeight / 18),
+                left: ((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/2)+2*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)),
+                child: IgnorePointer(
+                  ignoring: !isLayoutTab,
+                  child: Stack(  
+                    children: [
+                      SizedBox(
+                        height:isLayoutTab? (sHeight/2.5)-50:0,
+                        width: (sWidth/10),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        child: Row(
+                          children: [
+                            AnimatedContainer(
+                              duration: Durations.medium3,
+                               transform: Matrix4.identity()
+                                ..translate(isLayoutTab
+                                  ? 0.0
+                                  : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                                ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                              child: ElevatedLayerButton(
+                                  onClick: () async {
+                                    OverlayEntry? overlay;
+                                      overlay =  OverlayEntry(builder: (context) => Scaffold(
+                                      backgroundColor: defaultPalette.tertiary,
+                                      body: Stack(
+                                        children: [
+                                          Center(
+                                            child: SizedBox(
+                                              height: 150,
+                                              child: LoadingIndicator(
+                                                  indicatorType: Indicator.pacman, /// Required, The loading type of the widget
+                                                  colors: [defaultPalette.extras[0],defaultPalette.extras[0],defaultPalette.extras[0]],       /// Optional, The color collections
+                                                  strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
+                                                  backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
+                                                  pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
+                                              ),
+                                            )
+                                          ),
+                                           Positioned(
+                                            bottom: 10,
+                                            left: 0,
+                                            right: 0,
+                                            child: Text(
+                                              ref.watch(processMessageProvider),
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.lexend(
+                                                fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
+                                                color: defaultPalette.extras[0],
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                          if (Platform.isWindows)
+                                            GestureDetector(
+                                              behavior: HitTestBehavior.translucent,
+                                              onPanStart: (details) {
+                                                appWindow.startDragging();
+                                              },
+                                              onDoubleTap: () {
+                                                appWindow.maximizeOrRestore();
+                                              },
+                                              child: SizedBox(
+                                                height: 30,
+                                                child: Consumer(builder: (context, ref, c) {
+                                                  return Stack(
+                                                    children: [
+                                                      AnimatedPositioned(
+                                                        right: 0,
+                                                        top: 0,
+                                                        duration: Durations.short4,
+                                                        child: SingleChildScrollView(
+                                                          scrollDirection: Axis.horizontal,
+                                                          child: AnimatedContainer(
+                                                            duration: Durations.short4,
+                                                            padding: const EdgeInsets.only(
+                                                                right: 6, bottom: 0),
+                                                            margin: const EdgeInsets.only(top: 5),
+                                                            decoration: const BoxDecoration(
+                                                                color: Colors.transparent,
+                                                                borderRadius: BorderRadius.only(
+                                                                  topLeft: Radius.circular(12),
+                                                                  bottomLeft: Radius.circular(12),
+                                                                )),
+                                                            child: Row(
+                                                              children: [
+                                                                //minimize button
+                                                                ElevatedLayerButton(
+                                                                  // isTapped: false,
+                                                                  // toggleOnTap: true,
+                                                                  depth: 2.5, subfac: 2.5,
+                                                                  onClick: () {
+                                                                    Future.delayed(Duration.zero)
+                                                                        .then((y) {
+                                                                      appWindow.minimize();
+                                                                    });
+                                                                  },
+                                                                  buttonHeight: 22,
+                                                                  buttonWidth: 22,
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(5),
+                                                                  animationDuration:
+                                                                      const Duration(milliseconds: 10),
+                                                                  animationCurve: Curves.ease,
+                                                                  topDecoration: BoxDecoration(
+                                                                    color: Colors.white,
+                                                                    border: Border.all(),
+                                                                  ),
+                                                                  topLayerChild: const Icon(
+                                                                    TablerIcons.rectangle,
+                                                                    size: 15,
+                                                                    // color: Colors.blue,
+                                                                  ),
+                                                                  baseDecoration: BoxDecoration(
+                                                                    color: Colors.green,
+                                                                    border: Border.all(),
+                                                                  ),
+                                                                ),
+                                                                SizedBox(width: 7,),
+                                                                //
+                                                                //maximize button
+                                                                ElevatedLayerButton(
+                                                                  // isTapped: false,
+                                                                  // toggleOnTap: true,
+                                                                  depth: 2.5, subfac:2.5,
+                                                                  onClick: () {
+                                                                    Future.delayed(Durations.short1)
+                                                                        .then((y) {
+                                                                      appWindow.maximizeOrRestore();
+                                                                    });
+                                                                  },
+                                                                  buttonHeight: 22,
+                                                                  buttonWidth: 22,
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(5),
+                                                                  animationDuration:
+                                                                      const Duration(milliseconds: 1),
+                                                                  animationCurve: Curves.ease,
+                                                                  topDecoration: BoxDecoration(
+                                                                    color: Colors.white,
+                                                                    border: Border.all(),
+                                                                  ),
+                                                                  topLayerChild: const Icon(
+                                                                    TablerIcons.triangle,
+                                                                    size: 14,
+                                                                    // color: Colors.amber,
+                                                                  ),
+                                                                  baseDecoration: BoxDecoration(
+                                                                    color: Colors.green,
+                                                                    border: Border.all(),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            //
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                }),
+                                              ),
+                                            ),
+                
+                                        ],
+                                      ),),);
+                                      Overlay.of(context).insert(
+                                        overlay
+                                      );
+                                    var box =Boxes.getLayouts();
+                                    final gmap = await fetchAndReconstructLayoutModels(ref, overlay);
+                                    
+        
+                                    for (var lmEntry in gmap.entries) {
+                                      final id = lmEntry.key;
+                                      final incoming = lmEntry.value as LayoutModel;
+                                      final existing = box.get(id);
+                                      
+        
+                                      if (existing != null && (incoming.modifiedAt.isBefore(existing.modifiedAt) ||incoming.createdAt.isBefore(existing.createdAt) )) {
+                                        if (!mounted) return;
+        
+                                        final shouldOverwrite = await showDialog<int>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            backgroundColor: defaultPalette.primary,
+                                            title: Text("Older ${incoming.id.startsWith('LY-')? 'Layout': incoming.type == 0? 'Bill': SheetType.values[incoming.type].name} In The Cloud!",
+                                            style: GoogleFonts.lexend(
+                                                fontSize: 25,
+                                                color: defaultPalette.extras[0],
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            content: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "Do you want to overwrite it?",
+                                                  style: GoogleFonts.lexend(
+                                                    fontSize: 14,
+                                                    color: defaultPalette.extras[0],
+                                                    fontWeight: FontWeight.w400,
+                                                  ),
+                                                  ),
+                                                  SizedBox(height: 4,),
+                                                Column(
+                                                   mainAxisSize: MainAxisSize.min,
+                                                   crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    //incoming lm
+                                                    Row(
+                                                      children: [
+                                                        Icon(TablerIcons.cloud),
+                                                        SizedBox(width: 2,),
+                                                        Text(
+                                                        " ${incoming.name}",
+                                                          style: GoogleFonts.lexend(
+                                                            fontSize: 14, 
+                                                            color: defaultPalette.extras[0],
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    RichText(
+                                                    textAlign: TextAlign.start,
+                                                    maxLines: 1,
+                                                    // overflow: TextOverflow.ellipsis,
+                                                    text: TextSpan(
+                                                      style: GoogleFonts.lexend(
+                                                        fontSize: 13,
+                                                        fontWeight: FontWeight.w300,
+                                                        letterSpacing: -0.2,
+                                                      ),
+                                                      children: [
+                                                        TextSpan(
+                                                          text: 'Created: ',
+                                                          style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        TextSpan(
+                                                          text: DateFormat("EEE MMM d, y 'at' h:mm a").format(incoming.createdAt),
+                                                          style: TextStyle(color: defaultPalette.extras[0]),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    ),
+                                                    RichText(
+                                                      textAlign: TextAlign.start,
+                                                      maxLines: 1,
+                                                      // overflow: TextOverflow.ellipsis,
+                                                      text: TextSpan(
+                                                        style: GoogleFonts.lexend(
+                                                          fontSize: 13,
+                                                          fontWeight: FontWeight.w300,
+                                                          letterSpacing: -0.2,
+                                                        ),
+                                                        children: [
+                                                          TextSpan(
+                                                            text: 'Modified: ',
+                                                            style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                                          ),
+                                                          TextSpan(
+                                                            text: DateFormat("EEE MMM d, y 'at' h:mm a").format(incoming.modifiedAt),
+                                                            style: TextStyle(color: defaultPalette.extras[4]),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 4,),
+                                                    //existing lm
+                                                    Row(
+                                                      children: [
+                                                        Icon(TablerIcons.server),
+                                                        SizedBox(width: 2,),
+                                                        Text(
+                                                        " ${existing.name}",
+                                                          style: GoogleFonts.lexend(
+                                                            fontSize: 14, 
+                                                            color: defaultPalette.extras[0],
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    RichText(
+                                                    textAlign: TextAlign.start,
+                                                    maxLines: 1,
+                                                    // overflow: TextOverflow.ellipsis,
+                                                    text: TextSpan(
+                                                      style: GoogleFonts.lexend(
+                                                        fontSize: 13,
+                                                        fontWeight: FontWeight.w300,
+                                                        letterSpacing: -0.2,
+                                                      ),
+                                                      children: [
+                                                        TextSpan(
+                                                          text: 'Created: ',
+                                                          style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                                        ),
+                                                        TextSpan(
+                                                          text: DateFormat("EEE MMM d, y 'at' h:mm a").format(existing.createdAt),
+                                                          style: TextStyle(color: defaultPalette.extras[0]),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    ),
+                                                    RichText(
+                                                      textAlign: TextAlign.start,
+                                                      maxLines: 1,
+                                                      // overflow: TextOverflow.ellipsis,
+                                                      text: TextSpan(
+                                                        style: GoogleFonts.lexend(
+                                                          fontSize: 13,
+                                                          fontWeight: FontWeight.w300,
+                                                          letterSpacing: -0.2,
+                                                        ),
+                                                        children: [
+                                                          TextSpan(
+                                                            text: 'Modified: ',
+                                                            style: GoogleFonts.lexend(color: defaultPalette.extras[0]),
+                                                          ),
+                                                          TextSpan(
+                                                            text: DateFormat("EEE MMM d, y 'at' h:mm a").format(existing.modifiedAt),
+                                                            style: TextStyle(color: defaultPalette.tertiary),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(ctx, 0),
+                                                child: Text("Nah",
+                                                style: GoogleFonts.lexend(
+                                                fontSize: 14,
+                                                color: defaultPalette.extras[0],
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                                ),
+                                              ),
+                                              TextButton(
+                                                
+                                                onPressed: () => Navigator.pop(ctx, 1),
+                                                child: Text("Overwrite",
+                                                style: GoogleFonts.lexend(
+                                                fontSize: 14,
+                                                color: defaultPalette.extras[4],
+                                                fontWeight: FontWeight.w500,
+                                                ),
+                                                ),
+                                              ),
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(ctx, 2),
+                                                child: Text("Keep Both",
+                                                style: GoogleFonts.lexend(
+                                                fontSize: 14,
+                                                color: defaultPalette.tertiary,
+                                                fontWeight: FontWeight.w500,
+                                                ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+        
+                                        if (shouldOverwrite == 0) continue;
+                                        if (shouldOverwrite == 1) {
+                                          box.put(id, incoming.copyWith(pdf: existing.pdf));
+                                        } else if (shouldOverwrite ==2) {
+                                          var newId = '${existing.id.substring(0,4)}${Uuid().v4()}';
+                                          var newlm = LayoutModel(
+                                            docPropsList: incoming.docPropsList, 
+                                            spreadSheetList: incoming.spreadSheetList, 
+                                            id: newId, name: incoming.name+'-old', 
+                                            createdAt: incoming.createdAt, 
+                                            modifiedAt: incoming.modifiedAt,
+                                            labelList:incoming.labelList,
+                                            pdf: existing.pdf,
+                                            type: incoming.type,
+        
+                                            );
+                                          box.put(newId, newlm);
+                                        }
+                                      } else if (existing ==null){
+                                        box.put(id, incoming.copyWith(pdf: []));
+                                      }
+        
+                                    }
+        
+                                    setState(() {
+                                      filteredLayoutBox = box.values.toList();
+                                    });
+                                   
+                                  },
+                                  buttonHeight: ((sHeight/2.5)-40)/2,
+                                  buttonWidth: (sWidth/20),
+                                  borderRadius: BorderRadius.circular(mapValueDimensionBased( 12, 40, sWidth,sHeight)),
+                                  animationDuration: const Duration(milliseconds: 200),
+                                  animationCurve: Curves.ease,
+                                  subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                                  depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                                  topDecoration: BoxDecoration(
+                                    color: defaultPalette.primary,
+                                    border: Border.all(),
+                                  ),
+                                  topLayerChild: Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Container(
+                                            padding: EdgeInsets.only(
+                                              top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.center,
+                                              children: [
+                                                Icon(TablerIcons.cloud_filled,size: mapValueDimensionBased( 16, 40, sWidth,sHeight),color: defaultPalette.extras[9],),
+                                                Icon(TablerIcons.download,size: mapValueDimensionBased( 16, 40, sWidth,sHeight),),
+                                              ],
+                                            )
+                                          ),
+                                        ),
+                                      ]),
+                                  baseDecoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    // border: Border.all(),
+                                  ),
+                                ),
+                            ),
+                            AnimatedContainer(
+                              duration: Durations.medium3,
+                               transform: Matrix4.identity()
+                                ..translate(isLayoutTab
+                                  ? 0.0
+                                  : (-((sHeight) - 250) /10).clamp(double.negativeInfinity, 50))
+                                ..rotateZ( isLayoutTab? 0: math.pi / 2),
+                              child: ElevatedLayerButton(
+                                  onClick: () async {
+                                     OverlayEntry? overlay;
+                                      overlay =  OverlayEntry(builder: (context) => Scaffold(
+                                      backgroundColor: defaultPalette.tertiary,
+                                      body: Stack(
+                                        children: [
+                                          Center(
+                                            child: SizedBox(
+                                              height: 150,
+                                              child: LoadingIndicator(
+                                                  indicatorType: Indicator.pacman, /// Required, The loading type of the widget
+                                                  colors: [defaultPalette.primary,defaultPalette.primary,],       /// Optional, The color collections
+                                                  strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
+                                                  backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
+                                                  pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
+                                              ),
+                                            )
+                                          ),
+                                          Positioned(
+                                            bottom: 10,
+                                            left: 0,
+                                            right: 0,
+                                            child: Text(
+                                              ref.watch(processMessageProvider),
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.lexend(
+                                                fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
+                                                color: defaultPalette.extras[0],
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                          if (Platform.isWindows)
+                                            GestureDetector(
+                                              behavior: HitTestBehavior.translucent,
+                                              onPanStart: (details) {
+                                                appWindow.startDragging();
+                                              },
+                                              onDoubleTap: () {
+                                                appWindow.maximizeOrRestore();
+                                              },
+                                              child: SizedBox(
+                                                height: 30,
+                                                child: Consumer(builder: (context, ref, c) {
+                                                  return Stack(
+                                                    children: [
+                                                      AnimatedPositioned(
+                                                        right: 0,
+                                                        top: 0,
+                                                        duration: Durations.short4,
+                                                        child: SingleChildScrollView(
+                                                          scrollDirection: Axis.horizontal,
+                                                          child: AnimatedContainer(
+                                                            duration: Durations.short4,
+                                                            padding: const EdgeInsets.only(
+                                                                right: 6, bottom: 0),
+                                                            margin: const EdgeInsets.only(top: 5),
+                                                            decoration: const BoxDecoration(
+                                                                color: Colors.transparent,
+                                                                borderRadius: BorderRadius.only(
+                                                                  topLeft: Radius.circular(12),
+                                                                  bottomLeft: Radius.circular(12),
+                                                                )),
+                                                            child: Row(
+                                                              children: [
+                                                                //minimize button
+                                                                ElevatedLayerButton(
+                                                                  // isTapped: false,
+                                                                  // toggleOnTap: true,
+                                                                  depth: 2.5, subfac: 2.5,
+                                                                  onClick: () {
+                                                                    Future.delayed(Duration.zero)
+                                                                        .then((y) {
+                                                                      appWindow.minimize();
+                                                                    });
+                                                                  },
+                                                                  buttonHeight: 22,
+                                                                  buttonWidth: 22,
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(5),
+                                                                  animationDuration:
+                                                                      const Duration(milliseconds: 10),
+                                                                  animationCurve: Curves.ease,
+                                                                  topDecoration: BoxDecoration(
+                                                                    color: Colors.white,
+                                                                    border: Border.all(),
+                                                                  ),
+                                                                  topLayerChild: const Icon(
+                                                                    TablerIcons.rectangle,
+                                                                    size: 15,
+                                                                    // color: Colors.blue,
+                                                                  ),
+                                                                  baseDecoration: BoxDecoration(
+                                                                    color: Colors.green,
+                                                                    border: Border.all(),
+                                                                  ),
+                                                                ),
+                                                                SizedBox(width: 7,),
+                                                                //
+                                                                //maximize button
+                                                                ElevatedLayerButton(
+                                                                  // isTapped: false,
+                                                                  // toggleOnTap: true,
+                                                                  depth: 2.5, subfac:2.5,
+                                                                  onClick: () {
+                                                                    Future.delayed(Durations.short1)
+                                                                        .then((y) {
+                                                                      appWindow.maximizeOrRestore();
+                                                                    });
+                                                                  },
+                                                                  buttonHeight: 22,
+                                                                  buttonWidth: 22,
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(5),
+                                                                  animationDuration:
+                                                                      const Duration(milliseconds: 1),
+                                                                  animationCurve: Curves.ease,
+                                                                  topDecoration: BoxDecoration(
+                                                                    color: Colors.white,
+                                                                    border: Border.all(),
+                                                                  ),
+                                                                  topLayerChild: const Icon(
+                                                                    TablerIcons.triangle,
+                                                                    size: 14,
+                                                                    // color: Colors.amber,
+                                                                  ),
+                                                                  baseDecoration: BoxDecoration(
+                                                                    color: Colors.green,
+                                                                    border: Border.all(),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            //
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                }),
+                                              ),
+                                            ),
+                
+                                        ],
+                                      ),),);
+                                      Overlay.of(context).insert(
+                                        overlay
+                                      );
+                                   await authenticateAndSyncLayoutModels(Boxes.getLayouts(), ref, overlay).then((value) {
+                                     overlay?.remove();
+                                   },);
+                                  },
+                                  buttonHeight: ((sHeight/2.5)-40)/2,
+                                  buttonWidth: (sWidth/20),
+                                  borderRadius: BorderRadius.circular(mapValueDimensionBased(12, 40, sWidth,sHeight)),
+                                  animationDuration: const Duration(milliseconds: 200),
+                                  animationCurve: Curves.ease,
+                                  subfac: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                                  depth: mapValueDimensionBased( 5, 10, sWidth,sHeight),
+                                  topDecoration: BoxDecoration(
+                                    color: defaultPalette.primary,
+                                    border: Border.all(),
+                                  ),
+                                  topLayerChild: Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Container(
+                                            padding: EdgeInsets.only(
+                                              top: mapValueDimensionBasedLockOnDesync( 5, 20, sWidth,sHeight),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.center,
+                                              children: [
+                                                Icon(TablerIcons.cloud_filled, size: mapValueDimensionBasedLockOnDesync( 16, 40, sWidth,sHeight),color: defaultPalette.extras[9],),
+                                                Icon(TablerIcons.upload, size: mapValueDimensionBasedLockOnDesync( 16, 40, sWidth,sHeight),),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ]),
+                                  baseDecoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    // border: Border.all(),
+                                  ),
+                                ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                ),
+              ),
+              //toggle bwteen layouts and templates
+              // AnimatedPositioned(
+              //   duration: Durations.medium3,
+              //   bottom: 1.6*(sHeight / 18) -sWidth/30,
+              //   left: isLayoutTab?((sWidth / 20).clamp( 90, double.infinity)+(sWidth / 20)/2)+3*((sWidth/10) + mapValue(value: sWidth, inMin: 800, inMax: 2194, outMin: 5, outMax: 30)):sWidth/2,
+              //   child: Transform.rotate(
+              //     alignment: Alignment(-1, -1),
+              //     angle: -pi/2,
+              //     child: IgnorePointer(
+              //       ignoring: !isLayoutTab,
+              //       child: Container(
+              //         decoration: BoxDecoration(
+              //           border: Border.all(),
+              //           borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync( 10, 36, sWidth,sHeight),),
+              //         ),
+              //         child: AnimatedToggleSwitch<bool>.dual(
+              //           current: isTemplateView,
+              //           first: true,
+              //           second: false,
+              //           onChanged: (value) {
+              //             setState(() {
+              //               isTemplateView = value;
+              //             });
+              //           },
+              //           animationCurve:
+              //               Curves.easeInOutExpo,
+              //           animationDuration:
+              //               Durations.medium4,
+              //           borderWidth:
+              //               2, // backgroundColor is set independently of the current selection
+              //           styleBuilder: (value) =>
+              //               ToggleStyle(
+              //                   borderRadius:
+              //                       BorderRadius
+              //                           .circular(mapValueDimensionBasedLockOnDesync( 9, 35, sWidth,sHeight),),
+              //                   indicatorBorderRadius:
+              //                       BorderRadius.only(
+              //                         topLeft:  Radius.circular(!value?8:34) ,
+              //                         topRight: Radius.circular(value?8:34) ,
+              //                         bottomLeft:Radius.circular(!value?8:34) ,
+              //                         bottomRight:  Radius.circular(value?8:34) ,
+              //                         ),
+              //                   indicatorBorder: Border.all(),
+              //                   borderColor:
+              //                       defaultPalette
+              //                           .extras[0],
+              //                   backgroundColor:
+              //                       defaultPalette
+              //                           .extras[0],
+              //                   indicatorColor:
+              //                       defaultPalette
+              //                               .primary), // indicatorColor changes and animates its value with the selection
+              //           iconBuilder: (value) {
+              //             return Padding(
+              //               padding: const EdgeInsets.all(8.0),
+              //               child: Transform.rotate(
+              //                 angle: pi/2,
+              //                 child: Icon(
+              //                     !value? TablerIcons
+              //                             .layout
+              //                         : TablerIcons
+              //                             .template,
+              //                     size: mapValueDimensionBased( 12,30, sWidth,sHeight),
+              //                     color: defaultPalette
+              //                         .extras[0]),
+              //               ),
+              //             );
+              //           },
+              //           textBuilder: (value) {
+              //             return Text(
+              //               value ? 'template'
+              //                   : 'layout',
+              //               maxLines: 1,
+              //               overflow: TextOverflow.ellipsis,
+              //               style:
+              //                   GoogleFonts.lexend(
+              //                       fontSize: mapValueDimensionBased( 10, 20, sWidth,sHeight),
+              //                       fontWeight: FontWeight.w500,
+              //                       color: 
+              //                       defaultPalette
+              //                           .primary ,
+              //                       ),
+              //             );
+              //           },
+              //           height:sWidth/30,
+              //           spacing:(sHeight/2.5)-150,
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              
+              //quote
+              AnimatedPositioned(
+                duration: Durations.medium2,
+                left:((sWidth / 20).clamp(90, double.infinity)+(sWidth / 20)/1.5),
+                bottom: isLayoutTab ? 1.6*(sHeight / 18)+(sHeight/2.6)-mapValueDimensionBased( 85, 115, sWidth,sHeight): 0,
+                child: Text(
+                    ' Pay up, \n buttercup!',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    // textAlign: TextAlign.end,
+                    style: GoogleFonts.lexend(
+                      fontSize: mapValueDimensionBased( 15, 30, sWidth,sHeight),
+                      color: defaultPalette.extras[0].withOpacity(0.4),
+                      letterSpacing: -0.2,
+                      height: 1
+                    ),
+                  ),
+                ),
+              
+              //LayoutList
+              AnimatedPositioned(
+                duration: Durations.extralong2,
+                top: isLayoutTab
+                    ? Platform.isWindows
+                        ? topPadPosDistance + 10
+                        : 5
+                    : sHeight,
+                right: 2,
+                height: sHeight / 1.1,
+                width: sWidth / 2.05,
+                child: IgnorePointer(
+                  ignoring: !isLayoutTab,
+                  child: AnimatedOpacity(
+                    duration: Durations.extralong3 * 2,
+                    opacity: isLayoutTab ? 1 : 0,
+                    curve: Curves.bounceInOut,
+                    child: Container(
+                      margin: EdgeInsets.all(15),
+                      padding: EdgeInsets.all(mapValueDimensionBased( 5, 10, sWidth,sHeight)).copyWith(top: 15),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: defaultPalette.primary),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          //my layouts title search bar list page toggle
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '   Layouts',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.start,
+                                  style: GoogleFonts.lexend(
+                                    fontSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
+                                    color: defaultPalette.extras[0],
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                              ),
+                              
+                                ExpandableSearchBar(
+                                  onTap: () {
+                                    
+                                  },
+                                  onChange: (value) {
+                                    setState(() {
+                                      if (value.isNotEmpty) {
+                                        filteredLayoutBox = Boxes.getLayouts()
+                                            .values
+                                            .where((i) => i.name.toLowerCase().contains(value.toLowerCase()))
+                                            .toList();
+                                      } else {
+                                        filteredLayoutBox = Boxes.getLayouts()
+                                            .values.toList();
+                                      }
+                                    });
+                                  },
+                                  hintText: "search layout...",
+                                  editTextController: layoutSearchController,
+                                  focusNode: layoutSearchFocusNode,
+                                  boxShadow: [],
+                                  iconBackgroundColor: defaultPalette.primary,
+                                  iconColor: defaultPalette.extras[0],
+                                  iconSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
+                                  backgroundColor: defaultPalette.secondary,
+        
+                                ),
+                                SizedBox(width: 3,), 
+                                AnimatedToggleSwitch<bool>.dual(
+                                current: isLayoutTileView,
+                                first: true,
+                                second: false,
+                                onChanged: (value) {
+                                  setState(() {
+                                    isLayoutTileView = value;
+                                  });
+                                },
+                                animationCurve:
+                                    Curves.easeInOutExpo,
+                                animationDuration:
+                                    Durations.medium4,
+                                borderWidth:
+                                    2, // backgroundColor is set independently of the current selection
+                                styleBuilder: (value) =>
+                                    ToggleStyle(
+                                        borderRadius:
+                                            BorderRadius
+                                                .circular(
+                                                    50),
+                                        indicatorBorderRadius:
+                                            BorderRadius
+                                                .circular(
+                                                    5),
+                                        borderColor:
+                                            defaultPalette
+                                                .secondary,
+                                        backgroundColor:
+                                            defaultPalette
+                                                .secondary,
+                                        indicatorColor:
+                                            defaultPalette
+                                                    .extras[0]), // indicatorColor changes and animates its value with the selection
+                                iconBuilder: (value) {
+                                  return Icon(
+                                      value? TablerIcons
+                                              .grip_horizontal
+                                          : TablerIcons
+                                              .grip_vertical,
+                                      size: 12,
+                                      color: defaultPalette
+                                          .primary);
+                                },
+                                textBuilder: (value) {
+                                  return Text(
+                                    value ? 'list'
+                                        : 'page',
+                                    style:
+                                        GoogleFonts.bungee(
+                                            fontSize: 12),
+                                  );
+                                },
+                                height:mapValueDimensionBased( 22, 32, sWidth,sHeight),
+                                spacing:mapValueDimensionBased( 10, 30, sWidth,sHeight),
+                              ),
+                              SizedBox(width: 5,),                    
+                            ],
+                          ),
+                          SizedBox(height: 10,),
+                          //the layout tiles
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color:  Color(0xffc0c0c0).withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              margin: EdgeInsets.all(5),
+                              child:  ScrollConfiguration(
+                                behavior: ScrollBehavior().copyWith(scrollbars: false),
+                                child: DynMouseScroll(
+                                  durationMS: 500,
+                                  scrollSpeed: 1,
+                                  builder: (context, controller, physics) {
+                                    return ScrollbarUltima(
+                                      alwaysShowThumb: true,
+                                      controller: controller,
+                                      scrollbarPosition:
+                                          ScrollbarPosition.right,
+                                      backgroundColor: defaultPalette.primary,
+                                      isDraggable: true,
+                                      maxDynamicThumbLength: 90,
+                                      minDynamicThumbLength: 50,
+                                      thumbBuilder:
+                                          (context, animation, widgetStates) {
+                                        return Container(
+                                          margin: EdgeInsets.only(right: 3, top: 8,bottom: 8),
+                                          decoration: BoxDecoration(
+                                              color: defaultPalette.primary,
+                                              border: Border.all(),
+                                              borderRadius:
+                                                  BorderRadius.circular(15)),
+                                          width: 6,
+                                        );
+                                      },
+                                    child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: ListView.builder(
+                                      padding: EdgeInsets.only(right:0),
+                                    controller: controller,
+                                    physics: physics,
+                                    itemCount:layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length+1: filteredLayoutBox.length+1,
+                                    itemBuilder: (BuildContext context, int i) {
+                                      
+                                      if (i ==(layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length:filteredLayoutBox.length)) {
+                                        return SizedBox(height: 5,);
+                                      }
+                                      final layoutModel = layoutSearchController.text ==''?Boxes.getLayouts().values.toList()[i]: filteredLayoutBox[i];
+                                      if (layoutModel.id.startsWith('BI-')) {
+                                        return SizedBox.shrink();
+                                      }
+                                      if(!isLayoutTileView) {
+                                        return Material(
+                                          color: defaultPalette.transparent,
+                                          child: InkWell(
+                                            hoverColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            highlightColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            splashColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            onTap: () {
+                                              Navigator.push(context, MaterialPageRoute(
+                                                builder: (context) {
+                                                  return PopScope(
+                                                    canPop: false,
+                                                    child: LayoutDesigner(
+                                                      id: Boxes.getLayouts().keyAt(i),
+                                                      onPop: (pdf) {
+                                                        setState(() {
+                                                        filteredLayoutBox = Boxes.getLayouts().values.toList();
+                                                      });
+                                                      },
+                                                    ),
+                                                  );
+                                                },
+                                              ));
+                                              filteredLayoutBox = Boxes.getLayouts()
+                                            .values.toList();
+                                            },
+                                          child: Container(
+                                            height: 200,
+                                            width: 30,
+                                            margin: EdgeInsets.only(bottom: 10,right: 8),
+                                            color: defaultPalette.transparent,
+                                            child: Row(
+                                              children: [
+                                                //mini layout pdf pages swiper
+                                                SizedBox(
+                                                  height: 200,
+                                                  width: 150,
+                                                  child: AppinioSwiper(
+                                                    cardCount: (layoutModel.spreadSheetList.length.isNaN ||layoutModel.docPropsList.length ==0 )?1:layoutModel.docPropsList.length,
+                                                    backgroundCardCount: 5,
+                                                    backgroundCardOffset: Offset(0.8, 0.8),
+                                                    duration: Duration(milliseconds: 220),
+                                                    backgroundCardScale: 1,
+                                                    loop: true,
+                                                    allowUnSwipe: true,
+                                                    allowUnlimitedUnSwipe: true,
+                                                    initialIndex: 0,  
+                                                    cardBuilder: (context, indx) {
+                                                      // print(layoutModel.pdf?.length);
+                                                      return Stack(
+                                                            children: [
+                                                              //The main bgCOLOR OF THE CARD
+                                                              Positioned.fill(
+                                                                child: AnimatedContainer(
+                                                                  duration: Durations.short3,
+                                                                  alignment: Alignment.center,
+                                                                  margin: EdgeInsets.only(left:8,top:8,bottom: 2),
+                                                                  decoration: BoxDecoration(
+                                                                    color:defaultPalette.primary,
+                                                                    border: Border.all(width: 1.2, color:defaultPalette.extras[0], strokeAlign: BorderSide.strokeAlignOutside),
+                                                                    borderRadius: BorderRadius.circular(10),
+                                                                    image:layoutModel.pdf==null?null: DecorationImage(image:MemoryImage(layoutModel.pdf![indx],),fit: BoxFit.fitWidth),
+                                                                  ),
+                                                                  // foregroundDecoration: BoxDecoration(
+                                                                  //   border: Border.all(width: 2, color:defaultPalette.extras[0]),
+                                                                  //   borderRadius: BorderRadius.circular(10),
+                                                                  // ),
+                                                                ),
+                                                              ),    
+                                                            ],
+                                                      );
+                                                    },),
+                                                ),
+                                                SizedBox(width: 10,),
+                                                //layoutname and created modified
+                                                _getCreatedAndModified(layoutModel, sWidth, sHeight, !isLayoutTileView),
+                                                SizedBox(width:5),
+                                                Column(
+                                                  mainAxisAlignment: MainAxisAlignment.end,
+                                                  children: [
+                                                    //Make a bill out of the Layout button
+                                                    Tooltip(
+                                                      message: '  Create a Bill based on ${layoutModel.name} layout.  ',
+                                                      textStyle: GoogleFonts.lexend(
+                                                        fontSize: mapValueDimensionBased( 15, 20, sWidth,sHeight),
+                                                        color: defaultPalette.primary,
+                                                        fontWeight: FontWeight.w600,
+                                                        letterSpacing: -0.2,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0].withOpacity(0.8),
+                                                        borderRadius: BorderRadius.circular(50)
+                                                      ),
+                                                      child: ElevatedLayerButton(
+                                                        onClick: () {
+                                                          final box = Boxes.getLayouts();
+                                                          final name = Boxes.getBillName();
+                                                          var key = 'BI-${const Uuid().v4()}';
+                                                          var prevLm =box.getAt(i);
+                                                          // keyIndex = box.length;
+                                                          var lm = LayoutModel(
+                                                            createdAt: DateTime.now(),
+                                                            modifiedAt: DateTime.now(),
+                                                            name: name,
+                                                            docPropsList: prevLm?.docPropsList??[],
+                                                            spreadSheetList:prevLm?.spreadSheetList?? [],
+                                                            id: key,
+                                                            type: SheetType.taxInvoice.index,
+                                                            labelList: prevLm?.labelList ??[],
+                                                          );
+                                                          
+                                                          box.put(key, lm);
+                                                          lm.save();
+                                                          ref.read(homeScreenTabIndexProvider.notifier).update((state) => 2,);
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                            builder: (c) =>  Material(
+                                                                    child: PopScope(
+                                                                  child: LayoutDesigner(
+                                                                    id: key,
+                                                                    onPop: (pdf) {
+                                                                    },
+                                                                    
+                                                                  ),
+                                                                  canPop: false,
+                                                                )
+                                                              )
+                                                            )
+                                                          );
+                                                        },
+                                                        buttonHeight: 30,
+                                                        buttonWidth: 30,
+                                                        borderRadius: BorderRadius.circular(50)
+                                                        // .copyWith(
+                                                        //     topLeft: Radius.circular(80),
+                                                        //     bottomRight: Radius.circular(100)
+                                                        //   )
+                                                          ,
+                                                        animationDuration:
+                                                            const Duration(milliseconds: 200),
+                                                        animationCurve: Curves.ease,
+                                                        topDecoration: BoxDecoration(
+                                                          color: Colors.white,
+                                                          border: Border.all(),
+                                                        ),
+                                                        subfac: 3,depth: 3,
+                                                        topLayerChild: Icon(
+                                                          TablerIcons.receipt,
+                                                          size: 15,
+                                                        ),
+                                                        baseDecoration: BoxDecoration(
+                                                          color: defaultPalette.extras[0],
+                                                          border: Border.all(),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  
+                                                    //Delete a Layout button
+                                                    SizedBox(height:5),
+                                                    ElevatedLayerButton(
+                                                      onClick: () async {
+                                                        print(filteredLayoutBox);
+                                                        final layoutsBox = Boxes.getLayouts();
+                                                        // Delete the item
+                                                         print(layoutsBox);
+                                                        await layoutsBox
+                                                            .get(layoutsBox.keyAt(i))
+                                                            ?.delete();
+                                                        print('delete');
+                                                        setState(() {
+                                                          filteredLayoutBox = Boxes.getLayouts().values.toList();
+                                                        });
+                                                      },
+                                                      buttonHeight: 45,
+                                                      buttonWidth: 45,
+                                                      borderRadius: BorderRadius.circular(10),
+                                                      animationDuration:
+                                                          const Duration(milliseconds: 200),
+                                                      animationCurve: Curves.ease,
+                                                      topDecoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        border: Border.all(),
+                                                      ),
+                                                      topLayerChild: Icon(
+                                                        TablerIcons.trash,
+                                                        size: 20,
+                                                      ),
+                                                      subfac: 3,depth: 3,
+                                                      baseDecoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0],
+                                                        border: Border.all(),
+                                                      ),
+                                                    ),
+                                                    
+                                                  ],
+                                                ),
+                                                SizedBox(width:5),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                      } else {
+                                        return Material(
+                                          color: defaultPalette.transparent,
+                                          child: InkWell(
+                                            hoverColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            highlightColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            splashColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            onTap: () {
+                                              Navigator.push(context, MaterialPageRoute(
+                                                builder: (context) {
+                                                  return PopScope(
+                                                    canPop: false,
+                                                    child: LayoutDesigner(
+                                                      id: Boxes.getLayouts().keyAt(i),
+                                                      onPop: (pdf) {
+                                                        
+                                                      },
+                                                    ),
+                                                  );
+                                                },
+                                              ));
+                                            },
+                                          child: Container(
+                                            height: 70,
+                                            width: 30,
+                                            margin: EdgeInsets.only(bottom: 10,right: 8),
+                                            color: defaultPalette.transparent,
+                                            child: Row(
+                                              children: [
+                                                //layoutname
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.only(left:12,top: 0),
+                                                    child: Text(
+                                                      layoutModel.name,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.start,
+                                                      style: GoogleFonts.lexend(
+                                                        fontSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
+                                                        color: defaultPalette.extras[0],
+                                                        fontWeight: FontWeight.w600,
+                                                        letterSpacing: -0.2,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 10,),
+                                                //layoutname and created modified
+                                                _getCreatedAndModified(layoutModel, sWidth, sHeight, !isLayoutTileView),
+                                                SizedBox(width:5),
+                                                Column(
+                                                  mainAxisAlignment: MainAxisAlignment.end,
+                                                  children: [
+                                                    SizedBox(height:5),
+                                                    //make bill out of a Layout button
+                                                    Tooltip(
+                                                      message: '  Create a Bill based on ${layoutModel.name} layout.  ',
+                                                      textStyle: GoogleFonts.lexend(
+                                                        fontSize: mapValueDimensionBased( 15, 20, sWidth,sHeight),
+                                                        color: defaultPalette.primary,
+                                                        fontWeight: FontWeight.w600,
+                                                        letterSpacing: -0.2,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0].withOpacity(0.8),
+                                                        borderRadius: BorderRadius.circular(50)
+                                                      ),
+                                                      child: ElevatedLayerButton(
+                                                        onClick: () {
+                                                          final box = Boxes.getLayouts();
+                                                          final name = Boxes.getBillName();
+                                                          var key = 'BI-${const Uuid().v4()}';
+                                                          var prevLm =box.getAt(i);
+                                                          // keyIndex = box.length;
+                                                          var lm = LayoutModel(
+                                                            createdAt: DateTime.now(),
+                                                            modifiedAt: DateTime.now(),
+                                                            name: name,
+                                                            docPropsList: prevLm?.docPropsList??[],
+                                                            spreadSheetList:prevLm?.spreadSheetList?? [],
+                                                            id: key,
+                                                            type: SheetType.taxInvoice.index,
+                                                            labelList: prevLm?.labelList ??[],
+                                                          );
+                                                          
+                                                          box.put(key, lm);
+                                                          lm.save();
+                                                          ref.read(homeScreenTabIndexProvider.notifier).update((state) => 2,);
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                            builder: (c) =>  Material(
+                                                                    child: PopScope(
+                                                                  child: LayoutDesigner(
+                                                                    id: key,
+                                                                    onPop: (pdf) {
+                                                                    },
+                                                                    
+                                                                  ),
+                                                                  canPop: false,
+                                                                )
+                                                              )
+                                                            )
+                                                          );
+                                                        },
+                                                        buttonHeight: 30,
+                                                        buttonWidth: 30,
+                                                        borderRadius: BorderRadius.circular(100),
+                                                        animationDuration:
+                                                            const Duration(milliseconds: 200),
+                                                        animationCurve: Curves.ease,
+                                                        topDecoration: BoxDecoration(
+                                                          color: Colors.white,
+                                                          border: Border.all(),
+                                                        ),
+                                                        subfac: 3,depth: 3,
+                                                        topLayerChild: Icon(
+                                                          TablerIcons.receipt,
+                                                          size: 15,
+                                                        ),
+                                                        baseDecoration: BoxDecoration(
+                                                          color: defaultPalette.extras[0],
+                                                          border: Border.all(),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  
+                                                    //Delete a Layout button
+                                                    SizedBox(height:5),
+                                                    ElevatedLayerButton(
+                                                      onClick: () async {
+                                                        final layoutsBox = Boxes.getLayouts();
+                                                        // Delete the item
+                                                        await layoutsBox
+                                                            .get(layoutsBox.keyAt(i))
+                                                            ?.delete();
+                                                        
+                                                        setState(() {});
+                                                      },
+                                                      buttonHeight: 30,
+                                                      buttonWidth: 30,
+                                                      borderRadius: BorderRadius.circular(10),
+                                                      animationDuration:
+                                                          const Duration(milliseconds: 200),
+                                                      animationCurve: Curves.ease,
+                                                      topDecoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        border: Border.all(),
+                                                      ),
+                                                      topLayerChild: Icon(
+                                                        TablerIcons.trash,
+                                                        size: 20,
+                                                      ),
+                                                      subfac: 3,depth: 3,
+                                                      baseDecoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0],
+                                                        border: Border.all(),
+                                                      ),
+                                                    ),
+                                                    
+                                                  ],
+                                                ),
+                                                SizedBox(width:5),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        );
+                                      
+                                      }
+                                  },
+                                  ),
+                                ),
+                              );
+                            }
+                          ),
+                        ),
+                          
+                        ),
+                      ),
+                    ],
+                  ),
+                  ),
+                     
+                  ),
+                ),
+              ),
+              
+            ],
+          ),
         ),
       ),
     );
@@ -3059,627 +3210,663 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       duration: Durations.short2,
       // top: (topPadPosDistance * 1.08),
       height: sHeight,
-      child: AnimatedOpacity(
-        opacity: isBillTab ? 1 : 0,
-        duration: Duration(milliseconds: 100),
-        child: Stack(
-          children: [
-            IgnorePointer(
-              ignoring: !isBillTab,
-              child: Container(
-                // duration: Durations.extra,
-                height: sHeight,
-                width: sWidth,
-                alignment: Alignment.centerRight,
-                color: isHomeTab
-                    ? Colors.transparent
-                    : Colors.black.withOpacity(0.06),
-                padding: EdgeInsets.only(
-                  top: 0,
-                ),
-                //BillGraph
-                child: LineChart(LineChartData(
-                    lineBarsData: [LineChartBarData()],
-                    titlesData: FlTitlesData(show: false),
-                    gridData: FlGridData(
-                        // getDrawingVerticalLine: (value) => FlLine(
-                        //                         color: defaultPalette.tertiary,
-                        //                         dashArray: [5, 5],
-                        //                         strokeWidth: 1),
-                        // getDrawingHorizontalLine: (value) =>
-                        //     FlLine(
-                        //         color: defaultPalette.tertiary,
-                        //         dashArray: [5, 5,],
-                        //         strokeWidth: 1),
-                        show: true,
-                        horizontalInterval: 7.8,
-                        verticalInterval: 30),
-                    borderData: FlBorderData(show: false),
-                    minY: 0 ,
-                    maxY:  50,
-                    maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
-                            500 + 250,
-                    minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
-                        500)),
-              ),
-            ),
-              
-            //   ),
-            // ),
-            // //
-            //
-            //Bill$€₹
-            AnimatedPositioned(
-              duration: Durations.medium2,
-              width: sWidth,
-              height: (sHeight / 2.5),
-              top: topPadPosDistance + sHeight / 3-(sHeight / 8).clamp(0, 85),
-              right: isBillTab ? sWidth - math.min( (sHeight / 8), (sWidth/12)) - 350: (sWidth / 1.8),
-              child: Text('\$€',
-                textAlign: TextAlign.right,
-                style: GoogleFonts.caesarDressing(
-                  color: Color(0xFF000000).withOpacity(0.2),
-                  fontSize: (sHeight / 2.5).clamp(0, 300),
-                  letterSpacing: -5,
-                  fontWeight: FontWeight.w100,
-                  height: 0.6
-                )
-              ),
-            ),
-            
-            // //BillsList
-            AnimatedPositioned(
-              duration: Durations.extralong2,
-              top: isBillTab ? 60 : sHeight / 4,
-              // top: isBillTab
-              //     ?  topPadPosDistance + 10
-              //     : sHeight,
-              // left: 90,
-              right: 15,
-              height: (sHeight)-60-20,//60 from the top padding difference and 20 for bottom padding
-              width: sWidth / 2.5,
-              child: IgnorePointer(
+      child: IgnorePointer(
+        ignoring: !isBillTab,
+        child: AnimatedOpacity(
+          opacity: isBillTab ? 1 : 0,
+          duration: Duration(milliseconds: 100),
+          child: Stack(
+            children: [
+              IgnorePointer(
                 ignoring: !isBillTab,
-                child: AnimatedOpacity(
-                  duration: Durations.extralong3 * 2,
-                  opacity: isBillTab ? 1 : 0,
-                  curve: Curves.bounceInOut,
-                  child: Container(
-                    padding: EdgeInsets.all(mapValueDimensionBased( 5, 8, sWidth,sHeight)),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: defaultPalette.primary),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        //my bills title search bar list page toggle
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(width: 15,),
-                            Expanded(
-                              child:Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text('Bills',
-                                textAlign: TextAlign.left,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.outfit(
-                                  color: defaultPalette.extras[0],
-                                  fontSize: math.min( (sHeight / 8).clamp(0, 55), (sWidth/12).clamp(0, 55)),
-                                  letterSpacing: -2,
-                                  fontWeight: FontWeight.w600,
-                                  height: 0.9
-                                )
+                child: Container(
+                  // duration: Durations.extra,
+                  height: sHeight,
+                  width: sWidth,
+                  alignment: Alignment.centerRight,
+                  color: isHomeTab
+                      ? Colors.transparent
+                      : Colors.black.withOpacity(0.06),
+                  padding: EdgeInsets.only(
+                    top: 0,
+                  ),
+                  //BillGraph
+                  child: LineChart(LineChartData(
+                      lineBarsData: [LineChartBarData()],
+                      titlesData: FlTitlesData(show: false),
+                      gridData: FlGridData(
+                          // getDrawingVerticalLine: (value) => FlLine(
+                          //                         color: defaultPalette.tertiary,
+                          //                         dashArray: [5, 5],
+                          //                         strokeWidth: 1),
+                          // getDrawingHorizontalLine: (value) =>
+                          //     FlLine(
+                          //         color: defaultPalette.tertiary,
+                          //         dashArray: [5, 5,],
+                          //         strokeWidth: 1),
+                          show: true,
+                          horizontalInterval: 7.8,
+                          verticalInterval: 30),
+                      borderData: FlBorderData(show: false),
+                      minY: 0 ,
+                      maxY:  50,
+                      maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
+                              500 + 250,
+                      minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
+                          500)),
+                ),
+              ),
+                
+              //   ),
+              // ),
+              // //
+              //
+              //Bill$€₹
+              AnimatedPositioned(
+                duration: Durations.medium2,
+                width: sWidth,
+                height: (sHeight / 2.5),
+                top: topPadPosDistance + sHeight / 3-(sHeight / 8).clamp(0, 85),
+                right: isBillTab ? sWidth - math.min( (sHeight / 8), (sWidth/12)) - 350: (sWidth / 1.8),
+                child: Text('\$€',
+                  textAlign: TextAlign.right,
+                  style: GoogleFonts.caesarDressing(
+                    color: Color(0xFF000000).withOpacity(0.2),
+                    fontSize: (sHeight / 2.5).clamp(0, 300),
+                    letterSpacing: -5,
+                    fontWeight: FontWeight.w100,
+                    height: 0.6
+                  )
+                ),
+              ),
+              
+              // //BillsList
+              AnimatedPositioned(
+                duration: Durations.extralong2,
+                top: isBillTab ? 60 : sHeight / 4,
+                // top: isBillTab
+                //     ?  topPadPosDistance + 10
+                //     : sHeight,
+                // left: 90,
+                right: 15,
+                height: (sHeight)-60-20,//60 from the top padding difference and 20 for bottom padding
+                width: sWidth / 2.5,
+                child: IgnorePointer(
+                  ignoring: !isBillTab,
+                  child: AnimatedOpacity(
+                    duration: Durations.extralong3 * 2,
+                    opacity: isBillTab ? 1 : 0,
+                    curve: Curves.bounceInOut,
+                    child: Container(
+                      padding: EdgeInsets.all(mapValueDimensionBased( 5, 8, sWidth,sHeight)),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: defaultPalette.primary),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          //my bills title search bar list page toggle
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              SizedBox(width: 15,),
+                              Expanded(
+                                child:Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text('Bills',
+                                  textAlign: TextAlign.left,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.outfit(
+                                    color: defaultPalette.extras[0],
+                                    fontSize: math.min( (sHeight / 8).clamp(0, 55), (sWidth/12).clamp(0, 55)),
+                                    letterSpacing: -2,
+                                    fontWeight: FontWeight.w600,
+                                    height: 0.9
+                                  )
+                                  ),
                                 ),
                               ),
-                            ),
-                            
-                              ExpandableSearchBar(
-                                onTap: () {
-                                  
-                                },
-                                onChange: (value) {
+                              
+                                ExpandableSearchBar(
+                                  onTap: () {
+                                    
+                                  },
+                                  onChange: (value) {
+                                    setState(() {
+                                      if (value.isNotEmpty) {
+                                        filteredLayoutBox = Boxes.getLayouts()
+                                            .values
+                                            .where((i) => i.name.toLowerCase().contains(value.toLowerCase()))
+                                            .toList();
+                                      } else {
+                                        filteredLayoutBox = Boxes.getLayouts()
+                                            .values.toList();
+                                      }
+                                    });
+                                  },
+                                  width:  (sWidth / 2.5)/3,
+                                  hintText: "search bill...",
+                                  editTextController: layoutSearchController,
+                                  focusNode: layoutSearchFocusNode,
+                                  boxShadow: [],
+                                  iconBackgroundColor: defaultPalette.primary,
+                                  iconColor: defaultPalette.extras[0],
+                                  iconSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
+                                  backgroundColor: defaultPalette.secondary,
+        
+                                ),
+                                SizedBox(width: 3,), 
+                                AnimatedToggleSwitch<bool>.dual(
+                                current: isLayoutTileView,
+                                first: true,
+                                second: false,
+                                onChanged: (value) {
                                   setState(() {
-                                    if (value.isNotEmpty) {
-                                      filteredLayoutBox = Boxes.getLayouts()
-                                          .values
-                                          .where((i) => i.name.toLowerCase().contains(value.toLowerCase()))
-                                          .toList();
-                                    } else {
-                                      filteredLayoutBox = Boxes.getLayouts()
-                                          .values.toList();
-                                    }
+                                    isLayoutTileView = value;
                                   });
                                 },
-                                width:  (sWidth / 2.5)/3,
-                                hintText: "search bill...",
-                                editTextController: layoutSearchController,
-                                focusNode: layoutSearchFocusNode,
-                                boxShadow: [],
-                                iconBackgroundColor: defaultPalette.primary,
-                                iconColor: defaultPalette.extras[0],
-                                iconSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
-                                backgroundColor: defaultPalette.secondary,
-
+                                animationCurve:
+                                    Curves.easeInOutExpo,
+                                animationDuration:
+                                    Durations.medium4,
+                                borderWidth:
+                                    2, // backgroundColor is set independently of the current selection
+                                styleBuilder: (value) =>
+                                    ToggleStyle(
+                                        borderRadius:
+                                            BorderRadius
+                                                .circular(
+                                                    mapValueDimensionBased( 50, 999, sWidth,sHeight)),
+                                        indicatorBorderRadius:
+                                            BorderRadius
+                                                .circular(
+                                                    mapValueDimensionBased( 5, 32, sWidth,sHeight)),
+                                        borderColor:
+                                            defaultPalette
+                                                .secondary,
+                                        backgroundColor:
+                                            defaultPalette
+                                                .secondary,
+                                        indicatorColor:
+                                            defaultPalette
+                                                    .extras[0]), // indicatorColor changes and animates its value with the selection
+                                iconBuilder: (value) {
+                                  return Icon(
+                                      value? TablerIcons
+                                              .grip_horizontal
+                                          : TablerIcons
+                                              .grip_vertical,
+                                      size: 12,
+                                      color: defaultPalette
+                                          .primary);
+                                },
+                                textBuilder: (value) {
+                                  return Text(
+                                    value ? 'list'
+                                        : 'page',
+                                    style:
+                                        GoogleFonts.bungee(
+                                            fontSize: 12),
+                                  );
+                                },
+                                height:mapValueDimensionBased( 22, 32, sWidth,sHeight),
+                                spacing:mapValueDimensionBased( 10, 30, sWidth,sHeight),
                               ),
-                              SizedBox(width: 3,), 
-                              AnimatedToggleSwitch<bool>.dual(
-                              current: isLayoutTileView,
-                              first: true,
-                              second: false,
-                              onChanged: (value) {
-                                setState(() {
-                                  isLayoutTileView = value;
-                                });
-                              },
-                              animationCurve:
-                                  Curves.easeInOutExpo,
-                              animationDuration:
-                                  Durations.medium4,
-                              borderWidth:
-                                  2, // backgroundColor is set independently of the current selection
-                              styleBuilder: (value) =>
-                                  ToggleStyle(
-                                      borderRadius:
-                                          BorderRadius
-                                              .circular(
-                                                  mapValueDimensionBased( 50, 999, sWidth,sHeight)),
-                                      indicatorBorderRadius:
-                                          BorderRadius
-                                              .circular(
-                                                  mapValueDimensionBased( 5, 32, sWidth,sHeight)),
-                                      borderColor:
-                                          defaultPalette
-                                              .secondary,
-                                      backgroundColor:
-                                          defaultPalette
-                                              .secondary,
-                                      indicatorColor:
-                                          defaultPalette
-                                                  .extras[0]), // indicatorColor changes and animates its value with the selection
-                              iconBuilder: (value) {
-                                return Icon(
-                                    value? TablerIcons
-                                            .grip_horizontal
-                                        : TablerIcons
-                                            .grip_vertical,
-                                    size: 12,
-                                    color: defaultPalette
-                                        .primary);
-                              },
-                              textBuilder: (value) {
-                                return Text(
-                                  value ? 'list'
-                                      : 'page',
-                                  style:
-                                      GoogleFonts.bungee(
-                                          fontSize: 12),
-                                );
-                              },
-                              height:mapValueDimensionBased( 22, 32, sWidth,sHeight),
-                              spacing:mapValueDimensionBased( 10, 30, sWidth,sHeight),
-                            ),
-                            SizedBox(width: 5,),                    
-                          ],
-                        ),
-                  
-                        //the bills tiles
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color:  defaultPalette.secondary,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            margin: EdgeInsets.all(5),
-                            child:  ScrollConfiguration(
-                              behavior: ScrollBehavior().copyWith(scrollbars: false),
-                              child: DynMouseScroll(
-                                durationMS: 500,
-                                scrollSpeed: 1,
-                                builder: (context, controller, physics) {
-                                  return ScrollbarUltima(
-                                    alwaysShowThumb: true,
+                              SizedBox(width: 5,),                    
+                            ],
+                          ),
+                    
+                          //the bills tiles
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color:  defaultPalette.secondary,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              margin: EdgeInsets.all(5),
+                              child:  ScrollConfiguration(
+                                behavior: ScrollBehavior().copyWith(scrollbars: false),
+                                child: DynMouseScroll(
+                                  durationMS: 500,
+                                  scrollSpeed: 1,
+                                  builder: (context, controller, physics) {
+                                    return ScrollbarUltima(
+                                      alwaysShowThumb: true,
+                                      controller: controller,
+                                      scrollbarPosition:
+                                          ScrollbarPosition.right,
+                                      backgroundColor: defaultPalette.primary,
+                                      isDraggable: true,
+                                      maxDynamicThumbLength: 90,
+                                      minDynamicThumbLength: 50,
+                                      thumbBuilder:
+                                          (context, animation, widgetStates) {
+                                        return Container(
+                                          margin: EdgeInsets.only(right: 3, top: 8,bottom: 8),
+                                          decoration: BoxDecoration(
+                                              color: defaultPalette.primary,
+                                              border: Border.all(),
+                                              borderRadius:
+                                                  BorderRadius.circular(15)),
+                                          width: isLayoutTileView? 4: 6,
+                                        );
+                                      },
+                                    child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: ListView.builder(
+                                      padding: EdgeInsets.only(right:isLayoutTileView?6:3),
                                     controller: controller,
-                                    scrollbarPosition:
-                                        ScrollbarPosition.right,
-                                    backgroundColor: defaultPalette.primary,
-                                    isDraggable: true,
-                                    maxDynamicThumbLength: 90,
-                                    minDynamicThumbLength: 50,
-                                    thumbBuilder:
-                                        (context, animation, widgetStates) {
-                                      return Container(
-                                        margin: EdgeInsets.only(right: 3, top: 8,bottom: 8),
-                                        decoration: BoxDecoration(
-                                            color: defaultPalette.primary,
-                                            border: Border.all(),
-                                            borderRadius:
-                                                BorderRadius.circular(15)),
-                                        width: isLayoutTileView? 4: 6,
-                                      );
-                                    },
-                                  child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: ListView.builder(
-                                    padding: EdgeInsets.only(right:isLayoutTileView?6:3),
-                                  controller: controller,
-                                  physics: physics,
-                                  itemCount:layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length+1: filteredLayoutBox.length+1,
-                                  itemBuilder: (BuildContext context, int i) {
-                                    
-                                    if (i ==(layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length:filteredLayoutBox.length)) {
-                                      return SizedBox(height: 5,);
-                                    }
-                                    final layoutModel = layoutSearchController.text ==''?Boxes.getLayouts().values.toList()[i]: filteredLayoutBox[i];
-                                    if (layoutModel.id.startsWith('LY-')) {
-                                      return SizedBox.shrink();
-                                    }
-                                    if(!isLayoutTileView) {
-                                      return Material(
-                                        color: defaultPalette.transparent,
-                                        child: InkWell(
-                                          hoverColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          highlightColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          splashColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          onTap: () {
-                                            Navigator.push(context, MaterialPageRoute(
-                                              builder: (context) {
-                                                return PopScope(
-                                                  canPop: false,
-                                                  child: LayoutDesigner(
-                                                    id: Boxes.getLayouts().keyAt(i),
-                                                    onPop: (pdf) {
-                                                      setState(() {
-                                                      filteredLayoutBox = Boxes.getLayouts().values.toList();
-                                                    });
-                                                    },
-                                                  ),
-                                                );
-                                              },
-                                            ));
-                                            filteredLayoutBox = Boxes.getLayouts()
-                                          .values.toList();
-                                          },
-                                        child: Container(
-                                          height: 110,
-                                          width: 30,
-                                          margin: EdgeInsets.only(bottom: 0,right: 8),
+                                    physics: physics,
+                                    itemCount:layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length+1: filteredLayoutBox.length+1,
+                                    itemBuilder: (BuildContext context, int i) {
+                                      
+                                      if (i ==(layoutSearchController.text ==''?Boxes.getLayouts().values.toList().length:filteredLayoutBox.length)) {
+                                        return SizedBox(height: 5,);
+                                      }
+                                      final layoutModel = layoutSearchController.text ==''?Boxes.getLayouts().values.toList()[i]: filteredLayoutBox[i];
+                                      if (layoutModel.id.startsWith('LY-')) {
+                                        return SizedBox.shrink();
+                                      }
+                                      if(!isLayoutTileView) {
+                                        return Material(
                                           color: defaultPalette.transparent,
-                                          child: Row(
-                                            children: [
-                                              //mini layout pdf pages swiper
-                                              SizedBox(
-                                                height: 100,
-                                                width: 80,
-                                                child: AppinioSwiper(
-                                                  cardCount: (layoutModel.spreadSheetList.length.isNaN ||layoutModel.docPropsList.length ==0 )?1:layoutModel.docPropsList.length,
-                                                  backgroundCardCount: 5,
-                                                  backgroundCardOffset: Offset(0.8, 0.8),
-                                                  duration: Duration(milliseconds: 220),
-                                                  backgroundCardScale: 1,
-                                                  loop: true,
-                                                  allowUnSwipe: true,
-                                                  allowUnlimitedUnSwipe: true,
-                                                  initialIndex: 0,  
-                                                  cardBuilder: (context, indx) {
-                                                    // print(layoutModel.pdf?.length);
-                                                    return Stack(
-                                                          children: [
-                                                            //The main bgCOLOR OF THE CARD
-                                                            Positioned.fill(
-                                                              child: AnimatedContainer(
-                                                                duration: Durations.short3,
-                                                                alignment: Alignment.center,
-                                                                margin: EdgeInsets.only(left:8,top:0,bottom: 4),
-                                                                decoration: BoxDecoration(
-                                                                  color:defaultPalette.primary,
-                                                                  border: Border.all(width: 1.2, color:defaultPalette.extras[0]),
-                                                                  borderRadius: BorderRadius.circular(10),
-                                                                  image:(layoutModel.pdf==null ||(layoutModel.pdf?.isEmpty??false) )?null: DecorationImage(image:MemoryImage(layoutModel.pdf![indx],),fit: BoxFit.fitWidth),
-                                                                ),
-                                                              ),
-                                                            ),    
-                                                          ],
-                                                    );
-                                                  },),
-                                              ),
-                                              SizedBox(width: 10,),
-                                              //billname and created modified
-                                              _getCreatedAndModified(layoutModel, sWidth, sHeight, !isLayoutTileView, isBill:true),
-                                              
-                                              SizedBox(width:5),
-                                              Column(
-                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                children: [
-                                                  //Export as pdf of the bill button
-                                                  Tooltip(
-                                                    message: '  Export ${layoutModel.name} as pdf.  ',
-                                                    textStyle: GoogleFonts.lexend(
-                                                      fontSize: mapValueDimensionBased( 15, 20, sWidth,sHeight),
-                                                      color: defaultPalette.primary,
-                                                      fontWeight: FontWeight.w600,
-                                                      letterSpacing: -0.2,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: defaultPalette.extras[0].withOpacity(0.8),
-                                                      borderRadius: BorderRadius.circular(50)
-                                                    ),
-                                                    child: ElevatedLayerButton(
-                                                      onClick: () {
-                                                        Navigator.push(context, MaterialPageRoute(
-                                                          builder: (context) {
-                                                            return PopScope(
-                                                              canPop: false,
-                                                              child: LayoutDesigner(
-                                                                id: Boxes.getLayouts().keyAt(i),
-                                                                onPop: (pdf) {
-                                                                  setState(() {
-                                                                  filteredLayoutBox = Boxes.getLayouts().values.toList();
-                                                                });
-                                                                },
-                                                                exportPdf: true,
-                                                              ),
-                                                            );
-                                                          },
-                                                        ));
-                                                      },
-                                                      buttonHeight: 30,
-                                                      buttonWidth: 30,
-                                                      borderRadius: BorderRadius.circular(50)
-                                                      // .copyWith(
-                                                      //     topLeft: Radius.circular(80),
-                                                      //     bottomRight: Radius.circular(100)
-                                                      //   )
-                                                        ,
-                                                      animationDuration:
-                                                          const Duration(milliseconds: 200),
-                                                      animationCurve: Curves.ease,
-                                                      topDecoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        border: Border.all(),
-                                                      ),
-                                                      subfac: 3,depth: 2,
-                                                      topLayerChild: Icon(
-                                                        TablerIcons.upload,
-                                                        size: 15,
-                                                      ),
-                                                      baseDecoration: BoxDecoration(
-                                                        color: defaultPalette.extras[0],
-                                                        border: Border.all(),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(height:5),
-                                                  //Make a revised bill out of the bill button
-                                                  Tooltip(
-                                                    message: '  Create a revised ${(SheetType.values[layoutModel.type].name=='none'? 'document':SheetType.values[layoutModel.type].name)} of ${layoutModel.name}.  ',
-                                                    textStyle: GoogleFonts.lexend(
-                                                      fontSize: mapValueDimensionBased( 15, 20, sWidth,sHeight),
-                                                      color: defaultPalette.primary,
-                                                      fontWeight: FontWeight.w600,
-                                                      letterSpacing: -0.2,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: defaultPalette.extras[0].withOpacity(0.8),
-                                                      borderRadius: BorderRadius.circular(50)
-                                                    ),
-                                                    child: ElevatedLayerButton(
-                                                      onClick: () {
-                                                        final box = Boxes.getLayouts();
-                                                        final name = Boxes.getBillName();
-                                                        var key = 'BI-${const Uuid().v4()}';
-                                                        var prevLm =box.getAt(i);
-                                                        // keyIndex = box.length;
-                                                        var lm = LayoutModel(
-                                                          createdAt: DateTime.now(),
-                                                          modifiedAt: DateTime.now(),
-                                                          name: '${prevLm?.name??''}-revised',
-                                                          docPropsList: prevLm?.docPropsList??[],
-                                                          spreadSheetList:prevLm?.spreadSheetList?? [],
-                                                          id: key,
-                                                          type: SheetType.taxInvoice.index,
-                                                          labelList: prevLm?.labelList ??[],
-                                                        );
-                                                        
-                                                        box.put(key, lm);
-                                                        lm.save();
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                          builder: (c) =>  Material(
-                                                                  child: PopScope(
-                                                                child: LayoutDesigner(
-                                                                  id: key,
-                                                                  onPop: (pdf) {
-                                                                  },
-                                                                  
-                                                                ),
-                                                                canPop: false,
-                                                              )
-                                                            )
-                                                          )
-                                                        );
-                                                      },
-                                                      buttonHeight: 30,
-                                                      buttonWidth: 30,
-                                                      borderRadius: BorderRadius.circular(50)
-                                                      // .copyWith(
-                                                      //     topLeft: Radius.circular(80),
-                                                      //     bottomRight: Radius.circular(100)
-                                                      //   )
-                                                        ,
-                                                      animationDuration:
-                                                          const Duration(milliseconds: 200),
-                                                      animationCurve: Curves.ease,
-                                                      topDecoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        border: Border.all(),
-                                                      ),
-                                                      subfac: 3,depth: 2,
-                                                      topLayerChild: Icon(
-                                                        TablerIcons.edit,
-                                                        size: 15,
-                                                      ),
-                                                      baseDecoration: BoxDecoration(
-                                                        color: defaultPalette.extras[0],
-                                                        border: Border.all(),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                
-                                                  //Delete a Layout button
-                                                  SizedBox(height:5),
-                                                  ElevatedLayerButton(
-                                                    onClick: () async {
-                                                      print(filteredLayoutBox);
-                                                      final layoutsBox = Boxes.getLayouts();
-                                                      // Delete the item
-                                                       print(layoutsBox);
-                                                      await layoutsBox
-                                                          .get(layoutsBox.keyAt(i))
-                                                          ?.delete();
-                                                      print('delete');
-                                                      setState(() {
+                                          child: InkWell(
+                                            hoverColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            highlightColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            splashColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            onTap: () {
+                                              Navigator.push(context, MaterialPageRoute(
+                                                builder: (context) {
+                                                  return PopScope(
+                                                    canPop: false,
+                                                    child: LayoutDesigner(
+                                                      id: Boxes.getLayouts().keyAt(i),
+                                                      onPop: (pdf) {
+                                                        setState(() {
                                                         filteredLayoutBox = Boxes.getLayouts().values.toList();
                                                       });
-                                                    },
-                                                    buttonHeight: 30,
-                                                    buttonWidth: 30,
-                                                    borderRadius: BorderRadius.circular(10),
-                                                    animationDuration:
-                                                        const Duration(milliseconds: 200),
-                                                    animationCurve: Curves.ease,
-                                                    topDecoration: BoxDecoration(
-                                                      color: Colors.white,
-                                                      border: Border.all(),
+                                                      },
                                                     ),
-                                                    topLayerChild: Icon(
-                                                      TablerIcons.trash,
-                                                      size: 20,
+                                                  );
+                                                },
+                                              ));
+                                              filteredLayoutBox = Boxes.getLayouts()
+                                            .values.toList();
+                                            },
+                                          child: Container(
+                                            height: 110,
+                                            width: 30,
+                                            margin: EdgeInsets.only(bottom: 0,right: 8),
+                                            color: defaultPalette.transparent,
+                                            child: Row(
+                                              children: [
+                                                //mini layout pdf pages swiper
+                                                SizedBox(
+                                                  height: 100,
+                                                  width: 80,
+                                                  child: AppinioSwiper(
+                                                    cardCount: (layoutModel.spreadSheetList.length.isNaN ||layoutModel.docPropsList.length ==0 )?1:layoutModel.docPropsList.length,
+                                                    backgroundCardCount: 5,
+                                                    backgroundCardOffset: Offset(0.8, 0.8),
+                                                    duration: Duration(milliseconds: 220),
+                                                    backgroundCardScale: 1,
+                                                    loop: true,
+                                                    allowUnSwipe: true,
+                                                    allowUnlimitedUnSwipe: true,
+                                                    initialIndex: 0,  
+                                                    cardBuilder: (context, indx) {
+                                                      // print(layoutModel.pdf?.length);
+                                                      return Stack(
+                                                            children: [
+                                                              //The main bgCOLOR OF THE CARD
+                                                              Positioned.fill(
+                                                                child: AnimatedContainer(
+                                                                  duration: Durations.short3,
+                                                                  alignment: Alignment.center,
+                                                                  margin: EdgeInsets.only(left:8,top:0,bottom: 4),
+                                                                  decoration: BoxDecoration(
+                                                                    color:defaultPalette.primary,
+                                                                    border: Border.all(width: 1.2, color:defaultPalette.extras[0]),
+                                                                    borderRadius: BorderRadius.circular(10),
+                                                                    image:(layoutModel.pdf==null ||(layoutModel.pdf?.isEmpty??false) )?null: DecorationImage(image:MemoryImage(layoutModel.pdf![indx],),fit: BoxFit.fitWidth),
+                                                                  ),
+                                                                ),
+                                                              ),    
+                                                            ],
+                                                      );
+                                                    },),
+                                                ),
+                                                SizedBox(width: 10,),
+                                                //billname and created modified
+                                                _getCreatedAndModified(layoutModel, sWidth, sHeight, !isLayoutTileView, isBill:true),
+                                                
+                                                SizedBox(width:5),
+                                                Column(
+                                                  mainAxisAlignment: MainAxisAlignment.end,
+                                                  children: [
+                                                    //Export as pdf of the bill button
+                                                    Tooltip(
+                                                      message: '  Export ${layoutModel.name} as pdf.  ',
+                                                      textStyle: GoogleFonts.lexend(
+                                                        fontSize: mapValueDimensionBased( 15, 20, sWidth,sHeight),
+                                                        color: defaultPalette.primary,
+                                                        fontWeight: FontWeight.w600,
+                                                        letterSpacing: -0.2,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0].withOpacity(0.8),
+                                                        borderRadius: BorderRadius.circular(50)
+                                                      ),
+                                                      child: ElevatedLayerButton(
+                                                        onClick: () {
+                                                          Navigator.push(context, MaterialPageRoute(
+                                                            builder: (context) {
+                                                              return PopScope(
+                                                                canPop: false,
+                                                                child: LayoutDesigner(
+                                                                  id: Boxes.getLayouts().keyAt(i),
+                                                                  onPop: (pdf) {
+                                                                    setState(() {
+                                                                    filteredLayoutBox = Boxes.getLayouts().values.toList();
+                                                                  });
+                                                                  },
+                                                                  exportPdf: true,
+                                                                ),
+                                                              );
+                                                            },
+                                                          ));
+                                                        },
+                                                        buttonHeight: 30,
+                                                        buttonWidth: 30,
+                                                        borderRadius: BorderRadius.circular(50)
+                                                        // .copyWith(
+                                                        //     topLeft: Radius.circular(80),
+                                                        //     bottomRight: Radius.circular(100)
+                                                        //   )
+                                                          ,
+                                                        animationDuration:
+                                                            const Duration(milliseconds: 200),
+                                                        animationCurve: Curves.ease,
+                                                        topDecoration: BoxDecoration(
+                                                          color: Colors.white,
+                                                          border: Border.all(),
+                                                        ),
+                                                        subfac: 3,depth: 2,
+                                                        topLayerChild: Icon(
+                                                          TablerIcons.upload,
+                                                          size: 15,
+                                                        ),
+                                                        baseDecoration: BoxDecoration(
+                                                          color: defaultPalette.extras[0],
+                                                          border: Border.all(),
+                                                        ),
+                                                      ),
                                                     ),
-                                                    subfac: 3,depth: 3,
-                                                    baseDecoration: BoxDecoration(
-                                                      color: defaultPalette.extras[0],
-                                                      border: Border.all(),
+                                                    SizedBox(height:5),
+                                                    //Make a revised bill out of the bill button
+                                                    Tooltip(
+                                                      message: '  Create a revised ${(SheetType.values[layoutModel.type].name=='none'? 'document':SheetType.values[layoutModel.type].name)} of ${layoutModel.name}.  ',
+                                                      textStyle: GoogleFonts.lexend(
+                                                        fontSize: mapValueDimensionBased( 15, 20, sWidth,sHeight),
+                                                        color: defaultPalette.primary,
+                                                        fontWeight: FontWeight.w600,
+                                                        letterSpacing: -0.2,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0].withOpacity(0.8),
+                                                        borderRadius: BorderRadius.circular(50)
+                                                      ),
+                                                      child: ElevatedLayerButton(
+                                                        onClick: () {
+                                                          final box = Boxes.getLayouts();
+                                                          final name = Boxes.getBillName();
+                                                          var key = 'BI-${const Uuid().v4()}';
+                                                          var prevLm =box.getAt(i);
+                                                          // keyIndex = box.length;
+                                                          var lm = LayoutModel(
+                                                            createdAt: DateTime.now(),
+                                                            modifiedAt: DateTime.now(),
+                                                            name: '${prevLm?.name??''}-revised',
+                                                            docPropsList: prevLm?.docPropsList??[],
+                                                            spreadSheetList:prevLm?.spreadSheetList?? [],
+                                                            id: key,
+                                                            type: SheetType.taxInvoice.index,
+                                                            labelList: prevLm?.labelList ??[],
+                                                          );
+                                                          
+                                                          box.put(key, lm);
+                                                          lm.save();
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                            builder: (c) =>  Material(
+                                                                    child: PopScope(
+                                                                  child: LayoutDesigner(
+                                                                    id: key,
+                                                                    onPop: (pdf) {
+                                                                    },
+                                                                    
+                                                                  ),
+                                                                  canPop: false,
+                                                                )
+                                                              )
+                                                            )
+                                                          );
+                                                        },
+                                                        buttonHeight: 30,
+                                                        buttonWidth: 30,
+                                                        borderRadius: BorderRadius.circular(50)
+                                                        // .copyWith(
+                                                        //     topLeft: Radius.circular(80),
+                                                        //     bottomRight: Radius.circular(100)
+                                                        //   )
+                                                          ,
+                                                        animationDuration:
+                                                            const Duration(milliseconds: 200),
+                                                        animationCurve: Curves.ease,
+                                                        topDecoration: BoxDecoration(
+                                                          color: Colors.white,
+                                                          border: Border.all(),
+                                                        ),
+                                                        subfac: 3,depth: 2,
+                                                        topLayerChild: Icon(
+                                                          TablerIcons.edit,
+                                                          size: 15,
+                                                        ),
+                                                        baseDecoration: BoxDecoration(
+                                                          color: defaultPalette.extras[0],
+                                                          border: Border.all(),
+                                                        ),
+                                                      ),
                                                     ),
-                                                  ),
-                                                   SizedBox(height:5),
-                                                ],
-                                              ),
-                                              SizedBox(width:5),
-                                            ],
+                                                  
+                                                    //Delete a Layout button
+                                                    SizedBox(height:5),
+                                                    ElevatedLayerButton(
+                                                      onClick: () async {
+                                                        print(filteredLayoutBox);
+                                                        final layoutsBox = Boxes.getLayouts();
+                                                        // Delete the item
+                                                         print(layoutsBox);
+                                                        await layoutsBox
+                                                            .get(layoutsBox.keyAt(i))
+                                                            ?.delete();
+                                                        print('delete');
+                                                        setState(() {
+                                                          filteredLayoutBox = Boxes.getLayouts().values.toList();
+                                                        });
+                                                      },
+                                                      buttonHeight: 30,
+                                                      buttonWidth: 30,
+                                                      borderRadius: BorderRadius.circular(10),
+                                                      animationDuration:
+                                                          const Duration(milliseconds: 200),
+                                                      animationCurve: Curves.ease,
+                                                      topDecoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        border: Border.all(),
+                                                      ),
+                                                      topLayerChild: Icon(
+                                                        TablerIcons.trash,
+                                                        size: 20,
+                                                      ),
+                                                      subfac: 3,depth: 3,
+                                                      baseDecoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0],
+                                                        border: Border.all(),
+                                                      ),
+                                                    ),
+                                                     SizedBox(height:5),
+                                                  ],
+                                                ),
+                                                SizedBox(width:5),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                    } else {
-                                      return Material(
-                                        color: defaultPalette.transparent,
-                                        child: InkWell(
-                                          hoverColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          highlightColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          splashColor: defaultPalette.extras[0].withOpacity(0.4),
-                                          onTap: () {
-                                            Navigator.push(context, MaterialPageRoute(
-                                              builder: (context) {
-                                                return PopScope(
-                                                  canPop: false,
-                                                  child: LayoutDesigner(
-                                                    id: Boxes.getLayouts().keyAt(i),
-                                                    onPop: (pdf) {
-                                                      
-                                                    },
-                                                  ),
-                                                );
-                                              },
-                                            ));
-                                          },
-                                        child: Container(
-                                          height: 54,
-                                          width: 30,
-                                          // margin: EdgeInsets.only(bottom: 10,right: 8),
+                                      );
+                                      } else {
+                                        return Material(
                                           color: defaultPalette.transparent,
-                                          child: Row(
-                                            children: [
-                                              //billname
-                                              Expanded(
-                                                child: Padding(
-                                                  padding: const EdgeInsets.only(left:12,top: 0),
-                                                  child: Text(
-                                                    layoutModel.name,
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    textAlign: TextAlign.start,
-                                                    style: GoogleFonts.lexend(
-                                                      fontSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
-                                                      color: defaultPalette.extras[0],
-                                                      fontWeight: FontWeight.w600,
-                                                      letterSpacing: -0.2,
+                                          child: InkWell(
+                                            hoverColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            highlightColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            splashColor: defaultPalette.extras[0].withOpacity(0.4),
+                                            onTap: () {
+                                              Navigator.push(context, MaterialPageRoute(
+                                                builder: (context) {
+                                                  return PopScope(
+                                                    canPop: false,
+                                                    child: LayoutDesigner(
+                                                      id: Boxes.getLayouts().keyAt(i),
+                                                      onPop: (pdf) {
+                                                        
+                                                      },
+                                                    ),
+                                                  );
+                                                },
+                                              ));
+                                            },
+                                          child: Container(
+                                            height: 54,
+                                            width: 30,
+                                            // margin: EdgeInsets.only(bottom: 10,right: 8),
+                                            color: defaultPalette.transparent,
+                                            child: Row(
+                                              children: [
+                                                //billname
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.only(left:12,top: 0),
+                                                    child: Text(
+                                                      layoutModel.name,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.start,
+                                                      style: GoogleFonts.lexend(
+                                                        fontSize: mapValueDimensionBased( 20, 30, sWidth,sHeight),
+                                                        color: defaultPalette.extras[0],
+                                                        fontWeight: FontWeight.w600,
+                                                        letterSpacing: -0.2,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
-                                              ),
-                                              SizedBox(width: 10,),
-                                              //billname and created modified
-                                              _getCreatedAndModified(layoutModel, sWidth, sHeight, !isLayoutTileView,isBill: true),
-                                              SizedBox(width:5),
-                                              Column(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: [
-                                                  //make a revised bill out of a bill button
-                                                  Tooltip(
-                                                    message: '  Create a revised ${(SheetType.values[layoutModel.type].name=='none'? 'document':SheetType.values[layoutModel.type].name)} of ${layoutModel.name}.  ',
-                                                    textStyle: GoogleFonts.lexend(
-                                                      fontSize: mapValueDimensionBased( 15, 20, sWidth,sHeight),
-                                                      color: defaultPalette.primary,
-                                                      fontWeight: FontWeight.w600,
-                                                      letterSpacing: -0.2,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: defaultPalette.extras[0].withOpacity(0.8),
-                                                      borderRadius: BorderRadius.circular(50)
-                                                    ),
-                                                    child: ElevatedLayerButton(
-                                                      onClick: () {
-                                                        final box = Boxes.getLayouts();
-                                                        final name = Boxes.getBillName();
-                                                        var key = 'BI-${const Uuid().v4()}';
-                                                        var prevLm =box.getAt(i);
-                                                        // keyIndex = box.length;
-                                                        var lm = LayoutModel(
-                                                          createdAt: DateTime.now(),
-                                                          modifiedAt: DateTime.now(),
-                                                          name: '${prevLm?.name??''}-revised',
-                                                          docPropsList: prevLm?.docPropsList??[],
-                                                          spreadSheetList:prevLm?.spreadSheetList?? [],
-                                                          id: key,
-                                                          type: SheetType.taxInvoice.index,
-                                                          labelList: prevLm?.labelList ??[],
-                                                        );
-                                                        
-                                                        box.put(key, lm);
-                                                        lm.save();
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                          builder: (c) =>  Material(
-                                                                  child: PopScope(
-                                                                child: LayoutDesigner(
-                                                                  id: key,
-                                                                  onPop: (pdf) {
-                                                                  },
-                                                                  
-                                                                ),
-                                                                canPop: false,
+                                                SizedBox(width: 10,),
+                                                //billname and created modified
+                                                _getCreatedAndModified(layoutModel, sWidth, sHeight, !isLayoutTileView,isBill: true),
+                                                SizedBox(width:5),
+                                                Column(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    //make a revised bill out of a bill button
+                                                    Tooltip(
+                                                      message: '  Create a revised ${(SheetType.values[layoutModel.type].name=='none'? 'document':SheetType.values[layoutModel.type].name)} of ${layoutModel.name}.  ',
+                                                      textStyle: GoogleFonts.lexend(
+                                                        fontSize: mapValueDimensionBased( 15, 20, sWidth,sHeight),
+                                                        color: defaultPalette.primary,
+                                                        fontWeight: FontWeight.w600,
+                                                        letterSpacing: -0.2,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: defaultPalette.extras[0].withOpacity(0.8),
+                                                        borderRadius: BorderRadius.circular(50)
+                                                      ),
+                                                      child: ElevatedLayerButton(
+                                                        onClick: () {
+                                                          final box = Boxes.getLayouts();
+                                                          final name = Boxes.getBillName();
+                                                          var key = 'BI-${const Uuid().v4()}';
+                                                          var prevLm =box.getAt(i);
+                                                          // keyIndex = box.length;
+                                                          var lm = LayoutModel(
+                                                            createdAt: DateTime.now(),
+                                                            modifiedAt: DateTime.now(),
+                                                            name: '${prevLm?.name??''}-revised',
+                                                            docPropsList: prevLm?.docPropsList??[],
+                                                            spreadSheetList:prevLm?.spreadSheetList?? [],
+                                                            id: key,
+                                                            type: SheetType.taxInvoice.index,
+                                                            labelList: prevLm?.labelList ??[],
+                                                          );
+                                                          
+                                                          box.put(key, lm);
+                                                          lm.save();
+                                                          Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                            builder: (c) =>  Material(
+                                                                    child: PopScope(
+                                                                  child: LayoutDesigner(
+                                                                    id: key,
+                                                                    onPop: (pdf) {
+                                                                    },
+                                                                    
+                                                                  ),
+                                                                  canPop: false,
+                                                                )
                                                               )
                                                             )
-                                                          )
-                                                        );
+                                                          );
+                                                        },
+                                                        buttonHeight: 20,
+                                                        buttonWidth: 20,
+                                                        borderRadius: BorderRadius.circular(100),
+                                                        animationDuration:
+                                                            const Duration(milliseconds: 200),
+                                                        animationCurve: Curves.ease,
+                                                        topDecoration: BoxDecoration(
+                                                          color: Colors.white,
+                                                          border: Border.all(),
+                                                        ),
+                                                        subfac: 1,depth: 1,
+                                                        topLayerChild: Icon(
+                                                          TablerIcons.edit,
+                                                          size: 12,
+                                                        ),
+                                                        baseDecoration: BoxDecoration(
+                                                          color: defaultPalette.extras[0],
+                                                          border: Border.all(),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  
+                                                    //Delete a bill button
+                                                    SizedBox(height:5),
+                                                    ElevatedLayerButton(
+                                                      onClick: () async {
+                                                        final layoutsBox = Boxes.getLayouts();
+                                                        // Delete the item
+                                                        await layoutsBox
+                                                            .get(layoutsBox.keyAt(i))
+                                                            ?.delete();
+                                                        
+                                                        setState(() {});
                                                       },
                                                       buttonHeight: 20,
                                                       buttonWidth: 20,
-                                                      borderRadius: BorderRadius.circular(100),
+                                                      borderRadius: BorderRadius.circular(10),
                                                       animationDuration:
                                                           const Duration(milliseconds: 200),
                                                       animationCurve: Curves.ease,
@@ -3687,1191 +3874,190 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         color: Colors.white,
                                                         border: Border.all(),
                                                       ),
-                                                      subfac: 1,depth: 1,
                                                       topLayerChild: Icon(
-                                                        TablerIcons.edit,
+                                                        TablerIcons.trash,
                                                         size: 12,
                                                       ),
+                                                      subfac: 1,depth: 1,
                                                       baseDecoration: BoxDecoration(
                                                         color: defaultPalette.extras[0],
                                                         border: Border.all(),
                                                       ),
                                                     ),
-                                                  ),
-                                                
-                                                  //Delete a bill button
-                                                  SizedBox(height:5),
-                                                  ElevatedLayerButton(
-                                                    onClick: () async {
-                                                      final layoutsBox = Boxes.getLayouts();
-                                                      // Delete the item
-                                                      await layoutsBox
-                                                          .get(layoutsBox.keyAt(i))
-                                                          ?.delete();
-                                                      
-                                                      setState(() {});
-                                                    },
-                                                    buttonHeight: 20,
-                                                    buttonWidth: 20,
-                                                    borderRadius: BorderRadius.circular(10),
-                                                    animationDuration:
-                                                        const Duration(milliseconds: 200),
-                                                    animationCurve: Curves.ease,
-                                                    topDecoration: BoxDecoration(
-                                                      color: Colors.white,
-                                                      border: Border.all(),
-                                                    ),
-                                                    topLayerChild: Icon(
-                                                      TablerIcons.trash,
-                                                      size: 12,
-                                                    ),
-                                                    subfac: 1,depth: 1,
-                                                    baseDecoration: BoxDecoration(
-                                                      color: defaultPalette.extras[0],
-                                                      border: Border.all(),
-                                                    ),
-                                                  ),
-                                                  
-                                                ],
-                                              ),
-                                              SizedBox(width:5),
-                                            ],
+                                                    
+                                                  ],
+                                                ),
+                                                SizedBox(width:5),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                         ),
-                                      );
-                                    
-                                    }
-                                },
+                                           ),
+                                        );
+                                      
+                                      }
+                                  },
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            }
+                          ),
+                        ),
+                          
+                        ),
+                      ),
+                          
+                    ],
+                  ),
+                  ),
+                     
+                  ),
+                ),
+              ),
+              //  charts revenue analytical
+             AnimatedPositioned(
+                duration: Durations.medium2,
+                // right: 15,
+                left: 90,
+                top: isBillTab ? 60 : sHeight / 4,
+                child: ValueListenableBuilder(
+                valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
+                builder: (context, Box<LayoutModel> box, _) {
+                  monthRevenueMap ={};
+                  dayRevenueMap = {};
+                  if (isDragging) {
+                    dateTextControllers = [
+                    TextEditingController()..text = monthNames[selectedMonth-1], 
+                    TextEditingController()..text = selectedYear.toString(),
+                    ];
+                  }
+                  final allLayouts = box.values.toList();
+        
+                  // Collect all revised layout base names
+                  final revisedNames = allLayouts
+                      .where((l) => l.name.endsWith('-revised'))
+                      .map((l) => l.name.replaceAll('-revised', ''))
+                      .toSet();
+        
+                  // Now filter the layouts
+                  final layouts = allLayouts.where((layout) {
+                    final name = layout.name;
+                    if (layout.id.startsWith('LY-')) return false;
+                    if (name.endsWith('-old')) return false;
+                    if (revisedNames.contains(name)) return false; // exclude if revised version exists
+                    return true;
+                  }).toList();
+        
+        
+                  final invoiceCount = layouts.where((l) => l.type == SheetType.taxInvoice.index).length;
+                  final creditNoteCount = layouts.where((l) => l.type == SheetType.creditNote.index).length;
+        
+                  totalRevenue = 0;
+        
+                  // 👇 Month-wise totalPayable collector with 'YYYY-MM' as key
+        
+                  for (final layout in layouts) {
+                    try {
+                      final totalPayableLabel = layout.labelList.firstWhere(
+                        (lbl) => lbl.name == 'totalPayable',
+                      );
+        
+                      if (totalPayableLabel != null && totalPayableLabel.indexPath.index != -951) {
+                        final item = getItemAtPath(totalPayableLabel.indexPath, layout.spreadSheetList);
+                        if (item is SheetTextBox) {
+                          final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
+                          double value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
+        
+                          // If it's a credit note, negate the value
+                          if (layout.type == SheetType.creditNote.index) {
+                            value *= -1;
                           }
-                        ),
-                      ),
-                        
-                      ),
-                    ),
-                        
-                  ],
-                ),
-                ),
-                   
-                ),
-              ),
-            ),
-            //  charts revenue analytical
-           AnimatedPositioned(
-              duration: Durations.medium2,
-              // right: 15,
-              left: 90,
-              top: isBillTab ? 60 : sHeight / 4,
-              child: ValueListenableBuilder(
-              valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
-              builder: (context, Box<LayoutModel> box, _) {
-                monthRevenueMap ={};
-                dayRevenueMap = {};
-                if (isDragging) {
-                  dateTextControllers = [
-                  TextEditingController()..text = monthNames[selectedMonth-1], 
-                  TextEditingController()..text = selectedYear.toString(),
-                  ];
-                }
-                final allLayouts = box.values.toList();
-
-                // Collect all revised layout base names
-                final revisedNames = allLayouts
-                    .where((l) => l.name.endsWith('-revised'))
-                    .map((l) => l.name.replaceAll('-revised', ''))
-                    .toSet();
-
-                // Now filter the layouts
-                final layouts = allLayouts.where((layout) {
-                  final name = layout.name;
-                  if (layout.id.startsWith('LY-')) return false;
-                  if (name.endsWith('-old')) return false;
-                  if (revisedNames.contains(name)) return false; // exclude if revised version exists
-                  return true;
-                }).toList();
-
-
-                final invoiceCount = layouts.where((l) => l.type == SheetType.taxInvoice.index).length;
-                final creditNoteCount = layouts.where((l) => l.type == SheetType.creditNote.index).length;
-
-                totalRevenue = 0;
-
-                // 👇 Month-wise totalPayable collector with 'YYYY-MM' as key
-
-                for (final layout in layouts) {
-                  try {
-                    final totalPayableLabel = layout.labelList.firstWhere(
-                      (lbl) => lbl.name == 'totalPayable',
-                    );
-
-                    if (totalPayableLabel != null && totalPayableLabel.indexPath.index != -951) {
-                      final item = getItemAtPath(totalPayableLabel.indexPath, layout.spreadSheetList);
-                      if (item is SheetTextBox) {
-                        final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
-                        double value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0;
-
-                        // If it's a credit note, negate the value
-                        if (layout.type == SheetType.creditNote.index) {
-                          value *= -1;
-                        }
-                        if (layout.type == SheetType.proformaInvoice.index) {
-                          value *= 0;
-                        }
-
-                        totalRevenue += value;
-
-                        if (layout.createdAt.year == selectedYear) {
-                          final month = layout.createdAt.month.ceilToDouble(); // 1 to 12
-                          monthRevenueMap.update(month, (existing) => existing + value, ifAbsent: () => value);
-                        }
-                        final date = layout.createdAt;
-                        if (date.year == selectedYear && date.month == selectedMonth) {
-                          final day = date.day.toDouble(); // 1 to 31
-                          dayRevenueMap.update(day, (existing) => existing + value, ifAbsent: () => value);
+                          if (layout.type == SheetType.proformaInvoice.index) {
+                            value *= 0;
+                          }
+        
+                          totalRevenue += value;
+        
+                          if (layout.createdAt.year == selectedYear) {
+                            final month = layout.createdAt.month.ceilToDouble(); // 1 to 12
+                            monthRevenueMap.update(month, (existing) => existing + value, ifAbsent: () => value);
+                          }
+                          final date = layout.createdAt;
+                          if (date.year == selectedYear && date.month == selectedMonth) {
+                            final day = date.day.toDouble(); // 1 to 31
+                            dayRevenueMap.update(day, (existing) => existing + value, ifAbsent: () => value);
+                          }
                         }
                       }
-                    }
-                  } catch (_) {
-                    // Skip this layout
-                  }
-                }
-
-                // Ensure all months and days are initialized
-                monthRevenueMap = Map.fromEntries(
-                  List.generate(12, (i) => i + 1)
-                      .map((month) => MapEntry(month.ceilToDouble(), monthRevenueMap[month.toDouble()] ?? 0)),
-                );
-
-                final daysInMonth = DateUtils.getDaysInMonth(selectedYear, selectedMonth);
-                dayRevenueMap = Map.fromEntries(
-                  List.generate(daysInMonth, (i) => i + 1)
-                      .map((day) => MapEntry(day.toDouble(), dayRevenueMap[day.toDouble()] ?? 0)),
-                );
-
-                // print(monthRevenueMap);
-                return Container(
-                  width: sWidth / 1.73 - 100,
-                  height: sHeight / 1.8,
-                  padding: EdgeInsets.all(5).copyWith(right: 10),
-                  decoration: BoxDecoration(
-                    color: defaultPalette.primary,
-                    borderRadius: BorderRadius.circular(20)
-                    ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // title Revenue
-                      SizedBox(
-                        height: 25,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(width: 5,),
-                            Icon(TablerIcons.chart_dots_3, size: mapValueDimensionBased(25, 30, sWidth, sHeight),),
-                            SizedBox(width: 5,),
-                            Expanded(
-                              child: Text('Revenue',style: GoogleFonts.lexend(
-                                fontSize: mapValueDimensionBased(20, 23, sWidth, sHeight),
-                                color: defaultPalette.extras[0],
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: -1),),
-                            ),
-                            ...datePropertyTile(1),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      //yearly revenue
-                      Expanded(child: 
-                      LineChart(
-                          LineChartData(
-                          backgroundColor: defaultPalette.secondary,
-                          lineTouchData: LineTouchData(
-                            touchSpotThreshold: 25,
-                            getTouchedSpotIndicator:
-                                (LineChartBarData barData, List<int> spotIndexes) {
-                                  final isMainChart = barData.barWidth == 5;
-                              return spotIndexes.map((spotIndex) {
-                                final spot = barData.spots[spotIndex];
-                                if (!isMainChart) {
-                                  return TouchedSpotIndicatorData(
-                                    FlLine(strokeWidth: 0, color: Colors.transparent),
-                                    FlDotData(show: false),
-                                  );
-                                }
-                                return TouchedSpotIndicatorData(
-                                  FlLine(
-                                    color: defaultPalette.tertiary,
-                                    strokeWidth: 4,
-                                  ),
-                                  FlDotData(
-                                    getDotPainter: (spot, percent, barData, index) {
-                                      
-                                      return FlDotCirclePainter(
-                                        radius: 8,
-                                        color: defaultPalette.primary,
-                                        strokeWidth: 5,
-                                        strokeColor: defaultPalette.tertiary,
-                                      );
-                                    },
-                                  ),
-                              );
-                            }).toList();
-                          },
-                          touchTooltipData: LineTouchTooltipData(
-                            getTooltipColor: (touchedSpot) => defaultPalette.extras[0],
-                            getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-                              return touchedBarSpots.map((barSpot) {
-                                final flSpot = barSpot;
-                                 if (barSpot.x ==0 || barSpot.x ==13 || barSpot.barIndex ==1) {
-                                   return null;
-                                 }   
-                                 
-                                return LineTooltipItem(
-                                  '${monthNames[(barSpot.x-1).clamp(0, 12).round()]}',
-                                 GoogleFonts.lexend(
-                                    color: defaultPalette.tertiary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: ' Revenue: \n',
-                                      style:GoogleFonts.lexend(
-                                        color: defaultPalette.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: NumberFormat.decimalPattern('en_IN').format(monthRevenueMap[(barSpot.x).clamp(1, 12).round()]),
-                                      style:GoogleFonts.lexend(
-                                        color: defaultPalette.primary,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                     TextSpan(
-                                      text: '₹ ',
-                                      style:GoogleFonts.lexend(
-                                        fontWeight: FontWeight.w900,
-                                        color: defaultPalette.primary,
-                                      ),
-                                    ),
-                                  ],
-                                  textAlign: TextAlign.left
-                                );
-                              }).toList();
-                            },
-                          ),
-                          touchCallback:
-                              (FlTouchEvent event, LineTouchResponse? lineTouch) {
-                            if (!event.isInterestedForInteractions ||
-                                lineTouch == null ||
-                                lineTouch.lineBarSpots == null) {
-                              setState(() {
-                                // touchedValue = -1;
-                              });
-                              return;
-                            }
-                          },
-                          ),
-                          lineBarsData: [
-                          LineChartBarData(
-                            isStepLineChart: true,
-                            spots: [
-                              const FlSpot(0, 0),
-                              for( var entry in monthRevenueMap.entries)
-                                FlSpot(entry.key, entry.value),
-                              const FlSpot(13, 0),
-                            ],
-                            isCurved: false,
-                            barWidth: 5,
-                            color: defaultPalette.secondary,
-                            belowBarData: BarAreaData(
-                              show: true,
-                              gradient: LinearGradient(colors: [
-                                defaultPalette.extras[0],defaultPalette.extras[0],
-                              ],
-                              stops: [0.5, 1],
-                              begin: Alignment(0, -1),
-                              end: Alignment(0, 1),
-                              ),
-                              applyCutOffY: true,
-                              cutOffY: 0,
-                              spotsLine: BarAreaSpotsLine(
-                                show: true,
-                                flLineStyle: FlLine(
-                                  color: defaultPalette.extras[0],
-                                  strokeWidth: 1,
-                                ),
-                                
-                              ),
-                            ),
-                            dotData: FlDotData(
-                              show: true,
-                              getDotPainter: (spot, percent, barData, index) {
-                                
-                                  return FlDotSquarePainter(
-                                    size: 8.5,
-                                    color: defaultPalette.primary,
-                                    strokeWidth: 3,
-                                    strokeColor: defaultPalette.extras[0],
-                                  );
-                                
-                              },
-                              checkToShowDot: (spot, barData) {
-                                return( spot.y >1 && spot.x!=0);
-                              },
-                            ),
-                          ),
-                          LineChartBarData(
-                            isStepLineChart: true,
-                            spots: [
-                              const FlSpot(0, 0),
-                              for( var entry in monthRevenueMap.entries)
-                               entry.value<0? FlSpot(entry.key, (entry.value)):FlSpot(entry.key, 0),
-                              const FlSpot(13, 0),
-                            ],
-                            isCurved: false,
-                            barWidth: 2,
-                            color: defaultPalette.secondary,
-                
-                            belowBarData: BarAreaData(
-                              show: true,
-                              applyCutOffY: true,
-                              cutOffY: 0,
-                              gradient: LinearGradient(colors: [
-                                defaultPalette.extras[0],defaultPalette.extras[0],
-                              ],
-                              stops: [0.5, 1],
-                              begin: Alignment(0, 0),
-                              end: Alignment(0, 3),
-                              ),
-                
-                              spotsLine: BarAreaSpotsLine(
-                                show: true,
-                                flLineStyle: FlLine(
-                                  color: defaultPalette.extras[0],
-                                  strokeWidth: mapValueDimensionBased(25, 80, sWidth, sHeight, useWidth: true),
-                                ),
-                                
-                              ),
-                            ),
-                            dotData: FlDotData(
-                              show:monthRevenueMap.values.reduce(min)<-1,
-                              getDotPainter: (spot, percent, barData, index) {
-                                
-                                  return FlDotSquarePainter(
-                                    size: 8.5,
-                                    color: defaultPalette.primary,
-                                    strokeWidth: 3,
-                                    strokeColor: defaultPalette.extras[0],
-                                  );
-                                
-                              },
-                              checkToShowDot: (spot, barData) {
-                                return( spot.y.round() !=0 && spot.x!=0 && (spot.y <0));
-                              },
-                            ),
-                          ),
-                          ],
-                          minY: monthRevenueMap.values.fold(0.0, (min, val) => val < (min??0) ? val : min),
-                          maxY: max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),
-                          borderData: FlBorderData(
-                          show: true,
-                          border: Border(
-                            left: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: 0),
-                            right: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: 0),
-                            bottom: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: 5),
-                            top: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: 12),
-                            
-                          ),
-                          ),
-                          gridData: FlGridData(
-                          show: true,
-                          drawHorizontalLine: false,
-                          drawVerticalLine: false,
-                          getDrawingHorizontalLine: (value) {
-                            if (value == 0) {
-                              return  FlLine(
-                                color: defaultPalette.tertiary,
-                                strokeWidth: 2,
-                              );
-                            } else {
-                              return  FlLine(
-                                color: defaultPalette.tertiary,
-                                strokeWidth: 0.5,
-                              );
-                            }
-                          },
-                          getDrawingVerticalLine: (value) {
-                            if (value == 0) {
-                              return const FlLine(
-                                color: Colors.redAccent,
-                                strokeWidth: 10,
-                              );
-                            } else {
-                              return  FlLine(
-                                color: defaultPalette.tertiary,
-                                strokeWidth: 0.5,
-                              );
-                            }
-                          },
-                          ),
-                          titlesData: FlTitlesData(
-                          show: true,
-                          topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
-                              interval: getSmartInterval( max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),),
-                              getTitlesWidget:(value, meta) {
-                                if (meta.min == value || meta.max == value||value == 0) {
-                                  return const SizedBox.shrink(); // Hide first and last labels
-                                }
-                                return Text(meta.formattedValue.toLowerCase()+'\₹',
-                                  style: GoogleFonts.lexend(
-                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
-                                    letterSpacing: -1,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              // reservedSize: 40,
-                              interval: 1,
-                              getTitlesWidget:(value, meta) {
-                                if (value ==0 || value ==13) {
-                                  return SizedBox.shrink();
-                                }
-                                return Text(monthNames[(value-1).clamp(0, double.infinity).round()],
-                                  style: GoogleFonts.lexend(
-                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
-                                    letterSpacing: -1,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          ),
-                        ),
-                      )
-                      
-                      ),
-                      //the month display and editor
-                      SizedBox(
-                        height: 25,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            ...datePropertyTile(0),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      //day revenue
-                      Expanded(child: 
-                      LineChart(
-                          LineChartData(
-                          backgroundColor: defaultPalette.secondary,
-                          lineTouchData: LineTouchData(
-                            touchSpotThreshold: 25,
-                            getTouchedSpotIndicator:
-                                (LineChartBarData barData, List<int> spotIndexes) {
-                                  
-                                final isMainChart = barData.barWidth == 5;
- 
-
-                              return spotIndexes.map((spotIndex) {
-                                final spot = barData.spots[spotIndex];
-                                if (!isMainChart) {
-                                  return TouchedSpotIndicatorData(
-                                    FlLine(strokeWidth: 0, color: Colors.transparent),
-                                    FlDotData(show: false),
-                                  );
-                                }
-
-                                return TouchedSpotIndicatorData(
-                                  FlLine(
-                                    color: defaultPalette.tertiary,
-                                    strokeWidth: 4,
-                                  ),
-                                  FlDotData(
-                                    getDotPainter: (spot, percent, barData, index) {
-                                      
-                                      return FlDotCirclePainter(
-                                        radius: 8,
-                                        color: defaultPalette.primary,
-                                        strokeWidth: 5,
-                                        strokeColor: defaultPalette.tertiary,
-                                      );
-                                    },
-                                  ),
-                              );
-                            }).toList();
-                          },
-                          touchTooltipData: LineTouchTooltipData(
-                            maxContentWidth: 220,
-                            getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
-                            getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
-                              return touchedBarSpots.map((barSpot) {
-                                final flSpot = barSpot;
-
-                                 if (barSpot.x ==0 || barSpot.x ==32 ||  DateTime(selectedYear, selectedMonth, barSpot.x.toInt()).month != selectedMonth || barSpot.barIndex ==1) {
-                                   return null;
-                                 }   
-                                
-                                    
-                                return LineTooltipItem(
-                                  '${DateFormat.MMMMEEEEd().format(DateTime(selectedYear, selectedMonth, barSpot.x.toInt()))}${getOrdinal(barSpot.x.toInt())}\n',
-                                 GoogleFonts.lexend(
-                                    color: defaultPalette.extras[0],
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'Revenue: \n',
-                                      style:GoogleFonts.lexend(
-                                        color: defaultPalette.primary,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: NumberFormat.decimalPattern('en_IN').format(dayRevenueMap[(barSpot.x).clamp(1, 31).round()]),
-                                      style:GoogleFonts.lexend(
-                                        color: defaultPalette.primary,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                     TextSpan(
-                                      text: '₹ ',
-                                      style:GoogleFonts.lexend(
-                                        fontWeight: FontWeight.w900,
-                                        color: defaultPalette.primary,
-                                      ),
-                                    ),
-                                  ],
-                                  textAlign: TextAlign.left
-                                );
-                              }).toList();
-                            },
-                          ),
-                          touchCallback:
-                              (FlTouchEvent event, LineTouchResponse? lineTouch) {
-                            if (!event.isInterestedForInteractions ||
-                                lineTouch == null ||
-                                lineTouch.lineBarSpots == null) {
-                              setState(() {
-                                // touchedValue = -1;
-                              });
-                              return;
-                            }
-                          },
-                          ),
-                          extraLinesData: ExtraLinesData(
-                          ),
-                          lineBarsData: [
-                          LineChartBarData(
-                            isStepLineChart: true,
-                            spots: [
-                              const FlSpot(0, 0),
-                              for( var entry in dayRevenueMap.entries)
-                                FlSpot(entry.key, (entry.value)),
-                              const FlSpot(32, 0),
-                            ],
-                            isCurved: false,
-                            barWidth: 5,
-                            color: defaultPalette.secondary,
-                
-                            belowBarData: BarAreaData(
-                              show: true,
-                              applyCutOffY: true,
-                              cutOffY: 0,
-                              gradient: LinearGradient(colors: [
-                                defaultPalette.extras[0],defaultPalette.extras[0],
-                              ],
-                              stops: [0.5, 1],
-                              begin: Alignment(0, -5),
-                              end: Alignment(0, 1),
-                              ),
-                
-                              spotsLine: BarAreaSpotsLine(
-                                show: true,
-                                flLineStyle: FlLine(
-                                  color: defaultPalette.extras[0],
-                                  strokeWidth: 1,
-                                ),
-                                
-                              ),
-                            ),
-                            dotData: FlDotData(
-                              show: true,
-                              getDotPainter: (spot, percent, barData, index) {
-                                
-                                  return FlDotSquarePainter(
-                                    size: 8.5,
-                                    color: defaultPalette.primary,
-                                    strokeWidth: 3,
-                                    strokeColor: defaultPalette.extras[0],
-                                  );
-                                
-                              },
-                              checkToShowDot: (spot, barData) {
-                                return( spot.y >1 && spot.x!=0);
-                              },
-                            ),
-                          ),
-                          
-                          LineChartBarData(
-                            isStepLineChart: true,
-                            spots: [
-                              const FlSpot(0, 0),
-                              for( var entry in dayRevenueMap.entries)
-                               entry.value<0? FlSpot(entry.key, (entry.value)):FlSpot(entry.key, 0),
-                              const FlSpot(32, 0),
-                            ],
-                            isCurved: false,
-                            barWidth: 2,
-                            color: defaultPalette.secondary,
-                
-                            belowBarData: BarAreaData(
-                              show: true,
-                              applyCutOffY: true,
-                              cutOffY: 0,
-                              gradient: LinearGradient(colors: [
-                                defaultPalette.extras[0],defaultPalette.extras[0],
-                              ],
-                              stops: [0.5, 1],
-                              begin: Alignment(0, 0),
-                              end: Alignment(0, 3),
-                              ),
-                
-                              spotsLine: BarAreaSpotsLine(
-                                show: true,
-                                flLineStyle: FlLine(
-                                  color: defaultPalette.extras[0],
-                                  strokeWidth: mapValueDimensionBased(6, 30, sWidth, sHeight, useWidth: true),
-                                ),
-                                
-                              ),
-                            ),
-                            dotData: FlDotData(
-                              show:dayRevenueMap.values.fold(0.0, (min, val) => val < (min ?? 0)? val : min)<0,
-                              getDotPainter: (spot, percent, barData, index) {
-                                
-                                  return FlDotSquarePainter(
-                                    size: 8.5,
-                                    color: defaultPalette.primary,
-                                    strokeWidth: 3,
-                                    strokeColor: defaultPalette.extras[0],
-                                  );
-                                
-                              },
-                              checkToShowDot: (spot, barData) {
-                                return( spot.y.round() !=0 && spot.x!=0);
-                              },
-                            ),
-                          ),
-                          
-                          ],
-                          
-                          minY: dayRevenueMap.values.fold(0.0, (min, val) => val < (min ?? 0)? val : min),
-                          maxY: max(dayRevenueMap.values.isNotEmpty ? dayRevenueMap.values.reduce(max): 0, 1),
-                          borderData: FlBorderData(
-                          show: true,
-                          border: Border(
-                            left: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: 0),
-                            right: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: 0),
-                            bottom: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: dayRevenueMap.values.reduce(min)<0?12:5),
-                            top: BorderSide(
-                              color: defaultPalette.secondary,
-                            width: 12),
-                            
-                          ),
-                          ),
-                          gridData: FlGridData(
-                          show: true,
-                          drawHorizontalLine: false,
-                          drawVerticalLine: false,
-                          getDrawingHorizontalLine: (value) {
-                            if (value == 0) {
-                              return  FlLine(
-                                color: defaultPalette.tertiary,
-                                strokeWidth: 2,
-                              );
-                            } else {
-                              return  FlLine(
-                                color: defaultPalette.tertiary,
-                                strokeWidth: 0.5,
-                              );
-                            }
-                          },
-                          getDrawingVerticalLine: (value) {
-                            if (value == 0) {
-                              return const FlLine(
-                                color: Colors.redAccent,
-                                strokeWidth: 10,
-                              );
-                            } else {
-                              return  FlLine(
-                                color: defaultPalette.tertiary,
-                                strokeWidth: 0.5,
-                              );
-                            }
-                          },
-                          ),
-                          titlesData: FlTitlesData(
-                          show: true,
-                          topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
-                              interval: getSmartInterval(max(dayRevenueMap.values.isNotEmpty ? dayRevenueMap.values.reduce(max): 0, 1),minValue:dayRevenueMap.values.reduce(min) ),
-                              getTitlesWidget:(value, meta) {
-                                if (meta.min == value || (!isCleanRoundedNumber(meta.max) && meta.max == value ||value == 0)) {
-                                  return const SizedBox.shrink();
-                                }
-                                return Text(meta.formattedValue.toLowerCase()+'\₹',
-                                  style: GoogleFonts.lexend(
-                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
-                                    letterSpacing: -1,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              // reservedSize: 40,
-                              interval: 1,
-                              getTitlesWidget:(value, meta) {
-                                if (value ==0 || value ==32) {
-                                  return SizedBox.shrink();
-                                }
-                                return Text((value).clamp(0, double.infinity).round().toString(),
-                                  style: GoogleFonts.lexend(
-                                    fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
-                                    letterSpacing: -1,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          ),
-                        ),
-                      )
-                      
-                      )
-                    ],
-                  ),
-                                  
-                );
-                }
-              ),
-            ),
-            //  summary analytical
-           AnimatedPositioned(
-              duration: Durations.medium2,
-              // right: 15,
-              left: 90,
-              top: isBillTab ? 70 + sHeight / 1.8: sHeight / 4,
-              child: ValueListenableBuilder(
-              valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
-              builder: (context, Box<LayoutModel> box, _) {
-                final allLayouts = box.values.toList();
-
-                // Collect all revised layout base names
-                final revisedNames = allLayouts
-                    .where((l) => l.name.endsWith('-revised'))
-                    .map((l) => l.name.replaceAll('-revised', ''))
-                    .toSet();
-                // print('hello');
-                // Now filter the layouts
-                final layouts = allLayouts.where((layout) {
-                  final name = layout.name;
-                  if (layout.id.startsWith('LY-')) return false;
-                  if (name.endsWith('-old')) return false;
-                  if (revisedNames.contains(name)) return false; // exclude if revised version exists
-                  return true;
-                }).toList();
-                typeStats ={};
-                totalProfit =0;
-                for (final layout in layouts) {
-                  final type = SheetType.values[layout.type];
-                  double totalPayable = 0;
-                  double profit = 0;
-
-                  try {
-                    for (final label in layout.labelList) {
-                      // print(label.indexPath);
-                      if (label.indexPath.index == -951) continue;
-
-                      final item = getItemAtPath(label.indexPath, layout.spreadSheetList);
-                      // print(item);
-                      if (item is! SheetTextBox) continue;
-                      // print(item.inputBlocks);
-
-                      final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
-                      final cleaned = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.-]'), '')) ?? 0.0;
-                      // print('ghghh'+cleaned.toString());
-                      if (label.name == 'totalPayable') {
-                        totalPayable = cleaned;
-                        if (type == SheetType.creditNote) {
-                          totalPayable = -totalPayable;
-                        }
-                      } else if (label.name == 'profits') {
-                        profit = cleaned;
-                        totalProfit += profit;
-                      }
-                    }
-                  } catch (_) {
-                    // silently skip errors
-                  }
-
-                  // Update or initialize the stat object
-                  typeStats[type] = {
-                    'count': (typeStats[type]?['count'] ?? 0) + 1,
-                    'payable': (typeStats[type]?['payable'] ?? 0.0) + totalPayable,
-                    'profit': (typeStats[type]?['profit'] ?? 0.0) + profit,
-                  };
-                }
-
-
-                return Container(
-                  width: (sWidth / 1.73 - 100) / 2,
-                  height: sHeight - (sHeight / 1.8) -90,// 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
-                  padding: EdgeInsets.all(5).copyWith(right: 8, bottom: 8,left: mapValueDimensionBased(8, 10, sWidth, sHeight)),
-                  decoration: BoxDecoration(
-                    color: defaultPalette.primary,
-                    borderRadius: BorderRadius.circular(20)
-                    ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // title Revenue
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SizedBox(width: 5,),
-                          Icon(TablerIcons.chart_arcs, size: mapValueDimensionBased(16, 30, sWidth, sHeight),),
-                          SizedBox(width: 5,),
-                          Expanded(
-                            child: Text('Summary',style: GoogleFonts.lexend(
-                              fontSize: mapValueDimensionBased(15, 25, sWidth, sHeight),
-                              color: defaultPalette.extras[0],
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -1),),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 10,),
-                      Expanded(
-                        child: ScrollConfiguration(
-                        behavior: ScrollBehavior().copyWith(scrollbars: false),
-                        child: DynMouseScroll(
-                          durationMS: 500,
-                          scrollSpeed: 1,
-                          builder: (context, controller, physics) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: SingleChildScrollView(
-                                controller: controller,
-                                physics: physics,
-                                // padding: EdgeInsets.only(
-                                //   right: 10,
-                                // ),
-                                child: Column(
-                                  children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      SizedBox(width: 2,),
-                                      ...[Icon(TablerIcons.moneybag, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
-                                      SizedBox(width: 5,),],
-                                      Expanded(
-                                        child: Text('Total Revenue',
-                                        style: GoogleFonts.lexend(
-                                          fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
-                                          color: defaultPalette.extras[0],
-                                          fontWeight: FontWeight.w500,
-                                          letterSpacing: -1),),
-                                      ),
-                                      Expanded(
-                                      child: Text(NumberFormat.decimalPattern('en_IN').format(totalRevenue),
-                                      maxLines: 1,
-                                      textAlign: TextAlign.end,
-                                      style: GoogleFonts.lexend(
-                                        fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
-                                        color: defaultPalette.extras[0],
-                                        fontWeight: FontWeight.w500,
-                                        letterSpacing: -1),),
-                                        
-                                    ),
-                                    SizedBox(width:5,),
-                                    ],
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      SizedBox(width: 2,),
-                                      ...[Icon(TablerIcons.cash, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
-                                      SizedBox(width: 5,),],
-                                      Expanded(
-                                        child: Text('Total Profit',
-                                        style: GoogleFonts.lexend(
-                                          fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
-                                          color: defaultPalette.extras[0],
-                                          fontWeight: FontWeight.w500,
-                                          letterSpacing: -1),),
-                                      ),
-                                      Expanded(
-                                      child: Text(NumberFormat.decimalPattern('en_IN').format(totalProfit),
-                                      maxLines: 1,
-                                      textAlign: TextAlign.end,
-                                      style: GoogleFonts.lexend(
-                                        fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
-                                        color: defaultPalette.extras[0],
-                                        fontWeight: FontWeight.w500,
-                                        letterSpacing: -1),),
-                                        
-                                    ),
-                                      SizedBox(width: 5,),
-                                    ],
-                                    ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      SizedBox(width: 2,),
-                                      ...[Icon(TablerIcons.file_stack, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
-                                      SizedBox(width: 5,),],
-                                      Expanded(
-                                        child: Text('Total Bills',
-                                        style: GoogleFonts.lexend(
-                                          fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
-                                          color: defaultPalette.extras[0],
-                                          fontWeight: FontWeight.w500,
-                                          letterSpacing: -1),),
-                                      ),
-                                      Expanded(
-                                      child: Text(layouts.where((l) => SheetType.values[l.type] != SheetType.none).length.toString(),
-                                      maxLines: 1,
-                                      textAlign: TextAlign.end,
-                                      style: GoogleFonts.lexend(
-                                        fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
-                                        color: defaultPalette.extras[0],
-                                        fontWeight: FontWeight.w500,
-                                        letterSpacing: -1),),
-                                        
-                                    ),
-                                      SizedBox(width: 5,),
-                                    ],
-                                    ),
-                                    SizedBox(height: 8,),
-                                    summaryTile('Tax Invoices',
-                                      typeStats[SheetType.taxInvoice]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
-                                      TablerIcons.file_invoice,
-                                      sWidth,
-                                      sHeight,
-                                    ), 
-                                    summaryTile('Credit Notes',
-                                      typeStats[SheetType.creditNote]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
-                                      TablerIcons.credit_card_pay,
-                                      sWidth,
-                                      sHeight,
-                                    ),
-                                    summaryTile('Debit Notes',
-                                      typeStats[SheetType.debitNote]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
-                                      TablerIcons.credit_card_refund,
-                                      sWidth,
-                                      sHeight,
-                                    ),
-                                    summaryTile('Bills of Supply',
-                                      typeStats[SheetType.billOfSupply]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
-                                      TablerIcons.receipt_2,
-                                      sWidth,
-                                      sHeight,
-                                    ),
-                                    summaryTile('Proforma Invoices',
-                                      typeStats[SheetType.proformaInvoice]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
-                                      TablerIcons.receipt_filled,
-                                      sWidth,
-                                      sHeight,
-                                    ),
-                                    
-                                    SizedBox(height: 5,),
-                              
-                                  ],
-                                ),
-                              ),
-                            );
-                            }
-                          ),
-                        ),
-                      ),
-                      
-                    ],
-                  ),
-                                  
-                );
-                }
-              ),
-            ),
-            //  charts quantity analytical
-           AnimatedPositioned(
-              duration: Durations.medium2,
-              // right: 15,
-              left: 90 +(sWidth / 1.73 - 100)/2 + 10,
-              top: isBillTab ? 70 + sHeight / 1.8: sHeight / 4,
-              child: ValueListenableBuilder(
-              valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
-              builder: (context, Box<LayoutModel> box, _) {
-                final allLayouts = box.values.toList();
-                
-                // Collect all revised layout base names
-                final revisedNames = allLayouts
-                    .where((l) => l.name.endsWith('-revised'))
-                    .map((l) => l.name.replaceAll('-revised', ''))
-                    .toSet();
-
-                // Now filter the layouts
-                final layouts = allLayouts.where((layout) {
-                final name = layout.name;
-                if (!layout.id.startsWith('BI-')) return false; // ✅ Only include 'BI-' layouts
-                if (name.endsWith('-old')) return false;
-                if (revisedNames.contains(name)) return false; // exclude if revised version exists
-                return true;
-              }).toList();
-
-
-                final Map<SheetType, int> yearlyCounts = {
-                  SheetType.taxInvoice: 0,
-                  SheetType.creditNote: 0,
-                  SheetType.debitNote: 0,
-                  SheetType.billOfSupply: 0,
-                };
-
-                Map<SheetType, int> monthlyCounts = {
-                  SheetType.taxInvoice: 0,
-                  SheetType.creditNote: 0,
-                  SheetType.debitNote: 0,
-                  SheetType.billOfSupply: 0,
-                  SheetType.proformaInvoice: 0,
-                };
-
-                for (final layout in layouts) {
-                  final type = SheetType.values[layout.type];
-
-                  if (layout.createdAt.year == selectedYear) {
-                    yearlyCounts[type] = (yearlyCounts[type] ?? 0) + 1;
-                    
-                    if (layout.createdAt.month == selectedMonth) {
-                      monthlyCounts[type] = (monthlyCounts[type]?? 0) + 1;
+                    } catch (_) {
+                      // Skip this layout
                     }
                   }
-                }
-                // Sort the monthlyCounts by index
-                monthlyCounts = Map.fromEntries(
-                  monthlyCounts.entries.toList()
-                    ..sort((a, b) => a.key.index.compareTo(b.key.index))
-                );
-
-                return Container(
-                  width: (sWidth / 1.73 - 100) / 2 -10, // -10 because of the gap between the two charts
-                  height: sHeight - (sHeight / 1.8) -90,// 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
-                  padding: EdgeInsets.all(5).copyWith(right: 5),
-                  decoration: BoxDecoration(
-                    color: defaultPalette.primary,
-                    borderRadius: BorderRadius.circular(20)
-                    ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SizedBox(width: 5,),
-                          Icon(TablerIcons.tallymarks, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
-                          SizedBox(width: 5,),
-                          Expanded(
-                            child: Text('Quantity',style: GoogleFonts.lexend(
-                              fontSize: mapValueDimensionBased(14, 23, sWidth, sHeight),
-                              color: defaultPalette.extras[0],
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -1),),
-                          ),
-                          Expanded(child: Text(
-                            '$selectedMonth/${selectedYear.toString().substring(2, 4)}',
-                            textAlign: TextAlign.end,
-                            style: GoogleFonts.lexend(
-                              fontSize: mapValueDimensionBased(10, 15, sWidth, sHeight),
-                              color: defaultPalette.extras[0],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          )),
-                          SizedBox(width: 5,),
-                          // ...datePropertyTile(2),
-                        ],
+        
+                  // Ensure all months and days are initialized
+                  monthRevenueMap = Map.fromEntries(
+                    List.generate(12, (i) => i + 1)
+                        .map((month) => MapEntry(month.ceilToDouble(), monthRevenueMap[month.toDouble()] ?? 0)),
+                  );
+        
+                  final daysInMonth = DateUtils.getDaysInMonth(selectedYear, selectedMonth);
+                  dayRevenueMap = Map.fromEntries(
+                    List.generate(daysInMonth, (i) => i + 1)
+                        .map((day) => MapEntry(day.toDouble(), dayRevenueMap[day.toDouble()] ?? 0)),
+                  );
+        
+                  // print(monthRevenueMap);
+                  return Container(
+                    width: sWidth / 1.73 - 100,
+                    height: sHeight / 1.8,
+                    padding: EdgeInsets.all(5).copyWith(right: 10),
+                    decoration: BoxDecoration(
+                      color: defaultPalette.primary,
+                      borderRadius: BorderRadius.circular(20)
                       ),
-                      //type revenue
-                      Expanded(child: 
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 20,
-                            child: Padding(
-                            padding: const EdgeInsets.only(top: 6.0, bottom: 5, left: 5),
-                            child: LineChart(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // title Revenue
+                        SizedBox(
+                          height: 25,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              SizedBox(width: 5,),
+                              Icon(TablerIcons.chart_dots_3, size: mapValueDimensionBased(25, 30, sWidth, sHeight),),
+                              SizedBox(width: 5,),
+                              Expanded(
+                                child: Text('Revenue',style: GoogleFonts.lexend(
+                                  fontSize: mapValueDimensionBased(20, 23, sWidth, sHeight),
+                                  color: defaultPalette.extras[0],
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -1),),
+                              ),
+                              ...datePropertyTile(1),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        //yearly revenue
+                        Expanded(child: 
+                        LineChart(
                             LineChartData(
                             backgroundColor: defaultPalette.secondary,
                             lineTouchData: LineTouchData(
                               touchSpotThreshold: 25,
                               getTouchedSpotIndicator:
                                   (LineChartBarData barData, List<int> spotIndexes) {
+                                    final isMainChart = barData.barWidth == 5;
                                 return spotIndexes.map((spotIndex) {
                                   final spot = barData.spots[spotIndex];
-                                  
+                                  if (!isMainChart) {
+                                    return TouchedSpotIndicatorData(
+                                      FlLine(strokeWidth: 0, color: Colors.transparent),
+                                      FlDotData(show: false),
+                                    );
+                                  }
                                   return TouchedSpotIndicatorData(
                                     FlLine(
                                       color: defaultPalette.tertiary,
@@ -4892,40 +4078,42 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               }).toList();
                             },
                             touchTooltipData: LineTouchTooltipData(
-                              maxContentWidth: mapValueDimensionBased(120, 200, sWidth, sHeight),
-                              getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
+                              getTooltipColor: (touchedSpot) => defaultPalette.extras[0],
                               getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                                 return touchedBarSpots.map((barSpot) {
                                   final flSpot = barSpot;
-                                   if (barSpot.x ==0 || barSpot.x ==monthlyCounts.length+1 ) {
+                                   if (barSpot.x ==0 || barSpot.x ==13 || barSpot.barIndex ==1) {
                                      return null;
                                    }   
-                                  
-                                      
+                                   
                                   return LineTooltipItem(
-                                    '${DateFormat.yMMMM().format(DateTime(selectedYear, selectedMonth))}\n',
+                                    '${monthNames[(barSpot.x-1).clamp(0, 12).round()]}',
                                    GoogleFonts.lexend(
-                                      color: defaultPalette.extras[0],
+                                      color: defaultPalette.tertiary,
                                       fontWeight: FontWeight.bold,
-                                      fontSize:  mapValueDimensionBased(15, 20, sWidth, sHeight),
                                     ),
                                     children: [
                                       TextSpan(
-                                        text: '${monthlyCounts.keys.toList()[(barSpot.x-1).clamp(0, monthlyCounts.length).round()].name}: \n',
+                                        text: ' Revenue: \n',
                                         style:GoogleFonts.lexend(
                                           color: defaultPalette.primary,
-                                          fontSize:  mapValueDimensionBased(10, 20, sWidth, sHeight),
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                       TextSpan(
-                                        text: NumberFormat.decimalPattern('en_IN').format(monthlyCounts.values.toList()[(barSpot.x-1).clamp(0, monthlyCounts.length).round()]),
+                                        text: NumberFormat.decimalPattern('en_IN').format(monthRevenueMap[(barSpot.x).clamp(1, 12).round()]),
                                         style:GoogleFonts.lexend(
                                           color: defaultPalette.primary,
                                           fontWeight: FontWeight.w900,
-                                          fontSize:  mapValueDimensionBased(10, 20, sWidth, sHeight),
                                         ),
                                       ),
-                                       
+                                       TextSpan(
+                                        text: '₹ ',
+                                        style:GoogleFonts.lexend(
+                                          fontWeight: FontWeight.w900,
+                                          color: defaultPalette.primary,
+                                        ),
+                                      ),
                                     ],
                                     textAlign: TextAlign.left
                                   );
@@ -4944,34 +4132,31 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               }
                             },
                             ),
-                            extraLinesData: ExtraLinesData(
-                            ),
                             lineBarsData: [
                             LineChartBarData(
                               isStepLineChart: true,
                               spots: [
                                 const FlSpot(0, 0),
-                                for (final entry in monthlyCounts.entries.toList()
-                                    ..sort((a, b) => a.key.index.compareTo(b.key.index)))
-                                  FlSpot(entry.key.index.toDouble(), entry.value.toDouble()),
-                                FlSpot(monthlyCounts.length+1, 0),
+                                for( var entry in monthRevenueMap.entries)
+                                  FlSpot(entry.key, entry.value),
+                                const FlSpot(13, 0),
                               ],
                               isCurved: false,
-                              barWidth: 2,
-                              color: defaultPalette.extras[0],
-                                            
+                              barWidth: 5,
+                              color: defaultPalette.secondary,
                               belowBarData: BarAreaData(
                                 show: true,
                                 gradient: LinearGradient(colors: [
-                                  defaultPalette.secondary,defaultPalette.secondary,
+                                  defaultPalette.extras[0],defaultPalette.extras[0],
                                 ],
                                 stops: [0.5, 1],
                                 begin: Alignment(0, -1),
                                 end: Alignment(0, 1),
                                 ),
-                                            
+                                applyCutOffY: true,
+                                cutOffY: 0,
                                 spotsLine: BarAreaSpotsLine(
-                                  show: false,
+                                  show: true,
                                   flLineStyle: FlLine(
                                     color: defaultPalette.extras[0],
                                     strokeWidth: 1,
@@ -4983,22 +4168,72 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 show: true,
                                 getDotPainter: (spot, percent, barData, index) {
                                   
-                                    return FlDotCirclePainter(
-                                      radius: 4.5,
+                                    return FlDotSquarePainter(
+                                      size: 8.5,
                                       color: defaultPalette.primary,
-                                      strokeWidth: 2,
+                                      strokeWidth: 3,
                                       strokeColor: defaultPalette.extras[0],
                                     );
                                   
                                 },
                                 checkToShowDot: (spot, barData) {
-                                  return( spot.x!=0 && spot.x!=monthlyCounts.length+1 );
+                                  return( spot.y >1 && spot.x!=0);
+                                },
+                              ),
+                            ),
+                            LineChartBarData(
+                              isStepLineChart: true,
+                              spots: [
+                                const FlSpot(0, 0),
+                                for( var entry in monthRevenueMap.entries)
+                                 entry.value<0? FlSpot(entry.key, (entry.value)):FlSpot(entry.key, 0),
+                                const FlSpot(13, 0),
+                              ],
+                              isCurved: false,
+                              barWidth: 2,
+                              color: defaultPalette.secondary,
+                  
+                              belowBarData: BarAreaData(
+                                show: true,
+                                applyCutOffY: true,
+                                cutOffY: 0,
+                                gradient: LinearGradient(colors: [
+                                  defaultPalette.extras[0],defaultPalette.extras[0],
+                                ],
+                                stops: [0.5, 1],
+                                begin: Alignment(0, 0),
+                                end: Alignment(0, 3),
+                                ),
+                  
+                                spotsLine: BarAreaSpotsLine(
+                                  show: true,
+                                  flLineStyle: FlLine(
+                                    color: defaultPalette.extras[0],
+                                    strokeWidth: mapValueDimensionBased(25, 80, sWidth, sHeight, useWidth: true),
+                                  ),
+                                  
+                                ),
+                              ),
+                              dotData: FlDotData(
+                                show:monthRevenueMap.values.reduce(min)<-1,
+                                getDotPainter: (spot, percent, barData, index) {
+                                  
+                                    return FlDotSquarePainter(
+                                      size: 8.5,
+                                      color: defaultPalette.primary,
+                                      strokeWidth: 3,
+                                      strokeColor: defaultPalette.extras[0],
+                                    );
+                                  
+                                },
+                                checkToShowDot: (spot, barData) {
+                                  return( spot.y.round() !=0 && spot.x!=0 && (spot.y <0));
                                 },
                               ),
                             ),
                             ],
-                            minY: 0,
-                            maxY: max(monthlyCounts.values.isNotEmpty ? monthlyCounts.values.reduce(max).toDouble(): 0, 1),
+                            minY: monthRevenueMap.values.fold(0.0, (min, val) => val < (min??0) ? val : min),
+                            maxY: max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),
                             borderData: FlBorderData(
                             show: true,
                             border: Border(
@@ -5059,15 +4294,15 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             leftTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
-                                reservedSize: mapValueDimensionBased(12, 38, sWidth, sHeight),
-                                interval: getSmartInterval( max(monthlyCounts.values.isNotEmpty ? monthlyCounts.values.reduce(max).toDouble(): 0, 1),),
+                                reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
+                                interval: getSmartInterval( max(monthRevenueMap.values.isNotEmpty ? monthRevenueMap.values.reduce(max): 0, 1),),
                                 getTitlesWidget:(value, meta) {
-                                  if (meta.min == value || meta.max == value) {
+                                  if (meta.min == value || meta.max == value||value == 0) {
                                     return const SizedBox.shrink(); // Hide first and last labels
                                   }
-                                  return Text(value.toString()+'  ',
+                                  return Text(meta.formattedValue.toLowerCase()+'\₹',
                                     style: GoogleFonts.lexend(
-                                      fontSize:mapValueDimensionBased(8, 15, sWidth, sHeight),
+                                      fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
                                       letterSpacing: -1,
                                     ),
                                   );
@@ -5076,14 +4311,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             ),
                             bottomTitles: AxisTitles(
                               sideTitles: SideTitles(
-                                showTitles: false,
+                                showTitles: true,
                                 // reservedSize: 40,
                                 interval: 1,
                                 getTitlesWidget:(value, meta) {
-                                  if (value ==0 || value ==monthlyCounts.length+1) {
+                                  if (value ==0 || value ==13) {
                                     return SizedBox.shrink();
                                   }
-                                  return Text(monthlyCounts.keys.toList()[(value-1).clamp(0, double.infinity).round()].name,
+                                  return Text(monthNames[(value-1).clamp(0, double.infinity).round()],
                                     style: GoogleFonts.lexend(
                                       fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
                                       letterSpacing: -1,
@@ -5093,57 +4328,976 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               ),
                             ),
                             ),
+                          ),
+                        )
+                        
+                        ),
+                        //the month display and editor
+                        SizedBox(
+                          height: 25,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              ...datePropertyTile(0),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        //day revenue
+                        Expanded(child: 
+                        LineChart(
+                            LineChartData(
+                            backgroundColor: defaultPalette.secondary,
+                            lineTouchData: LineTouchData(
+                              touchSpotThreshold: 25,
+                              getTouchedSpotIndicator:
+                                  (LineChartBarData barData, List<int> spotIndexes) {
+                                    
+                                  final isMainChart = barData.barWidth == 5;
+         
+        
+                                return spotIndexes.map((spotIndex) {
+                                  final spot = barData.spots[spotIndex];
+                                  if (!isMainChart) {
+                                    return TouchedSpotIndicatorData(
+                                      FlLine(strokeWidth: 0, color: Colors.transparent),
+                                      FlDotData(show: false),
+                                    );
+                                  }
+        
+                                  return TouchedSpotIndicatorData(
+                                    FlLine(
+                                      color: defaultPalette.tertiary,
+                                      strokeWidth: 4,
+                                    ),
+                                    FlDotData(
+                                      getDotPainter: (spot, percent, barData, index) {
+                                        
+                                        return FlDotCirclePainter(
+                                          radius: 8,
+                                          color: defaultPalette.primary,
+                                          strokeWidth: 5,
+                                          strokeColor: defaultPalette.tertiary,
+                                        );
+                                      },
+                                    ),
+                                );
+                              }).toList();
+                            },
+                            touchTooltipData: LineTouchTooltipData(
+                              maxContentWidth: 220,
+                              getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
+                              getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                                return touchedBarSpots.map((barSpot) {
+                                  final flSpot = barSpot;
+        
+                                   if (barSpot.x ==0 || barSpot.x ==32 ||  DateTime(selectedYear, selectedMonth, barSpot.x.toInt()).month != selectedMonth || barSpot.barIndex ==1) {
+                                     return null;
+                                   }   
+                                  
+                                      
+                                  return LineTooltipItem(
+                                    '${DateFormat.MMMMEEEEd().format(DateTime(selectedYear, selectedMonth, barSpot.x.toInt()))}${getOrdinal(barSpot.x.toInt())}\n',
+                                   GoogleFonts.lexend(
+                                      color: defaultPalette.extras[0],
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: 'Revenue: \n',
+                                        style:GoogleFonts.lexend(
+                                          color: defaultPalette.primary,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: NumberFormat.decimalPattern('en_IN').format(dayRevenueMap[(barSpot.x).clamp(1, 31).round()]),
+                                        style:GoogleFonts.lexend(
+                                          color: defaultPalette.primary,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                       TextSpan(
+                                        text: '₹ ',
+                                        style:GoogleFonts.lexend(
+                                          fontWeight: FontWeight.w900,
+                                          color: defaultPalette.primary,
+                                        ),
+                                      ),
+                                    ],
+                                    textAlign: TextAlign.left
+                                  );
+                                }).toList();
+                              },
+                            ),
+                            touchCallback:
+                                (FlTouchEvent event, LineTouchResponse? lineTouch) {
+                              if (!event.isInterestedForInteractions ||
+                                  lineTouch == null ||
+                                  lineTouch.lineBarSpots == null) {
+                                setState(() {
+                                  // touchedValue = -1;
+                                });
+                                return;
+                              }
+                            },
+                            ),
+                            extraLinesData: ExtraLinesData(
+                            ),
+                            lineBarsData: [
+                            LineChartBarData(
+                              isStepLineChart: true,
+                              spots: [
+                                const FlSpot(0, 0),
+                                for( var entry in dayRevenueMap.entries)
+                                  FlSpot(entry.key, (entry.value)),
+                                const FlSpot(32, 0),
+                              ],
+                              isCurved: false,
+                              barWidth: 5,
+                              color: defaultPalette.secondary,
+                  
+                              belowBarData: BarAreaData(
+                                show: true,
+                                applyCutOffY: true,
+                                cutOffY: 0,
+                                gradient: LinearGradient(colors: [
+                                  defaultPalette.extras[0],defaultPalette.extras[0],
+                                ],
+                                stops: [0.5, 1],
+                                begin: Alignment(0, -5),
+                                end: Alignment(0, 1),
+                                ),
+                  
+                                spotsLine: BarAreaSpotsLine(
+                                  show: true,
+                                  flLineStyle: FlLine(
+                                    color: defaultPalette.extras[0],
+                                    strokeWidth: 1,
+                                  ),
+                                  
+                                ),
+                              ),
+                              dotData: FlDotData(
+                                show: true,
+                                getDotPainter: (spot, percent, barData, index) {
+                                  
+                                    return FlDotSquarePainter(
+                                      size: 8.5,
+                                      color: defaultPalette.primary,
+                                      strokeWidth: 3,
+                                      strokeColor: defaultPalette.extras[0],
+                                    );
+                                  
+                                },
+                                checkToShowDot: (spot, barData) {
+                                  return( spot.y >1 && spot.x!=0);
+                                },
+                              ),
+                            ),
+                            
+                            LineChartBarData(
+                              isStepLineChart: true,
+                              spots: [
+                                const FlSpot(0, 0),
+                                for( var entry in dayRevenueMap.entries)
+                                 entry.value<0? FlSpot(entry.key, (entry.value)):FlSpot(entry.key, 0),
+                                const FlSpot(32, 0),
+                              ],
+                              isCurved: false,
+                              barWidth: 2,
+                              color: defaultPalette.secondary,
+                  
+                              belowBarData: BarAreaData(
+                                show: true,
+                                applyCutOffY: true,
+                                cutOffY: 0,
+                                gradient: LinearGradient(colors: [
+                                  defaultPalette.extras[0],defaultPalette.extras[0],
+                                ],
+                                stops: [0.5, 1],
+                                begin: Alignment(0, 0),
+                                end: Alignment(0, 3),
+                                ),
+                  
+                                spotsLine: BarAreaSpotsLine(
+                                  show: true,
+                                  flLineStyle: FlLine(
+                                    color: defaultPalette.extras[0],
+                                    strokeWidth: mapValueDimensionBased(6, 30, sWidth, sHeight, useWidth: true),
+                                  ),
+                                  
+                                ),
+                              ),
+                              dotData: FlDotData(
+                                show:dayRevenueMap.values.fold(0.0, (min, val) => val < (min ?? 0)? val : min)<0,
+                                getDotPainter: (spot, percent, barData, index) {
+                                  
+                                    return FlDotSquarePainter(
+                                      size: 8.5,
+                                      color: defaultPalette.primary,
+                                      strokeWidth: 3,
+                                      strokeColor: defaultPalette.extras[0],
+                                    );
+                                  
+                                },
+                                checkToShowDot: (spot, barData) {
+                                  return( spot.y.round() !=0 && spot.x!=0);
+                                },
+                              ),
+                            ),
+                            
+                            ],
+                            
+                            minY: dayRevenueMap.values.fold(0.0, (min, val) => val < (min ?? 0)? val : min),
+                            maxY: max(dayRevenueMap.values.isNotEmpty ? dayRevenueMap.values.reduce(max): 0, 1),
+                            borderData: FlBorderData(
+                            show: true,
+                            border: Border(
+                              left: BorderSide(
+                                color: defaultPalette.secondary,
+                              width: 0),
+                              right: BorderSide(
+                                color: defaultPalette.secondary,
+                              width: 0),
+                              bottom: BorderSide(
+                                color: defaultPalette.secondary,
+                              width: dayRevenueMap.values.reduce(min)<0?12:5),
+                              top: BorderSide(
+                                color: defaultPalette.secondary,
+                              width: 12),
+                              
+                            ),
+                            ),
+                            gridData: FlGridData(
+                            show: true,
+                            drawHorizontalLine: false,
+                            drawVerticalLine: false,
+                            getDrawingHorizontalLine: (value) {
+                              if (value == 0) {
+                                return  FlLine(
+                                  color: defaultPalette.tertiary,
+                                  strokeWidth: 2,
+                                );
+                              } else {
+                                return  FlLine(
+                                  color: defaultPalette.tertiary,
+                                  strokeWidth: 0.5,
+                                );
+                              }
+                            },
+                            getDrawingVerticalLine: (value) {
+                              if (value == 0) {
+                                return const FlLine(
+                                  color: Colors.redAccent,
+                                  strokeWidth: 10,
+                                );
+                              } else {
+                                return  FlLine(
+                                  color: defaultPalette.tertiary,
+                                  strokeWidth: 0.5,
+                                );
+                              }
+                            },
+                            ),
+                            titlesData: FlTitlesData(
+                            show: true,
+                            topTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: mapValueDimensionBased(25, 38, sWidth, sHeight),
+                                interval: getSmartInterval(max(dayRevenueMap.values.isNotEmpty ? dayRevenueMap.values.reduce(max): 0, 1),minValue:dayRevenueMap.values.reduce(min) ),
+                                getTitlesWidget:(value, meta) {
+                                  if (meta.min == value || (!isCleanRoundedNumber(meta.max) && meta.max == value ||value == 0)) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Text(meta.formattedValue.toLowerCase()+'\₹',
+                                    style: GoogleFonts.lexend(
+                                      fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
+                                      letterSpacing: -1,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                // reservedSize: 40,
+                                interval: 1,
+                                getTitlesWidget:(value, meta) {
+                                  if (value ==0 || value ==32) {
+                                    return SizedBox.shrink();
+                                  }
+                                  return Text((value).clamp(0, double.infinity).round().toString(),
+                                    style: GoogleFonts.lexend(
+                                      fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
+                                      letterSpacing: -1,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                             ),
                           ),
-                          )),
-                          Expanded(
-                            flex: 30,
-                            child: PieChart(
-                              PieChartData(
-                                pieTouchData: PieTouchData(
-                                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                                    setState(() {
-                                      if (!event.isInterestedForInteractions ||
-                                          pieTouchResponse == null ||
-                                          pieTouchResponse.touchedSection == null) {
-                                        touchedIndex = -1;
-                                        return;
-                                      }
-                                      touchedIndex = pieTouchResponse
-                                          .touchedSection!.touchedSectionIndex;
-                                      // print('Touched index: $touchedIndex');
-                                    });
+                        )
+                        
+                        )
+                      ],
+                    ),
+                                    
+                  );
+                  }
+                ),
+              ),
+              //  summary analytical
+             AnimatedPositioned(
+                duration: Durations.medium2,
+                // right: 15,
+                left: 90,
+                top: isBillTab ? 70 + sHeight / 1.8: sHeight / 4,
+                child: ValueListenableBuilder(
+                valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
+                builder: (context, Box<LayoutModel> box, _) {
+                  final allLayouts = box.values.toList();
+        
+                  // Collect all revised layout base names
+                  final revisedNames = allLayouts
+                      .where((l) => l.name.endsWith('-revised'))
+                      .map((l) => l.name.replaceAll('-revised', ''))
+                      .toSet();
+                  // print('hello');
+                  // Now filter the layouts
+                  final layouts = allLayouts.where((layout) {
+                    final name = layout.name;
+                    if (layout.id.startsWith('LY-')) return false;
+                    if (name.endsWith('-old')) return false;
+                    if (revisedNames.contains(name)) return false; // exclude if revised version exists
+                    return true;
+                  }).toList();
+                  typeStats ={};
+                  totalProfit =0;
+                  for (final layout in layouts) {
+                    final type = SheetType.values[layout.type];
+                    double totalPayable = 0;
+                    double profit = 0;
+        
+                    try {
+                      for (final label in layout.labelList) {
+                        // print(label.indexPath);
+                        if (label.indexPath.index == -951) continue;
+        
+                        final item = getItemAtPath(label.indexPath, layout.spreadSheetList);
+                        // print(item);
+                        if (item is! SheetTextBox) continue;
+                        // print(item.inputBlocks);
+        
+                        final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
+                        final cleaned = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.-]'), '')) ?? 0.0;
+                        // print('ghghh'+cleaned.toString());
+                        if (label.name == 'totalPayable') {
+                          totalPayable = cleaned;
+                          if (type == SheetType.creditNote) {
+                            totalPayable = -totalPayable;
+                          }
+                        } else if (label.name == 'profits') {
+                          profit = cleaned;
+                          totalProfit += profit;
+                        }
+                      }
+                    } catch (_) {
+                      // silently skip errors
+                    }
+        
+                    // Update or initialize the stat object
+                    typeStats[type] = {
+                      'count': (typeStats[type]?['count'] ?? 0) + 1,
+                      'payable': (typeStats[type]?['payable'] ?? 0.0) + totalPayable,
+                      'profit': (typeStats[type]?['profit'] ?? 0.0) + profit,
+                    };
+                  }
+        
+        
+                  return Container(
+                    width: (sWidth / 1.73 - 100) / 2,
+                    height: sHeight - (sHeight / 1.8) -90,// 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
+                    padding: EdgeInsets.all(5).copyWith(right: 8, bottom: 8,left: mapValueDimensionBased(8, 10, sWidth, sHeight)),
+                    decoration: BoxDecoration(
+                      color: defaultPalette.primary,
+                      borderRadius: BorderRadius.circular(20)
+                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // title Revenue
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(width: 5,),
+                            Icon(TablerIcons.chart_arcs, size: mapValueDimensionBased(16, 30, sWidth, sHeight),),
+                            SizedBox(width: 5,),
+                            Expanded(
+                              child: Text('Summary',style: GoogleFonts.lexend(
+                                fontSize: mapValueDimensionBased(15, 25, sWidth, sHeight),
+                                color: defaultPalette.extras[0],
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -1),),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10,),
+                        Expanded(
+                          child: ScrollConfiguration(
+                          behavior: ScrollBehavior().copyWith(scrollbars: false),
+                          child: DynMouseScroll(
+                            durationMS: 500,
+                            scrollSpeed: 1,
+                            builder: (context, controller, physics) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: SingleChildScrollView(
+                                  controller: controller,
+                                  physics: physics,
+                                  // padding: EdgeInsets.only(
+                                  //   right: 10,
+                                  // ),
+                                  child: Column(
+                                    children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        SizedBox(width: 2,),
+                                        ...[Icon(TablerIcons.moneybag, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
+                                        SizedBox(width: 5,),],
+                                        Expanded(
+                                          child: Text('Total Revenue',
+                                          style: GoogleFonts.lexend(
+                                            fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                            color: defaultPalette.extras[0],
+                                            fontWeight: FontWeight.w500,
+                                            letterSpacing: -1),),
+                                        ),
+                                        Expanded(
+                                        child: Text(NumberFormat.decimalPattern('en_IN').format(totalRevenue),
+                                        maxLines: 1,
+                                        textAlign: TextAlign.end,
+                                        style: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                          color: defaultPalette.extras[0],
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: -1),),
+                                          
+                                      ),
+                                      SizedBox(width:5,),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        SizedBox(width: 2,),
+                                        ...[Icon(TablerIcons.cash, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
+                                        SizedBox(width: 5,),],
+                                        Expanded(
+                                          child: Text('Total Profit',
+                                          style: GoogleFonts.lexend(
+                                            fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                            color: defaultPalette.extras[0],
+                                            fontWeight: FontWeight.w500,
+                                            letterSpacing: -1),),
+                                        ),
+                                        Expanded(
+                                        child: Text(NumberFormat.decimalPattern('en_IN').format(totalProfit),
+                                        maxLines: 1,
+                                        textAlign: TextAlign.end,
+                                        style: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                          color: defaultPalette.extras[0],
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: -1),),
+                                          
+                                      ),
+                                        SizedBox(width: 5,),
+                                      ],
+                                      ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        SizedBox(width: 2,),
+                                        ...[Icon(TablerIcons.file_stack, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
+                                        SizedBox(width: 5,),],
+                                        Expanded(
+                                          child: Text('Total Bills',
+                                          style: GoogleFonts.lexend(
+                                            fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                            color: defaultPalette.extras[0],
+                                            fontWeight: FontWeight.w500,
+                                            letterSpacing: -1),),
+                                        ),
+                                        Expanded(
+                                        child: Text(layouts.where((l) => SheetType.values[l.type] != SheetType.none).length.toString(),
+                                        maxLines: 1,
+                                        textAlign: TextAlign.end,
+                                        style: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                                          color: defaultPalette.extras[0],
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: -1),),
+                                          
+                                      ),
+                                        SizedBox(width: 5,),
+                                      ],
+                                      ),
+                                      SizedBox(height: 8,),
+                                      summaryTile('Tax Invoices',
+                                        typeStats[SheetType.taxInvoice]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
+                                        TablerIcons.file_invoice,
+                                        sWidth,
+                                        sHeight,
+                                      ), 
+                                      summaryTile('Credit Notes',
+                                        typeStats[SheetType.creditNote]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
+                                        TablerIcons.credit_card_pay,
+                                        sWidth,
+                                        sHeight,
+                                      ),
+                                      summaryTile('Debit Notes',
+                                        typeStats[SheetType.debitNote]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
+                                        TablerIcons.credit_card_refund,
+                                        sWidth,
+                                        sHeight,
+                                      ),
+                                      summaryTile('Bills of Supply',
+                                        typeStats[SheetType.billOfSupply]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
+                                        TablerIcons.receipt_2,
+                                        sWidth,
+                                        sHeight,
+                                      ),
+                                      summaryTile('Proforma Invoices',
+                                        typeStats[SheetType.proformaInvoice]?? {'count': 0, 'payable': 0.0, 'profit': 0.0},
+                                        TablerIcons.receipt_filled,
+                                        sWidth,
+                                        sHeight,
+                                      ),
+                                      
+                                      SizedBox(height: 5,),
+                                
+                                    ],
+                                  ),
+                                ),
+                              );
+                              }
+                            ),
+                          ),
+                        ),
+                        
+                      ],
+                    ),
+                                    
+                  );
+                  }
+                ),
+              ),
+              //  charts quantity analytical
+             AnimatedPositioned(
+                duration: Durations.medium2,
+                // right: 15,
+                left: 90 +(sWidth / 1.73 - 100)/2 + 10,
+                top: isBillTab ? 70 + sHeight / 1.8: sHeight / 4,
+                child: ValueListenableBuilder(
+                valueListenable: Hive.box<LayoutModel>('layouts').listenable(),
+                builder: (context, Box<LayoutModel> box, _) {
+                  final allLayouts = box.values.toList();
+                  
+                  // Collect all revised layout base names
+                  final revisedNames = allLayouts
+                      .where((l) => l.name.endsWith('-revised'))
+                      .map((l) => l.name.replaceAll('-revised', ''))
+                      .toSet();
+        
+                  // Now filter the layouts
+                  final layouts = allLayouts.where((layout) {
+                  final name = layout.name;
+                  if (!layout.id.startsWith('BI-')) return false; // ✅ Only include 'BI-' layouts
+                  if (name.endsWith('-old')) return false;
+                  if (revisedNames.contains(name)) return false; // exclude if revised version exists
+                  return true;
+                }).toList();
+        
+        
+                  final Map<SheetType, int> yearlyCounts = {
+                    SheetType.taxInvoice: 0,
+                    SheetType.creditNote: 0,
+                    SheetType.debitNote: 0,
+                    SheetType.billOfSupply: 0,
+                  };
+        
+                  Map<SheetType, int> monthlyCounts = {
+                    SheetType.taxInvoice: 0,
+                    SheetType.creditNote: 0,
+                    SheetType.debitNote: 0,
+                    SheetType.billOfSupply: 0,
+                    SheetType.proformaInvoice: 0,
+                  };
+        
+                  for (final layout in layouts) {
+                    final type = SheetType.values[layout.type];
+        
+                    if (layout.createdAt.year == selectedYear) {
+                      yearlyCounts[type] = (yearlyCounts[type] ?? 0) + 1;
+                      
+                      if (layout.createdAt.month == selectedMonth) {
+                        monthlyCounts[type] = (monthlyCounts[type]?? 0) + 1;
+                      }
+                    }
+                  }
+                  // Sort the monthlyCounts by index
+                  monthlyCounts = Map.fromEntries(
+                    monthlyCounts.entries.toList()
+                      ..sort((a, b) => a.key.index.compareTo(b.key.index))
+                  );
+        
+                  return Container(
+                    width: (sWidth / 1.73 - 100) / 2 -10, // -10 because of the gap between the two charts
+                    height: sHeight - (sHeight / 1.8) -90,// 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
+                    padding: EdgeInsets.all(5).copyWith(right: 5),
+                    decoration: BoxDecoration(
+                      color: defaultPalette.primary,
+                      borderRadius: BorderRadius.circular(20)
+                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(width: 5,),
+                            Icon(TablerIcons.tallymarks, size: mapValueDimensionBased(15, 30, sWidth, sHeight),),
+                            SizedBox(width: 5,),
+                            Expanded(
+                              child: Text('Quantity',style: GoogleFonts.lexend(
+                                fontSize: mapValueDimensionBased(14, 23, sWidth, sHeight),
+                                color: defaultPalette.extras[0],
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -1),),
+                            ),
+                            Expanded(child: Text(
+                              '$selectedMonth/${selectedYear.toString().substring(2, 4)}',
+                              textAlign: TextAlign.end,
+                              style: GoogleFonts.lexend(
+                                fontSize: mapValueDimensionBased(10, 15, sWidth, sHeight),
+                                color: defaultPalette.extras[0],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            )),
+                            SizedBox(width: 5,),
+                            // ...datePropertyTile(2),
+                          ],
+                        ),
+                        //type revenue
+                        Expanded(child: 
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 20,
+                              child: Padding(
+                              padding: const EdgeInsets.only(top: 6.0, bottom: 5, left: 5),
+                              child: LineChart(
+                              LineChartData(
+                              backgroundColor: defaultPalette.secondary,
+                              lineTouchData: LineTouchData(
+                                touchSpotThreshold: 25,
+                                getTouchedSpotIndicator:
+                                    (LineChartBarData barData, List<int> spotIndexes) {
+                                  return spotIndexes.map((spotIndex) {
+                                    final spot = barData.spots[spotIndex];
+                                    
+                                    return TouchedSpotIndicatorData(
+                                      FlLine(
+                                        color: defaultPalette.tertiary,
+                                        strokeWidth: 4,
+                                      ),
+                                      FlDotData(
+                                        getDotPainter: (spot, percent, barData, index) {
+                                          
+                                          return FlDotCirclePainter(
+                                            radius: 8,
+                                            color: defaultPalette.primary,
+                                            strokeWidth: 5,
+                                            strokeColor: defaultPalette.tertiary,
+                                          );
+                                        },
+                                      ),
+                                  );
+                                }).toList();
+                              },
+                              touchTooltipData: LineTouchTooltipData(
+                                maxContentWidth: mapValueDimensionBased(120, 200, sWidth, sHeight),
+                                getTooltipColor: (touchedSpot) => defaultPalette.tertiary,
+                                getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
+                                  return touchedBarSpots.map((barSpot) {
+                                    final flSpot = barSpot;
+                                     if (barSpot.x ==0 || barSpot.x ==monthlyCounts.length+1 ) {
+                                       return null;
+                                     }   
+                                    
+                                        
+                                    return LineTooltipItem(
+                                      '${DateFormat.yMMMM().format(DateTime(selectedYear, selectedMonth))}\n',
+                                     GoogleFonts.lexend(
+                                        color: defaultPalette.extras[0],
+                                        fontWeight: FontWeight.bold,
+                                        fontSize:  mapValueDimensionBased(15, 20, sWidth, sHeight),
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: '${monthlyCounts.keys.toList()[(barSpot.x-1).clamp(0, monthlyCounts.length).round()].name}: \n',
+                                          style:GoogleFonts.lexend(
+                                            color: defaultPalette.primary,
+                                            fontSize:  mapValueDimensionBased(10, 20, sWidth, sHeight),
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: NumberFormat.decimalPattern('en_IN').format(monthlyCounts.values.toList()[(barSpot.x-1).clamp(0, monthlyCounts.length).round()]),
+                                          style:GoogleFonts.lexend(
+                                            color: defaultPalette.primary,
+                                            fontWeight: FontWeight.w900,
+                                            fontSize:  mapValueDimensionBased(10, 20, sWidth, sHeight),
+                                          ),
+                                        ),
+                                         
+                                      ],
+                                      textAlign: TextAlign.left
+                                    );
+                                  }).toList();
+                                },
+                              ),
+                              touchCallback:
+                                  (FlTouchEvent event, LineTouchResponse? lineTouch) {
+                                if (!event.isInterestedForInteractions ||
+                                    lineTouch == null ||
+                                    lineTouch.lineBarSpots == null) {
+                                  setState(() {
+                                    // touchedValue = -1;
+                                  });
+                                  return;
+                                }
+                              },
+                              ),
+                              extraLinesData: ExtraLinesData(
+                              ),
+                              lineBarsData: [
+                              LineChartBarData(
+                                isStepLineChart: true,
+                                spots: [
+                                  const FlSpot(0, 0),
+                                  for (final entry in monthlyCounts.entries.toList()
+                                      ..sort((a, b) => a.key.index.compareTo(b.key.index)))
+                                    FlSpot(entry.key.index.toDouble(), entry.value.toDouble()),
+                                  FlSpot(monthlyCounts.length+1, 0),
+                                ],
+                                isCurved: false,
+                                barWidth: 2,
+                                color: defaultPalette.extras[0],
+                                              
+                                belowBarData: BarAreaData(
+                                  show: true,
+                                  gradient: LinearGradient(colors: [
+                                    defaultPalette.secondary,defaultPalette.secondary,
+                                  ],
+                                  stops: [0.5, 1],
+                                  begin: Alignment(0, -1),
+                                  end: Alignment(0, 1),
+                                  ),
+                                              
+                                  spotsLine: BarAreaSpotsLine(
+                                    show: false,
+                                    flLineStyle: FlLine(
+                                      color: defaultPalette.extras[0],
+                                      strokeWidth: 1,
+                                    ),
+                                    
+                                  ),
+                                ),
+                                dotData: FlDotData(
+                                  show: true,
+                                  getDotPainter: (spot, percent, barData, index) {
+                                    
+                                      return FlDotCirclePainter(
+                                        radius: 4.5,
+                                        color: defaultPalette.primary,
+                                        strokeWidth: 2,
+                                        strokeColor: defaultPalette.extras[0],
+                                      );
+                                    
+                                  },
+                                  checkToShowDot: (spot, barData) {
+                                    return( spot.x!=0 && spot.x!=monthlyCounts.length+1 );
                                   },
                                 ),
-                                borderData: FlBorderData(
-                                  show: false,
-                                ),
-                                sectionsSpace: 1,
-                                centerSpaceRadius: mapValueDimensionBasedLockOnDesync(10, 50, sWidth, sHeight,),
-                                sections: showingSections(
-                                  billCounts: yearlyCounts,
-                                  touchedIndex: touchedIndex,
-                                  sWidth: sWidth,
-                                  sHeight: sHeight,
-                                  ),
                               ),
-                              swapAnimationDuration: Durations.short3,
+                              ],
+                              minY: 0,
+                              maxY: max(monthlyCounts.values.isNotEmpty ? monthlyCounts.values.reduce(max).toDouble(): 0, 1),
+                              borderData: FlBorderData(
+                              show: true,
+                              border: Border(
+                                left: BorderSide(
+                                  color: defaultPalette.secondary,
+                                width: 0),
+                                right: BorderSide(
+                                  color: defaultPalette.secondary,
+                                width: 0),
+                                bottom: BorderSide(
+                                  color: defaultPalette.secondary,
+                                width: 5),
+                                top: BorderSide(
+                                  color: defaultPalette.secondary,
+                                width: 12),
+                                
+                              ),
+                              ),
+                              gridData: FlGridData(
+                              show: true,
+                              drawHorizontalLine: false,
+                              drawVerticalLine: false,
+                              getDrawingHorizontalLine: (value) {
+                                if (value == 0) {
+                                  return  FlLine(
+                                    color: defaultPalette.tertiary,
+                                    strokeWidth: 2,
+                                  );
+                                } else {
+                                  return  FlLine(
+                                    color: defaultPalette.tertiary,
+                                    strokeWidth: 0.5,
+                                  );
+                                }
+                              },
+                              getDrawingVerticalLine: (value) {
+                                if (value == 0) {
+                                  return const FlLine(
+                                    color: Colors.redAccent,
+                                    strokeWidth: 10,
+                                  );
+                                } else {
+                                  return  FlLine(
+                                    color: defaultPalette.tertiary,
+                                    strokeWidth: 0.5,
+                                  );
+                                }
+                              },
+                              ),
+                              titlesData: FlTitlesData(
+                              show: true,
+                              topTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              rightTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: mapValueDimensionBased(12, 38, sWidth, sHeight),
+                                  interval: getSmartInterval( max(monthlyCounts.values.isNotEmpty ? monthlyCounts.values.reduce(max).toDouble(): 0, 1),),
+                                  getTitlesWidget:(value, meta) {
+                                    if (meta.min == value || meta.max == value) {
+                                      return const SizedBox.shrink(); // Hide first and last labels
+                                    }
+                                    return Text(value.toString()+'  ',
+                                      style: GoogleFonts.lexend(
+                                        fontSize:mapValueDimensionBased(8, 15, sWidth, sHeight),
+                                        letterSpacing: -1,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: false,
+                                  // reservedSize: 40,
+                                  interval: 1,
+                                  getTitlesWidget:(value, meta) {
+                                    if (value ==0 || value ==monthlyCounts.length+1) {
+                                      return SizedBox.shrink();
+                                    }
+                                    return Text(monthlyCounts.keys.toList()[(value-1).clamp(0, double.infinity).round()].name,
+                                      style: GoogleFonts.lexend(
+                                        fontSize:mapValueDimensionBased(10, 15, sWidth, sHeight),
+                                        letterSpacing: -1,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              ),
+                              ),
                             ),
-                          )
-                        ],
-                      ),
-            
-                      ),
-                      
-                    ],
-                  ),
-                                  
-                );
-                }
+                            )),
+                            Expanded(
+                              flex: 30,
+                              child: PieChart(
+                                PieChartData(
+                                  pieTouchData: PieTouchData(
+                                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                                      setState(() {
+                                        if (!event.isInterestedForInteractions ||
+                                            pieTouchResponse == null ||
+                                            pieTouchResponse.touchedSection == null) {
+                                          touchedIndex = -1;
+                                          return;
+                                        }
+                                        touchedIndex = pieTouchResponse
+                                            .touchedSection!.touchedSectionIndex;
+                                        // print('Touched index: $touchedIndex');
+                                      });
+                                    },
+                                  ),
+                                  borderData: FlBorderData(
+                                    show: false,
+                                  ),
+                                  sectionsSpace: 1,
+                                  centerSpaceRadius: mapValueDimensionBasedLockOnDesync(10, 50, sWidth, sHeight,),
+                                  sections: showingSections(
+                                    billCounts: yearlyCounts,
+                                    touchedIndex: touchedIndex,
+                                    sWidth: sWidth,
+                                    sHeight: sHeight,
+                                    ),
+                                ),
+                                swapAnimationDuration: Durations.short3,
+                              ),
+                            )
+                          ],
+                        ),
+              
+                        ),
+                        
+                      ],
+                    ),
+                                    
+                  );
+                  }
+                ),
               ),
-            ),
-          
-          ],
+            
+            ],
+          ),
         ),
       ),
     );
@@ -5288,7 +5442,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               
   }
   
-  Widget _getProfile(BuildContext context, WidgetRef ref, double topPadPosDistance) {
+  Widget _getProfile(BuildContext context, WidgetRef ref, double topPadPosDistance, double titleFontSize) {
+    final User? user = ref.watch(authPr).currentUser;
     var sHeight = MediaQuery.of(context).size.height;
     var sWidth = MediaQuery.of(context).size.width;
     int homeScreenTabIndex = ref.watch(homeScreenTabIndexProvider);
@@ -5301,72 +5456,634 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       duration: Durations.short2,
       // top: (topPadPosDistance * 1.08),
       height: sHeight,
-      child: AnimatedOpacity(
-        opacity: isProfileTab ? 1 : 0,
-        duration: Duration(milliseconds: 100),
-        child: Stack(
-          children: [
-            IgnorePointer(
-              ignoring: !isProfileTab,
-              child: Container(
-                // duration: Durations.extra,
-                height: sHeight,
+      child: IgnorePointer(
+        ignoring: !isProfileTab,
+        child: AnimatedOpacity(
+          opacity: isProfileTab ? 1 : 0,
+          duration: Duration(milliseconds: 100),
+          child: Stack(
+            children: [
+              IgnorePointer(
+                ignoring: !isProfileTab,
+                child: Container(
+                  // duration: Durations.extra,
+                  height: sHeight,
+                  width: sWidth,
+                  alignment: Alignment.centerRight,
+                  color: isHomeTab
+                      ? Colors.transparent
+                      : Colors.white,
+                  padding: EdgeInsets.only(
+                    top: 0,
+                  ),
+                  //BillGraph
+                  child: Opacity(
+                    opacity: 0.35,
+                    child: LineChart(LineChartData(
+                      lineBarsData: [LineChartBarData()],
+                      titlesData: const FlTitlesData(show: false),
+                      gridData: FlGridData(
+                        getDrawingVerticalLine: (value) => FlLine(
+                          color: defaultPalette.extras[0].withOpacity(0.6),
+                          dashArray:[2,8],
+                          strokeWidth: 1),
+                        getDrawingHorizontalLine: (value) => FlLine(
+                          color: defaultPalette.extras[0].withOpacity(0.6),
+                          dashArray:[2,8],
+                          strokeWidth: 1),
+                        show: true,
+                        horizontalInterval: 10,
+                        verticalInterval: 30),
+                      borderData: FlBorderData(show: false),
+                      minY: 0,
+                      maxY: 50,
+                      maxX: dateTimeNow.millisecondsSinceEpoch
+                                  .ceilToDouble() /
+                              500 +
+                          250,
+                      minX: dateTimeNow.millisecondsSinceEpoch
+                              .ceilToDouble() /
+                          500)),
+                  ),
+                    
+                ),
+              ),
+              // Positioned.fill(
+              //   child: StarryBackground(
+              //             numberOfStars: 200,
+              //             starConfig: StarConfig(
+              //               minSize: 0.1,
+              //               maxSize: 1.0,
+              //               starColor: defaultPalette.primary,
+              //               movementSpeed: 2.0,
+              //               enableTwinkling: true,
+              //             ),
+              //             backgroundGradient: LinearGradient(
+              //               colors: [ Color(0xFF000D36),defaultPalette.transparent,],
+              //               stops: [0.5,0.8]
+              //             ),
+              //             enableShootingStars: true,
+              //             shootingStarInterval: Duration(seconds: 3),
+              //           ),
+              // ),
+                
+              //   ),
+              // ),
+              // //
+              //
+              //Profile$€₹
+               AnimatedPositioned(
+                duration: Durations.medium2,
                 width: sWidth,
-                alignment: Alignment.centerRight,
-                color: isHomeTab
-                    ? Colors.transparent
-                    : Colors.white,
-                padding: EdgeInsets.only(
-                  top: 0,
+                height: mapValueDimensionBasedLockOnDesync(205, 405, sWidth, sHeight),
+                top: 90,
+                left:isProfileTab ? 110:0,
+                child: Container(
+                  padding: EdgeInsets.only(left:5, right: 20, top: 10),
+                  width: sWidth,
+                  decoration: BoxDecoration(
+                    // color:defaultPalette.secondary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text('Profile',
+                    textAlign: TextAlign.left,
+                    style: GoogleFonts.lexend(
+                      color: defaultPalette.extras[0],
+                      fontSize: mapValueDimensionBasedLockOnDesync(60, 80, sWidth, sHeight),
+                      letterSpacing: -2,
+                      fontWeight: FontWeight.w700,
+                      height: 0.6
+                    )
+                  ),
                 ),
-                //BillGraph
-                child: Opacity(
-                  opacity: 0.35,
-                  child: LineChart(LineChartData(
-                    lineBarsData: [LineChartBarData()],
-                    titlesData: const FlTitlesData(show: false),
-                    gridData: FlGridData(
-                      getDrawingVerticalLine: (value) => FlLine(
-                        color: defaultPalette.extras[0].withOpacity(0.6),
-                        dashArray:[2,8],
-                        strokeWidth: 1),
-                      getDrawingHorizontalLine: (value) => FlLine(
-                        color: defaultPalette.extras[0].withOpacity(0.6),
-                        dashArray:[2,8],
-                        strokeWidth: 1),
-                      show: true,
-                      horizontalInterval: 10,
-                      verticalInterval: 30),
-                    borderData: FlBorderData(show: false),
-                    minY: 0,
-                    maxY: 50,
-                    maxX: dateTimeNow.millisecondsSinceEpoch
-                                .ceilToDouble() /
-                            500 +
-                        250,
-                    minX: dateTimeNow.millisecondsSinceEpoch
-                            .ceilToDouble() /
-                        500)),
+              ),
+              //leftSideButtons and elevated
+              AnimatedPositioned(
+                duration: Durations.medium2,
+                bottom:isProfileTab?-90:-150,right:isProfileTab? mapValueDimensionBased(50, 60, sWidth, sHeight,useWidth: true):-sWidth/2,
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: Align(
+                      alignment: Alignment(0.8,-0.8),
+                      child: Username(text: user?.email?.split('@')[0]??'',sHeight: sHeight,sWidth: sWidth,))),
+                    Container(
+                    height: sHeight-(2*titleFontSize),
+                    width: (15+65+15+65+15+65+15+45)+mapValueDimensionBased(0, 200, sWidth, sHeight,useWidth: true),
+                       
+                    decoration: BoxDecoration(
+                      color: defaultPalette.transparent,
+                      borderRadius: BorderRadius.circular(45),
+                      border: Border.all(width: 1.5,color: defaultPalette.extras[0],),
+                      
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(width: 15+mapValueDimensionBasedLockOnDesync(0, 5, sWidth, sHeight),),
+                           Column(
+                            children: [
+                              SizedBox(height: 15+mapValueDimensionBasedLockOnDesync(0, 5, sWidth, sHeight),),
+                              //LogOUT
+                              ElevatedLayerButton(
+                              depth: 3, subfac: 3,
+                              onClick:() async {
+                                ref.read(homeScreenTabIndexProvider.notifier).state = 0;
+                                ref.read(authRepositoryProvider).googleLogOut(ref);
+                              },
+                              buttonHeight: mapValueDimensionBasedLockOnDesync(75, 130, sWidth, sHeight),
+                              buttonWidth: mapValueDimensionBasedLockOnDesync(75, 130, sWidth, sHeight),
+                              borderRadius:
+                                  BorderRadius.circular(450000),
+                              animationDuration:
+                                  const Duration(milliseconds: 100),
+                              animationCurve: Curves.ease,
+                              topDecoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(),
+                              ),
+                              topLayerChild: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(IconsaxPlusLinear.logout_1,
+                                    size: mapValueDimensionBasedLockOnDesync(55, 100, sWidth, sHeight),
+                                    color: defaultPalette.extras[0],
+                                  )
+                                ],
+                              ),
+                              baseDecoration: BoxDecoration(
+                                color: defaultPalette.extras[0],
+                                border: Border.all(),
+                              ),
+                              ),
+                              SizedBox(height: 15+mapValueDimensionBasedLockOnDesync(0, 5, sWidth, sHeight),),
+                              //Github
+                              ElevatedLayerButton(
+                                // isTapped: false,
+                                // toggleOnTap: true,
+                                depth: 3, subfac: 3,
+                                onClick: () async {
+                                  
+                                  ref.read(loginPageUrlProvider.notifier).state ="https://github.com/jepixo";
+                                  if (_controller != null && ref.read(loginPageUrlProvider).isNotEmpty) {
+                                    // startWhiteNoise();
+                                    await _controller!.loadUrl(
+                                      urlRequest: URLRequest(url: WebUri("D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
+                                    );
+                                    await Future.delayed(const Duration(milliseconds: 100));
+                                    startWhiteNoise();
+                                    await Future.delayed(const Duration(milliseconds: 400));
+                                    _controller!.loadUrl(
+                                      urlRequest: URLRequest(url: WebUri.uri(Uri.parse(ref.read(loginPageUrlProvider)))),
+                                    );
+                                    stopWhiteNoise();
+                                    await Future.delayed(const Duration(milliseconds: 100));
+                                  }
+                                  setState(() {
+                                    
+                                  });
+                                },
+                                buttonHeight: mapValueDimensionBasedLockOnDesync(75, 130, sWidth, sHeight),
+                                buttonWidth: mapValueDimensionBasedLockOnDesync(75, 130, sWidth, sHeight),
+                                borderRadius:
+                                    BorderRadius.circular(450000),
+                                animationDuration:
+                                    const Duration(milliseconds: 100),
+                                animationCurve: Curves.ease,
+                                topDecoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(),
+                                ),
+                                topLayerChild: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SVGL.software.githubLight(
+                                      width: mapValueDimensionBasedLockOnDesync(55, 100, sWidth, sHeight),
+                                      height: mapValueDimensionBasedLockOnDesync(55, 100, sWidth, sHeight))
+                                  ],
+                                ),
+                                baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  border: Border.all(),
+                                ),
+                              ),
+                              SizedBox(height: 15+mapValueDimensionBasedLockOnDesync(0, 5, sWidth, sHeight),),
+                              Expanded(child: SizedBox())
+                            ],
+                          ),
+                           SizedBox(width: mapValueDimensionBasedLockOnDesync(25, 35, sWidth, sHeight),),
+                          Expanded(
+                             child: Container(
+                              margin: EdgeInsets.all(0)
+                              .copyWith(top: 15+mapValueDimensionBasedLockOnDesync(0, 5, sWidth, sHeight)),
+                               child: Column(
+                                 children: [
+                                  Expanded(
+                                    child: Text(
+                                      ' ${user?.email??''}',
+                                      maxLines:1,
+                                      overflow:TextOverflow.ellipsis,
+                                      textAlign: TextAlign.start,
+                                      style: GoogleFonts.lexend(
+                                        fontSize: mapValueDimensionBased(12, 25, sWidth, sHeight, ),
+                                        color: defaultPalette.extras[0],
+                                        letterSpacing: mapValueDimensionBased(3, 10, sWidth, sHeight,),
+                                        height: 1,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                  ],
+                               ),
+                             ),
+                           ),  
+                          SizedBox(width: 15+mapValueDimensionBasedLockOnDesync(0, 5, sWidth, sHeight),),
+                          
+                          
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                  
+              ),
+              //TVTV
+              AnimatedPositioned(
+                duration: Durations.medium2,
+                bottom:isProfileTab?-90:-400,left: 90,
+                child:AnimatedRotation(
+                  duration: Durations.medium2,
+                  turns: isProfileTab? 0:-0.1,
+                  child: ElevatedLayerButton(
+                    // isTapped: false,
+                    // toggleOnTap: true,
+                    depth:4, subfac: 4,
+                    onClick: () {
+                    },
+                    buttonWidth: (sWidth -(15+65+15+65+15+65+15+65+65)-80-mapValueDimensionBased(0, 200, sWidth, sHeight,useWidth: true)).clamp(0, double.infinity),
+                    buttonHeight: sHeight-(2*titleFontSize),
+                    borderRadius:
+                        BorderRadius.circular(35),
+                    animationDuration:
+                        const Duration(milliseconds: 100),
+                    animationCurve: Curves.ease,
+                    topDecoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(),
+                    ),
+                    topLayerChild: Container(
+                      padding: const EdgeInsets.all(9),
+                      color: Colors.white.withOpacity(0.2),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 70,
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius:BorderRadius.circular(30),
+                                    child: 
+                                    InAppWebView(
+                                      initialUrlRequest: URLRequest(url: WebUri.uri(Uri.parse(ref.watch(loginPageUrlProvider)))),
+                                      onWebViewCreated: (controller) async {
+                                        _controller = controller;
+                                        
+                                        print("WebView created");
+                                      },
+                                      onLoadStop: (controller, url) async {
+                                        
+                                        print("Loaded: $url");
+                                        await controller.evaluateJavascript(source: "document.documentElement.style.zoom = '100%';");
+                                        
+                                      },
+                                      initialSettings: InAppWebViewSettings(
+                                        textZoom: 50,
+                                        horizontalScrollBarEnabled: false,
+                                        verticalScrollBarEnabled: false,
+                                        builtInZoomControls: true,
+                                        pageZoom: 10,
+                                        supportZoom: true,
+                                        displayZoomControls: true,
+                                        maximumZoomScale: 0.5
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 50,)
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            flex: 30,
+                            child: Stack(
+                              children: [
+                                //speaker graph of the TV
+                                Container(
+                                  margin: EdgeInsets.all(0).copyWith(left: 10),
+                                  decoration: BoxDecoration(
+                                    color: defaultPalette.secondary.withAlpha(50),
+                                    border: Border.all(width: 0.2),
+                                    borderRadius: BorderRadius.circular(30)
+                                  ),
+                                  child: ClipRRect(
+                              borderRadius:BorderRadius.circular(30),
+                                    child: Opacity(
+                                      opacity: 0.35,
+                                      child: LineChart(LineChartData(
+                                        lineBarsData: [LineChartBarData()],
+                                        titlesData: const FlTitlesData(show: false),
+                                        gridData: FlGridData(
+                                          getDrawingVerticalLine: (value) => FlLine(
+                                            color: defaultPalette.extras[0].withOpacity(0.7),
+                                            dashArray:[2,8],
+                                            strokeWidth: 0.5),
+                                          getDrawingHorizontalLine: (value) => FlLine(
+                                            color: defaultPalette.extras[0].withOpacity(0.7),
+                                            dashArray:[2,8],
+                                            strokeWidth: 0.5),
+                                          show: true,
+                                          horizontalInterval: 1,
+                                          verticalInterval: 60),
+                                        borderData: FlBorderData(show: false),
+                                        minY: 0,
+                                        maxY: 50,
+                                        maxX: DateTime.now().millisecondsSinceEpoch
+                                                    .ceilToDouble() /
+                                                500 +
+                                            250,
+                                        minX: DateTime.now().millisecondsSinceEpoch
+                                                .ceilToDouble() /
+                                            500)),
+                                    ),
+                                  ),
+                                ),
+                              
+                                Column(
+                                  children: [
+                                    SizedBox(height: mapValueDimensionBased(25, 55, sWidth, sHeight,),),
+                                    Row(
+                                      children: [
+                                        SizedBox(width: mapValueDimensionBased(5, 1, sWidth, sHeight,),),
+                                        Expanded(
+                                          child: Text(
+                                            ' FLUX',
+                                            maxLines:1,
+                                            overflow:TextOverflow.ellipsis,
+                                            textAlign: TextAlign.center,
+                                            style: GoogleFonts.lexend(
+                                              fontSize: mapValueDimensionBased(12, 35, sWidth, sHeight, ),
+                                              color: defaultPalette.extras[0],
+                                              letterSpacing: mapValueDimensionBased(5, 15, sWidth, sHeight,),
+                                              height: 1,
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Expanded(child: SizedBox()),
+                                    Row(
+                                      children: [
+                                        SizedBox(width: 10,),
+                                        Expanded(
+                                          child: Center(
+                                            child: ElevatedLayerButton(
+                                            // isTapped: false,
+                                            // toggleOnTap: true,
+                                            depth: 3, subfac: 3,
+                                            onClick:() async {
+                                              ref.read(loginPageUrlProvider.notifier).state =loginPageUrls[Random().nextInt(loginPageUrls.length-1)];
+                                              if (_controller != null && ref.read(loginPageUrlProvider).isNotEmpty) {
+                                                  // startWhiteNoise();
+                                                  await _controller!.loadUrl(
+                                                    urlRequest: URLRequest(url: WebUri("D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
+                                                  );
+                                                  await Future.delayed(const Duration(milliseconds: 100));
+                                                  startWhiteNoise();
+                                                  await Future.delayed(const Duration(milliseconds: 400));
+                                                  _controller!.loadUrl(
+                                                    urlRequest: URLRequest(url: WebUri.uri(Uri.parse(ref.read(loginPageUrlProvider)))),
+                                                  );
+                                                  await Future.delayed(const Duration(milliseconds: 100));
+                                                  stopWhiteNoise();
+                                                }
+                                                setState(() {
+                                                  
+                                                });
+                                            },
+                                            buttonHeight: mapValueDimensionBasedLockOnDesync(30, 80, sWidth, sHeight),
+                                            buttonWidth: mapValueDimensionBasedLockOnDesync(30, 80, sWidth, sHeight),
+                                            borderRadius:
+                                                BorderRadius.circular(450000),
+                                            animationDuration:
+                                                const Duration(milliseconds: 100),
+                                            animationCurve: Curves.ease,
+                                            topDecoration: BoxDecoration(
+                                              color: Colors.white,
+                                              border: Border.all(),
+                                            ),
+                                            topLayerChild: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(TablerIcons.rosette_filled,size: mapValueDimensionBasedLockOnDesync(15, 45, sWidth, sHeight),)
+                                              ],
+                                            ),
+                                            baseDecoration: BoxDecoration(
+                                              color: defaultPalette.extras[0],
+                                              border: Border.all(),
+                                            ),
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Center(
+                                            child: ElevatedLayerButton(
+                                            // isTapped: false,
+                                            // toggleOnTap: true,
+                                            depth: 3, subfac: 3,
+                                            onClick: () async {
+                                              final urls = loginPageUrls;
+                                              if (urls.isEmpty) return; // nothing to do
+                          
+                                              final current = ref.read(loginPageUrlProvider);
+                                              final idx = urls.indexOf(current); // -1 if not found
+                                              final nextIndex = (idx == -1) ? 0 : (idx + 1) % urls.length;
+                          
+                                              // update provider
+                                              ref.read(loginPageUrlProvider.notifier).state = urls[nextIndex];
+                          
+                                              // load into webview if available
+                                              final newUrl = ref.read(loginPageUrlProvider);
+                                              if (_controller != null && newUrl.isNotEmpty) {
+                                                // startWhiteNoise();
+                                                await _controller!.loadUrl(
+                                                  urlRequest: URLRequest(url: WebUri("D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
+                                                );
+                                                await Future.delayed(const Duration(milliseconds: 100));
+                                                startWhiteNoise();
+                                                await Future.delayed(const Duration(milliseconds: 400));
+                                                _controller!.loadUrl(
+                                                  urlRequest: URLRequest(url: WebUri.uri(Uri.parse(newUrl))),
+                                                );
+                                                await Future.delayed(const Duration(milliseconds: 100));
+                                                stopWhiteNoise();
+                                              }
+                          
+                                              setState(() {}); // if you still need local UI refresh
+                                            },
+                          
+                                            buttonHeight: mapValueDimensionBasedLockOnDesync(30, 80, sWidth, sHeight),
+                                            buttonWidth: mapValueDimensionBasedLockOnDesync(30, 80, sWidth, sHeight),
+                                            borderRadius:
+                                                BorderRadius.circular(450000),
+                                            animationDuration:
+                                                const Duration(milliseconds: 100),
+                                            animationCurve: Curves.ease,
+                                            topDecoration: BoxDecoration(
+                                              color: Colors.white,
+                                              border: Border.all(),
+                                            ),
+                                            topLayerChild: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(TablerIcons.blob_filled,size:  mapValueDimensionBasedLockOnDesync(14, 40, sWidth, sHeight),)
+                                              ],
+                                            ),
+                                            baseDecoration: BoxDecoration(
+                                              color: defaultPalette.extras[0],
+                                              border: Border.all(),
+                                            ),
+                                            ),
+                                          ),
+                                        ),
+                                        
+                                        SizedBox(width: mapValueDimensionBased(0, 0, sWidth, sHeight,),),
+                                      ],
+                                    ),
+                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(10, 50, sWidth, sHeight),),
+                                    GestureDetector(
+                                      onTap: () {
+                                        final url = ref.read(loginPageUrlProvider);
+                                        Clipboard.setData(ClipboardData(text: url));
+                                      },
+                                      child: Container(
+                                            height:mapValueDimensionBasedLockOnDesync(15, 50, sWidth, sHeight),
+                                            margin: EdgeInsets.all(0).copyWith(left: 10+mapValueDimensionBasedLockOnDesync(6, 20, sWidth, sHeight),right: mapValueDimensionBasedLockOnDesync(6, 20, sWidth, sHeight)),
+                                            decoration: BoxDecoration(
+                                              color: defaultPalette.extras[0],
+                                              borderRadius: BorderRadius.circular(50)
+                                            ),
+                                            padding: EdgeInsets.all(0).copyWith(left: 10,right: 10),
+                                            alignment: Alignment(0,0),
+                                            child:
+                                             Row(
+                                               children: [
+                                                Text(
+                                                  ' //',
+                                                  maxLines:1,
+                                                  overflow:TextOverflow.ellipsis,
+                                                  textAlign: TextAlign.center,
+                                                  style: GoogleFonts.lexend(
+                                                    fontSize: mapValueDimensionBased(8, 25, sWidth, sHeight, ),
+                                                    color: defaultPalette.primary,
+                                                    letterSpacing:-1,
+                                                    height: 1,
+                                                    fontWeight: FontWeight.w400,
+                                                  ),
+                                                ),
+                                                 Expanded(
+                                                   child: Text(
+                                                    ref.watch(loginPageUrlProvider),
+                                                    maxLines:1,
+                                                    overflow:TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.redactedScript(
+                                                      fontSize: mapValueDimensionBased(8, 25, sWidth, sHeight, ),
+                                                      color: defaultPalette.primary,
+                                                      letterSpacing:-1,
+                                                      height: 1,
+                                                      fontWeight: FontWeight.w400,
+                                                    ),
+                                                                                             ),
+                                                 ),
+                                               ],
+                                             ),
+                                          ),
+                                    ),
+                                    SizedBox(height: 90,),
+                                  ],
+                                ),
+                              
+                              ],
+                            ))
+                        ],
+                      ),
+                    ),
+                      
+                    baseDecoration: BoxDecoration(
+                      color: defaultPalette.extras[0],
+                    ),
+                  ),
+                ),
+                  ),
+              //BIG PFP BUTTON
+              AnimatedPositioned(
+                duration: Durations.extralong4,
+                curve: Curves.bounceOut,
+                bottom:-40,right:isProfileTab? 5:400,
+                child:AnimatedRotation(
+                  duration: Durations.extralong4,
+                  turns: isProfileTab? 0:-1,
+                  curve: Curves.bounceOut,
+              child: ElevatedLayerButton(
+                // isTapped: false,
+                // toggleOnTap: true,
+                depth: 3, subfac: 3,
+                onClick:() async {
+                },
+                buttonHeight:mapValueDimensionBasedLockOnDesync(200, 350, sWidth, sHeight),
+                buttonWidth: mapValueDimensionBasedLockOnDesync(200, 350, sWidth, sHeight),
+                borderRadius:
+                    BorderRadius.circular(450000000),
+                animationDuration:
+                    const Duration(milliseconds: 100),
+                animationCurve: Curves.ease,
+                topDecoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(),
+                ),
+                topLayerChild: ClipRRect(
+                  borderRadius:
+                    BorderRadius.circular(45),
+                  child: Stack(
+                    children: [
+                      
+                      Container(
+                        width: mapValueDimensionBasedLockOnDesync(150, 280, sWidth, sHeight),
+                        height: mapValueDimensionBasedLockOnDesync(150, 280, sWidth, sHeight),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          image: DecorationImage(
+                            //
+                            // Background Blurred Image
+                            //
+                            image: NetworkImage(user?.photoURL ?? ''),
+                            fit: BoxFit.cover,
+                          ),),
+                        )
+                    ],
+                  )
+                  ),
+                baseDecoration: BoxDecoration(
+                  color: defaultPalette.extras[0],
+                  border: Border.all(),
+                ),
               ),
             ),
-              
-            //   ),
-            // ),
-            // //
-            //
-            //Bill$€₹
-            AnimatedPositioned(
-              duration: Durations.medium2,
-              width: sWidth-70,
-              height: (sHeight -topPadPosDistance),
-              top: topPadPosDistance,
-              left: 70,
-              child: AccountInfo(),
             ),
             
-          ],
+            ],
+          ),
         ),
       ),
     );

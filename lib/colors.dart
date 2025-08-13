@@ -133,15 +133,16 @@ ColorPalette againPalette = ColorPalette(
       Color(0xff293132),//0
       Color(0xffF9DC5C),//1
       Color(0xffe94f37),//2
-      Color(0xff9D75CB),//3
+      Colors.blue,//3
       Color(0xffD62828),//4
       Color(0xff6279B8),//5
       Color(0xff083d77),//6
       Color(0xff931F1D),//7
       Color(0xffA594F9),//8
+      Colors.red,//9
       
+      Color(0xff4C1A57),//10
       
-      Color(0xff4C1A57),//9
-      
-      Color(0xff401F3E),//10
+      Color(0xff401F3E),//11
+      Color(0xff9D75CB),//12
     ]);
