@@ -90,7 +90,9 @@ class SheetTableBox extends SheetItem {
     return map;
     } 
 
-  factory SheetTableBox.fromMap(Map<String, dynamic> map) => SheetTableBox(
+  factory SheetTableBox.fromMap(Map<String, dynamic> map) {
+    print('in SheetTableFromMap: '+map['id']);
+    return SheetTableBox(
         id: map['id'],
         parentId: map['parentId'],
         indexPath: IndexPath.fromJson(map['indexPath']),
@@ -113,7 +115,7 @@ class SheetTableBox extends SheetItem {
             SuperDecorationBox.fromMap(map['sheetTablebgDecoration']),
         name: map['name'],
         expand: map['expand'],
-      );
+      );}
   @override
   String toJson() => jsonEncode(toMap());
 
@@ -174,21 +176,17 @@ class SheetTable extends SheetItem {
       );
   }
   
-  // 🧠 Private cache map
-  Map<String, SheetTableCell>? _cellLookupMap;
 
-  // ⚡️ Build once, lazy init
-  Map<String, SheetTableCell> get _lookupMap {
-    return _cellLookupMap ??= {
-      for (final row in cellData)
-        for (final cell in row) cell.id: cell
-    };
-  }
 
   // ✅ Public access method
   SheetTableCell? getCellFromLabel(String label) {
-    return _lookupMap[label];
+    final lookupMap = {
+      for (final row in cellData)
+        for (final cell in row) cell.id: cell
+    };
+    return lookupMap[label];
   }
+
 
 }
 

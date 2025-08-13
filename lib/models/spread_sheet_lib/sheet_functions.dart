@@ -2,11 +2,7 @@
 
 import 'dart:convert';
 import 'dart:math';
-import 'package:intl/intl.dart';
-import 'package:billblaze/colors.dart';
-import 'package:billblaze/components/elevated_button.dart';
-import 'package:billblaze/models/layout_model.dart';
-import 'package:billblaze/util/numeric_input_formatter.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
@@ -15,14 +11,19 @@ import 'package:flutter_quill/quill_delta.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
+import 'package:mesh_gradient/mesh_gradient.dart';
+import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 
+import 'package:billblaze/colors.dart';
+import 'package:billblaze/components/elevated_button.dart';
 import 'package:billblaze/home.dart';
 import 'package:billblaze/models/input_block.dart';
+import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/screens/layout_designer.dart' as ly;
-import 'package:mesh_gradient/mesh_gradient.dart';
-import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
+import 'package:billblaze/util/numeric_input_formatter.dart';
 
 part 'sheet_functions.g.dart';
 
@@ -42,6 +43,7 @@ class SheetFunction {
   {
     List<SheetListBox>? spreadSheet,
     Map<List<InputBlock>, int>? visited,
+    bool returnFormatted = false,
   }) {
     throw UnimplementedError('Subclasses must override result()');
   }
@@ -101,6 +103,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
     Function buildCombinedQuillConfiguration, {
     List<SheetListBox>? spreadSheet,
     Map<List<InputBlock>, int>? visited,
+    bool returnFormatted = false,
   }) {
     visited ??= {};
     visited[inputBlocks] = (visited[inputBlocks] ?? 0) + 1;
@@ -121,6 +124,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
         break;
       case 'product':
         newText = _product(values).toString();
+        print(newText);
         break;
       case 'count':
         newText = count.toString();
@@ -228,7 +232,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
     }
 
     // Preserve styling in resultJson
-    newText = applyFormatting(newText);
+    if(returnFormatted)newText = applyFormatting(newText);
     final oldDelta = Delta.fromJson(resultJson);
     final oldOps = oldDelta.toList();
     final newDelta = _applyStylingFromOldOps(oldOps, newText);
@@ -323,7 +327,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
   // ──────────────────────────────
   double _sum(List<double> values) => values.fold(0.0, (a, b) => a + b);
   double _product(List<double> values) =>
-      values.fold(1.0, (a, b) => a * b);
+      values.fold(1, (a, b) => a * b);
   double _average(List<double> values) =>
       values.isEmpty ? 0.0 : _sum(values) / values.length;
 
@@ -482,14 +486,26 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
         'formatter': formatter,
       };
 
-  factory UniStatFunction.fromMap(Map<String, dynamic> map) => UniStatFunction(
+  factory UniStatFunction.fromMap(Map<String, dynamic> map){ 
+    print('in UniStatFunctionFromMap: '+map['resultJson'].toString());
+    return UniStatFunction(
         inputBlocks:  (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
             .toList(),
-        resultJson:  map['resultJson'],
+        resultJson:() {
+          final result = map['resultJson'];
+          if (result is List) {
+            return result.map((e) {
+              if (e is Map<String, dynamic>) return e;
+              if (e is Map) return Map<String, dynamic>.from(e);
+              throw Exception('Invalid resultJson entry: $e');
+            }).toList();
+          }
+          return [{'insert': ''}];
+        }(),
         func: map['func'],
         formatter: map['formatter'],
-      );
+      );}
   
   static final Map<String, IconData> availableFunctions = {
     'sum': TablerIcons.sum,
@@ -592,6 +608,20 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
   ).show(context);
   }
   
+
+  UniStatFunction copyWith({
+    List<InputBlock>? inputBlocks,
+    List<Map<String, dynamic>>? resultJson,
+    String? func,
+    Map<String, dynamic>? formatter,
+  }) {
+    return UniStatFunction(
+      inputBlocks: inputBlocks ?? this.inputBlocks,
+      resultJson: resultJson ?? this.resultJson,
+      func: func ?? this.func,
+      formatter: formatter ?? this.formatter,
+    );
+  }
 }
 
 @HiveType(typeId:19)
@@ -625,8 +655,9 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
    {
     List<SheetListBox>? spreadSheet,
     Map<List<InputBlock>, int>? visited,
+    bool returnFormatted = false,
   }) {
-    return UniStatFunction(inputBlocks:inputBlocks, func:func, resultJson: resultJson).result(getItemAtPath, buildCombinedQuillConfiguration);
+    return UniStatFunction(inputBlocks:inputBlocks, func:func, resultJson: resultJson).result(getItemAtPath, buildCombinedQuillConfiguration, returnFormatted: returnFormatted);
   }
 
   @override
@@ -640,7 +671,9 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
         'resultJson': resultJson,
       };
 
-  factory ColumnFunction.fromMap(Map<String, dynamic> map) => ColumnFunction(
+  factory ColumnFunction.fromMap(Map<String, dynamic> map) {
+    print('in ColumnFunctionFromMap: '+map['resultJson'].toString());
+    return ColumnFunction(
       inputBlocks: 
         (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
@@ -648,9 +681,19 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
         func:
             map['func'],
         axisLabel: map['axisLabel'],
-        resultJson: map['resultJson'],
+        resultJson: () {
+          final result = map['resultJson'];
+          if (result is List) {
+            return result.map((e) {
+              if (e is Map<String, dynamic>) return e;
+              if (e is Map) return Map<String, dynamic>.from(e);
+              throw Exception('Invalid resultJson entry: $e');
+            }).toList();
+          }
+          return [{'insert': ''}];
+        }(),
 
-      );
+      );}
 
     void switchFunc(BuildContext context, Function setStateCallback, Offset position) {
     final entries = UniStatFunction.functionCategories.entries.map((category) {
@@ -736,7 +779,7 @@ class InputBlockFunction extends SheetFunction {
   ):super(0,'inputBlock');
 
   @override
-  result(Function getItemAtPath, Function buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet,Map<List<InputBlock>, int>? visited,}) {
+  result(Function getItemAtPath, Function buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet,Map<List<InputBlock>, int>? visited,bool returnFormatted = false,}) {
     if (spreadSheet!=null) {
       return buildCombinedTextFromBlocks(inputBlocks, spreadSheet);
     }
@@ -760,15 +803,15 @@ class InputBlockFunction extends SheetFunction {
 
       };
 
-  factory InputBlockFunction.fromMap(Map<String, dynamic> map) => InputBlockFunction(
+  factory InputBlockFunction.fromMap(Map<String, dynamic> map) {
+    print('in InputBlockFunctionFromMap: '+map['label']);
+    return InputBlockFunction(
         inputBlocks: (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
             .toList(),
         label: map['label'],
         
-      );
-
-  get get => null;
+      );}
 
 }
 
@@ -793,6 +836,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
     required this.inputBlocksY,
     this.resultJson = const [],
     required this.func,
+    this.isX = true,
   }) : super(1, 'bistat');
 
   @override
@@ -801,6 +845,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
     Function buildCombinedQuillConfiguration, {
     List<SheetListBox>? spreadSheet,
     Map<List<InputBlock>, int>? visited,
+    bool returnFormatted = false,
   }) {
     visited ??= {};
     visited[inputBlocksX] = (visited[inputBlocksX] ?? 0) + 1;
@@ -820,7 +865,9 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
     switch (func.toLowerCase()) {
       case 'difference':
         // element-wise X - Y
-        newText = _zip(valuesX, valuesY).map((pair) => (pair.$1 - pair.$2).toString()).join(', ');
+        final sumX = valuesX.fold<double>(0, (a, b) => a + b);
+        final sumY = valuesY.fold<double>(0, (a, b) => a + b);
+        newText = (sumX-sumY).toString();
         break;
       case 'percentage':
         final sumX = valuesX.fold<double>(0, (a, b) => a + b);
@@ -941,8 +988,10 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
             getItemAtPath,
             buildCombinedQuillConfiguration,
             spreadSheet: spreadSheet,
-            visited: Map.from(visited!),
+            visited: Map.from(visited??{}),
+            returnFormatted: false
           );
+          // print('RAWW: $raw');
         }
         baseCount++;
       } else {
@@ -952,8 +1001,8 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
 
         if (item is SheetText) {
           raw = item.textEditorConfigurations.controller.document
-              .toPlainText()
-              .trim();
+              .toPlainText();
+          
         } else if (item is SheetTextBox) {
           raw = Document.fromDelta(
                   Delta.fromJson(item.textEditorController as List))
@@ -970,8 +1019,11 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
         final parsed = double.tryParse(raw);
         if (parsed != null) values.add(parsed);
       } else if (raw is Document) {
+        // print('RAWW: ${raw.toPlainText()}');
         final parsed = double.tryParse(raw.toPlainText().trim());
         if (parsed != null) values.add(parsed);
+        
+        // print('PPAWW: $parsed');
       } else {
         values.add(0);
       }
@@ -1091,16 +1143,28 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
         'func': func,
       };
 
-  factory BiStatFunction.fromMap(Map<String, dynamic> map) => BiStatFunction(
+  factory BiStatFunction.fromMap(Map<String, dynamic> map) {
+    print('in BiStatFunctionFromMap: '+map['resultJson'].toString());
+    return BiStatFunction(
         inputBlocksX: (map['inputBlocksX'] as List)
             .map((e) => InputBlock.fromMap(e))
             .toList(),
         inputBlocksY: (map['inputBlocksY'] as List)
             .map((e) => InputBlock.fromMap(e))
             .toList(),
-        resultJson: map['resultJson'],
+        resultJson:() {
+          final result = map['resultJson'];
+          if (result is List) {
+            return result.map((e) {
+              if (e is Map<String, dynamic>) return e;
+              if (e is Map) return Map<String, dynamic>.from(e);
+              throw Exception('Invalid resultJson entry: $e');
+            }).toList();
+          }
+          return [{'insert': ''}];
+        }(),
         func: map['func'],
-      );
+      );}
 
   List<Widget> buildPrimaryFunctionBlock(
     BuildContext context,
@@ -2090,6 +2154,22 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
   }
   
 
+
+  BiStatFunction copyWith({
+    List<InputBlock>? inputBlocksX,
+    List<InputBlock>? inputBlocksY,
+    List<Map<String, dynamic>>? resultJson,
+    String? func,
+    bool? isX,
+  }) {
+    return BiStatFunction(
+      inputBlocksX: inputBlocksX ?? this.inputBlocksX,
+      inputBlocksY: inputBlocksY ?? this.inputBlocksY,
+      resultJson: resultJson ?? this.resultJson,
+      func: func ?? this.func,
+      isX: isX ?? this.isX,
+    );
+  }
 }
 
 ///

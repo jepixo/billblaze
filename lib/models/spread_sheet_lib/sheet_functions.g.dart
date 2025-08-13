@@ -109,13 +109,14 @@ class ColumnFunctionAdapter extends TypeAdapter<ColumnFunction> {
       resultJson: (fields[5] as List)
           .map((dynamic e) => (e as Map).cast<String, dynamic>())
           .toList(),
+      lockMode: fields[6] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, ColumnFunction obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(2)
       ..write(obj.inputBlocks)
       ..writeByte(3)
@@ -124,6 +125,8 @@ class ColumnFunctionAdapter extends TypeAdapter<ColumnFunction> {
       ..write(obj.axisLabel)
       ..writeByte(5)
       ..write(obj.resultJson)
+      ..writeByte(6)
+      ..write(obj.lockMode)
       ..writeByte(0)
       ..write(obj.returnType)
       ..writeByte(1)

@@ -11,10 +11,11 @@ import 'package:flutter/material.dart';
 typedef _LetIndexPage = bool Function(int value);
 
 class CurvedNavigationBar extends StatefulWidget {
-  final List<Icon> items;
+  final List<Widget> items;
   final int index;
   final Color color;
   final Color? buttonBackgroundColor;
+  final Color buttonBaseDecorationColor;
   final Color backgroundColor;
   final Color buttonIconColor;
   final ValueChanged<int>? onTap;
@@ -45,6 +46,7 @@ class CurvedNavigationBar extends StatefulWidget {
     _LetIndexPage? letIndexChange,
     this.animationCurve = Curves.easeOut,
     this.animationDuration = const Duration(milliseconds: 600),
+    this.buttonBaseDecorationColor = const Color(0xff293132),
     this.height = 75.0,
     this.maxWidth,
     this.radius = 10.0,
@@ -71,7 +73,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
   late int _endingIndex;
   late double _pos;
   double _buttonHide = 0;
-  late Icon _icon;
+  late Widget _icon;
   late AnimationController _animationController;
   late int _length;
 
@@ -171,15 +173,12 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                           ),
                           topLayerChild: Transform.rotate(
                             angle: -pi/2,
-                            child: Icon(
-                              _icon.icon,
-                              color: widget.buttonIconColor,
-                              size: _icon.size,
-                            ),
+                            child:Icon((_icon as Icon).icon,color: widget.buttonIconColor,size: (_icon as Icon).size,)
+                              
                           ),
                           baseDecoration: BoxDecoration(
-                            color: widget.color,
-                            border: Border.all(),
+                            color: widget.buttonBaseDecorationColor,
+                            // border: Border.all(),
                           ),
                           subfac: 5,
                           depth: 5,

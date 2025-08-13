@@ -69,13 +69,7 @@ class AuthRepository {
   }
 
   Future<void> _googleLoginWindows(WidgetRef ref) async {
-    final gap.GoogleSignIn _googleSignIn = gap.GoogleSignIn(
-      params: gap.GoogleSignInParams(
-        clientId: gSignInClientId,
-        clientSecret: gSignInClientSecret,
-        redirectPort: 3000,
-      ),
-    );
+    final gap.GoogleSignIn _googleSignIn = ref.read(googleSignInProvider);
 
     try {
       final creds = await _googleSignIn.signInOnline();
@@ -101,11 +95,47 @@ class AuthRepository {
     }
   } //
   //
-  //
-  Future<void> googleLogOut() async {
-    await _googleSignIn.signOut();
-    await _auth.signOut();
+  /// Sign in with email + password
+  Future<AuthResult> emailPasswordSignIn({
+    required String email,
+    required String password,
+  }) async {
+    if (email.trim().isEmpty || password.isEmpty) return AuthResult.abort;
+
+    try {
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (userCredential.user != null) {
+        print('Email/password sign-in success: ${userCredential.user!.email}');
+        return AuthResult.success;
+      } else {
+        return AuthResult.failed;
+      }
+    } on FirebaseAuthException catch (e) {
+      print('FirebaseAuthException in emailPasswordSignIn: ${e.code} ${e.message}');
+      return AuthResult.failed;
+    } catch (e, st) {
+      print('Unexpected error in emailPasswordSignIn: $e\n$st');
+      return AuthResult.failed;
+    }
   }
+  
+  Future<void> googleLogOut(WidgetRef ref) async {
+  try {
+    final googleSignIn = ref.read(googleSignInProvider);
+    await googleSignIn.signOut(); // Sign out from Google
+    await ref.read(authPr).signOut(); // Sign out from FirebaseAuth
+    print('Signed out successfully');
+  } catch (e, st) {
+    print('Error signing out: $e');
+    print(st);
+  }
+}
+
+  
 
   Future<String> promptForUsername(BuildContext context) async {
     String username = '';

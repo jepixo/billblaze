@@ -57,6 +57,9 @@ class InputBlock {
     }
 
   factory InputBlock.fromMap(Map<String, dynamic> map) {
+    print('in InputBlockFromMap: '+map['id']);
+    print('in InputBlockFromMap: '+map['blockIndex'].toString());
+    print('in InputBlockFromMap: '+map['function'].toString());
     return InputBlock(
       indexPath: map['indexPath'] != null
           ? IndexPath.fromJson(map['indexPath'])

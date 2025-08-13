@@ -315,6 +315,7 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref, Over
     print("✅ LayoutModelBox loaded from Google Sheet and Docs");
     ref.read(processMessageProvider.notifier).state = "✅ Layouts&Bills loaded from Google Drive.";
     overlay?.markNeedsBuild();
+    overlay?.remove();
     return box;
   } catch (e) {
     print("❌ Failed to fetch LayoutModels: $e");
