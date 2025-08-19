@@ -24,7 +24,7 @@ class DocumentPropertiesBoxAdapter extends TypeAdapter<DocumentPropertiesBox> {
       marginBottomController: fields[4] as String,
       marginTopController: fields[5] as String,
       orientationController: fields[6] as bool,
-      pageFormatController: fields[7] as String,
+      pageFormatController: (fields[7] as Map).cast<String, dynamic>(),
       useIndividualMargins: fields[8] as bool,
       pageColor: fields[9] as String,
     );

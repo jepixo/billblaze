@@ -158,6 +158,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                         offset: Offset(2, ((_buttonHide - 1) * 80)),
                         // transformHitTests: true,
                         child: ElevatedLayerButton(
+                          // isNavigation:true,
                           onClick: () => setState(() {
                             // print('object');
                           }),

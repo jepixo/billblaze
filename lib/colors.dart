@@ -141,7 +141,7 @@ ColorPalette againPalette = ColorPalette(
       Color(0xffA594F9),//8
       Colors.red,//9
       
-      Color(0xff4C1A57),//10
+      Color(0xffF6AE2D),//10
       
       Color(0xff401F3E),//11
       Color(0xff9D75CB),//12
