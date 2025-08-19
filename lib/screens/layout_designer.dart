@@ -18416,7 +18416,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     ],
                                   ),
                                   //FORMATS TITLE
-                            
                                   Container(
                                     width: sWidth * wH2DividerPosition,
                                     height: 15,
@@ -18458,10 +18457,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             theme: PieTheme(
                                                 rightClickShowsMenu: true,
                                                 buttonSize:
-                                                    ((sWidth * wH2DividerPosition -
-                                                                65) /
-                                                            6)
-                                                        .clamp(40, 400),
+                                                    ((sWidth * wH2DividerPosition -  65) / 6).clamp(40, 400),
                                                 spacing: 1,
                                                 radius:
                                                     ((sWidth * wH2DividerPosition -
@@ -18682,7 +18678,6 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     ),
                                   ),
                             
-                                 
                                   // STYLES TITLE
                                   Container(
                                     width: sWidth * wH2DividerPosition - 35,

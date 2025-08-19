@@ -326,24 +326,6 @@ class _LoginSignUpState extends State<LoginSignUp> {
                         ElevatedLayerButton(
                         depth: 3, subfac: 3,
                         onClick:() async {
-                          // ref.read(loginPageUrlProvider.notifier).state ="https://www.youtube.com/watch?v=XY4jS4X09zY&t=148s&pp=0gcJCTAAlc8ueATH";
-                          // if (_controller != null && ref.read(loginPageUrlProvider).isNotEmpty) {
-                          //     // startWhiteNoise();
-                          //     await _controller!.loadUrl(
-                          //       urlRequest: URLRequest(url: WebUri("D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
-                          //     );
-                          //     await Future.delayed(const Duration(milliseconds: 100));
-                          //     startWhiteNoise();
-                          //     await Future.delayed(const Duration(milliseconds: 400));
-                          //     await _controller!.loadUrl(
-                          //       urlRequest: URLRequest(url: WebUri.uri(Uri.parse(ref.read(loginPageUrlProvider)))),
-                          //     );
-                          //     stopWhiteNoise();
-                          //     await Future.delayed(const Duration(milliseconds: 100));
-                          //   }
-                          //   setState(() {
-                              
-                          //   });
                           if (isEmailValid(emailFieldController.text) && passwordFieldController.text.isNotEmpty) {
                             setState(() {
                               errorText = 'be a darling & use google login 🤗✨';

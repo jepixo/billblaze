@@ -1,4 +1,6 @@
+import 'package:billblaze/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:mesh_gradient/mesh_gradient.dart';
 
 class ElevatedLayerButton extends StatefulWidget {
   final double? buttonHeight;
@@ -16,6 +18,7 @@ class ElevatedLayerButton extends StatefulWidget {
   final double depth;
   final bool extrudeLeft;
   final Alignment topAlignment;
+  final bool isNavigation;
 
   const ElevatedLayerButton({
     Key? key,
@@ -33,7 +36,8 @@ class ElevatedLayerButton extends StatefulWidget {
     this.subfac = 10,
     this.depth = 4,
     this.extrudeLeft = true,
-    this.topAlignment = const Alignment(0, 0)
+    this.topAlignment = const Alignment(0, 0),
+    this.isNavigation = false,
   }) : super(key: key);
 
   @override
@@ -117,7 +121,31 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
               Positioned(
                 bottom: 0,
                 right: 0,
-                child: Container(
+                child: widget.isNavigation?
+                ClipRRect(
+                  borderRadius: widget.borderRadius??BorderRadius.circular(0),
+                  child: AnimatedMeshGradient(colors: [
+                    defaultPalette.extras[0],
+                    defaultPalette.extras[3],
+                    defaultPalette.extras[4],
+                    defaultPalette.tertiary,
+                    // widget.baseDecoration?.color??defaultPalette.tertiary,
+                    
+                    // widget.baseDecoration?.color??defaultPalette.tertiary,
+                  ], 
+                  
+                  options: AnimatedMeshGradientOptions(
+                    frequency: 200,
+                    amplitude: 2,
+                    grain: 0.2,
+                    speed: 10
+                  ),
+                  child: Container(
+                    width: widget.buttonWidth! - subfac,
+                    height: widget.buttonHeight! - subfac,),
+                  ),
+                ):
+                 Container(
                   width: widget.buttonWidth! - subfac,
                   height: widget.buttonHeight! - subfac,
                   decoration: widget.baseDecoration?.copyWith(

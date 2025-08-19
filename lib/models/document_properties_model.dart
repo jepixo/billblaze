@@ -25,7 +25,7 @@ class DocumentPropertiesBox extends HiveObject {
   @HiveField(6)
   bool orientationController;
   @HiveField(7)
-  String pageFormatController;
+  Map<String, dynamic> pageFormatController;
   @HiveField(8)
   bool useIndividualMargins;
   @HiveField(9)
@@ -56,24 +56,16 @@ class DocumentPropertiesBox extends HiveObject {
       orientationController: orientationController == true
           ? pw.PageOrientation.portrait
           : pw.PageOrientation.landscape,
-      pageFormatController: _getPageFormatFromString(pageFormatController),
+      pageFormatController: _getPageFormatFromMap(pageFormatController),
       pageColor: _getColorFromHex(pageColor),
     );
   }
 
-  PdfPageFormat _getPageFormatFromString(String format) {
-    switch (format) {
-      case 'A4': return PdfPageFormat.a4;
-      case 'A3': return PdfPageFormat.a3;
-      case 'A5': return PdfPageFormat.a5;
-      case 'A6': return PdfPageFormat.a6;
-      case 'Letter': return PdfPageFormat.letter;
-      case 'Legal': return PdfPageFormat.legal;
-      case 'Standard': return PdfPageFormat.standard;
-      case 'Roll 57': return PdfPageFormat.roll57;
-      case 'Roll 80': return PdfPageFormat.roll80;
-      default: return PdfPageFormat.a4;
-    }
+  PdfPageFormat _getPageFormatFromMap(Map<String, dynamic> format) {
+    return PdfPageFormat(
+      double.parse(format['width'].toString()),
+      double.parse(format['height'].toString()),
+    );
   }
 
   Color _getColorFromHex(String hexCode) {
@@ -88,7 +80,7 @@ class DocumentPropertiesBox extends HiveObject {
     String? marginBottomController,
     String? marginTopController,
     bool? orientationController,
-    String? pageFormatController,
+    Map<String, dynamic>? pageFormatController,
     bool? useIndividualMargins,
     String? pageColor,
   }) {
@@ -164,7 +156,7 @@ class DocumentPropertiesBox extends HiveObject {
       marginBottomController: map['marginBottomController'] as String,
       marginTopController: map['marginTopController'] as String,
       orientationController: map['orientationController'] as bool,
-      pageFormatController: map['pageFormatController'] as String,
+      pageFormatController: map['pageFormatController'] as Map<String, dynamic>,
       useIndividualMargins: map['useIndividualMargins'] as bool,
       pageColor: map['pageColor'] as String,
     );
@@ -213,22 +205,16 @@ class DocumentProperties {
       marginTopController: marginTopController.text,
       useIndividualMargins: useIndividualMargins,
       orientationController: orientationController == pw.PageOrientation.portrait,
-      pageFormatController: _getStringFromPageFormat(pageFormatController),
+      pageFormatController: _getMapFromPageFormat(pageFormatController),
       pageColor: pageColor.value.toRadixString(16).padLeft(8, '0').substring(2),
     );
   }
 
-  String _getStringFromPageFormat(PdfPageFormat format) {
-    if (format == PdfPageFormat.a4) return 'A4';
-    if (format == PdfPageFormat.a3) return 'A3';
-    if (format == PdfPageFormat.a5) return 'A5';
-    if (format == PdfPageFormat.a6) return 'A6';
-    if (format == PdfPageFormat.letter) return 'Letter';
-    if (format == PdfPageFormat.legal) return 'Legal';
-    if (format == PdfPageFormat.standard) return 'Standard';
-    if (format == PdfPageFormat.roll57) return 'Roll 57';
-    if (format == PdfPageFormat.roll80) return 'Roll 80';
-    return 'A4';
+  Map<String, dynamic> _getMapFromPageFormat(PdfPageFormat format) {
+    return {
+      'width': format.width,
+      'height': format.height,
+    };
   }
 
   DocumentProperties copyWith({
