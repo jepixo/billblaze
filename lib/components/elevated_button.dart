@@ -1,3 +1,4 @@
+
 import 'package:billblaze/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
@@ -8,6 +9,7 @@ class ElevatedLayerButton extends StatefulWidget {
   final Duration? animationDuration;
   final Curve? animationCurve;
   final VoidCallback? onClick;
+  final Function? onTapDown;
   final BoxDecoration? baseDecoration;
   final BoxDecoration? topDecoration;
   final Widget? topLayerChild;
@@ -38,6 +40,7 @@ class ElevatedLayerButton extends StatefulWidget {
     this.extrudeLeft = true,
     this.topAlignment = const Alignment(0, 0),
     this.isNavigation = false,
+    this.onTapDown = null,
   }) : super(key: key);
 
   @override
@@ -81,6 +84,7 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
       });
     }
     widget.onClick?.call(); // Trigger onClick callback
+    widget.onTapDown?.call(details);
   }
 
   void _handleTapCancel() {

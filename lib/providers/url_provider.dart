@@ -42,7 +42,6 @@ final loginPageUrls = [
 "https://www.bouncingdvdlogo.com/",
 "https://www.youtube.com/watch?v=XY4jS4X09zY&t=148s&pp=0gcJCTAAlc8ueATH",
 "https://2018.14islands.com/?ref=onepagelove",
-"https://somethingnothing.net/",
 "https://next.junni.co.jp/",
 "https://eyes.nasa.gov/apps/solar-system/#/home",
 "https://goinghome.302chanwoo.com/",

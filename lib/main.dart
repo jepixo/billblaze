@@ -85,7 +85,6 @@ Future<void> main() async {
   //   modelPath: Directory.current.path +"/assets/models/Phi-3-mini-4k-instruct-q4.gguf",
   // );
   
-  
 
   runApp(const ProviderScope(child: MainApp()));
   if (Platform.isWindows) {
