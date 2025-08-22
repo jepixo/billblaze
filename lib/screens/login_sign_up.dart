@@ -533,19 +533,48 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                   children: [
                                     SizedBox(width: mapValueDimensionBased(5, 1, sWidth, sHeight,),),
                                     Expanded(
-                                      child: Text(
-                                        ' FLUX',
-                                        maxLines:1,
-                                        overflow:TextOverflow.ellipsis,
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.lexend(
-                                          fontSize: mapValueDimensionBased(12, 35, sWidth, sHeight, ),
-                                          color: defaultPalette.extras[0],
-                                          letterSpacing: mapValueDimensionBased(5, 15, sWidth, sHeight,),
-                                          height: 1,
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
+                                      child: RichText(
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            textAlign: TextAlign.center,
+                                            // overflow: TextOverflow.ellipsis,
+                                            text: TextSpan(
+                                              style: GoogleFonts.lexend(
+                                                fontSize:
+                                                    mapValueDimensionBasedLockOnDesync(
+                                                  12,
+                                                  35,
+                                                  sWidth,
+                                                  sHeight,
+                                                ),
+                                                color: defaultPalette.extras[0],
+                                                letterSpacing: mapValueDimensionBasedLockOnDesync( 5, 15, sWidth, sHeight,
+                                                ),
+                                                height: 1,
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                              children: [
+                                                TextSpan(
+                                                  text: ' FLUX',
+                                                  style: GoogleFonts.lexend(
+                                                      color: defaultPalette.extras[0]),
+                                                ),
+                                                TextSpan(
+                                                  text: 'TV',
+                                                  style:
+                                                      TextStyle(
+                                                        fontSize:
+                                                    mapValueDimensionBasedLockOnDesync(
+                                                  8,
+                                                  30,
+                                                  sWidth,
+                                                  sHeight,
+                                                ),
+                                                        color: defaultPalette.extras[0]),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -674,49 +703,73 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                     final url = ref.read(loginPageUrlProvider);
                                     Clipboard.setData(ClipboardData(text: url));
                                   },
-                                  child: Container(
-                                        height:mapValueDimensionBasedLockOnDesync(15, 50, sWidth, sHeight),
-                                        margin: EdgeInsets.all(0).copyWith(left: 10+mapValueDimensionBasedLockOnDesync(6, 20, sWidth, sHeight),right: mapValueDimensionBasedLockOnDesync(6, 20, sWidth, sHeight)),
-                                        decoration: BoxDecoration(
-                                          color: defaultPalette.extras[0],
-                                          borderRadius: BorderRadius.circular(50)
-                                        ),
-                                        padding: EdgeInsets.all(0).copyWith(left: 10,right: 10),
-                                        alignment: Alignment(0,0),
-                                        child:
-                                         Row(
-                                           children: [
-                                            Text(
-                                              ' //',
-                                              maxLines:1,
-                                              overflow:TextOverflow.ellipsis,
-                                              textAlign: TextAlign.center,
-                                              style: GoogleFonts.lexend(
-                                                fontSize: mapValueDimensionBased(8, 25, sWidth, sHeight, ),
-                                                color: defaultPalette.primary,
-                                                letterSpacing:-1,
-                                                height: 1,
-                                                fontWeight: FontWeight.w400,
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                              height:mapValueDimensionBasedLockOnDesync(15, 50, sWidth, sHeight),
+                                              margin: EdgeInsets.all(0).copyWith(left: 10+mapValueDimensionBasedLockOnDesync(6, 20, sWidth, sHeight),right: mapValueDimensionBasedLockOnDesync(6, 20, sWidth, sHeight)),
+                                              decoration: BoxDecoration(
+                                                color: defaultPalette.extras[0],
+                                                borderRadius: BorderRadius.circular(50)
                                               ),
+                                              padding: EdgeInsets.all(0).copyWith(left: 10,right: mapValueDimensionBasedLockOnDesync(2, 5, sWidth, sHeight)),
+                                              alignment: Alignment(0,0),
+                                              child:
+                                               Row(
+                                                 children: [
+                                                  Text(
+                                                    ' //',
+                                                    maxLines:1,
+                                                    overflow:TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.lexend(
+                                                      fontSize: mapValueDimensionBased(8, 25, sWidth, sHeight, ),
+                                                      color: defaultPalette.primary,
+                                                      letterSpacing:-1,
+                                                      height: 1,
+                                                      fontWeight: FontWeight.w400,
+                                                    ),
+                                                  ),
+                                                   Expanded(
+                                                     child: Text(
+                                                      ref.watch(loginPageUrlProvider),
+                                                      maxLines:1,
+                                                      overflow:TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.center,
+                                                      style: GoogleFonts.redactedScript(
+                                                        fontSize: mapValueDimensionBased(8, 25, sWidth, sHeight, ),
+                                                        color: defaultPalette.primary,
+                                                        letterSpacing:-1,
+                                                        height: 1,
+                                                        fontWeight: FontWeight.w400,
+                                                      ),
+                                                                                               ),
+                                                   ),
+                                                 ],
+                                               ),
                                             ),
-                                             Expanded(
-                                               child: Text(
-                                                ref.watch(loginPageUrlProvider),
-                                                maxLines:1,
-                                                overflow:TextOverflow.ellipsis,
-                                                textAlign: TextAlign.center,
-                                                style: GoogleFonts.redactedScript(
-                                                  fontSize: mapValueDimensionBased(8, 25, sWidth, sHeight, ),
-                                                  color: defaultPalette.primary,
-                                                  letterSpacing:-1,
-                                                  height: 1,
-                                                  fontWeight: FontWeight.w400,
-                                                ),
-                                                                                         ),
-                                             ),
-                                           ],
-                                         ),
                                       ),
+                                        Tooltip(
+                                            message:'FluxTV showcases cool websites made by cool creators. \nAll content belongs to its original owners.',
+                                            textStyle: GoogleFonts.lexend(
+                                              fontSize: mapValueDimensionBasedLockOnDesync(10,20, sWidth, sHeight),
+                                              color:defaultPalette.primary,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            padding: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(8,16, sWidth, sHeight)).copyWith(left:mapValueDimensionBasedLockOnDesync(15,25, sWidth, sHeight)),
+                                            decoration: BoxDecoration(
+                                                color: defaultPalette.extras[0].withOpacity(0.95),
+                                                borderRadius: BorderRadius.circular( 50)),
+                                          child: Icon(TablerIcons.info_circle_filled,
+                                          color: defaultPalette.extras[0],
+                                            size: mapValueDimensionBasedLockOnDesync(18,65, sWidth, sHeight),)),
+                                          SizedBox(
+                                            width:mapValueDimensionBasedLockOnDesync(
+                                                          6, 20, sWidth, sHeight),
+                                          )
+                                    ],
+                                  ),
                                 ),
                                 SizedBox(height: 90,),
                               ],

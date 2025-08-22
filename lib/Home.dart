@@ -869,7 +869,7 @@ void _getCurrentTime() {
                                       FittedBox(
                                         fit: BoxFit.scaleDown,
                                         alignment: Alignment.centerRight,
-                                        child: Text('Ola, ${user?.displayName}!',
+                                        child: Text('Hola, ${user?.displayName}!',
                                         textAlign: TextAlign.end,
                                         maxLines:1,
                                         overflow:TextOverflow.ellipsis,
@@ -3320,7 +3320,7 @@ void _getCurrentTime() {
               : s==1
               ? ' height '
               : s==2
-              ? ' pages '
+              ? ' pages: '
               : ' line ',
               style: GoogleFonts.lexend(
                   fontSize: mapValueDimensionBasedLockOnDesync(13, 26, sWidth, sHeight),
@@ -3541,7 +3541,7 @@ void _getCurrentTime() {
     final double originalHeight = pageFormatController['height'];
 
     // max box the page should fit in
-    final double maxWidth = (((sWidth / 2.15) - 70) * (55 / 75)) / 3;
+    final double maxWidth = (((sWidth / 2.15) - 70) * (55 / 75)) / 4;
     final double maxHeight = (sHeight / 2) / 2.5;
 
     // scale factor that keeps aspect ratio
@@ -3743,7 +3743,7 @@ void _getCurrentTime() {
                                   //number of pagess && ORIENTATIONN // to do createdAT
                                   Expanded(
                                     child: SizedBox(
-                                      height: math.max(getScaledPageSize(sWidth, sHeight, tempLayoutModel.docPropsList[0].pageFormatController, tempLayoutModel.docPropsList[0].orientationController).height, (sHeight / 2)/3),
+                                      height: math.max(getScaledPageSize(sWidth, sHeight, tempLayoutModel.docPropsList[0].pageFormatController, tempLayoutModel.docPropsList[0].orientationController).height, (sHeight / 2)/2.5),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
@@ -3786,9 +3786,209 @@ void _getCurrentTime() {
                                             children:[ 
                                               ...pagePropertyTile(2, sWidth, sHeight)],
                                           ),
-                                          SizedBox(
-                                            height: mapValueDimensionBasedLockOnDesync(6, 12, sWidth, sHeight),
+                                          //createdAt
+                                          Row(
+                                            children:[ 
+                                               Icon(
+                                                TablerIcons.calendar_event,
+                                                size: mapValueDimensionBasedLockOnDesync(15, 28, sWidth, sHeight),
+                                                color: defaultPalette.extras[0]
+                                              ),
+                                              Expanded(
+                                                child: Text(' createdAt: ',
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: GoogleFonts.lexend(
+                                                      fontSize: mapValueDimensionBasedLockOnDesync(13, 26, sWidth, sHeight),
+                                                      letterSpacing: -1,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: defaultPalette.extras[0]),
+                                                ),
+                                              ),
+                                              Expanded(child: MouseRegion(
+                                                cursor: SystemMouseCursors.click,
+                                                child: GestureDetector(
+                                                  onTap: () async {
+                                                  tempLayoutModel.createdAt =  await showDatePicker(
+                                                          context: context,
+                                                          initialDate: DateTime.now(),
+                                                          firstDate: DateTime(1800),
+                                                          lastDate: DateTime(2100),
+                                                          barrierColor: defaultPalette.extras[0].withOpacity(0.5),
+                                                          builder: (context, child) {
+                                                            return Theme(
+                                                              data: Theme.of(context).copyWith(
+                                                                inputDecorationTheme: InputDecorationTheme(
+                                                                  labelStyle: GoogleFonts.lexend(
+                                                                    fontSize: 12,
+                                                                    color: defaultPalette.extras[0],
+                                                                  ),
+                                                                  hintStyle: GoogleFonts.lexend(
+                                                                    fontSize: 15,
+                                                                    color: defaultPalette.extras[0].withOpacity(0.6),
+                                                                  ),
+                                                                  errorStyle: GoogleFonts.lexend(
+                                                                    fontSize: 15,
+                                                                    color: defaultPalette.extras[0].withOpacity(0.6),
+                                                                  ),
+                                                                  focusedBorder: OutlineInputBorder(
+                                                                    borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+                                                                    borderRadius: BorderRadius.circular(8),
+                                                                  ),
+                                                                ),
+                                                                textTheme: Theme.of(context).textTheme.copyWith(
+                                                                  titleLarge: GoogleFonts.lexend(
+                                                                    fontSize: 24,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    color: defaultPalette.black,
+                                                                  ),
+                                                                  headlineSmall: GoogleFonts.lexend(
+                                                                    fontSize: 20,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    color: defaultPalette.black,
+                                                                  ),
+                                                                  headlineMedium: GoogleFonts.lexend(
+                                                                    fontSize: 20,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    color: defaultPalette.black,
+                                                                  ),
+                                                                ),
+                                                                textButtonTheme: TextButtonThemeData(
+                                                                  style: ButtonStyle(
+                                                                    textStyle: WidgetStateProperty.all(
+                                                                      GoogleFonts.lexend(fontSize: 15, letterSpacing: -1),
+                                                                    ),
+                                                                    foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
+                                                                  ),
+                                                                ),
+                                                                datePickerTheme: DatePickerThemeData(
+                                                                  backgroundColor: defaultPalette.primary,
+                                                                  rangePickerBackgroundColor: defaultPalette.tertiary,
+                                                                  elevation: 20,
+                                                                  dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                                                    if (states.contains(WidgetState.selected)) {
+                                                                      return defaultPalette.tertiary;
+                                                                    }
+                                                                    return null;
+                                                                  }),
+                                                                  locale: const Locale('en', 'IN'),
+                                                                  todayBorder: BorderSide.none,
+                                                                  todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                                                    if (states.contains(WidgetState.selected)) {
+                                                                      return defaultPalette.tertiary;
+                                                                    } else {
+                                                                      return defaultPalette.primary;
+                                                                    }
+                                                                  }),
+                                                                  todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                                                                    if (states.contains(WidgetState.selected)) {
+                                                                      return defaultPalette.primary;
+                                                                    } else {
+                                                                      return defaultPalette.extras[0];
+                                                                    }
+                                                                  }),
+                                                                  yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                                                                    if (states.contains(WidgetState.selected)) {
+                                                                      return defaultPalette.primary;
+                                                                    }
+                                                                    return null;
+                                                                  }),
+                                                                  yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                                                    if (states.contains(WidgetState.selected)) {
+                                                                      return defaultPalette.tertiary;
+                                                                    } else {
+                                                                      return defaultPalette.transparent;
+                                                                    }
+                                                                  }),
+                                                                  dividerColor: defaultPalette.extras[0].withOpacity(0.4),
+                                                                  confirmButtonStyle: ButtonStyle(
+                                                                    textStyle: WidgetStateProperty.all(
+                                                                      GoogleFonts.lexend(
+                                                                        fontSize: 15,
+                                                                        letterSpacing: -1,
+                                                                        color: defaultPalette.tertiary,
+                                                                        fontWeight: FontWeight.w400,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  cancelButtonStyle: ButtonStyle(
+                                                                    textStyle: WidgetStateProperty.all(
+                                                                      GoogleFonts.lexend(
+                                                                        fontSize: 15,
+                                                                        letterSpacing: -1,
+                                                                        color: defaultPalette.tertiary,
+                                                                        fontWeight: FontWeight.w400,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  yearStyle: GoogleFonts.lexend(
+                                                                    fontSize: 15,
+                                                                    color: defaultPalette.tertiary,
+                                                                    letterSpacing: -1,
+                                                                  ),
+                                                                  dayStyle: GoogleFonts.lexend(
+                                                                    fontSize: 15,
+                                                                    color: defaultPalette.tertiary,
+                                                                    letterSpacing: -1,
+                                                                  ),
+                                                                  weekdayStyle: GoogleFonts.lexend(
+                                                                    fontSize: 14,
+                                                                    letterSpacing: -1,
+                                                                    color: defaultPalette.tertiary,
+                                                                    fontWeight: FontWeight.w600,
+                                                                  ),
+                                                                  headerHeadlineStyle: GoogleFonts.lexend(
+                                                                    fontSize: 30,
+                                                                    letterSpacing: -1,
+                                                                    color: defaultPalette.tertiary,
+                                                                    fontWeight: FontWeight.w600,
+                                                                  ),
+                                                                  rangePickerHeaderHeadlineStyle: GoogleFonts.lexend(
+                                                                    fontSize: 14,
+                                                                    letterSpacing: -1,
+                                                                    color: defaultPalette.tertiary,
+                                                                  ),
+                                                                  rangePickerHeaderHelpStyle: GoogleFonts.lexend(
+                                                                    fontSize: 14,
+                                                                    letterSpacing: -1,
+                                                                    color: defaultPalette.tertiary,
+                                                                    fontWeight: FontWeight.w600,
+                                                                  ),
+                                                                headerHelpStyle: GoogleFonts.lexend(
+                                                                  fontSize: 14,
+                                                                  letterSpacing: -1,
+                                                                  color: defaultPalette.tertiary,
+                                                                ),
+                                                                shape: RoundedRectangleBorder(
+                                                                  borderRadius: BorderRadius.circular(16),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            child: child!,
+                                                          );
+                                                        },
+                                                      )??DateTime.now();
+                                                  setState(() {
+                                                    
+                                                  });
+                                                  },
+                                                  child: Text(
+                                                    tempLayoutModel.createdAt.toIso8601String(),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.lexend(
+                                                      fontSize: mapValueDimensionBasedLockOnDesync(13, 26, sWidth, sHeight),
+                                                      letterSpacing: -1,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: defaultPalette.extras[0]),
+                                                    ),
+                                                ),
+                                              ),),
+                                            ],
                                           ),
+                                          // SizedBox(
+                                          //   height: mapValueDimensionBasedLockOnDesync(6, 12, sWidth, sHeight),
+                                          // ),
                                           //porttaittt and landscapee
                                           Row(
                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -4025,7 +4225,7 @@ void _getCurrentTime() {
                                                                     child: Icon(
                                                                       TablerIcons.north_star,
                                                                       size: 150,
-                                                                      color: defaultPalette.extras[0].withOpacity(0.1),
+                                                                      color: defaultPalette.extras[0].withOpacity(0.05),
                                                                     )),
                                                                   Container(
                                                                     margin: const EdgeInsets.all(2).copyWith(left: 0, right: 0,bottom: 4),
@@ -4844,9 +5044,9 @@ void _getCurrentTime() {
                                           }
                                         },
                                         buttonHeight: mapValueDimensionBased(
-                                            25, 43, sWidth, sHeight),
+                                            25, 53, sWidth, sHeight),
                                         buttonWidth: mapValueDimensionBased(
-                                            25, 43, sWidth, sHeight),
+                                            25, 53, sWidth, sHeight),
                                         borderRadius: BorderRadius.circular(999),
                                         animationDuration:
                                             const Duration(milliseconds: 100),
@@ -4891,6 +5091,7 @@ void _getCurrentTime() {
                           ),
                         ),
                       ),
+                      //ADD BUTONS CLOUD BUTTONS
                       Expanded(
                           flex: 20,
                           child: Column(
@@ -4931,7 +5132,7 @@ void _getCurrentTime() {
                                     type: tempLayoutModel.type,
                                     docPropsList: docPropsList,
                                     spreadSheetList: spreadSheetList,
-                                    createdAt: DateTime.now(),
+                                    createdAt: tempLayoutModel.createdAt,
                                     modifiedAt: DateTime.now(),
                                   );
 
@@ -5052,7 +5253,7 @@ void _getCurrentTime() {
                                     type: tempLayoutModel.type,
                                     docPropsList: docPropsList,
                                     spreadSheetList: spreadSheetList,
-                                    createdAt: DateTime.now(),
+                                    createdAt: tempLayoutModel.createdAt,
                                     modifiedAt: DateTime.now(),
                                   );
 
@@ -10503,29 +10704,6 @@ void _getCurrentTime() {
                   ),
                 ),
               ),
-              // Positioned.fill(
-              //   child: StarryBackground(
-              //             numberOfStars: 200,
-              //             starConfig: StarConfig(
-              //               minSize: 0.1,
-              //               maxSize: 1.0,
-              //               starColor: defaultPalette.primary,
-              //               movementSpeed: 2.0,
-              //               enableTwinkling: true,
-              //             ),
-              //             backgroundGradient: LinearGradient(
-              //               colors: [ Color(0xFF000D36),defaultPalette.transparent,],
-              //               stops: [0.5,0.8]
-              //             ),
-              //             enableShootingStars: true,
-              //             shootingStarInterval: Duration(seconds: 3),
-              //           ),
-              // ),
-
-              //   ),
-              // ),
-              // //
-              //
               //Profile$€₹
               AnimatedPositioned(
                 duration: Durations.medium2,
@@ -10817,7 +10995,10 @@ void _getCurrentTime() {
                               children: [
                                 Expanded(
                                   child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(30),
+                                    borderRadius: BorderRadius.circular(30).copyWith(
+                                      bottomLeft: Radius.circular(0),
+                                      bottomRight: Radius.circular(0),
+                                    ),
                                     child: InAppWebView(
                                       initialUrlRequest: URLRequest(
                                           url: WebUri.uri(Uri.parse(ref
@@ -10846,7 +11027,7 @@ void _getCurrentTime() {
                                   ),
                                 ),
                                 SizedBox(
-                                  height: 50,
+                                  height: 75,
                                 )
                               ],
                             ),
@@ -10924,31 +11105,48 @@ void _getCurrentTime() {
                                             ),
                                           ),
                                           Expanded(
-                                            child: Text(
-                                              ' FLUX',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              textAlign: TextAlign.center,
+                                            child:  RichText(
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            textAlign: TextAlign.center,
+                                            // overflow: TextOverflow.ellipsis,
+                                            text: TextSpan(
                                               style: GoogleFonts.lexend(
                                                 fontSize:
-                                                    mapValueDimensionBased(
+                                                    mapValueDimensionBasedLockOnDesync(
                                                   12,
                                                   35,
                                                   sWidth,
                                                   sHeight,
                                                 ),
                                                 color: defaultPalette.extras[0],
-                                                letterSpacing:
-                                                    mapValueDimensionBased(
-                                                  5,
-                                                  15,
-                                                  sWidth,
-                                                  sHeight,
+                                                letterSpacing: mapValueDimensionBasedLockOnDesync( 5, 15, sWidth, sHeight,
                                                 ),
                                                 height: 1,
                                                 fontWeight: FontWeight.w400,
                                               ),
+                                              children: [
+                                                TextSpan(
+                                                  text: ' FLUX',
+                                                  style: GoogleFonts.lexend(
+                                                      color: defaultPalette.extras[0]),
+                                                ),
+                                                TextSpan(
+                                                  text: 'TV',
+                                                  style:
+                                                      TextStyle(
+                                                        fontSize:
+                                                    mapValueDimensionBasedLockOnDesync(
+                                                  8,
+                                                  30,
+                                                  sWidth,
+                                                  sHeight,
+                                                ),
+                                                        color: defaultPalette.extras[0]),
+                                                ),
+                                              ],
                                             ),
+                                          ),
                                           ),
                                         ],
                                       ),
@@ -11179,72 +11377,96 @@ void _getCurrentTime() {
                                           Clipboard.setData(
                                               ClipboardData(text: url));
                                         },
-                                        child: Container(
-                                          height:
-                                              mapValueDimensionBasedLockOnDesync(
-                                                  15, 50, sWidth, sHeight),
-                                          margin: EdgeInsets.all(0).copyWith(
-                                              left: 10 +
-                                                  mapValueDimensionBasedLockOnDesync(
-                                                      6, 20, sWidth, sHeight),
-                                              right:
-                                                  mapValueDimensionBasedLockOnDesync(
-                                                      6, 20, sWidth, sHeight)),
-                                          decoration: BoxDecoration(
-                                              color: defaultPalette.extras[0],
-                                              borderRadius:
-                                                  BorderRadius.circular(50)),
-                                          padding: EdgeInsets.all(0)
-                                              .copyWith(left: 10, right: 10),
-                                          alignment: Alignment(0, 0),
-                                          child: Row(
-                                            children: [
-                                              Text(
-                                                ' //',
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                textAlign: TextAlign.center,
-                                                style: GoogleFonts.lexend(
-                                                  fontSize:
-                                                      mapValueDimensionBased(
-                                                    8,
-                                                    25,
-                                                    sWidth,
-                                                    sHeight,
-                                                  ),
-                                                  color: defaultPalette.primary,
-                                                  letterSpacing: -1,
-                                                  height: 1,
-                                                  fontWeight: FontWeight.w400,
-                                                ),
-                                              ),
-                                              Expanded(
-                                                child: Text(
-                                                  ref.watch(
-                                                      loginPageUrlProvider),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  textAlign: TextAlign.center,
-                                                  style: GoogleFonts
-                                                      .redactedScript(
-                                                    fontSize:
-                                                        mapValueDimensionBased(
-                                                      8,
-                                                      25,
-                                                      sWidth,
-                                                      sHeight,
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Container(
+                                                height:
+                                                    mapValueDimensionBasedLockOnDesync(
+                                                        15, 50, sWidth, sHeight),
+                                                margin: EdgeInsets.all(0).copyWith(
+                                                    left: 10 +
+                                                        mapValueDimensionBasedLockOnDesync(
+                                                            6, 20, sWidth, sHeight),
+                                                    right:
+                                                        mapValueDimensionBasedLockOnDesync(
+                                                            2, 5, sWidth, sHeight)),
+                                                decoration: BoxDecoration(
+                                                    color: defaultPalette.extras[0],
+                                                    borderRadius:
+                                                        BorderRadius.circular(50)),
+                                                padding: EdgeInsets.all(0)
+                                                    .copyWith(left: 10, right: 10),
+                                                alignment: Alignment(0, 0),
+                                                child: Row(
+                                                  children: [
+                                                    Text(
+                                                      ' //',
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.center,
+                                                      style: GoogleFonts.lexend(
+                                                        fontSize:
+                                                            mapValueDimensionBased(
+                                                          8,
+                                                          25,
+                                                          sWidth,
+                                                          sHeight,
+                                                        ),
+                                                        color: defaultPalette.primary,
+                                                        letterSpacing: -1,
+                                                        height: 1,
+                                                        fontWeight: FontWeight.w400,
+                                                      ),
                                                     ),
-                                                    color:
-                                                        defaultPalette.primary,
-                                                    letterSpacing: -1,
-                                                    height: 1,
-                                                    fontWeight: FontWeight.w400,
-                                                  ),
+                                                    Expanded(
+                                                      child: Text(
+                                                        ref.watch(
+                                                            loginPageUrlProvider),
+                                                        maxLines: 1,
+                                                        overflow:
+                                                            TextOverflow.ellipsis,
+                                                        textAlign: TextAlign.center,
+                                                        style: GoogleFonts
+                                                            .redactedScript(
+                                                          fontSize:
+                                                              mapValueDimensionBased(
+                                                            8,
+                                                            25,
+                                                            sWidth,
+                                                            sHeight,
+                                                          ),
+                                                          color:
+                                                              defaultPalette.primary,
+                                                          letterSpacing: -1,
+                                                          height: 1,
+                                                          fontWeight: FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                            Tooltip(
+                                              message:'FluxTV showcases cool websites made by cool creators. \nAll content belongs to its original owners.',
+                                              textStyle: GoogleFonts.lexend(
+                                                fontSize: mapValueDimensionBasedLockOnDesync(10,20, sWidth, sHeight),
+                                                color:defaultPalette.primary,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              padding: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(8,16, sWidth, sHeight)).copyWith(left:mapValueDimensionBasedLockOnDesync(15,25, sWidth, sHeight)),
+                                              decoration: BoxDecoration(
+                                                  color: defaultPalette.extras[0].withOpacity(0.95),
+                                                  borderRadius: BorderRadius.circular( 50)),
+                                            child: Icon(TablerIcons.info_circle_filled,
+                                            color: defaultPalette.extras[0],
+                                             size: mapValueDimensionBasedLockOnDesync(18,65, sWidth, sHeight),)),
+                                            SizedBox(
+                                              width:mapValueDimensionBasedLockOnDesync(
+                                                            6, 20, sWidth, sHeight),
+                                            )
+                                          ],
                                         ),
                                       ),
                                       SizedBox(

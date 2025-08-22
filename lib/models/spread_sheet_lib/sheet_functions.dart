@@ -3,8 +3,10 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:billblaze/util/custom_uid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
@@ -47,6 +49,56 @@ class SheetFunction {
   }) {
     throw UnimplementedError('Subclasses must override result()');
   }
+  
+  List<Widget> buildPrimaryFunctionBlock(
+    BuildContext context,
+    InputBlock funcBlock,
+    List<InputBlock>? selectedInputBlocks,
+    double width,
+    Function setStateCallBack,
+    List<InputBlock> inputBlock,
+    int index,
+    SheetText item,
+    Offset overlayPosition,
+    double overlayHeight,
+    Function buildCombinedQuillConfiguration,
+    Function getItemAtPath,
+    Function customStyleBuilder,
+    Function uniStatFunctionInputBlocks,
+    Function showPositionedTextFieldOverlay,
+    {
+      bool isSecondary = false,Map<int, FocusNode> extraFocusNodes =const {},
+    }
+
+  ) {
+    throw UnimplementedError('Subclasses must override result()');
+  }
+
+  Widget buildSecondaryFunctionBlock(
+    BuildContext context,
+    InputBlock funcBlock,
+    List<InputBlock>? selectedInputBlocks,
+    double width,
+    Function setStateCallBack,
+    List<InputBlock> inputBlock,
+    int index,
+    SheetText item,
+    Offset overlayPosition,
+    double overlayHeight,
+    Function buildCombinedQuillConfiguration,
+    Function getItemAtPath,
+    Function customStyleBuilder,
+    Function uniStatFunctionInputBlocks,
+    Function showPositionedTextFieldOverlay,
+    {
+      bool isSecondary = false,Map<int, FocusNode> extraFocusNodes =const {},
+    }
+
+    ) {
+    throw UnimplementedError('Subclasses must override result()');
+  }
+  
+
   Map<String, dynamic> toMap() {
     throw UnimplementedError('Subclasses must override toMap()');
   }
@@ -62,6 +114,8 @@ class SheetFunction {
         return UniStatFunction.fromMap(map);
       case 'bistat':
         return BiStatFunction.fromMap(map);
+      case 'uidgen':
+        return UidGeneratorFunction.fromMap(map);
       // Add more subclasses here if needed
       default:
         throw Exception('Unknown SheetFunction type: ${map['type']}');
@@ -1166,6 +1220,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
         func: map['func'],
       );}
 
+  @override
   List<Widget> buildPrimaryFunctionBlock(
     BuildContext context,
     InputBlock funcBlock,
@@ -1183,7 +1238,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
     Function uniStatFunctionInputBlocks,
     Function showPositionedTextFieldOverlay,
     {
-      bool isSecondary = false,
+      bool isSecondary = false,Map<int, FocusNode> extraFocusNodes =const {},
     }
 
     ){
@@ -1664,6 +1719,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                       
   }
   
+  @override
   Widget buildSecondaryFunctionBlock(
     BuildContext context,
     InputBlock funcBlock,
@@ -1681,7 +1737,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
     Function uniStatFunctionInputBlocks,
     Function showPositionedTextFieldOverlay,
     {
-      bool isSecondary = false,
+      bool isSecondary = false,Map<int, FocusNode> extraFocusNodes =const {}
     }
 
     ){
@@ -2172,6 +2228,1536 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
   }
 }
 
+@HiveType(typeId: 22)
+class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
+  @HiveField(2)
+  String template;
+
+  @HiveField(3)
+  List<Map<String, dynamic>> resultJson = [];
+  
+  @HiveField(4)
+  String idKey;
+
+  @HiveField(5)
+  String func;
+
+  UidGeneratorFunction({
+    required this.template,
+    this.resultJson = const [],
+    this.idKey = '00',
+    this.func = 'uidGenerator'
+  }):super(1, 'uidgen');
+
+  
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'type': 'uidgen',
+      'returnType': returnType,
+      'template': template,
+      'resultJson': resultJson,
+    };
+  }
+
+  factory UidGeneratorFunction.fromMap(Map<String, dynamic> map) {
+    return UidGeneratorFunction(
+      template: map['template'] as String,
+      resultJson:() {
+          final result = map['resultJson'];
+          if (result is List) {
+            return result.map((e) {
+              if (e is Map<String, dynamic>) return e;
+              if (e is Map) return Map<String, dynamic>.from(e);
+              throw Exception('Invalid resultJson entry: $e');
+            }).toList();
+          }
+          return [{'insert': ''}];
+        }(),
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory UidGeneratorFunction.fromJson(String source) => UidGeneratorFunction.fromMap(json.decode(source) as Map<String, dynamic>);
+
+
+  Delta _applyStylingFromOldOps(List<Operation> oldOps, String newText) {
+    final newDelta = Delta();
+    int written = 0;
+
+    for (final op in oldOps) {
+      if (written >= newText.length) break;
+      final data = op.data;
+      final attrs = op.attributes;
+      if (data is String && data.isNotEmpty) {
+        final span = data.length;
+        final take = (newText.length - written).clamp(0, span);
+        final slice = newText.substring(written, written + take);
+        if (slice.isNotEmpty) {
+          newDelta.insert(slice, attrs);
+          written += take;
+        }
+      }
+    }
+
+    if (written < newText.length) {
+      newDelta.insert(newText.substring(written));
+    }
+
+    // preserve last \n attributes if any
+    Map<String, dynamic>? newlineAttrs;
+    for (final op in oldOps.reversed) {
+      if (op.data is String && (op.data as String).endsWith('\n')) {
+        newlineAttrs = op.attributes;
+        break;
+      }
+    }
+    newDelta.insert('\n', newlineAttrs);
+
+    return newDelta;
+  }
+
+  QuillEditorConfigurations getConfigurations (
+    Function getItemAtPath,
+    Function buildCombinedQuillConfiguration,
+    Function setState,
+    Function customStyleBuilder,
+    {
+    List<SheetListBox>? spreadSheet,
+    Map<List<InputBlock>, int>? visited,
+  }) {
+    return QuillEditorConfigurations(
+      controller: QuillController(
+        document: (result(getItemAtPath, buildCombinedQuillConfiguration)), 
+        selection: TextSelection.collapsed(offset: 0),
+        onReplaceText: (_, __, ___) {
+          // setState(() {});
+          return true;
+        },
+        ),
+        enableScribble: true,
+        enableSelectionToolbar: true,
+        autoFocus: true,
+        contextMenuBuilder: (context, rawEditorState) {
+          return Container();
+        },
+        customStyleBuilder: (attribute) {
+          return customStyleBuilder(attribute); // Default style
+        },
+      );
+  }
+  
+  void showOpsFormatMenu(BuildContext context, Offset position, Function setStateCallback, int index, int len) {
+    final entries = buildOpsFormatContextMenuEntries(setStateCallback, index, len);
+    var menu = ContextMenu(
+      entries: entries,
+      boxDecoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: defaultPalette.black.withOpacity(0.3),
+            blurRadius: 2,
+          )
+        ],
+        color: defaultPalette.extras[0],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      position: position,
+    );
+    menu.show(context);
+  }
+  
+  List<ContextMenuEntry> buildOpsFormatContextMenuEntries(Function setStateCallback, int index, int len) {
+    final formats = ["alnum", "alpha", "numeric"];
+
+    return formats.map((s) {
+      return MenuItem(
+        label: s,
+        onSelected: () {
+          
+            setStateCallback((){_updateToken(index, "{rand~$len~$s}");});
+                      
+        },
+        hoverColor: defaultPalette.primary.withOpacity(0.02),
+        unfocusedColor: defaultPalette.primary.withOpacity(0.2),
+        style: GoogleFonts.lexend(
+          fontWeight: FontWeight.w500,
+          color: defaultPalette.primary,
+          fontSize: 15,
+        ),
+      );
+    }).toList();
+  }
+
+  void _updateToken(int index, String newToken) {
+    final matches = RegExp(r"\{(.*?)\}").allMatches(template).toList();
+    if (index >= matches.length) return;
+
+    final match = matches[index];
+    template = template.replaceRange(match.start, match.end, newToken);
+    
+  }
+  void _addToken(String token) {
+  
+      if (template.isEmpty) {
+        template = token;
+      } else {
+        template += token;
+      }
+  }
+  Widget _buildRuleEditor(int index, String token, Function setStateCallback, BuildContext context,Map<int, FocusNode> extraFocusNodes) {
+    final parts = token.split("~");
+    final type = parts[0];
+
+    switch (type) {
+      case "rand":
+        final len = parts.length > 1 ? int.tryParse(parts[1]) ?? 6 : 6;
+        final mode = parts.length > 2 ? parts[2] : "alnum";
+
+        return Container(
+          padding: EdgeInsets.symmetric(vertical: 2),
+          decoration: BoxDecoration(color:defaultPalette.tertiary),
+          child: Column(
+            children: [
+              const SizedBox(height: 2),
+              //title icon and close button
+              Row(
+                children: [
+                  const SizedBox(width: 4),
+                  Icon(TablerIcons.dice_5, size: 20,color:defaultPalette.primary),
+                  Expanded(
+                    child: Text("randomStr ",
+                    textAlign: TextAlign.end,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.lexend(
+                      letterSpacing: -1,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 18,
+                      height: 1,
+                      color: defaultPalette.primary,
+                    ),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(99999),
+                    child: Material(
+                      color: defaultPalette.transparent,
+                      child: InkWell(
+                        hoverColor: defaultPalette.primary,
+                        splashColor: defaultPalette.primary,
+                        highlightColor: defaultPalette.primary,
+                        onTap: () {
+                          setStateCallback((){_updateToken(index, "");});
+                        },
+                        child: Icon(
+                          TablerIcons.x,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                 const SizedBox(width: 3),
+                ],
+              ),
+              const SizedBox(height: 5),
+              //type and length
+              Row(
+                children: [
+                  const SizedBox(width: 4),
+                  //type dropdown
+                  MouseRegion(
+                    cursor:SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTapDown:(d){
+                        showOpsFormatMenu(context, d.globalPosition, setStateCallback, index, len,);
+                      },
+                      child: Row(
+                        children: [
+                          Text(mode,
+                          textAlign: TextAlign.start,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.lexend(
+                            letterSpacing: -1,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                            height: 1,
+                            color: defaultPalette.primary,
+                          ),
+                          ),
+                          Icon(TablerIcons.caret_down_filled, size: 12,color:defaultPalette.primary),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  //length slider
+                  Expanded(child: Material(
+                    color: defaultPalette.transparent,
+                    child: Container(
+                      decoration:BoxDecoration(
+                        color:defaultPalette.extras[0],
+                        borderRadius: BorderRadius.circular(5)
+                      ),
+                      child: Row(
+                        children: sliderPropertyTile(TextEditingController(text: len.toString()), setStateCallback, (value) {
+                            final newLen = (value as double).round();
+                            setStateCallback((){_updateToken(index, "{rand~$newLen~$mode}");});
+                          })
+                      ),
+                    ),
+                  ),),
+                  const SizedBox(width: 3),
+                ],
+              )
+            ],
+          ),
+        );
+      case "date":
+        final format = parts.length > 1 ? parts[1] : "yyyy-MM-dd";
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          decoration: BoxDecoration(color: defaultPalette.tertiary),
+          child: Column(
+            children: [
+              const SizedBox(height: 2),
+              // title row
+              Row(
+                children: [
+                  const SizedBox(width: 4),
+                  Icon(TablerIcons.calendar_event, size: 20, color: defaultPalette.primary),
+                  Expanded(
+                    child: Text(
+                      "date",
+                      textAlign: TextAlign.end,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.lexend(
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18,
+                        height: 1,
+                        color: defaultPalette.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(99999),
+                    child: Material(
+                      color: defaultPalette.transparent,
+                      child: InkWell(
+                        hoverColor: defaultPalette.primary,
+                        splashColor: defaultPalette.primary,
+                        highlightColor: defaultPalette.primary,
+                        onTap: () {
+                          setStateCallback(() {
+                            _updateToken(index, "");
+                          });
+                        },
+                        child: Icon(
+                          TablerIcons.x,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                ],
+              ),
+              const SizedBox(height: 5),
+              // format chooser
+              Row(
+                children: [
+                  const SizedBox(width: 3),
+                  Expanded(
+                    child:  Material(
+                    color: defaultPalette.transparent,
+                    child: Container(
+                      height: 20,
+                      decoration:BoxDecoration(
+                        color:defaultPalette.extras[0],
+                        borderRadius: BorderRadius.circular(5)
+                      ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 5),
+                            Text(
+                              "format:",
+                              textAlign: TextAlign.end,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.lexend(
+                                letterSpacing: -1,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                                height: 1,
+                                color: defaultPalette.extras[3],
+                              ),
+                            ),
+                            Expanded(
+                              child: TextFormField(
+                                // onTapOutside: (event) => fontFocusNodes[s].unfocus(),
+                                // focusNode: fontFocusNodes[s],
+                                controller: TextEditingController(text: format.toString()),
+                                cursorColor: defaultPalette.tertiary,
+                                selectionControls: ly.NoMenuTextSelectionControls(),
+                                textAlign: TextAlign.end,
+                                decoration: InputDecoration(
+                                  contentPadding: const EdgeInsets.all(0),
+                                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                  fillColor: defaultPalette.transparent,
+                                  border: InputBorder.none,
+                                  enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                                  focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                                ),
+                                keyboardType: TextInputType.number,
+                                style: GoogleFonts.lexend(
+                                    fontSize: 15,
+                                    color: defaultPalette.primary,
+                                    fontWeight: FontWeight.w400,
+                                    letterSpacing: -1),
+                                onChanged: (value) {
+                                  // setStateCallback(() {
+                                    _updateToken(index, '{date~$value}');
+                                    
+                              
+                                  // });
+                                },
+                                onFieldSubmitted:(v){
+                                  setStateCallback((){});
+                                }
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                ],
+              ),
+              const SizedBox(height: 2),
+            ],
+          ),
+        );
+      case "time":
+        final format = parts.length > 1 ? parts[1] : "HH:mm:ss";
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          decoration: BoxDecoration(color: defaultPalette.tertiary),
+          child: Column(
+            children: [
+              const SizedBox(height: 2),
+              // title row
+              Row(
+                children: [
+                  const SizedBox(width: 4),
+                  Icon(TablerIcons.clock_hour_4, size: 20, color: defaultPalette.primary),
+                  Expanded(
+                    child: Text(
+                      "time",
+                      textAlign: TextAlign.end,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.lexend(
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18,
+                        height: 1,
+                        color: defaultPalette.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(99999),
+                    child: Material(
+                      color: defaultPalette.transparent,
+                      child: InkWell(
+                        hoverColor: defaultPalette.primary,
+                        splashColor: defaultPalette.primary,
+                        highlightColor: defaultPalette.primary,
+                        onTap: () {
+                          setStateCallback(() {
+                            _updateToken(index, "");
+                          });
+                        },
+                        child: Icon(
+                          TablerIcons.x,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                ],
+              ),
+              const SizedBox(height: 5),
+              // format chooser
+              Row(
+                children: [
+                  const SizedBox(width: 3),
+                  Expanded(
+                    child:  Material(
+                    color: defaultPalette.transparent,
+                    child: Container(
+                      height: 20,
+                      decoration:BoxDecoration(
+                        color:defaultPalette.extras[0],
+                        borderRadius: BorderRadius.circular(5)
+                      ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 5),
+                            Text(
+                              "format:",
+                              textAlign: TextAlign.end,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.lexend(
+                                letterSpacing: -1,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                                height: 1,
+                                color: defaultPalette.extras[3],
+                              ),
+                            ),
+                            Expanded(
+                              child: TextFormField(
+                                // onTapOutside: (event) => fontFocusNodes[s].unfocus(),
+                                // focusNode: fontFocusNodes[s],
+                                controller: TextEditingController(text: format.toString()),
+                                cursorColor: defaultPalette.tertiary,
+                                selectionControls: ly.NoMenuTextSelectionControls(),
+                                textAlign: TextAlign.end,
+                                decoration: InputDecoration(
+                                  contentPadding: const EdgeInsets.all(0),
+                                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                  fillColor: defaultPalette.transparent,
+                                  border: InputBorder.none,
+                                  enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                                  focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                                ),
+                                keyboardType: TextInputType.number,
+                                style: GoogleFonts.lexend(
+                                    fontSize: 15,
+                                    color: defaultPalette.primary,
+                                    fontWeight: FontWeight.w400,
+                                    letterSpacing: -1),
+                                onChanged: (value) {
+                                  // setStateCallback(() {
+                                    _updateToken(index, '{time~$value}');
+                                    
+                              
+                                  // });
+                                },
+                                onFieldSubmitted:(v){
+                                  setStateCallback((){});
+                                }
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                ],
+              ),
+              const SizedBox(height: 2),
+            ],
+          ),
+        );
+      case "str":
+        final format = parts.length > 1 ? parts[1] : "";
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          decoration: BoxDecoration(color: defaultPalette.tertiary),
+          child: Column(
+            children: [
+              const SizedBox(height: 2),
+              // title row
+              Row(
+                children: [
+                  const SizedBox(width: 4),
+                  Icon(TablerIcons.cursor_text, size: 20, color: defaultPalette.primary),
+                  Expanded(
+                    child: Text(
+                      "text",
+                      textAlign: TextAlign.end,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.lexend(
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18,
+                        height: 1,
+                        color: defaultPalette.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(99999),
+                    child: Material(
+                      color: defaultPalette.transparent,
+                      child: InkWell(
+                        hoverColor: defaultPalette.primary,
+                        splashColor: defaultPalette.primary,
+                        highlightColor: defaultPalette.primary,
+                        onTap: () {
+                          setStateCallback(() {
+                            _updateToken(index, "");
+                          });
+                        },
+                        child: Icon(
+                          TablerIcons.x,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                ],
+              ),
+              const SizedBox(height: 5),
+              // format chooser
+              Row(
+                children: [
+                  const SizedBox(width: 3),
+                  Expanded(
+                    child:  Material(
+                    color: defaultPalette.transparent,
+                    child: Container(
+                      height: 20,
+                      decoration:BoxDecoration(
+                        color:defaultPalette.extras[0],
+                        borderRadius: BorderRadius.circular(5)
+                      ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 5),
+                            Text(
+                              "text:",
+                              textAlign: TextAlign.end,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.lexend(
+                                letterSpacing: -1,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 14,
+                                height: 1,
+                                color: defaultPalette.extras[3],
+                              ),
+                            ),
+                            Expanded(
+                              child: TextFormField(
+                                // onTapOutside: (event) => fontFocusNodes[s].unfocus(),
+                                focusNode: extraFocusNodes.putIfAbsent(index,()=>FocusNode()),
+                                controller: TextEditingController(text: format.toString()),
+                                cursorColor: defaultPalette.tertiary,
+                                selectionControls: ly.NoMenuTextSelectionControls(),
+                                textAlign: TextAlign.end,
+                                decoration: InputDecoration(
+                                  contentPadding: const EdgeInsets.all(0),
+                                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                  fillColor: defaultPalette.transparent,
+                                  border: InputBorder.none,
+                                  enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                                  focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                                ),
+                                keyboardType: TextInputType.number,
+                                style: GoogleFonts.lexend(
+                                    fontSize: 15,
+                                    color: defaultPalette.primary,
+                                    fontWeight: FontWeight.w400,
+                                    letterSpacing: -1),
+                                onChanged: (value) {
+                                  // setStateCallback(() {
+                                    _updateToken(index, '{str~$value}');
+                                    
+                              
+                                  // });
+                                },
+                                onFieldSubmitted:(v){
+                                  setStateCallback((){});
+                                }
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                ],
+              ),
+              const SizedBox(height: 2),
+            ],
+          ),
+        );
+      default:
+        return Text("Unhandled: {$token}");
+    }
+  }
+
+  @override
+  dynamic result(
+    Function getItemAtPath,
+    Function buildCombinedQuillConfiguration, {
+    List<SheetListBox>? spreadSheet,
+    Map<List<InputBlock>, int>? visited,
+    bool returnFormatted = false,
+  }) {
+    
+    var newText = UidGenerator.generate(template,idKey: idKey);
+    final oldDelta = Delta.fromJson(resultJson);
+    final oldOps = oldDelta.toList();
+    final newDelta = _applyStylingFromOldOps(oldOps, newText);
+
+    // Update resultJson if changed
+    final newJson = newDelta.toJson();
+    if (newJson != resultJson) {
+      resultJson = newJson;
+    }
+
+    return Document.fromDelta(newDelta);
+  }
+  
+  @override
+  List<Widget> buildPrimaryFunctionBlock(
+    BuildContext context,
+    InputBlock funcBlock,
+    List<InputBlock>? selectedInputBlocks,
+    double width,
+    Function setStateCallBack,
+    List<InputBlock> inputBlock,
+    int index,
+    SheetText item,
+    Offset overlayPosition,
+    double overlayHeight,
+    Function buildCombinedQuillConfiguration,
+    Function getItemAtPath,
+    Function customStyleBuilder,
+    Function uniStatFunctionInputBlocks,
+    Function showPositionedTextFieldOverlay,
+    {
+      bool isSecondary = false,
+      Map<int, FocusNode> extraFocusNodes =const {}
+    }
+
+    ){
+      
+    return [
+      Padding(
+        padding: const EdgeInsets.only(top: 10, bottom: 5),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: width,
+            decoration: BoxDecoration(
+              color: defaultPalette.primary,
+              borderRadius: BorderRadius.circular(8).copyWith(
+                bottomRight: Radius.circular(funcBlock.isExpanded?0:8),
+                bottomLeft: Radius.circular(funcBlock.isExpanded?0:8) 
+              ),
+            ),
+            child: Column(
+              children: [
+                SizedBox(height: 15,),
+                //the title of function
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'uidGenerator',
+                        textAlign: TextAlign.end,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.lexend(
+                          letterSpacing: -1,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 18,
+                          height: 1,
+                          color: defaultPalette.extras[0],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width:8),
+                  ],
+                ),
+                //sum/count and index
+          
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        margin: EdgeInsets.all(2),
+                        padding: EdgeInsets.all(1),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                          color: defaultPalette.extras[0],
+                        ),
+                        child: Row(
+                        children: [
+                          const SizedBox(width: 3),
+                          Icon(TablerIcons.medical_cross_circle, color:defaultPalette.primary, size:14),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: GoogleFonts.lexend(
+                                  letterSpacing: -1,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                  color: defaultPalette.extras[0],
+                                ),
+                                children: [
+                                  // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                  TextSpan(
+                                    text: getConfigurations(getItemAtPath,buildCombinedQuillConfiguration, setStateCallBack, customStyleBuilder).controller.document.toPlainText(),
+                                    style: TextStyle(color:defaultPalette.primary),
+                                  ),
+                                ],
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                          
+                          const SizedBox(width: 3),
+                        ],
+                      ),
+                      ),
+                    ),
+                  
+                  ],
+                ),
+
+                if(funcBlock.isExpanded)
+                  ...[SizedBox(height: 5,),
+                  //the label tiles for folded vsalues of x and y
+                  Container(
+                    width: width,
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    decoration:BoxDecoration(
+                      color:defaultPalette.transparent,
+                      // border:Border.all()
+                    ),
+                    //reorderable for functioninputblockchildren
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        //add date
+                        ElevatedLayerButton(
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(5),
+                            topLeft: Radius.circular(5),
+                            bottomRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                          ),
+                          animationDuration: const Duration(milliseconds: 100),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: defaultPalette.primary,
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          topLayerChild: Icon(TablerIcons.calendar_event, size: 15, color: defaultPalette.extras[0]),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          depth: 2,
+                          subfac: 2,
+                          buttonHeight: 24,
+                          buttonWidth: width/4-4,
+                          onClick: () {
+                            setStateCallBack(() {
+                            // inputBlock.removeAt(index);
+                            // inputBlockExpansionList.removeAt(index);
+                            _addToken('{date~yyyy-MM-dd}');
+                          });
+                          },
+                        ),
+                        //add time
+                        ElevatedLayerButton(
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(5),
+                            topLeft: Radius.circular(5),
+                            bottomRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                          ),
+                          animationDuration: const Duration(milliseconds: 100),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: defaultPalette.primary,
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          topLayerChild: Icon(TablerIcons.clock_hour_4, size: 15, color: defaultPalette.extras[0]),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          depth: 2,
+                          subfac: 2,
+                          buttonHeight: 24,
+                          buttonWidth: width/4-4,
+                          onClick: () {
+                            setStateCallBack(() {
+                            // inputBlock.removeAt(index);
+                            // inputBlockExpansionList.removeAt(index);
+                            _addToken('{time~HH:mm:ss}');
+                          });
+                          },
+                        ),
+                        //addtext
+                        ElevatedLayerButton(
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(5),
+                            topLeft: Radius.circular(5),
+                            bottomRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                          ),
+                          animationDuration: const Duration(milliseconds: 100),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: defaultPalette.primary,
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          topLayerChild: Icon(TablerIcons.cursor_text, size: 15, color: defaultPalette.extras[0]),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          depth: 2,
+                          subfac: 2,
+                          buttonHeight: 24,
+                          buttonWidth: width/4-4,
+                          onClick: () {
+                            setStateCallBack(() {
+                            // inputBlock.removeAt(index);
+                            // inputBlockExpansionList.removeAt(index);
+                            _addToken('{str~yo}');
+                          });
+                          },
+                        ),
+                        //add randomstr
+                        ElevatedLayerButton(
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(5),
+                            topLeft: Radius.circular(5),
+                            bottomRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                          ),
+                          animationDuration: const Duration(milliseconds: 100),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: defaultPalette.primary,
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          topLayerChild: Icon(TablerIcons.dice_5, size: 15, color: defaultPalette.extras[0]),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          depth: 2,
+                          subfac: 2,
+                          buttonHeight: 24,
+                          buttonWidth: width/4-4,
+                          onClick: () {
+                            setStateCallBack(() {
+                            // inputBlock.removeAt(index);
+                            // inputBlockExpansionList.removeAt(index);
+                            _addToken('{rand~6~alnum}');
+                          });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 5,),
+
+                  ScrollConfiguration(
+                    behavior: ScrollBehavior().copyWith(scrollbars: false),
+                    child: DynMouseScroll(
+                      durationMS: 500,
+                      scrollSpeed: 1,
+                      builder: (context, controller, physics) {
+                        return ReorderableListView(
+                          shrinkWrap: true,
+                          buildDefaultDragHandles: false,
+                          scrollDirection: Axis.vertical,
+                          scrollController:controller,
+                          physics:physics,
+                          onReorder: (oldIndex, newIndex) {
+                            setStateCallBack(() {
+                              if (newIndex > oldIndex) newIndex--;
+
+                                final regExp = RegExp(r"\{.*?\}");
+                                final matches = regExp.allMatches(template).toList();
+
+                                // Extract tokens
+                                final tokens = matches.map((m) => m.group(0)!).toList();
+
+                                // Extract separators
+                                final separators = <String>[];
+                                int lastEnd = 0;
+                                for (final m in matches) {
+                                  separators.add(template.substring(lastEnd, m.start));
+                                  lastEnd = m.end;
+                                }
+                                separators.add(template.substring(lastEnd));
+
+                                // Reorder tokens only
+                                final item = tokens.removeAt(oldIndex);
+                                tokens.insert(newIndex, item);
+
+                                // Rebuild template
+                                final buffer = StringBuffer();
+                                for (int i = 0; i < tokens.length; i++) {
+                                  buffer.write(separators[i]);
+                                  buffer.write(tokens[i]);
+                                }
+                                buffer.write(separators.last);
+
+                                template = buffer.toString(); // update original string
+                            });
+                          },
+                          proxyDecorator: (child, index, animation) {
+                            return Container(child: child); },
+                          // itemBuilder:(context, index) {
+                          //   return RegExp(r"\{(.*?)\}").allMatches(template).toList().asMap().entries.map((entry) {
+                          //     return _buildRuleEditor(entry.key, entry.value.group(1)!, setStateCallBack, context);
+                          //   },).toList()[index];
+                          // },
+                          children: [
+                            ...RegExp(r"\{(.*?)\}").allMatches(template).toList().asMap().entries.map((entry) {
+                              return ReorderableDragStartListener(
+                                index: entry.key,
+                                key: ValueKey(entry.key),
+                                child: _buildRuleEditor(entry.key, entry.value.group(1)!, setStateCallBack, context, extraFocusNodes));
+                            },).toList()
+                            // for (int i = 0; i < matches.length; i++)
+                              
+                          ],
+                        );
+                      }
+                    ),
+                  ),
+                  ],
+                  
+              ]),
+            ),
+        ),
+      ),
+      ElevatedLayerButton(
+        
+        isTapped: funcBlock.isExpanded,
+        borderRadius: const BorderRadius.only(
+          topRight: Radius.circular(5),
+          topLeft: Radius.circular(5),
+          bottomRight: Radius.circular(10),
+          bottomLeft: Radius.circular(10),
+        ),
+        animationDuration: const Duration(milliseconds: 100),
+        animationCurve: Curves.ease,
+        topDecoration: BoxDecoration(
+          color: defaultPalette.primary,
+          border: Border.all(color: defaultPalette.extras[0]),
+        ),
+        topLayerChild: Row(
+          children: [
+            const SizedBox(width: 10),
+            Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0]),
+            Expanded(
+              child: Text(
+                ' edit',
+                maxLines: 1,
+                style: GoogleFonts.bungee(
+                  fontSize: 12,
+                  color: defaultPalette.extras[0],
+                  // letterSpacing: -1,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        baseDecoration: BoxDecoration(
+          color: defaultPalette.extras[0],
+          border: Border.all(color: defaultPalette.extras[0]),
+        ),
+        depth: 2,
+        subfac: 2,
+        buttonHeight: 24,
+        buttonWidth: 80,
+        onClick: () {
+          setStateCallBack(() {
+            // inputBlockExpansionList[index] = !// inputBlockExpansionList[index];
+            inputBlock[index].isExpanded =!inputBlock[index].isExpanded;
+          });
+        },
+      ),
+      Positioned(
+        left:81,
+        child: ElevatedLayerButton(
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(5),
+              topLeft: Radius.circular(5),
+              bottomRight: Radius.circular(10),
+              bottomLeft: Radius.circular(10),
+            ),
+            animationDuration: const Duration(milliseconds: 100),
+            animationCurve: Curves.ease,
+            topDecoration: BoxDecoration(
+              color: defaultPalette.secondary,
+              border: Border.all(color: defaultPalette.extras[0]),
+            ),
+            topLayerChild: Row(
+              children: [
+                const SizedBox(width: 2),
+                Icon(funcBlock.useConst?TablerIcons.cursor_text:TablerIcons.x, size: 12, color: defaultPalette.extras[0]),
+                
+              ],
+            ),
+            baseDecoration: BoxDecoration(
+              color: defaultPalette.extras[0],
+              border: Border.all(color: defaultPalette.extras[0]),
+            ),
+            depth: 2,
+            subfac: 2,
+            buttonHeight: 24,
+            buttonWidth: 20,
+            onClick: () {
+              setStateCallBack(() {
+              inputBlock.removeAt(index);
+              // inputBlockExpansionList.removeAt(index);
+            });
+            },
+          ),
+      ),
+    
+    ];
+                      
+  }
+  @override
+  Widget buildSecondaryFunctionBlock(
+    BuildContext context,
+    InputBlock funcBlock,
+    List<InputBlock>? selectedInputBlocks,
+    double width,
+    Function setStateCallBack,
+    List<InputBlock> inputBlock,
+    int index,
+    SheetText item,
+    Offset overlayPosition,
+    double overlayHeight,
+    Function buildCombinedQuillConfiguration,
+    Function getItemAtPath,
+    Function customStyleBuilder,
+    Function uniStatFunctionInputBlocks,
+    Function showPositionedTextFieldOverlay,
+    {
+      bool isSecondary = false,
+      Map<int, FocusNode> extraFocusNodes =const {}
+    }
+
+    ){
+    return 
+      Container(
+        width: width,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8).copyWith(
+            bottomRight: Radius.circular(funcBlock.isExpanded?0:8),
+            bottomLeft: Radius.circular(funcBlock.isExpanded?0:8) 
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: width,
+            decoration: BoxDecoration(
+              color: defaultPalette.primary,
+              borderRadius: BorderRadius.circular(8).copyWith(
+                bottomRight: Radius.circular(funcBlock.isExpanded?0:8),
+                bottomLeft: Radius.circular(funcBlock.isExpanded?0:8) 
+              ),
+            ),
+            child: Column(
+              children: [
+                SizedBox(height: 15,),
+                //the title of function
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'uidGenerator',
+                        textAlign: TextAlign.end,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.lexend(
+                          letterSpacing: -1,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 18,
+                          height: 1,
+                          color: defaultPalette.extras[0],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width:8),
+                  ],
+                ),
+                //sum/count and index
+          
+                Row(
+                  children: [
+                    const SizedBox(width: 2),
+                  ElevatedLayerButton(
+                  isTapped: funcBlock.isExpanded,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(5),
+                    topLeft: Radius.circular(5),
+                    bottomRight: Radius.circular(10),
+                    bottomLeft: Radius.circular(10),
+                  ),
+                  animationDuration: const Duration(milliseconds: 100),
+                  animationCurve: Curves.ease,
+                  topDecoration: BoxDecoration(
+                    color: defaultPalette.primary,
+                    border: Border.all(color: defaultPalette.extras[0]),
+                  ),
+                  topLayerChild: Row(
+                    children: [
+                      Expanded(child: Icon(TablerIcons.medical_cross_filled, size: 13, color: defaultPalette.extras[0])),
+                    ],
+                  ),
+                  baseDecoration: BoxDecoration(
+                    color: defaultPalette.extras[0],
+                    border: Border.all(color: defaultPalette.extras[0]),
+                  ),
+                  depth: 2,
+                  subfac: 2,
+                  buttonHeight: 24,
+                  buttonWidth: 20,
+                  onClick: () {
+                    setStateCallBack(() {
+                      // inputBlockExpansionList[index] = !// inputBlockExpansionList[index];
+                      inputBlock[index].isExpanded =!inputBlock[index].isExpanded;
+                    });
+                  },
+                ),
+                   const SizedBox(width: 2),
+                  ElevatedLayerButton(
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(5),
+                        topLeft: Radius.circular(5),
+                        bottomRight: Radius.circular(10),
+                        bottomLeft: Radius.circular(10),
+                      ),
+                      animationDuration: const Duration(milliseconds: 100),
+                      animationCurve: Curves.ease,
+                      topDecoration: BoxDecoration(
+                        color: defaultPalette.secondary,
+                        border: Border.all(color: defaultPalette.extras[0]),
+                      ),
+                      topLayerChild: Row(
+                        children: [
+                          const SizedBox(width: 2),
+                          Icon(funcBlock.useConst?TablerIcons.cursor_text:TablerIcons.x, size: 12, color: defaultPalette.extras[0]),
+                          
+                        ],
+                      ),
+                      baseDecoration: BoxDecoration(
+                        color: defaultPalette.extras[0],
+                        border: Border.all(color: defaultPalette.extras[0]),
+                      ),
+                      depth: 2,
+                      subfac: 2,
+                      buttonHeight: 24,
+                      buttonWidth: 20,
+                      onClick: () {
+                        setStateCallBack(() {
+                        inputBlock.removeAt(index);
+                        // inputBlockExpansionList.removeAt(index);
+                      });
+                      },
+                    ),
+          
+                    Expanded(
+                      child: Container(
+                        margin: EdgeInsets.all(2),
+                        padding: EdgeInsets.all(1),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                          color: defaultPalette.extras[0],
+                        ),
+                        child: Row(
+                        children: [
+                          const SizedBox(width: 3),
+                          Icon(TablerIcons.medical_cross_circle, color:defaultPalette.primary, size:14),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: GoogleFonts.lexend(
+                                  letterSpacing: -1,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                  color: defaultPalette.extras[0],
+                                ),
+                                children: [
+                                  // TextSpan(text: ' sum: ',style: TextStyle(color:Color(0xffB388EB)),),
+                                  TextSpan(
+                                    text: getConfigurations(getItemAtPath,buildCombinedQuillConfiguration, setStateCallBack, customStyleBuilder).controller.document.toPlainText(),
+                                    style: TextStyle(color:defaultPalette.primary),
+                                  ),
+                                ],
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                          
+                          const SizedBox(width: 3),
+                        ],
+                      ),
+                      ),
+                    ),
+                  
+                  ],
+                ),
+        
+                if(funcBlock.isExpanded)
+                  ...[SizedBox(height: 5,),
+                  //the label tiles for folded vsalues of x and y
+                  Container(
+                    width: width,
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    decoration:BoxDecoration(
+                      color:defaultPalette.transparent,
+                      // border:Border.all()
+                    ),
+                    //reorderable for functioninputblockchildren
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        //add date
+                        ElevatedLayerButton(
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(5),
+                            topLeft: Radius.circular(5),
+                            bottomRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                          ),
+                          animationDuration: const Duration(milliseconds: 100),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: defaultPalette.primary,
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          topLayerChild: Icon(TablerIcons.calendar_event, size: 15, color: defaultPalette.extras[0]),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          depth: 2,
+                          subfac: 2,
+                          buttonHeight: 24,
+                          buttonWidth: width/4-4,
+                          onClick: () {
+                            setStateCallBack(() {
+                            // inputBlock.removeAt(index);
+                            // inputBlockExpansionList.removeAt(index);
+                            _addToken('{date~yyyy-MM-dd}');
+                          });
+                          },
+                        ),
+                        //add time
+                        ElevatedLayerButton(
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(5),
+                            topLeft: Radius.circular(5),
+                            bottomRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                          ),
+                          animationDuration: const Duration(milliseconds: 100),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: defaultPalette.primary,
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          topLayerChild: Icon(TablerIcons.clock_hour_4, size: 15, color: defaultPalette.extras[0]),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          depth: 2,
+                          subfac: 2,
+                          buttonHeight: 24,
+                          buttonWidth: width/4-4,
+                          onClick: () {
+                            setStateCallBack(() {
+                            // inputBlock.removeAt(index);
+                            // inputBlockExpansionList.removeAt(index);
+                            _addToken('{time~HH:mm:ss}');
+                          });
+                          },
+                        ),
+                        //addtext
+                        ElevatedLayerButton(
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(5),
+                            topLeft: Radius.circular(5),
+                            bottomRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                          ),
+                          animationDuration: const Duration(milliseconds: 100),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: defaultPalette.primary,
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          topLayerChild: Icon(TablerIcons.cursor_text, size: 15, color: defaultPalette.extras[0]),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          depth: 2,
+                          subfac: 2,
+                          buttonHeight: 24,
+                          buttonWidth: width/4-4,
+                          onClick: () {
+                            setStateCallBack(() {
+                            // inputBlock.removeAt(index);
+                            // inputBlockExpansionList.removeAt(index);
+                            _addToken('{str~yo}');
+                          });
+                          },
+                        ),
+                        //add randomstr
+                        ElevatedLayerButton(
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(5),
+                            topLeft: Radius.circular(5),
+                            bottomRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                          ),
+                          animationDuration: const Duration(milliseconds: 100),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: defaultPalette.primary,
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          topLayerChild: Icon(TablerIcons.dice_5, size: 15, color: defaultPalette.extras[0]),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(color: defaultPalette.extras[0]),
+                          ),
+                          depth: 2,
+                          subfac: 2,
+                          buttonHeight: 24,
+                          buttonWidth: width/4-4,
+                          onClick: () {
+                            setStateCallBack(() {
+                            // inputBlock.removeAt(index);
+                            // inputBlockExpansionList.removeAt(index);
+                            _addToken('{rand~6~alnum}');
+                          });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 5,),
+        
+                  ScrollConfiguration(
+                    behavior: ScrollBehavior().copyWith(scrollbars: false),
+                    child: DynMouseScroll(
+                      durationMS: 500,
+                      scrollSpeed: 1,
+                      builder: (context, controller, physics) {
+                        return ReorderableListView(
+                          shrinkWrap: true,
+                          buildDefaultDragHandles: false,
+                          scrollDirection: Axis.vertical,
+                          scrollController:controller,
+                          physics:physics,
+                          onReorder: (oldIndex, newIndex) {
+                            setStateCallBack(() {
+                              if (newIndex > oldIndex) newIndex--;
+        
+                                final regExp = RegExp(r"\{.*?\}");
+                                final matches = regExp.allMatches(template).toList();
+        
+                                // Extract tokens
+                                final tokens = matches.map((m) => m.group(0)!).toList();
+        
+                                // Extract separators
+                                final separators = <String>[];
+                                int lastEnd = 0;
+                                for (final m in matches) {
+                                  separators.add(template.substring(lastEnd, m.start));
+                                  lastEnd = m.end;
+                                }
+                                separators.add(template.substring(lastEnd));
+        
+                                // Reorder tokens only
+                                final item = tokens.removeAt(oldIndex);
+                                tokens.insert(newIndex, item);
+        
+                                // Rebuild template
+                                final buffer = StringBuffer();
+                                for (int i = 0; i < tokens.length; i++) {
+                                  buffer.write(separators[i]);
+                                  buffer.write(tokens[i]);
+                                }
+                                buffer.write(separators.last);
+        
+                                template = buffer.toString(); // update original string
+                            });
+                          },
+                          proxyDecorator: (child, index, animation) {
+                            return Container(child: child); },
+                          // itemBuilder:(context, index) {
+                          //   return RegExp(r"\{(.*?)\}").allMatches(template).toList().asMap().entries.map((entry) {
+                          //     return _buildRuleEditor(entry.key, entry.value.group(1)!, setStateCallBack, context);
+                          //   },).toList()[index];
+                          // },
+                          children: [
+                            ...RegExp(r"\{(.*?)\}").allMatches(template).toList().asMap().entries.map((entry) {
+                              return ReorderableDragStartListener(
+                                index: entry.key,
+                                key: ValueKey(entry.key),
+                                child: _buildRuleEditor(entry.key, entry.value.group(1)!, setStateCallBack, context, extraFocusNodes));
+                            },).toList()
+                            // for (int i = 0; i < matches.length; i++)
+                              
+                          ],
+                        );
+                      }
+                    ),
+                  ),
+                  ],
+                  
+              ]),
+            ),
+        ),
+            
+         );
+                      
+  }
+  
+
+}
+
 ///
 ///
 ///
@@ -2221,6 +3807,92 @@ class XORFunction extends SheetFunction {
 
 // true false null and empty
 // lambda functions
+List<Widget> sliderPropertyTile(TextEditingController s, Function setStateCallback, Function onChange) {
+    
+  return [
+    MouseRegion(
+      cursor: SystemMouseCursors.resizeLeftRight,
+      child: GestureDetector(
+        onHorizontalDragCancel: () {
+        },
+        onHorizontalDragUpdate: (details) {
+          var multiplier = HardwareKeyboard.instance.isControlPressed
+              ? 10
+              : HardwareKeyboard.instance.isShiftPressed
+                  ? 0.1
+                  : 1;
+          // setStateCallback(() {
+            double currentValue =
+                double.tryParse(s.text) ??
+                    0.0;
+            double newValue = (currentValue + details.delta.dx * multiplier)
+                .clamp(0.1, double.infinity);
+
+            double parsedValue = double.parse(newValue.toStringAsFixed(4));
+            onChange(parsedValue);
+            
+          // });
+        },
+        child: Row(
+          children: [
+            const SizedBox(width: 3),
+            Text(' length:',
+              style: GoogleFonts.lexend(
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
+                letterSpacing: -1,
+                color: defaultPalette.extras[3]),
+            ),
+          ],
+        ),
+      ),
+    ),
+    Expanded(
+      flex: 10,
+      child: SizedBox(
+        height: 15,
+        child: TextFormField(
+          // onTapOutside: (event) => fontFocusNodes[s].unfocus(),
+          // focusNode: fontFocusNodes[s],
+          controller: s,
+          inputFormatters: [
+            NumericInputFormatter(allowNegative: false),
+          ],
+          cursorColor: defaultPalette.tertiary,
+          selectionControls: ly.NoMenuTextSelectionControls(),
+          textAlign: TextAlign.end,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.all(0),
+            labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+            fillColor: defaultPalette.transparent,
+            border: InputBorder.none,
+            enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+            focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+          ),
+          keyboardType: TextInputType.number,
+          style: GoogleFonts.mitr(
+              fontSize: 15,
+              color: defaultPalette.primary,
+              fontWeight: FontWeight.w400,
+              letterSpacing: -1),
+          onFieldSubmitted: (value) {
+            setStateCallback(() {
+              print(value);
+            var parsedValue = (double.tryParse(value)??0.0);
+            onChange(parsedValue);
+              
+
+            });
+          },
+        ),
+      ),
+    ),
+    SizedBox(
+      width: 2,
+    ),
+  ];
+  }
+  
 
 mixin QuillFormattingMixin on SheetFunction {
   /// All implementing classes must have:

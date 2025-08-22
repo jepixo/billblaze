@@ -48,8 +48,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
-import 'package:iconify_flutter_plus/icons/carbon.dart';
-import 'package:iconify_flutter_plus/icons/tabler.dart';
+import 'package:iconify_flutter_plus/icons/majesticons.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
@@ -64,7 +63,6 @@ import 'package:flutter/rendering.dart';
 import "package:billblaze/components/color_picker.dart"
     show ColorTools, FlexPickerNoNullColorExtensions;
 // import 'package:flex_color_picker/flex_color_picker.dart' as fl;
-import 'package:animated_custom_dropdown/custom_dropdown.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:billblaze/colors.dart';
 import 'package:printing/printing.dart';
@@ -85,6 +83,7 @@ import 'package:file_selector/file_selector.dart';
 //     Attribute,
 //     Document,
 //     QuillEditorConfigurations;
+// import 'package:interactive_viewer_2/src/interactive_viewer_2.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -100,6 +99,8 @@ import 'package:uuid/uuid.dart';
 
 import '../components/checkable_treeview/treeview.dart';
 import '../components/elevated_button.dart';
+
+
 
 class PanelIndex {
   String id;
@@ -121,6 +122,9 @@ class PanelIndex {
         parentIndexPath: parentIndexPath ?? this.parentIndexPath,
 
         );
+  }
+  PanelIndex reset(){
+    return PanelIndex(id: '', parentId: '', itemIndexPath: IndexPath(index: -1), parentIndexPath: IndexPath(index: -1),);
   }
 
   @override
@@ -222,7 +226,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   double wH2DividerPosition = 0.24;
   double _cardPosition = 0;
   double textFieldHeight = 40;
-  double pdfPreviewPaddingScaleFactor = 1;
+  double pdfPreviewPaddingScaleFactor = 0.1;
   double pageUnit = 1;
   double get sWidth => MediaQuery.of(context).size.width;
   double get sHeight => MediaQuery.of(context).size.height;
@@ -241,6 +245,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   PieMenuController opsMovePieController = PieMenuController();
   PieMenuController opsCopyPieController = PieMenuController();
   PieMenuController opsFormatPieController = PieMenuController();
+  TransformationController pdfPreviewTransformationController = TransformationController();
   List<SheetList> spreadSheetList = [];
   List<DocumentProperties> documentPropertiesList = [];
   // List<SheetDecoration> sheetDecorationList = [];
@@ -252,6 +257,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   final FocusNode functionSearchFocusNode = FocusNode();
   final FocusNode funcSearchFocusNode = FocusNode();
   List<FocusNode> fontFocusNodes = List.generate(7, (e)=>FocusNode());
+  Map<int, FocusNode>  extraFocusNodes = {};
   zz.TransformationController transformationcontroller = zz.TransformationController();
   List<GlobalKey> globalKeys = [];
   List<Uint8List> _images = [];
@@ -293,6 +299,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   bool isListDecorationLibraryToggled = false;
   bool showDecorationLayers = true;
   bool isMathFunctionLibraryToggled = false;
+  bool isMathFuncLibraryToggled = false;
   bool isFormulaMode = false;
   List<bool> expansionLevels = [true] + List.filled(10, false).sublist(0, 9);
   SheetText item = SheetText(
@@ -439,6 +446,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     setState(() => isLoading = false);
     _renderPagePreviewOnProperties();
     assignIndexPathsAndDisambiguate(labelList,spreadSheetList);
+    pdfPreviewTransformationController.value.scale(0.1);
     // IF EXPORT BILL BUTTON IS CLICKED v
     Future.delayed(Durations.extralong4).then((c) async {if (widget.exportPdf) {
       final overlay =  OverlayEntry(builder: (context) => Scaffold(
@@ -464,6 +472,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       }
 
     }});
+  
   }
 
   // ─── Tab change handlers ─────────────────────────────────────────────────
@@ -515,6 +524,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     decorationSearchController.dispose();
     listPropertyCardsController.dispose();
     sheetTypeBrowserEntry?.dispose();
+    pdfPreviewTransformationController.dispose();
     // listDirectionPieController.dispose();
     // listMainAxisAlignmentPieController.dispose();
     // listCrossAxisAlignmentDirectionPieController.dispose();
@@ -1056,12 +1066,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 if (deletePage) {
                   if (pageCount == 1) {
                     spreadSheetList[currentPageIndex].sheetList = [];
-                    panelIndex = PanelIndex(
-                        id: panelIndex.id,
-                        parentId: panelIndex.parentId,
-                        itemIndexPath: panelIndex.itemIndexPath,
-                        parentIndexPath: panelIndex.parentIndexPath,
-                        );
+                    panelIndex = panelIndex.reset();
                     return;
                   }
 
@@ -1078,30 +1083,22 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       duration: Durations.short1, curve: Curves.linear);
 
                   // Update panelIndex for the new current page
-                  panelIndex = PanelIndex(
-                    id: spreadSheetList[currentPageIndex].id,
-                    // runTimeType: spreadSheetList[currentPageIndex].runtimeType,
-                    parentId: spreadSheetList[currentPageIndex].parentId,
-                    itemIndexPath: spreadSheetList[currentPageIndex].indexPath,
-                    parentIndexPath: spreadSheetList[currentPageIndex].indexPath.parent,
-                  );
+                  panelIndex = panelIndex.reset();
 
                   // Reassign pageNumberController for the new sequence
                   for (int i = 0; i < documentPropertiesList.length; i++) {
                     documentPropertiesList[i].pageNumberController.text =
                         (i + 1).toString();
                   }
+                  
 
                   return;
+
                 }
 
                 // Clear the sheet list for the current page
                 spreadSheetList[currentPageIndex].sheetList = [];
-                panelIndex = PanelIndex(
-                    id: panelIndex.id,
-                    itemIndexPath: panelIndex.itemIndexPath,
-                    parentIndexPath: panelIndex.parentIndexPath,
-                    parentId: panelIndex.parentId);
+                panelIndex = panelIndex.reset();
               });
 
               Navigator.of(context).pop();
@@ -2890,7 +2887,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       height: sHeight,
                       child: Stack(
                         children: [
-                          // Graph //Desktop Behind the emulating preview
+                          // Graph 
                           IgnorePointer(
                             ignoring: true,
                             child: AnimatedContainer(
@@ -2940,7 +2937,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           //sidebar tools and pdf preview //Desktop WEB
                           Positioned(
                             top: 0,
-                            width: sWidth,
+                            width: (sWidth * wH1DividerPosition),
                             height: sHeight,
                             child: Row(
                               children: [
@@ -3277,29 +3274,32 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   flex: (20000).round(),
                                   child: Container(
                                     height: sHeight,
-                                    child: zz.Zoom(
-                                      centerOnScale: false,
-                                      initTotalZoomOut: true,
-                                      maxScale: 5,
-                                      zoomSensibility: 2,
-                                      // key: ValueKey(currentPageIndex),
-                                      backgroundColor: defaultPalette.transparent,
-                                      canvasColor: defaultPalette.transparent,
-                                      transformationController:
-                                          transformationcontroller,
-                                      opacityScrollBars: 0,
-                                      onScaleUpdate: (p0, p1) {
+                                    child:Listener(
+                                      onPointerSignal: (event) {
+                                        print((event as PointerScrollEvent).scrollDelta.dy);
+                                        // if ( HardwareKeyboard.instance.isControlPressed) {
                                         setState(() {
-                                          pdfPreviewPaddingScaleFactor = p1;
-                                          // print(pdfPreviewPaddingScaleFactor);
+                                          if (event.scrollDelta.dy>0) {
+                                            pdfPreviewTransformationController.value.scale(0.9);
+                                          } else {
+                                            pdfPreviewTransformationController.value.scale(1.1);
+                                          }
+                                         pdfPreviewPaddingScaleFactor= pdfPreviewTransformationController.value.storage[0];
                                         });
+                                      // }
+
                                       },
-                                      initScale: 0.01,
-                                      child: Transform.scale(
-                                        scale: 0.8,
-                                        // scale: 1,
-                                        alignment: Alignment.topLeft,
-                                        child: Container(
+                                      child: InteractiveViewer(
+                                        alignment: Alignment(-1,-1),
+                                        minScale: 0.1,
+                                        scaleFactor: 0.1,
+                                        maxScale:3.5,
+                                        constrained: false,
+                                        panEnabled: true, // allow drag
+                                        scaleEnabled: false,
+                                        trackpadScrollCausesScale: false,
+                                        transformationController: pdfPreviewTransformationController,
+                                        child:Container(
                                           padding: EdgeInsets.only(
                                               bottom: 500,
                                               top: 60 *
@@ -3307,14 +3307,48 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       pdfPreviewPaddingScaleFactor),
                                               left: 40,
                                               right: 5000),
-                                          decoration: BoxDecoration(
-                                              color: defaultPalette.transparent),
-                                          // alignment: Alignment.center,
                                           child: _generateWidWin(
-                                              sWidth, sHeight * 0.9),
-                                        ),
-                                      ),
-                                    ),
+                                                  sWidth, sHeight * 0.9),
+                                        ), ),
+                                    )
+                                    // child: zz.Zoom(
+                                    //   centerOnScale: false,
+                                    //   initTotalZoomOut: true,
+                                    //   maxScale: 5,
+                                    //   zoomSensibility: 2,
+                                    //   // key: ValueKey(currentPageIndex),
+                                    //   backgroundColor: defaultPalette.transparent,
+                                    //   canvasColor: defaultPalette.transparent,
+                                    //   transformationController:
+                                    //       transformationcontroller,
+                                    //   opacityScrollBars: 0,
+                                    //   onScaleUpdate: (p0, p1) {
+                                    //     setState(() {
+                                    //       pdfPreviewPaddingScaleFactor = p1;
+                                    //       // print(pdfPreviewPaddingScaleFactor);
+                                    //     });
+                                    //   },
+                                    //   initScale: 0.01,
+                                    //   child: Transform.scale(
+                                    //     scale: 0.8,
+                                    //     // scale: 1,
+                                    //     alignment: Alignment.topLeft,
+                                    //     child: Container(
+                                    //       padding: EdgeInsets.only(
+                                    //           bottom: 500,
+                                    //           top: 60 *
+                                    //               (1 /
+                                    //                   pdfPreviewPaddingScaleFactor),
+                                    //           left: 40,
+                                    //           right: 5000),
+                                    //       decoration: BoxDecoration(
+                                    //           color: defaultPalette.transparent),
+                                    //       // alignment: Alignment.center,
+                                    //       child: _generateWidWin(
+                                    //           sWidth, sHeight * 0.9),
+                                    //     ),
+                                    //   ),
+                                    // ),
                                   ),
                                 ),
                               ],
@@ -3693,6 +3727,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                                   });
                                                                                 } else {
                                                                                   var sheetItem = getItemAtPath(label.indexPath);
+
                                                                                   if (sheetItem is! SheetText) {
                                                                                     doubleCheckLabelList(labelList);
                                                                                   } else {
@@ -3702,6 +3737,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                                                       panelIndex.itemIndexPath = sheetItem.indexPath;
                                                                                       panelIndex.parentIndexPath = sheetItem.indexPath.parent;
                                                                                       item = sheetItem;
+                                                                                    });
+                                                                                  }
+                                                                                  if (currentPageIndex != sheetItem.indexPath.toList()[0]) {
+                                                                                    setState(() {
+                                                                                      currentPageIndex = sheetItem.indexPath.toList()[0];
                                                                                     });
                                                                                   }
 
@@ -9411,7 +9451,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 if (itemInputBlockIndex !=-1) {
                   try {
                     ib =item.inputBlocks[itemInputBlockIndex];
-                    if(ib.function is UniStatFunction || ib.function is ColumnFunction){
+                    if(ib.function is UniStatFunction || ib.function is ColumnFunction || ib.function is BiStatFunction|| ib.function is UidGeneratorFunction){
                       config = ib.function.getConfigurations(getItemAtPath, buildCombinedQuillConfiguration, setState, customStyleBuilder);
                       ibfunc = ib.function;
                       ibfuncname = ib.function.func;
@@ -10557,7 +10597,20 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             functionFocusNode:funcSearchFocusNode,
                                             updateState: updateState,
                                             ),
-                                          
+                                           const SizedBox(
+                                                height:10
+                                              ),
+                                              //generator
+                                              uidGeneratorFunctionBlock(
+                                               oWidth, 
+                                                isOverlay:true,
+                                                height:oHeight, 
+                                                inputBlocks: inputBlocks, 
+                                                functionSearchController: funcSearchController,
+                                                functionFocusNode:funcSearchFocusNode,
+                                                updateState: updateState,
+                                                idKey: Uuid().v1(),
+                                                ),
                                         ],
                                       ),
                                     ),
@@ -11081,8 +11134,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
                                       if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
                                       inputBlockFunctionInputBlocks(inBlock, inx,parent : parent,),
-                                      if(!inBlock[inx].useConst && inBlock[inx].function is BiStatFunction)
-                                      (inBlock[inx].function as BiStatFunction).buildSecondaryFunctionBlock(
+                                      if(!inBlock[inx].useConst && (inBlock[inx].function is BiStatFunction || inBlock[inx].function is UidGeneratorFunction))
+                                      (inBlock[inx].function)!.buildSecondaryFunctionBlock(
                                         context, 
                                         inBlock[inx], 
                                         selectedInputBlocks, 
@@ -11092,7 +11145,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         sHeight-80,
                                         buildCombinedQuillConfiguration, getItemAtPath, 
                                         customStyleBuilder, uniStatFunctionInputBlocks, 
-                                        showPositionedTextFieldOverlay),
+                                        showPositionedTextFieldOverlay,
+                                        extraFocusNodes: extraFocusNodes
+                                        ),
                                       if(!inBlock[inx].useConst 
                                       && (inBlock[inx].function is UniStatFunction||
                                       inBlock[inx].function is ColumnFunction))
@@ -11723,8 +11778,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
                                       if(!inBlock[inx].useConst && (inBlock[inx].function is UniStatFunction || inBlock[inx].function is ColumnFunction))
                                       uniStatFunctionInputBlocks(inBlock, inx,parent:parent, ),
-                                      if(!inBlock[inx].useConst && inBlock[inx].function is BiStatFunction)
-                                      (inBlock[inx].function as BiStatFunction).buildSecondaryFunctionBlock(
+                                      if(!inBlock[inx].useConst && (inBlock[inx].function is BiStatFunction || inBlock[inx].function is UidGeneratorFunction))
+                                      (inBlock[inx].function)!.buildSecondaryFunctionBlock(
                                         context, 
                                         inBlock[inx], 
                                         selectedInputBlocks, 
@@ -11734,7 +11789,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         sHeight-80,
                                         buildCombinedQuillConfiguration, getItemAtPath, 
                                         customStyleBuilder, uniStatFunctionInputBlocks, 
-                                        showPositionedTextFieldOverlay),
+                                        showPositionedTextFieldOverlay,
+                                        extraFocusNodes: extraFocusNodes
+                                        ),
                                       if(!inBlock[inx].useConst && inBlock[inx].function is InputBlockFunction)
                                       GestureDetector(
                                         onTap:(){
@@ -13019,8 +13076,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     
                         ];
                       
-                      case BiStatFunction:
-                        return (funcBlock.function as BiStatFunction).buildPrimaryFunctionBlock(
+                      case BiStatFunction || UidGeneratorFunction:
+                        return (funcBlock.function).buildPrimaryFunctionBlock(
                           context,
                           funcBlock, 
                           selectedInputBlocks, 
@@ -13035,7 +13092,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           getItemAtPath, 
                           customStyleBuilder,
                           uniStatFunctionInputBlocks,
-                          showPositionedTextFieldOverlay
+                          showPositionedTextFieldOverlay,
+                          extraFocusNodes: extraFocusNodes
                           );
                       
                       default:
@@ -13638,7 +13696,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                       fontWeight: FontWeight.w400,
                                                       letterSpacing: -0.5,
                                                     ),
-                                                    icon: UniStatFunction.availableFunctions[func.func],
+                                                    icon:  (){
+                                                      if(func is UniStatFunction)
+                                                        return UniStatFunction.availableFunctions[func.func];
+                                                      else if (func is BiStatFunction)
+                                                        return BiStatFunction.availableFunctions[func.func];
+                                                      else return TablerIcons.medical_cross_circle;
+                                                      }(),
                                                     hoverColor: defaultPalette.primary,
                                                     unfocusedColor: defaultPalette.secondary,
                                                     onSelected: () {
@@ -13658,18 +13722,21 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                     ],
                                                     color: defaultPalette.primary,
                                                     border:Border.all(width:2),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10)),
+                                                    borderRadius: BorderRadius.circular( 10)),
                                                 position: Offset(
                                                     d.globalPosition.dx,
-                                                    d.globalPosition.dy+20))
-                                              .show(context);
+                                                    d.globalPosition.dy+20)).show(context);
                                             },
                                             child:Icon(
                                               ibfunc ==null
                                               ? TablerIcons.cursor_text
-                                              : UniStatFunction.availableFunctions[ibfuncname],
+                                              : (){
+                                                if(ib.function is UniStatFunction)
+                                                  return UniStatFunction.availableFunctions[ibfuncname];
+                                                else if (ib.function is BiStatFunction)
+                                                  return BiStatFunction.availableFunctions[ibfuncname];
+                                                else return TablerIcons.medical_cross_circle;
+                                                }(),
                                               size: 20
                                             ) )),
                                         ],
@@ -15526,7 +15593,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             crossAxisAlignment:CrossAxisAlignment.start,
                                             children: [       
                                               //inputblock list   
-                                              ...[const SizedBox(
+                                              ...[
+                                              
+                                              const SizedBox(
                                                     height:4
                                                   ),
                                               //preview Text in function
@@ -15557,14 +15626,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         ],
                                                       ),
                                                 ),
-                                                  ),
+                                              ),
                                               const SizedBox(
-                                                  height:4
-                                                ),
+                                                height:4
+                                              ),
                                               titleTile(' inputBlocks', TablerIcons.subtask,fontSize: 15,iconSize: 20, color: defaultPalette.primary),  
                                               const SizedBox(
-                                                    height:10,
-                                                  ),
+                                                height:10,
+                                              ),
                                               //InputBlocks for Functions 
                                               inputBlocks(item.inputBlocks),
                                               const SizedBox(
@@ -15573,7 +15642,26 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               //
                                               //
                                               //functions library
-                                              mathFunctionsLibrary(width, functionSearchController: functionSearchController,updateState: setState, functionFocusNode:functionSearchFocusNode),
+                                              mathFunctionsLibrary(
+                                                width, 
+                                                inputBlocks: item.inputBlocks,
+                                                functionSearchController: functionSearchController,
+                                                updateState: setState, 
+                                                functionFocusNode:functionSearchFocusNode,
+                                                ),
+                                              const SizedBox(
+                                                height:15
+                                              ),
+                                              //generator
+                                              uidGeneratorFunctionBlock(
+                                                width, 
+                                                inputBlocks: item.inputBlocks,
+                                                functionSearchController: functionSearchController,
+                                                updateState: setState, 
+                                                functionFocusNode:functionSearchFocusNode,
+                                                idKey: item.id
+                                                ),
+
                                               const SizedBox(
                                                 height:3
                                               ), 
@@ -19055,13 +19143,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     if (inputBlocks == null) {
       inputBlocks = selectedInputBlocks;
     }
+    
     return  Row(
       children: [
         Expanded(
           child: Stack(
             children: [
               const SizedBox(height: 35),
-              if(isMathFunctionLibraryToggled || isOverlay)
+              if(isOverlay?isMathFuncLibraryToggled:isMathFunctionLibraryToggled)
               Container(
                 height:height/3,
                 width: width+13,
@@ -19316,7 +19405,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   ),
                 ),
               ),
-              if(!isOverlay)
+              // if(isOverlay)
               ElevatedLayerButton(
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(5),
@@ -19357,10 +19446,166 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 buttonHeight: 24,
                 buttonWidth: 80,
                 onClick: () {
-                  setState(() {
-                    isMathFunctionLibraryToggled = !isMathFunctionLibraryToggled;
-                  });
+                  if (!isOverlay) {
+                    setState(() {
+                      isMathFunctionLibraryToggled = !isMathFunctionLibraryToggled;
+                    });
+                    updateState(() {
+                    });
+                  } else {
+                    setState(() {
+                      isMathFuncLibraryToggled = !isMathFuncLibraryToggled;
+                    });
+                    updateState(() {
+                    });
+                  }
                 },
+              ),
+            ],
+          ),
+        ),
+      ]
+      );
+  }
+
+    Widget uidGeneratorFunctionBlock(
+    double width,
+    {
+      bool isOverlay=false,
+      double height=900,
+      List<InputBlock>? inputBlocks,
+      required TextEditingController functionSearchController,
+      required FocusNode functionFocusNode,
+      required Function updateState,
+      required String idKey,
+    }
+  ) {
+    if (inputBlocks == null) {
+      inputBlocks = selectedInputBlocks;
+    }
+    
+    return  Row(
+      children: [
+        Expanded(
+          child: Stack(
+            children: [//gradient mesh tile for math functions
+              Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 20,
+                      offset: Offset(0, 2),
+                      color: defaultPalette.extras[0].withOpacity(0.6)
+                    )
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8).copyWith(
+                            bottomLeft: Radius.circular(isOverlay?8:15),
+                            bottomRight: Radius.circular(isOverlay?8:15)
+                          ),
+                    child: AnimatedMeshGradient(
+                      colors: [
+                          // defaultPalette.extras[0],
+                          defaultPalette.primary,
+                          defaultPalette.primary,
+                          
+                          defaultPalette.primary,
+                          defaultPalette.extras[4],
+                        ],
+                      options: AnimatedMeshGradientOptions(
+                          speed: 10,
+                          amplitude: 10,
+                          grain: 0.1,
+                          frequency: 10,
+                          
+                        ),
+                      child: Container(
+                        height: 30,
+                        width: width+13,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8).copyWith(
+                            bottomLeft: Radius.circular(isOverlay?8:15),
+                            bottomRight: Radius.circular(isOverlay?8:15)
+                          ),
+                          border: Border.all(color: defaultPalette.primary),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'uidGenerator',
+                                textAlign: TextAlign.end,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.lexend(
+                                  letterSpacing: -1,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 19,
+                                  color: defaultPalette.extras[0],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 15),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // if(isOverlay)
+              Positioned(
+                top:3,
+                left: 3,
+                child: ElevatedLayerButton(
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(5),
+                    topLeft: Radius.circular(5),
+                    bottomRight: Radius.circular(10),
+                    bottomLeft: Radius.circular(10),
+                  ),
+                  animationDuration: const Duration(milliseconds: 100),
+                  animationCurve: Curves.ease,
+                  topDecoration: BoxDecoration(
+                    color: defaultPalette.primary,
+                    border: Border.all(color: defaultPalette.extras[0]),
+                  ),
+                  topLayerChild: Row(
+                    mainAxisAlignment:MainAxisAlignment.center,
+                    children: [
+                      // const SizedBox(width: 10),
+                      Iconify(Majesticons.settings_cog_plus, size: 15, color: defaultPalette.extras[0])
+                      
+                    ],
+                  ),
+                  baseDecoration: BoxDecoration(
+                    color: defaultPalette.extras[0],
+                    border: Border.all(color: defaultPalette.extras[0]),
+                  ),
+                  depth: 3,
+                  subfac: 3,
+                  buttonHeight: 24,
+                  buttonWidth: 30,
+                  onClick: () {
+                    setState(() {
+                    inputBlocks!.add(
+                      InputBlock(
+                        indexPath: IndexPath(index:-2), 
+                        blockIndex: [-2], 
+                        id: 'yo',
+                        useConst: false,
+                        function: UidGeneratorFunction(
+                          template: '{rand~6}',
+                          idKey: idKey
+                          )
+                        )
+                    );
+                  });
+                  },
+                ),
               ),
             ],
           ),

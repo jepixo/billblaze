@@ -67,6 +67,7 @@ Future<void> main() async {
   Hive.registerAdapter(InputBlockFunctionAdapter());
   Hive.registerAdapter(UniStatFunctionAdapter());
   Hive.registerAdapter(BiStatFunctionAdapter());
+  Hive.registerAdapter(UidGeneratorFunctionAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   // await Hive.deleteBoxFromDisk('fetchedLayoutBox');
