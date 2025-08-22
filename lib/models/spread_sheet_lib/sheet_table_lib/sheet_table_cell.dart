@@ -60,7 +60,7 @@ class SheetTableCell extends SheetItem {
 
   SheetItem boxSheetItem(SheetItem sheetItem) {
     if (sheetItem is SheetText) {
-      return sheetItem.toTEItemBox(sheetItem);
+      return sheetItem.toBox();
     }
     else if (sheetItem is SheetList){
       return (sheetItem).toSheetListBox();

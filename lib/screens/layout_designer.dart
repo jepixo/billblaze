@@ -27,6 +27,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.da
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_column.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_row.dart';
+import 'package:billblaze/models/spread_sheet_lib/sized_item.dart';
 import 'package:billblaze/providers/env_provider.dart';
 import 'package:cool_background_animation/cool_background_animation.dart';
 import 'package:cool_background_animation/custom_model/bubble_model.dart';
@@ -218,8 +219,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   List<String> textDecorationPath=[];
   List<String> tableDecorationPath =[];
   List<String> tablebgDecorationPath = [];
-  List<String> rowDecorationPath = [];
-  List<String> columnDecorationPath = [];
+  List<String> sizedItemDecorationPath = [];
+  // List<String> columnDecorationPath = [];
   Map<String, List<String>> categorizedFonts = {};    
   double hDividerPosition = 0.5;
   double wH1DividerPosition = 0.2;
@@ -239,6 +240,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   late TabController fontsTabContainerController;
   AppinioSwiperController propertyCardsController = AppinioSwiperController();
   AppinioSwiperController textPropertyCardsController = AppinioSwiperController();
+  AppinioSwiperController sizedItemPropertyCardsController = AppinioSwiperController();
   AppinioSwiperController listPropertyCardsController = AppinioSwiperController();
   AppinioSwiperController tablePropertyCardsController = AppinioSwiperController();    
   PieMenuController opsAddPieController = PieMenuController();
@@ -273,7 +275,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   TextEditingController textDecorationNameController = TextEditingController();
   TextEditingController tableDecorationNameController = TextEditingController();
   TextEditingController tablebgDecorationNameController = TextEditingController();
-  TextEditingController rowDecorationNameController = TextEditingController();
+  TextEditingController sizedItemDecorationNameController = TextEditingController();
   TextEditingController columnDecorationNameController = TextEditingController();
   TextEditingController decorationSearchController = TextEditingController();
   TextEditingController textFieldSearchController = TextEditingController();
@@ -290,6 +292,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   int whichListPropertyTabIsClicked = 0;
   int whichTablePropertyTabIsClicked = 0;
   int whichTableDecorationIsClicked = 0;
+  int whichSizedItemPropertyTabIsClicked = 0;
   int itemInputBlockIndex =-1;
   SheetTableVariables sheetTableVariables = SheetTableVariables();
   Uint8List? cachedImageData;
@@ -312,6 +315,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     );
   SheetList sheetListItem = SheetList(id: 'yo',parentId: 'yo', listDecoration:'yo', sheetList: [],indexPath: IndexPath(index:-1));
   late SheetTable sheetTableItem;
+  SheetSizedItem sizedItem = SheetSizedItem(id: 'yo',parentId: 'yo',sizedItemDecoration: 'yo', indexPath: IndexPath(index:-1),height: 20,width: 20,hide: true);
   var dragBackupValue;
   OverlayEntry? _overlay;
   List<InputBlock>? selectedInputBlocks =[];
@@ -525,6 +529,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     listPropertyCardsController.dispose();
     sheetTypeBrowserEntry?.dispose();
     pdfPreviewTransformationController.dispose();
+    sizedItemPropertyCardsController.dispose();
+    sizedItemDecorationNameController.dispose();
+    propertyCardsController.dispose();
     // listDirectionPieController.dispose();
     // listMainAxisAlignmentPieController.dispose();
     // listCrossAxisAlignmentDirectionPieController.dispose();
@@ -561,13 +568,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       // print('B PARENT: '+ sheetListBox.parentId );
       for (var i = 0; i < sheetlist.length; i++) {
         if (sheetlist[i] is SheetText) {
-          sheetListBox.sheetList.add((sheetlist[i] as SheetText)
-              .toTEItemBox((sheetlist[i] as SheetText)));
+          sheetListBox.sheetList.add((sheetlist[i] as SheetText).toBox());
         } else if (sheetlist[i] is SheetList) {
           sheetListBox.sheetList.add(sheetListtoBox(sheetlist[i] as SheetList));
         } else if (sheetlist[i] is SheetTable) {
           sheetListBox.sheetList.add((sheetlist[i] as SheetTable).toSheetTableBox());
-        }
+        } else {sheetListBox.sheetList.add((sheetlist[i]).toBox());}
       }
       listbox.add(sheetListBox);
     }
@@ -580,13 +586,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     sheetListBox.sheetList = [];
     for (var i = 0; i < sheetlist.length; i++) {
       if (sheetlist[i] is SheetText) {
-        sheetListBox.sheetList.add((sheetlist[i] as SheetText)
-            .toTEItemBox((sheetlist[i] as SheetText)));
+        sheetListBox.sheetList.add((sheetlist[i] as SheetText).toBox());
       } else if (sheetlist[i] is SheetList) {
         sheetListBox.sheetList.add(sheetListtoBox(sheetlist[i] as SheetList));
       } else if (sheetlist[i] is SheetTable) {
         sheetListBox.sheetList.add((sheetlist[i] as SheetTable).toSheetTableBox());
-      }
+      } else {sheetlist[i].toBox();}
     }
     return sheetListBox;
   }
@@ -619,7 +624,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           sheetList.sheetList.add(boxToSheetList(item,sheetList.indexPath));
         } else if (item is SheetTableBox) {
           sheetList.sheetList.add((item).toSheetTable(_findItem,textFieldTapDown,getReplaceTextFunctionForType));
-        }
+        } else {sheetList.sheetList.add(item.unBox());}
       }
 
       listbox.add(sheetList);
@@ -658,7 +663,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         sheetList.sheetList.add(boxToSheetList(item, sheetList.indexPath));
       } else if (item is SheetTableBox) {
         sheetList.sheetList.add((item).toSheetTable(_findItem,textFieldTapDown,getReplaceTextFunctionForType));
-      }
+      } else {sheetList.sheetList.add(item.unBox());}
     }
     return sheetList;
   }
@@ -1496,7 +1501,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                             return _buildSheetListWidget(sheetTextItem, width);
                           } else if (sheetTextItem is SheetTable) {
                             return _buildSheetTableWidget(sheetTextItem,);
-                          }
+                          } else if(sheetTextItem is SheetSizedItem) {
+                            SuperDecoration? sizedItemDecor = sheetDecorationMap[(sheetTextItem).sizedItemDecoration] as SuperDecoration?;
+      
+                            return IgnorePointer(
+                              key: ValueKey(sheetTextItem),
+                              child: buildDecoratedContainer(
+                                sizedItemDecor,sheetTextItem.build(),false));
+                            }
 
                           return const SizedBox();
                         }),
@@ -1540,7 +1552,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                           } else if (item is SheetList) {
                             // print('in buildSheetListWidget item is: $item');
                             return _buildSheetListWidget(item, width);
-                          }
+                          } else if(item is SheetSizedItem){
+                            SuperDecoration? sizedItemDecor = sheetDecorationMap[item.sizedItemDecoration] as SuperDecoration?;
+      
+                            return IgnorePointer(
+                              key: ValueKey(item),
+                              child: buildDecoratedContainer(
+                                sizedItemDecor,item.build(),false));
+                            }
                           return const SizedBox();
                         }),
                       ),
@@ -2279,7 +2298,61 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     }
     
   }
+  
+  void _findSizedItem() {
+    print('findSizedItem called');
+    try {
+      sizedItem = getItemAtPath(panelIndex.itemIndexPath) as SheetSizedItem;
+          // _sheetItemIterator(panelIndex.id, spreadSheetList[currentPageIndex])
+          //     as SheetText;
+      if (HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed) {
+        if (selectedIndexPaths[sizedItem.id] == null) {
+          selectedIndexPaths.addAll({
+            sizedItem.id: panelIndex.copyWith(),
+          });
+        }
+      } else {
+        selectedIndexPaths = {
+          sizedItem.id: panelIndex.copyWith(),
+        };
+      }
+      
+      setState(() {
+        if(whichPropertyTabIsClicked != 5){
+          whichPropertyTabIsClicked = 5;
+        }
+        
+      // prnt(selectedIndexPaths);
+      // var tmpinx = int.tryParse(sizedItem.textDecoration.id.substring(sizedItem.textDecoration.id.indexOf('/') + 1))??-111;
+      if (sizedItem.sizedItemDecoration == 'yo' || sheetDecorationMap[sizedItem.sizedItemDecoration] == null) { // so we are reassigning the decoration variables to null if id is 'yo'.
+        sizedItemDecorationNameController.text = '[Unassigned]';
+        decorationIndex = -1;
+        updateSheetDecorationvariables(sheetDecorationMap[sizedItem.sizedItemDecoration] as SuperDecoration?);
+      } else {
+        sizedItemDecorationNameController.text = sheetDecorationMap[sizedItem.sizedItemDecoration]!.name;
+        decorationIndex = -1;
+        updateSheetDecorationvariables(sheetDecorationMap[sizedItem.sizedItemDecoration] as SuperDecoration?);
+      }
 
+      // if (// inputBlockExpansionList.length != sizedItem.inputBlocks.length) {
+      //   // inputBlockExpansionList = List.generate(sizedItem.inputBlocks.length, (e)=>false);
+      // }
+      sizedItemDecorationPath =[sizedItem.sizedItemDecoration];
+    });
+    } on Exception catch (e) {
+      setState(() {
+      sizedItem = SheetSizedItem(id: 'yo',parentId: 'yo',sizedItemDecoration: 'yo', indexPath: IndexPath(index:-1),height: 20,width: 20,hide: true);
+      panelIndex.id = '';
+      panelIndex.itemIndexPath = IndexPath(index:-1);
+      selectedIndexPaths = {};
+      print(selectedIndexPaths);
+      print('findSizedItem? Yeah not found.'+e.toString());
+    });
+    } finally{
+    }
+    
+  }
+  
   void _findSheetListItem() {
     try {
       if (panelIndex.parentId.startsWith('LI')) {
@@ -2374,10 +2447,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         tableDecorationPath..clear()..add(sheetTable!.sheetTableDecoration.id);
         tablebgDecorationNameController.text = sheetDecorationMap[sheetTable!.sheetTablebgDecoration.id]!.name;
         tablebgDecorationPath..clear()..add(sheetDecorationMap[sheetTable!.sheetTablebgDecoration.id]!.id);
-        rowDecorationNameController.text = sheetDecorationMap[sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration]!.name; 
-        rowDecorationPath..clear()..add(sheetDecorationMap[sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration]!.id); 
-        columnDecorationNameController.text = sheetDecorationMap[sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration]!.name;   
-        columnDecorationPath..clear()..add(sheetDecorationMap[sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration]!.id);
+        // rowDecorationNameController.text = sheetDecorationMap[sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration]!.name; 
+        // rowDecorationPath..clear()..add(sheetDecorationMap[sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration]!.id); 
+        // columnDecorationNameController.text = sheetDecorationMap[sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration]!.name;   
+        // columnDecorationPath..clear()..add(sheetDecorationMap[sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration]!.id);
         
          switch (whichTableDecorationIsClicked) {
           case 0:
@@ -3229,6 +3302,48 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
                                         },
                                       ),
+                                      Padding(
+                                        padding:EdgeInsets.only(top:4, left:4,right:3),
+                                       
+                                        child: Text(
+                                          ' misc ',
+                                          style: GoogleFonts.lexend(
+                                            color: defaultPalette.tertiary, 
+                                            fontSize: 12,
+                                            letterSpacing: -0.5,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        )
+                                        ),
+                                      const SizedBox(height:2),
+                                      //SizedItem
+                                      toolBarButton(TablerIcons.space, 'sizedItem',
+                                      fontSize: 12,
+                                      iconSize: 13,
+                                      tooltip: 'add a sized item for spacing.',
+                                      hoverColor: defaultPalette.extras[8],
+                                      onTap: () {
+                                          setState(() {
+                                            String newId = 'SZ-${ const Uuid().v4()}';
+                                            var newDecoration = newSuperDecoration();
+                                            var newIndexPath = IndexPath(
+                                                  parent: spreadSheetList[currentPageIndex].indexPath,
+                                                  index: spreadSheetList[currentPageIndex].length);
+                                            spreadSheetList[currentPageIndex].add(
+                                              SheetSizedItem(
+                                                id: newId, 
+                                                parentId: spreadSheetList[currentPageIndex].id, 
+                                                indexPath: newIndexPath, 
+                                                width: 20, 
+                                                height: 20, 
+                                                hide: false, 
+                                                sizedItemDecoration:newDecoration.id)
+                                            );
+                                          });
+                                          assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
+                                        },
+                                      ),
+                                     
                                       const Expanded(child: SizedBox()),
                                       toolBarButton(TablerIcons.device_floppy, 'save',
                                       fontSize: 12,
@@ -4369,6 +4484,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ),
                                   child: Row(
                                     children: [
+                                      //page border
                                       Expanded(
                                           flex: 1,
                                           child: Padding(
@@ -4387,13 +4503,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               strokeWidth: 4,
                                               child: SizedBox(
                                                 height: 45,
-                                                width: _getPropertiesButtonWidth(
-                                                    'page'),
+                                                width: _getPropertiesButtonWidth('page'),
                                               ),
                                             ),
                                           )),
                                       //text field properties button border
-                                      if (panelIndex.id != '' && getItemAtPath(panelIndex.itemIndexPath) is SheetText)
+                                      if (panelIndex.id != '' && (getItemAtPath(panelIndex.itemIndexPath) is SheetText))
                                         Expanded(
                                             flex: 2,
                                             child: Padding(
@@ -4410,13 +4525,30 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                 strokeWidth: 5,
                                                 child: SizedBox(
                                                   height: 43,
-                                                  width: (2 *
-                                                      (sWidth *
-                                                          (wH2DividerPosition)) /
-                                                      5),
+                                                  width: (2 * (sWidth * (wH2DividerPosition)) / 5),
                                                 ),
                                               ),
                                             )),
+                                      //sized item properties button border
+                                      if (panelIndex.id != '' && (getItemAtPath(panelIndex.itemIndexPath) is SheetSizedItem))
+                                        Expanded(
+                                          flex: 2,
+                                          child: Padding(
+                                            padding: EdgeInsets.only(
+                                                left: 4, top: 8),
+                                            child: CustomBorder(
+                                              color: whichPropertyTabIsClicked == 5
+                                                      ? defaultPalette.primary
+                                                      : defaultPalette.transparent,
+                                              radius: const Radius.circular(8),
+                                              dashPattern: const [5, 1],
+                                              strokeWidth: 5,
+                                              child: SizedBox(
+                                                height: 43,
+                                                width: (2 * (sWidth * (wH2DividerPosition)) / 5),
+                                              ),
+                                            ),
+                                          )),
                                       //sheet list properties button border
                                       if (panelIndex.parentId != '' && panelIndex.parentId.startsWith("LI"))
                                         Expanded(
@@ -4525,7 +4657,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ),
                                       ),
                                       //text field properties button button
-                                      if (panelIndex.id != '' && item.id != ''&& item.id != 'yo' && getItemAtPath(panelIndex.itemIndexPath) is SheetText)
+                                      if (panelIndex.id != '' && item.id != ''&& item.id != 'yo' && (getItemAtPath(panelIndex.itemIndexPath) is SheetText ))
                                         Expanded(
                                           flex: 2,
                                           child: Stack(
@@ -4750,6 +4882,186 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             ],
                                           ),
                                         ),
+                                      //sized item properties button button
+                                      if (panelIndex.id != '' && sizedItem.id != ''&& sizedItem.id != 'yo' && (getItemAtPath(panelIndex.itemIndexPath) is SheetSizedItem))
+                                        Expanded(
+                                          flex: 2,
+                                          child: Stack(
+                                            children: [
+                                              //The lavender panel
+                                              Container(
+                                                margin: EdgeInsets.only(
+                                                    top: 10, left: 4),
+                                                decoration: BoxDecoration(
+                                                  color: defaultPalette.extras[8],
+                                                  borderRadius: BorderRadius.circular(10).copyWith(bottomLeft: Radius.circular(8), bottomRight:Radius.circular(8)),
+                                                  border: Border.all(),
+                                                ),
+                                              ),
+                                              //sizeditem tabs buttons
+                                              Positioned.fill(
+                                                child: Container(
+                                                  margin: const EdgeInsets.only(
+                                                    top: 22,
+                                                    left: 4,
+                                                    bottom: 3
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        defaultPalette.transparent,
+                                                    borderRadius:
+                                                        BorderRadius.circular(2),
+                                                    // border: Border.all(),
+                                                  ),
+                                                  child: Stack(
+                                                    children: [
+                                                      //button that switched the tab to dimensions
+                                                      Positioned(
+                                                        bottom:0, left:0,
+                                                        child: ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                              whichPropertyTabIsClicked = 5;
+                                                              whichSizedItemPropertyTabIsClicked = 0;
+                                                              Future.delayed(Duration.zero).then((value) => sizedItemPropertyCardsController.setCardIndex(whichSizedItemPropertyTabIsClicked),);
+                                                              _findSizedItem(); 
+                                                            });
+                                                          },
+                                                          buttonHeight: 21,
+                                                          buttonWidth: (_getPropertiesButtonWidth('text-field')/2)-5,
+                                                          borderRadius:
+                                                              BorderRadius.circular(5),
+                                                          animationDuration: const Duration(
+                                                              milliseconds: 100),
+                                                          animationCurve: Curves.ease,
+                                                          topDecoration: BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: const Icon(
+                                                            TablerIcons.dimensions,
+                                                            size: 12,
+                                                          ),
+                                                          subfac: 5,
+                                                          depth:1.5,
+                                                          baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      //button that switched the tab to sizedItem SuperDecoration
+                                                      Positioned(
+                                                        bottom:0, right:3,
+                                                        child: ElevatedLayerButton(
+                                                          onClick: () {
+                                                            setState(() {
+                                                              whichPropertyTabIsClicked = 5;
+                                                              whichSizedItemPropertyTabIsClicked = 1;
+                                                              Future.delayed(Duration.zero).then((value) => sizedItemPropertyCardsController.setCardIndex(whichSizedItemPropertyTabIsClicked),);
+                                                              _findSizedItem(); 
+                                                              decorationIndex = -1;
+                                                              isListDecorationLibraryToggled = false;
+                                                              isListDecorationPropertiesToggled = false;
+                                                              showDecorationLayers = false;
+                                                              updateSheetDecorationvariables(sheetDecorationMap[sizedItemDecorationPath.last] as SuperDecoration);
+                                                              sizedItemDecorationNameController.text = (sheetDecorationMap[sizedItemDecorationPath.last] as SuperDecoration).name;
+                                                      
+                                                            });
+                                                          },
+                                                          buttonHeight: 21,
+                                                          buttonWidth:( _getPropertiesButtonWidth('text-field')/2)-5,
+                                                          borderRadius: BorderRadius.circular(5),
+                                                          animationDuration: const Duration(
+                                                          milliseconds: 100),
+                                                          animationCurve: Curves.ease,
+                                                          topDecoration: BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(),
+                                                          ),
+                                                          topLayerChild: const Icon(
+                                                            TablerIcons.sparkles,
+                                                            size: 12,
+                                                          ),
+                                                          subfac: 5,
+                                                          depth: 1.5,
+                                                          baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                            
+                                                          ),
+                                                        ),
+                                                      ),
+                                              
+                                                    ],
+                                                  )
+                                                ),
+                                              ),
+                                              // the property tab switch main button sizedItem
+                                              Positioned(
+                                                top: -2,
+                                                right: 0,
+                                                child: ElevatedLayerButton(
+                                                  // isTapped: false,0
+                                                  onClick: () {
+                                                    setState(() {
+                                                      whichPropertyTabIsClicked = 5;
+                                                      sizedItemPropertyCardsController.animateTo(Offset(1, 1),
+                                                      duration:
+                                                          Duration.zero,
+                                                      curve: Curves.linear);
+                                                      _findSizedItem(); 
+                                                      decorationIndex = -1;
+                                                      isListDecorationLibraryToggled = false;
+                                                      isListDecorationPropertiesToggled = false;
+                                                      updateSheetDecorationvariables(sheetDecorationMap[sizedItemDecorationPath.last] as SuperDecoration);
+                                                      sizedItemDecorationNameController.text = (sheetDecorationMap[sizedItemDecorationPath.last] as SuperDecoration).name;
+                                              
+                                                    });
+                                                  },
+                                                  buttonHeight: 30,
+                                                  buttonWidth: _getPropertiesButtonWidth('text-field') + 2,
+                                                  borderRadius:
+                                                      BorderRadius.circular(5).copyWith(bottomLeft: Radius.circular(10), bottomRight:Radius.circular(10)),
+                                                  animationDuration: const Duration(
+                                                      milliseconds: 100),
+                                                  animationCurve: Curves.ease,
+                                                  topDecoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    border: Border.all(),
+                                                  ),
+                                                  topLayerChild: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceAround,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
+                                                    children: [
+                                                      const Icon(
+                                                        TablerIcons
+                                                            .space,
+                                                        size: 15,
+                                                        // color: Colors.blue,
+                                                      ),
+                                                      Text(
+                                                        'space',
+                                                        style: GoogleFonts.bungee(
+                                                            color: defaultPalette
+                                                                .black,
+                                                            fontSize: 12),
+                                                      )
+                                                    ],
+                                                  ),
+                                                  subfac: 10,
+                                                  depth: 3,
+                                                  baseDecoration: BoxDecoration(
+                                                    color: defaultPalette.extras[0],
+                                                    // border: Border.all(),
+                                                  ),
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      
                                       //sheetlist properties button button on top the whole thing
                                       if (panelIndex.parentId != '' && panelIndex.parentId.startsWith("LI"))
                                         Expanded(
@@ -5725,13 +6037,34 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           index: index,
           child: buildSheetTableWidget(sheetList[index] as SheetTable)
           );
+      } else {
+        return ReorderableDragStartListener(
+          key: ValueKey(sheetList[index].id),
+          index: index,
+          child: GestureDetector(
+            onTap: () {
+              FocusScope.of(context).unfocus();
+              
+              setState(() {
+                panelIndex.id = sheetList[index].id;
+                panelIndex.itemIndexPath = sheetList[index].indexPath;
+                panelIndex.parentId = sheetList.id;
+                panelIndex.parentIndexPath = sheetList.indexPath;
+                
+                whichPropertyTabIsClicked = 5;
+                WidgetsBinding.instance.addPostFrameCallback((t){
+                  sizedItemPropertyCardsController.setCardIndex(whichSizedItemPropertyTabIsClicked);
+                });
+                _findSizedItem();
+                
+              });
+              
+              print('clicked');
+              
+              print(panelIndex);
+            },child: sheetList[index].buildWidget(panelIndex,selectedIndexPaths)),
+        );
       }
-      return Container(
-        key: ValueKey(const Uuid().v4()),
-        color: Colors.amberAccent,
-        height: 12,
-        // buildlistw
-      );
       },
       
       );
@@ -5864,13 +6197,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       imageUpdateInterval: 5000000,
                       onTap: () {
                         setState(() {
-                          panelIndex.id = '';
-                          panelIndex.parentId = '';
-                          panelIndex.itemIndexPath = IndexPath(index: -2);
-                          panelIndex.parentIndexPath = IndexPath(index: -2);
+                          panelIndex = panelIndex.reset();
                           print(panelIndex);
                           selectedIndexPaths ={};
                           whichPropertyTabIsClicked =1;
+                          WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                            propertyCardsController.swipeDefault();
+                            propertyCardsController.setCardIndex(currentPageIndex);
+                          },);
+                          
                         });
                       },
                       child: ConstrainedBox(
@@ -6498,8 +6833,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     if (sheetText.locked) {
       sheetText.textEditorConfigurations.controller.onReplaceText =(x,b,m)=>false;
     }
-  return 
-    Container(
+  return Container(
       margin: const EdgeInsets.only(
         left: 2,
         top: 4,
@@ -17778,19 +18112,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                   ...buildSuperDecorationSwiperInterface(
                     whichTableDecorationIsClicked ==0
                     ? tableDecorationPath
-                    : whichTableDecorationIsClicked ==1
-                    ? tablebgDecorationPath
-                    : whichTableDecorationIsClicked ==2
-                    ? rowDecorationPath
-                    : columnDecorationPath
-                    , 
+                    :tablebgDecorationPath, 
                     whichTableDecorationIsClicked ==0
                     ? tableDecorationNameController
-                    : whichTableDecorationIsClicked ==1
-                    ? tablebgDecorationNameController
-                    : whichTableDecorationIsClicked ==2
-                    ? rowDecorationNameController
-                    : columnDecorationNameController
+                    :tablebgDecorationNameController
                     
                     ),
                   ],
@@ -17800,6 +18125,343 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             },
             )
         );
+      case 5:
+        //The actual cards for list properties
+        return FadeInLeft(
+          onFinish: (direction) {
+            setState(() {
+              sizedItemPropertyCardsController
+                  .setCardIndex(whichSizedItemPropertyTabIsClicked);
+            });
+          },
+          from: 3,
+          duration: Durations.short3,
+          child: AppinioSwiper(
+            controller: sizedItemPropertyCardsController,
+            backgroundCardCount: 1,
+            backgroundCardOffset: Offset(3, 3),
+            duration: Duration(milliseconds: 150),
+            backgroundCardScale: 1,
+            loop: true,
+            cardCount: 2,
+            allowUnSwipe: true,
+            allowUnlimitedUnSwipe: true,
+            initialIndex: whichSizedItemPropertyTabIsClicked,
+            maxAngle: 50,
+            threshold: 100,
+            onCardPositionChanged: (position) {
+              setState(() {
+                // isListDecorationLibraryToggled = true;
+                _cardPosition =
+                    position.offset.dx.abs() + position.offset.dy.abs();
+              });
+            },
+            onSwipeEnd: (a, b, direction) {
+              // print(direction.toString());
+              setState(() {
+                // ref.read(propertyCardIndexProvider.notifier).update((s) => s = b);
+                isListDecorationLibraryToggled = false;
+                whichSizedItemPropertyTabIsClicked = b;
+                _cardPosition = 0;
+                if (sizedItem.id == 'yo') {
+                  _findSizedItem();
+                }
+              });
+            },
+            onSwipeCancelled: (activity) {},
+            cardBuilder: (BuildContext context, int index) {
+              int currentCardIndex = whichSizedItemPropertyTabIsClicked;
+              var width = (sWidth * wH2DividerPosition - 25);
+              
+              List<TextEditingController> sizedItemControllers = [
+                TextEditingController()..text = sizedItem.width.toString().replaceAll(RegExp(r'.0$'),''),
+                TextEditingController()..text = sizedItem.height.toString().replaceAll(RegExp(r'.0$'),''),
+              ];
+              
+              List<Widget> sizedItemPropertyTile(int s, String name, IconData icon) {
+                return [
+                  SizedBox(width:2),
+                  MouseRegion(
+                    cursor: s!=5? SystemMouseCursors.resizeLeftRight: SystemMouseCursors.basic,
+                    child: GestureDetector(
+                      onHorizontalDragCancel: () {
+                        //  fontFocusNodes[s].requestFocus();
+                      },
+                      onHorizontalDragUpdate: (details) {
+                        var multiplier = HardwareKeyboard.instance.isControlPressed
+                            ? 5
+                            : HardwareKeyboard.instance.isShiftPressed
+                                ? 0.1
+                                : 1;
+                        setState(() {
+                          double currentValue =
+                              double.tryParse(sizedItemControllers[s].text) ??
+                                  0.0;
+                          double newValue = (currentValue + details.delta.dx * multiplier)
+                              .clamp(
+                                s==0
+                                ? 0
+                                : double.negativeInfinity
+                               , double.infinity);
+
+                          double parsedValue = double.parse(newValue.toStringAsFixed(2));
+                          switch (s) {
+                            case 0:
+                              sizedItem.updateWidth(parsedValue);
+                              break;
+                            case 1:
+                              sizedItem.updateHeight(parsedValue);
+                              break;  
+                          }
+                          
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Icon(
+                            icon,
+                            size: 16,
+                          ),
+                          Text(
+                            name,
+                            style: GoogleFonts.lexend(
+                                fontSize: 14,
+                                letterSpacing: -1,
+                                color: defaultPalette.extras[0]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 10,
+                    child: SizedBox(
+                      height: 12,
+                      child: TextFormField(
+                        // onTapOutside: (event) => fontFocusNodes[s].unfocus(),
+                        // focusNode: fontFocusNodes[s],
+                        controller: sizedItemControllers[s],
+                        inputFormatters: [
+                          NumericInputFormatter(),
+                        ],
+                        cursorColor: defaultPalette.tertiary,
+                        selectionControls: NoMenuTextSelectionControls(),
+                        textAlign: TextAlign.end,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.all(0),
+                          labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                          fillColor: defaultPalette.transparent,
+                          border: InputBorder.none,
+                          enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
+                        ),
+                        keyboardType: TextInputType.number,
+                        style: GoogleFonts.mitr(
+                            fontSize: 13,
+                            color: defaultPalette.extras[0],
+                            letterSpacing: -1),
+                        onFieldSubmitted: (value) {
+                          setState(() {
+                            var parsedValue = double.parse(value);
+                          switch (s) {
+                            case 0:
+                              sizedItem.updateWidth(parsedValue);
+                              break;
+                            case 1:
+                              sizedItem.updateHeight(parsedValue);
+                              break;
+                          }
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ];
+                }
+
+              Widget titleTile(
+              String name,
+              IconData icon, {
+              double fontSize = 13,
+              double iconSize = 15,
+              }) {
+              return Row(children: [
+                Icon(icon, size: iconSize),
+                Expanded(
+                  child: Text(
+                    name,
+                    maxLines: 1,
+                    overflow:TextOverflow.ellipsis,
+                    style: GoogleFonts.lexend(
+                        fontSize: fontSize,
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w500),
+                  ),
+                )
+              ]);
+            }
+
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: AnimatedContainer(
+                      duration: Durations.short3,
+                      margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color:index==0? defaultPalette.secondary: defaultPalette.primary,
+                        border: Border.all(width: 2),
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: AnimatedOpacity(
+                      opacity: currentCardIndex == index
+                          ? 0
+                          : index >= (currentCardIndex + 2) % 10
+                              ? 1
+                              : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
+                      duration: Duration(milliseconds: 300),
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 300),
+                        margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: index == (currentCardIndex + 1) % 10
+                              ? defaultPalette.extras[0]
+                              : index == (currentCardIndex + 2) % 10
+                                  ? defaultPalette.extras[0]
+                                  : defaultPalette.extras[0],
+                          border: Border.all(width: 2),
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  //SizedItemProperties
+                  if (index == 0) ...[
+                    //GRAPH BEHIND SizedItem PROPERTIES CARD
+                      Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(25),
+                          child: Opacity(
+                            opacity: 0.7,
+                            child: LineChart(LineChartData(
+                              lineBarsData: [LineChartBarData()],
+                              titlesData: const FlTitlesData(show: false),
+                              gridData: FlGridData(
+                                getDrawingVerticalLine: (value) => FlLine(
+                                  color: defaultPalette.extras[0],
+                                  dashArray: [5, 5],
+                                  strokeWidth: 1),
+                                getDrawingHorizontalLine: (value) => FlLine(
+                                  color: defaultPalette.extras[0],
+                                  dashArray: [5, 5],
+                                  strokeWidth: 1),
+                                show: true,
+                                horizontalInterval: 6,
+                                verticalInterval: 60),
+                              borderData: FlBorderData(show: false),
+                              minY: 0,
+                              maxY: 50,
+                              maxX: dateTimeNow.millisecondsSinceEpoch
+                                          .ceilToDouble() /
+                                      500 +
+                                  250,
+                              minX: dateTimeNow.millisecondsSinceEpoch
+                                      .ceilToDouble() /
+                                  500)),
+                          ),
+                        ),
+                      ),
+                      
+                      Positioned.fill(
+                      child: Padding(
+                        padding: EdgeInsets.all(15).copyWith(left: 11, right: 14),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: ScrollConfiguration(
+                            behavior: ScrollBehavior()
+                                .copyWith(scrollbars: false),
+                            child: DynMouseScroll(
+                              durationMS: 500,
+                              scrollSpeed: 1,
+                              builder: (context, controller, physics) {
+                                return SingleChildScrollView(
+                                  controller: controller,
+                                  physics: physics,
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        margin: EdgeInsets.only(top:2),
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                        color:defaultPalette.primary,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: defaultPalette.extras[0], width: 2)
+                                        ),
+                                        child: Column(
+                                          children: [
+                                        titleTile('spaceProperties', TablerIcons.space,fontSize: 18, iconSize:20),  
+                                        const SizedBox(
+                                            height:3
+                                          ),
+                                        Row(
+                                          children: [
+                                            const SizedBox( width:4 ),
+                                            Expanded(
+                                              child: Text('id: ${sizedItem.id}',
+                                                textAlign: TextAlign.start,
+                                                maxLines:1,
+                                                style: TextStyle(
+                                                  height: 1,
+                                                  fontFamily: GoogleFonts.lexend().fontFamily,
+                                                  letterSpacing:-0.5,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  fontWeight: FontWeight.w400,        
+                                                  color: defaultPalette.extras[0],
+                                                  fontSize: 8)),
+                                            ),
+                                          ],
+                                        ),  
+                                        const SizedBox(
+                                            height:10
+                                          ),
+                                        Row(children: sizedItemPropertyTile(0, 'width', TablerIcons.ruler_measure)),
+                                          
+                                          SizedBox(height:4),
+                                        Row(
+                                            children: sizedItemPropertyTile(1, 'height', TablerIcons.ruler_measure_2)
+                                          ),
+                                          
+                                          SizedBox(height:4),
+                                    
+                                        ],
+                                        ),
+                                        ),
+                                      
+                                      
+                                      
+                                      // Text(sheetListItem.indexPath.toString()),
+                                    ],
+                                  ));
+                            
+                              }))),
+                      ),
+                    )
+                  ],
+                     
+                  if(index == 1) ...buildSuperDecorationSwiperInterface(sizedItemDecorationPath, sizedItemDecorationNameController)
+                
+                ],
+              );
+            },
+          ),
+        );
+      
       default:
     }
 
@@ -19468,7 +20130,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       );
   }
 
-    Widget uidGeneratorFunctionBlock(
+  Widget uidGeneratorFunctionBlock(
     double width,
     {
       bool isOverlay=false,
@@ -19824,6 +20486,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         ),
                       ),
                       Tooltip(
+                        key: ValueKey(panelIndex.id),
                         message: 'add New SuperDecoration.',
                         child: MouseRegion(
                           cursor:SystemMouseCursors.click,
@@ -19841,6 +20504,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 case 3:
                                   sheetListItem.listDecoration = newSuperDecoration(placeholder: false).id;
                                   _findSheetListItem();
+                                  break;
+                                case 5:
+                                  sizedItem.sizedItemDecoration = newSuperDecoration(placeholder: false).id;
+                                  _findSizedItem();
                                   break;
                                 default:
                               }
@@ -20023,7 +20690,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                 ? defaultPalette.tertiary
                                 : whichPropertyTabIsClicked == 3
                                 ? defaultPalette.extras[1]
-                                : defaultPalette.extras[3],
+                                : whichPropertyTabIsClicked == 4
+                                ? defaultPalette.extras[3]
+                                : defaultPalette.extras[8],
                               border: Border.all(width:1),
                               borderRadius: BorderRadius.circular(500),
                             ),
@@ -20195,13 +20864,17 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                         ? defaultPalette.tertiary
                                         : whichPropertyTabIsClicked ==3
                                         ? defaultPalette.extras[1]
-                                        : defaultPalette.extras[3],
+                                        : whichPropertyTabIsClicked == 4
+                                        ? defaultPalette.extras[3]
+                                        : defaultPalette.extras[8],
                                         
                                         whichPropertyTabIsClicked ==2
                                         ? defaultPalette.tertiary
                                         : whichPropertyTabIsClicked ==3
                                         ? defaultPalette.extras[1]
-                                        : defaultPalette.extras[3],
+                                        : whichPropertyTabIsClicked == 4
+                                        ? defaultPalette.extras[3]
+                                        : defaultPalette.extras[8],
                                         defaultPalette.secondary,
                               
                                       ]
@@ -20226,6 +20899,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                     ? "textDecor  "
                                     : whichPropertyTabIsClicked == 3
                                     ? 'listDecor '
+                                    : whichPropertyTabIsClicked == 5
+                                    ? 'spaceDecor '
                                     : whichTableDecorationIsClicked==0
                                       ?'tableDecor '
                                       :'tableBgDecor ',
@@ -21916,6 +22591,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   sheetListItem.listDecoration = e.id;
                                   _findSheetListItem();
                                   break;
+                                case 5:
+                                  sizedItem.sizedItemDecoration = (sheetDecorationMap[e.id] as SuperDecoration).id;
+                                  _findSizedItem();
+                                  break;
                                 default:
                               }
                             }),
@@ -22128,6 +22807,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                           }
                                           sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].columnDecoration = sheetDecorationMap[tmpinx]!.id;
                                         }
+                                        break;
+                                      case 5:
+                                        sizedItem.sizedItemDecoration = (sheetDecorationMap[tmpinx] as SuperDecoration).id;
+                                        updateSheetDecorationvariables(e);
+                                        decorationIndex = -1;
+                                        sizedItemDecorationPath
+                                          ..clear()
+                                          ..add(e.id);
                                         break;
                                     }
                                     itemDecorationNameController.text = e.name;

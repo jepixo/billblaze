@@ -212,7 +212,8 @@ class SheetText extends SheetItem {
     );
   }
 
-  SheetTextBox toTEItemBox(SheetText item) {
+  @override
+  SheetTextBox toBox() {
     // print(
     //     'conversion text: ${item.textEditorController.document.toDelta().toJson()}');
     // print(
@@ -220,16 +221,16 @@ class SheetText extends SheetItem {
     // print('ToBOX name: ${item.name}, and locked: ${item.locked}');
     return SheetTextBox(
         textEditorController:
-            textEditorController.document.toDelta().toJson(),
-        id: item.id,
-        parentId: item.parentId,
-        hide: item.hide,
-        name: item.name,
+        textEditorController.document.toDelta().toJson(),
+        id: super.id,
+        parentId: super.parentId,
+        hide: hide,
+        name: name,
         indexPath: indexPath,
-        textDecoration: item.textDecoration.toSuperDecorationBox(),
-        inputBlocks: item.inputBlocks,
-        type: item.type.index,
-        locked: item.locked,
+        textDecoration: textDecoration.toSuperDecorationBox(),
+        inputBlocks: inputBlocks,
+        type: type.index,
+        locked: locked,
         );
   }
 

@@ -19,6 +19,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/firebase_options.dart';
 import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
+import 'package:billblaze/models/spread_sheet_lib/sized_item.dart';
 import 'package:billblaze/providers/auth_provider.dart';
 import 'package:billblaze/repo/llama_repository.dart';
 import 'package:billblaze/screens/login_sign_up.dart';
@@ -68,6 +69,7 @@ Future<void> main() async {
   Hive.registerAdapter(UniStatFunctionAdapter());
   Hive.registerAdapter(BiStatFunctionAdapter());
   Hive.registerAdapter(UidGeneratorFunctionAdapter());
+  Hive.registerAdapter(SheetSizedItemAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   // await Hive.deleteBoxFromDisk('fetchedLayoutBox');
