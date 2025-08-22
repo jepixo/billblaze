@@ -22,6 +22,7 @@ import 'package:billblaze/providers/url_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
 import 'package:billblaze/repo/llama_repository.dart';
 import 'package:billblaze/screens/account_info.dart';
+import 'package:billblaze/util/asset_manifest.dart';
 import 'package:billblaze/util/numeric_input_formatter.dart';
 import 'package:billblaze/util/static_noise.dart';
 import 'package:cool_background_animation/cool_background_animation.dart';
@@ -148,6 +149,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   TextEditingController chatTextController = TextEditingController();
   PieMenuController opsFormatPieController = PieMenuController();
   FocusNode chatFocusNode = FocusNode();
+  FocusNode keyboardFocusNode = FocusNode();
   Orientation? _lastOrientation;
   Map<double, double> monthRevenueMap = {};
   Map<double, double> dayRevenueMap = {};
@@ -215,7 +217,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     name: 'INR',
     decimalDigits: 0,
   );
-  final _rand = Random();
+  
 
   @override
   void initState() {
@@ -284,8 +286,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       TextEditingController()..text = monthNames[selectedMonth - 1],
       TextEditingController()..text = selectedYear.toString()
     ];
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async{
       _updateGraphLineSpeed(100);
+      await syncLayoutsWithAssets();
     },);
     
   }
@@ -296,10 +299,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     squiggleFadeAnimationController.dispose();
     sliderFadeAnimationController.dispose();
     sliderController.dispose();
+    recentsCardController.dispose();
+    revCardController.dispose();
+    qtyCardController.dispose();
+    profitsCardController.dispose();
+    titleFontFadeController.dispose();
     // recentsCardController.dispose();
     // ref.read(llamaProvider).dispose();
     // LlamaRepository.dispose();
     _controller?.dispose();
+    chatFocusNode.dispose();
+    keyboardFocusNode.dispose();
     super.dispose();
   }
 
@@ -462,9 +472,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
 
       });
+      _getCurrentTime();
     },
+  
   );
+
 }
+void _getCurrentTime() {
+    setState(() {
+      dateTimeNow = DateTime.now();
+    });
+  }
   //
   //
   void _updateGraphLineSpeed(int newSpeed) {
@@ -477,17 +495,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   }
 
   //
-  
   //
   //
-  void _getCurrentTime() {
-    setState(() {
-      dateTimeNow = DateTime.now();
-    });
+  TypewriterAnimatedText typewriterText(bool isHomeTab, double sWidth, double sHeight, String text){
+    return TypewriterAnimatedText(text,
+      textStyle: GoogleFonts.lexend(
+          fontSize: (isHomeTab) ? mapValueDimensionBasedLockOnDesync( 14, 30, sWidth, sHeight) : 20,
+          color: defaultPalette.extras[0].withOpacity(0.4),
+          height: 1.7),
+      speed: Duration(milliseconds: 100));
   }
-
-  //
-  //
+  
   void _homeTabSwitched(int index, WidgetRef ref) {
     bool left = index != 0;
     // ref.read(isLayoutTabProvider.notifier).state = index == 1;
@@ -580,6 +598,15 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     // print('e ${recentsCardController.cardIndex}');
   }
 
+  void tabSwitchOnTap(int index, WidgetRef ref){
+    // setState(() {
+    //               _updateGraphLineSpeed(
+    //                   (300).round());
+    //             });
+    _homeTabSwitched(index, ref);
+    sheetTypeBrowserEntry?.remove();
+    sheetTypeBrowserEntry = null;
+  }
   //
   //
   void _updateSliderAnimation(int newBegin, int newEnd, {Function? func}) {
@@ -623,18 +650,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         backgroundColor: defaultPalette.extras[0],
         body: Stack(
           children: [
-            AnimatedStack(
-              scaleHeight: 40,
-              scaleWidth: 40,
-              slideAnimationDuration: Duration(milliseconds: 600),
-              fabBackgroundColor: Colors.transparent,
-              backgroundColor: Colors.transparent,
-              fabIconColor: Colors.green,
-              buttonIcon: IconsaxPlusBold.add,
-              columnWidget: Column(),
-              bottomWidget: Row(),
-              isDisabled: true,
-              foregroundWidget: Container(
+
+            SizedBox(
                 height: sHeight,
                 width: sWidth,
                 child: SafeArea(
@@ -748,18 +765,181 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             ],
                             // totalRepeatCount: 1,
                             repeatForever: true,
-                            pause: const Duration(milliseconds: 10000),
+                            pause: const Duration(milliseconds: 20000),
                             displayFullTextOnTap: true,
                             stopPauseOnTap: true,
                           ),
                         ),
                       ),
-                      //
-                      //
-                      //Graph window
+                      //greetings and tips
                       AnimatedPositioned(
                         duration: defaultDuration,
-                        top: topPadPosDistance + topPadGraphDistance+5,
+                        top: topPadPosDistance +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false),
+                        // bottom: mapValueDimensionBasedLockOnDesync(18, 28, sWidth, sHeight)
+                        // //height pf graph
+                        // +sHeight / 4
+                        // //height of balloon slider
+                        // + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
+                        // //padding of statcards
+                        // + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
+                        // //height of stat cards
+                        // + mapValueDimensionBasedLockOnDesync(100, 180, sWidth, sHeight)
+                        // //some padding
+                        // + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
+                        left: mapValueDimensionBasedLockOnDesync(70, 95, sWidth, sHeight),
+                        width: mapValueDimensionBased(450, 1310, sWidth, sHeight,useWidth: true),
+                        child: IgnorePointer(
+                          ignoring: !isHomeTab,
+                          child: AnimatedOpacity(
+                            opacity: isHomeTab ? 1 : 0,
+                            duration: Durations.medium1,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedLayerButton(
+                                  onClick: () async {
+                                    
+                                  },
+                                  buttonHeight: mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight),
+                                  buttonWidth: mapValueDimensionBased(450, 1310, sWidth, sHeight,useWidth: true)-mapValueDimensionBasedLockOnDesync(55, 105, sWidth, sHeight),
+                                  borderRadius: BorderRadius.circular(
+                                    mapValueDimensionBasedLockOnDesync( 15, 20, sWidth, sHeight)),
+                                  animationDuration:
+                                    const Duration(milliseconds: 200),
+                                  animationCurve: Curves.ease,
+                                  subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                  depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                  topDecoration: BoxDecoration(
+                                  color: defaultPalette.primary,
+                                  border: Border.all(),
+                                  ),
+                                  topLayerChild:Row(
+                                    children: [
+                                      Icon(TablerIcons.cursor_text,
+                                      size: mapValueDimensionBasedLockOnDesync( 25, 35, sWidth, sHeight),
+                                      ),
+                                      Expanded(
+                                        child: Container(
+                                        padding: EdgeInsets.all(4).copyWith(left:10),
+                                        margin: EdgeInsets.symmetric(vertical:6),
+                                        decoration: BoxDecoration(
+                                          color: defaultPalette.secondary,
+                                          border: Border.all(width: 0.5),
+                                          borderRadius: BorderRadius.circular(
+                                          mapValueDimensionBasedLockOnDesync( 12, 20, sWidth, sHeight)),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Expanded(
+                                              child: AnimatedTextKit(
+                                                key: ValueKey(
+                                                    (isHomeTab) ? sHeight * sWidth : (isHomeTab)),
+                                                animatedTexts: [
+                                                  typewriterText(isHomeTab, sWidth, sHeight, 'Create Layouts.'),
+                                                  typewriterText(isHomeTab, sWidth, sHeight, "From Layouts, Create Bills."),
+                                                  typewriterText(isHomeTab, sWidth, sHeight, "Select A Bill Type."),
+                                                  typewriterText(isHomeTab, sWidth, sHeight, "Assign Labels To Fields."),
+                                                  typewriterText(isHomeTab, sWidth, sHeight, "Calculate Revenue, Profit, Taxes, etc."),
+                                                  typewriterText(isHomeTab, sWidth, sHeight, "Decorate & Style Your Text, Lists and Tables."),
+                                                  typewriterText(isHomeTab, sWidth, sHeight, "Track Your Revenue and Profits."),
+                                                  
+                                                  // TypewriterAnimatedText("Bill\nBlaze.",
+                                                  //     textStyle: GoogleFonts.nabla(
+                                                  //         fontSize: isHomeTab
+                                                  //             ? titleFontSize
+                                                  //             : titleFontSize / 3,
+                                                  //         color: isHomeTab
+                                                  //             ? Colors.black
+                                                  //             : Color(0xFF000000).withOpacity(0.8),
+                                                  //         height: 0.9),
+                                                  //     speed: Duration(milliseconds: 100)),
+                                                ],
+                                                // totalRepeatCount: 1,
+                                                repeatForever: true,
+                                                pause: const Duration(milliseconds: 1000),
+                                                displayFullTextOnTap: true,
+                                                stopPauseOnTap: true,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      ),
+                                      SizedBox(width:mapValueDimensionBasedLockOnDesync( 5, 20, sWidth, sHeight)),
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerRight,
+                                        child: Text('Hola, ${user?.displayName}!',
+                                        textAlign: TextAlign.end,
+                                        maxLines:1,
+                                        overflow:TextOverflow.ellipsis,
+                                        style: GoogleFonts.lexend(
+                                          color: defaultPalette.extras[0],
+                                          fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
+                                          letterSpacing: -1,
+                                          fontWeight: FontWeight.w400,
+                                          height: 0.5
+                                        ),),
+                                      ),
+                                      SizedBox(width:mapValueDimensionBasedLockOnDesync( 5, 20, sWidth, sHeight)),
+                                   ],
+                                  ),
+                                                                                  
+                                  baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  // border: Border.all(),
+                                    ),
+                                  ),
+                              ),
+                              SizedBox(width:mapValueDimensionBasedLockOnDesync( 5, 20, sWidth, sHeight)),
+                              ElevatedLayerButton(
+                                  onClick: () async {
+                                    
+                                  },
+                                  buttonHeight: mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight),
+                                  buttonWidth: mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight),
+                                  borderRadius: BorderRadius.circular(
+                                    mapValueDimensionBasedLockOnDesync( 30, 80, sWidth, sHeight)),
+                                  animationDuration:
+                                    const Duration(milliseconds: 200),
+                                  animationCurve: Curves.ease,
+                                  subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                  depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                  topDecoration: BoxDecoration(
+                                  color: defaultPalette.primary,
+                                  border: Border.all(),
+                                  ),
+                                  topLayerChild:Row(
+                                    children: [
+                                      Expanded(
+                                        child: Icon(TablerIcons.player_play_filled,
+                                        size: mapValueDimensionBasedLockOnDesync( 25, 35, sWidth, sHeight),
+                                        ),
+                                      ),],
+                                  ),
+                                  baseDecoration: BoxDecoration(
+                                  color: defaultPalette.extras[0],
+                                  // border: Border.all(),
+                                    ),
+                                  ),
+                            ],
+                          ),
+                      ))),
+                      
+                      //
+                      //Graph windowBGBLACKK &WHITE&SECONDARRY
+                      AnimatedPositioned(
+                        duration: defaultDuration,
+                        top: topPadPosDistance 
+                        +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
+                        //height of greetings
+                        +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
+                        //some padding
+                        + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight) +5,
+
+                        // bottom: mapValueDimensionBasedLockOnDesync(18, 28, sWidth, sHeight),
                         left: mapValueDimensionBasedLockOnDesync(70, 100, sWidth, sHeight)+5,
                         height: sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
                         width: mapValueDimensionBased(450, 1300, sWidth, sHeight,useWidth: true),
@@ -777,7 +957,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         ),
                       AnimatedPositioned(
                         duration: defaultDuration,
-                        top: topPadPosDistance + topPadGraphDistance,
+                        top: topPadPosDistance 
+                        +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
+                        //height of greetings
+                        +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
+                        //some padding
+                        + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
+                        // bottom: mapValueDimensionBasedLockOnDesync(18+5, 28+5, sWidth, sHeight),
                         left: mapValueDimensionBasedLockOnDesync(70, 100, sWidth, sHeight),
                         height: sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
                         width: mapValueDimensionBased(450, 1300, sWidth, sHeight,useWidth: true),
@@ -796,7 +982,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         ),
                       AnimatedPositioned(
                         duration: defaultDuration,
-                        top: topPadPosDistance + topPadGraphDistance,
+                        top: topPadPosDistance 
+                        +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
+                        //height of greetings
+                        +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
+                        //some padding
+                        + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
+                        // bottom: mapValueDimensionBasedLockOnDesync(18+5, 28+5, sWidth, sHeight),
                         left: mapValueDimensionBasedLockOnDesync(70, 100, sWidth, sHeight),
                         height: sHeight / 4,
                         width: mapValueDimensionBased(450, 1300, sWidth, sHeight,useWidth: true),
@@ -815,10 +1007,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           ),
                         ),
                         ),
+                      
                       //Graph window
                       AnimatedPositioned(
                         duration: defaultDuration,
-                        top: topPadPosDistance + topPadGraphDistance,
+                        top: topPadPosDistance 
+                          +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
+                          //height of greetings
+                          +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
+                          //some padding
+                          + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
+                        // bottom: mapValueDimensionBasedLockOnDesync(18+5, 28+5, sWidth, sHeight),
                         left: mapValueDimensionBasedLockOnDesync(70, 100, sWidth, sHeight),
                         height: sHeight / 4,
                         width: mapValueDimensionBased(450, 1300, sWidth, sHeight,useWidth: true),
@@ -1077,600 +1276,82 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       //
                       //balloon slider
                       AnimatedPositioned(
-                          duration: defaultDuration,
-                          top: topPadPosDistance +
-                              topPadGraphDistance +
-                              sHeight / 4.2+ mapValueDimensionBased(0, 10+ mapValueDimensionBased(0, 10, sWidth, sHeight,useWidth: true), sWidth, sHeight,b: false),
-                          left: mapValueDimensionBasedLockOnDesync(102, 142, sWidth, sHeight),
-                          height: 20,
-                          width: mapValueDimensionBased(380, 1200, sWidth, sHeight,useWidth: true),
-                          child: AnimatedOpacity(
-                            // animate: true,
-                            // manualTrigger: true,
-                            // controller: (p0) {
-                            //   sliderFadeAnimationController = p0;
-                            // },
-                            opacity: isHomeTab ? 1 : 0,
-                            duration: Durations.medium2,
-                            child: IgnorePointer(
-                              ignoring: !isHomeTab,
-                              child: BalloonSlider(
-                                  thumbRadius: 3,
-                                  trackHeight: 3,
-                                  value: (_graphLineSpeedTween.value / 400),
-                                  ropeLength: sHeight / 6,
-                                  showRope: true,
-                                  // onChangeStart: (val) {
-                                  //   setState(() {
-                                  //     _updateGraphLineSpeed(
-                                  //         (val.clamp(0.1, 1.9) * 100).round());
-                                  //     // _updateGraphLineSpeed(_graphLineSpeed);
-                                  //   });
-                                  // },
-                                  onChanged: (val) {
-                                    setState(() {
-                                      _updateGraphLineSpeed(
-                                          (val.clamp(0.01, 0.99) * 400).round());
-                                    });
-                                  },
-                                  // onChangeEnd: (val) {
-                                  //   setState(() {
-                                  //     _updateGraphLineSpeed(
-                                  //         (val.clamp(0.1, 1.9) * 100).round());
-                                  //     // _updateGraphLineSpeed(_graphLineSpeed);
-                                  //   });
-                                  // },
-                                  color: Colors.black),
-                            ),
-                          )),
-                      //
-                      //AIIIIII CARDS
-                      AnimatedPositioned(
                         duration: defaultDuration,
-                        top: Platform.isWindows ? topPadPosDistance + 10 : 5
-                        // +
-                        //     topPadGraphDistance +
-                        //     topPadCardsDistance
-                        ,
-                        right: 5,
-                        height: sHeight -mapValueDimensionBasedLockOnDesync(42, 80, sWidth, sHeight),
-                        width: sWidth / 3,
-                        child: AppinioSwiper(
-                          backgroundCardCount: 1,
-                          // initialIndex: ref.read(cCardIndexProvider),
-                          backgroundCardOffset: Offset(5, 5),
-                          duration: Duration(milliseconds: 150),
-                          backgroundCardScale: 1,
-                          loop: isHomeTab,
-                          cardCount: 2,
-                          allowUnSwipe: true,
-                          controller: recentsCardController,
-                          onCardPositionChanged: (position) {
-                            setState(() {
-                              _cardPosition = position.offset.dx.abs() + position.offset.dy.abs();
-                            });
-                          },
-                          onSwipeEnd: (a, b, direction) {
-                            // print(direction.toString());
-                            setState(() {
-                              ref
-                                  .read(cCardIndexProvider.notifier)
-                                  .update((s) => s = b);
-                              // _currentCardIndex = b;
-                              _cardPosition = 0;
-                            });
-                          },
-                          cardBuilder: (BuildContext context, int index) {
-                            int currentCardIndex =
-                                ref.watch(cCardIndexProvider);
-                            return Stack(
-                              children: [
-                                Positioned.fill(
-                                  child: AnimatedContainer(
-                                    duration: defaultDuration,
-                                    margin: EdgeInsets.all(15),
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      border: Border.all(width: 2),
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                  ),
-                                ),
-                                Positioned.fill(
-                                  child: AnimatedOpacity(
-                                    opacity: currentCardIndex == index
-                                        ? 0
-                                        : index >= (currentCardIndex + 2) % 10
-                                            ? 1
-                                            : (1 -
-                                                (_cardPosition / 200)
-                                                    .clamp(0.0, 1.0)),
-                                    duration: Duration(milliseconds: 300),
-                                    child: AnimatedContainer(
-                                      duration: Duration(milliseconds: 300),
-                                      margin: EdgeInsets.all(15),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: index ==
-                                                (currentCardIndex + 1) % 10
-                                            ? defaultPalette.extras[0]
-                                            : index ==
-                                                    (currentCardIndex + 2) % 10
-                                                ? defaultPalette.extras[0]
-                                                : defaultPalette.extras[0],
-                                        border: Border.all(width: 2),
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                //AI CHAT INTERFACE
-                                Positioned.fill(
-                                    left: 15+mapValueDimensionBasedLockOnDesync(15, 25, sWidth, sHeight),
-                                    right: 15+mapValueDimensionBasedLockOnDesync(15, 25, sWidth, sHeight),
-                                    top: 15+10,
-                                    bottom: 15+5,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(0),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        //The name of the model and switch button
-                                        SizedBox(
-                                        child: Row(
-                                          children: [
-                                            SizedBox(width: 30,),
-                                            Expanded(
-                                              child: Text(
-                                                ref.watch(aiModelPathProvider).split('/').last.replaceAll('.gguf', '').toUpperCase(),
-                                                maxLines: 1,
-                                                overflow:TextOverflow.ellipsis,
-                                                textAlign: TextAlign.center,
-                                                style: GoogleFonts.pressStart2p(
-                                                  fontSize: mapValueDimensionBasedLockOnDesync(
-                                                          15,
-                                                          20,
-                                                          sWidth,
-                                                          sHeight),
-                                                  color: defaultPalette
-                                                      .extras[0],
-                                                  fontWeight:
-                                                      FontWeight.w500,
-                                                ),
-                                              ),
-                                            ),
-                                            SizedBox(width: 15,),
-                                            ElevatedLayerButton(
-                                              onClick: () async {
-                                                final result = await FilePicker.platform.pickFiles(
-                                                  type: FileType.custom,
-                                                  allowedExtensions: ['gguf'], // only allow .gguf
-                                                  allowMultiple: false,
-                                                );
-
-                                                if (result != null && result.files.isNotEmpty) {
-                                                    ref.read(aiModelPathProvider.notifier).state = result.files.single.path?.replaceAll('\\', '/')??ref.read(aiModelPathProvider.notifier).state;
-                                                  
-                                                }
-                                              },
-                                              buttonHeight:
-                                                  mapValueDimensionBasedLockOnDesync(
-                                                      30, 35, sWidth, sHeight),
-                                              buttonWidth:mapValueDimensionBasedLockOnDesync(
-                                                      30, 35, sWidth, sHeight),
-                                              borderRadius: BorderRadius.circular(
-                                                  mapValueDimensionBasedLockOnDesync(
-                                                      16, 30, sWidth, sHeight)),
-                                              animationDuration:
-                                                  const Duration(milliseconds: 200),
-                                              animationCurve: Curves.ease,
-                                              subfac: mapValueDimensionBasedLockOnDesync(
-                                                  2, 4, sWidth, sHeight),
-                                              depth: mapValueDimensionBasedLockOnDesync(
-                                                  2, 4, sWidth, sHeight),
-                                              topDecoration: BoxDecoration(
-                                                color: defaultPalette.extras[4],
-                                                border: Border.all(),
-                                              ),
-                                              topLayerChild: Column(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Icon(TablerIcons.replace,size:12,color: defaultPalette.primary,)
-                                                ],
-                                              ),
-                                              baseDecoration: BoxDecoration(
-                                                color: defaultPalette.extras[0],
-                                                // border: Border.all(),
-                                              ),
-                                            ),
-                                            SizedBox(width: 15,),
-                                          ],
-                                        ),
-                                        ),
-                                        SizedBox(height: 8,),
-                                        //Chat interfacee
-                                        Expanded(
-                                          child: ClipRRect(
-                                            borderRadius:BorderRadius.circular(35),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color:defaultPalette.secondary,
-                                                borderRadius:BorderRadius.circular(35),
-                                                border: Border.all()
-                                              ),
-                                              child: SingleChildScrollView(
-                                                  padding: EdgeInsets.all(10),
-                                                  child: Column(
-                                                    children: [
-                                                    SizedBox(height: 8,),
-                                                    //USER PROMPT CHAT BUBBLE
-                                                    if(ref.watch(aiPromptProvider).isNotEmpty)
-                                                    Row(
-                                                      mainAxisAlignment: MainAxisAlignment.end,
-                                                      children: [
-                                                        SizedBox(width:22),
-                                                        Expanded(
-                                                          child: Stack(
-                                                            alignment: Alignment.topRight,
-                                                            children: [
-                                                              Container(
-                                                                margin: EdgeInsets.only(left:2,top: 2),
-                                                                padding:EdgeInsets.all(8).copyWith(bottom:8,) ,
-                                                                decoration:BoxDecoration(
-                                                                  color:defaultPalette.extras[0],
-                                                                  borderRadius:BorderRadius.circular(20),
-                                                                  border: Border.all()
-                                                                ),
-                                                                child:Text(
-                                                                ref.watch(aiPromptProvider),
-                                                                style: GoogleFonts.lexend(
-                                                                    fontSize:
-                                                                        mapValueDimensionBasedLockOnDesync(
-                                                                            15,
-                                                                            20,
-                                                                            sWidth,
-                                                                            sHeight),
-                                                                    color: defaultPalette
-                                                                        .extras[0],
-                                                                    fontWeight:
-                                                                        FontWeight.w500,
-                                                                    letterSpacing: -0.8),
-                                                              ),),
-                                                              Container(
-                                                                margin:EdgeInsets.only(right: 2),
-                                                                padding:EdgeInsets.all(8),
-                                                                decoration:BoxDecoration(
-                                                                  color:defaultPalette.primary,
-                                                                  borderRadius:BorderRadius.circular(20),
-                                                                  border: Border.all()
-                                                                ),
-                                                                child:Text(
-                                                                ref.watch(aiPromptProvider),
-                                                                style: GoogleFonts.lexend(
-                                                                    fontSize:
-                                                                        mapValueDimensionBasedLockOnDesync(
-                                                                            15,
-                                                                            20,
-                                                                            sWidth,
-                                                                            sHeight),
-                                                                    color: defaultPalette
-                                                                        .extras[0],
-                                                                    fontWeight:
-                                                                        FontWeight.w500,
-                                                                    letterSpacing: -0.8),
-                                                              ),)
-                                                            ],
-                                                          ),
-                                                        )
-                                                      ],
-                                                    ),
-                                                    SizedBox(height: 12,),
-                                                    //AI RESPONSE CHAT BUBBLE
-                                                    Row(
-                                                      mainAxisAlignment: MainAxisAlignment.end,
-                                                      children: [
-                                                        Expanded(
-                                                          child: Stack(
-                                                            children: [
-                                                              Container(
-                                                                margin:EdgeInsets.only(right:22,left: 2,top: 2),
-                                                                padding:EdgeInsets.all(10) ,
-                                                                decoration:BoxDecoration(
-                                                                  color:defaultPalette.extras[0],
-                                                                  borderRadius:BorderRadius.circular(20),
-                                                                  border: Border.all()
-                                                                ),
-                                                                child:Text(
-                                                                ref.watch(aiTokenProvider).trimLeft(),
-                                                                style: GoogleFonts.lexend(
-                                                                    fontSize:
-                                                                        mapValueDimensionBasedLockOnDesync(
-                                                                            15,
-                                                                            20,
-                                                                            sWidth,
-                                                                            sHeight),
-                                                                    color: defaultPalette
-                                                                        .extras[0],
-                                                                    fontWeight:
-                                                                        FontWeight.w500,
-                                                                    letterSpacing: -0.8),
-                                                              ),),
-                                                              Container(
-                                                                margin:EdgeInsets.only(right:24),
-                                                                padding:EdgeInsets.all(10),
-                                                                decoration:BoxDecoration(
-                                                                  color:defaultPalette.tertiary,
-                                                                  borderRadius:BorderRadius.circular(20),
-                                                                  border: Border.all()
-                                                                ),
-                                                                child:Text(
-                                                                ref.watch(aiTokenProvider).trimLeft(),
-                                                                style: GoogleFonts.lexend(
-                                                                    fontSize:
-                                                                        mapValueDimensionBasedLockOnDesync(
-                                                                            15,
-                                                                            20,
-                                                                            sWidth,
-                                                                            sHeight),
-                                                                    color: defaultPalette
-                                                                        .primary,
-                                                                    fontWeight:
-                                                                        FontWeight.w500,
-                                                                    letterSpacing: -0.8),
-                                                              ),)
-                                                            ],
-                                                          ),
-                                                        )
-                                                      ],
-                                                    ),
-                                                    ],
-                                                  )),
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(height:5),
-                                        
-                                        SizedBox(height:5),
-                                        //SEND PROMPT BUTTON
-                                        Row(
-                                          children: [
-                                            ElevatedLayerButton(
-                                            onClick: () async {
-                                              ref.read(aiPromptProvider.notifier).state = chatTextController.text;
-                                              if (!isLlmProcessing) {
-                                                setState(() {
-                                                  isLlmProcessing = true;
-                                                });
-                                                final receivePort =
-                                                    ReceivePort();
-                                            
-                                                final prompt =
-                                                    ChatHistory()
-                                                      ..addMessage(
-                                                          role:
-                                                              Role.system,
-                                                          content:
-                                                        """"" You are a concise, analytical assistant.
-                                                              Always focus directly on asnwering the user's prompt, 
-                                                              keep responses short and precise. 
-                                                              Only generate the answer and stop.
-                                                              Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. If you can't answer something just say so but don't remain silent to a question.
-                                                              Do not generate questions or mention unrelated topics. Keep your responses strictly bound to the BillBlaze data and decorate linguistically for the user. 
-                                                              Here's the BillBlaze Data: $typeStats, Selected year: $selectedYear, Selected Month: $selectedMonth, YearStats: $monthRevenueMap, MonthStats: $dayRevenueMap Current Date: ${DateFormat('dd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
-                                                          Payable means our total revenue.
-                                                          Count means number of bills made by the user.
-                                                        """)
-                                                      ..addMessage(
-                                                          role: Role.user,
-                                                          content:
-                                                              chatTextController
-                                                                  .text)
-                                                      ..addMessage(
-                                                          role: Role
-                                                              .assistant,
-                                                          content: "");
-                                            
-                                                final modelPath = ref.read(aiModelPathProvider);
-                                                // final modelPath =
-                                                //     "C:/Users/ANTEC/Downloads/Compressed/Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf";
-                                            
-                                                // ✅ Pass only data, not Flutter state
-                                                await Isolate.spawn(
-                                                    runLlamaModel, {
-                                                  'sendPort': receivePort
-                                                      .sendPort,
-                                                  'prompt':
-                                                      prompt.exportFormat(
-                                                          ChatFormat
-                                                              .chatml,
-                                                          leaveLastAssistantOpen:
-                                                              true),
-                                                  'modelPath': modelPath,
-                                                });
-                                                ref
-                                                    .read(aiTokenProvider
-                                                        .notifier)
-                                                    .state = '';
-                                            
-                                                final buffer =
-                                                    StringBuffer();
-                                                await for (final token
-                                                    in receivePort) {
-                                                  if (token == null)
-                                                    break;
-                                                  buffer.write(token);
-                                                  ref
-                                                      .read(
-                                                          aiTokenProvider
-                                                              .notifier)
-                                                      .state += (token);
-                                                  ref.read(aiTokenProvider.notifier).state = ref.read(
-                                                          aiTokenProvider.notifier).state
-                                                          .replaceAll('<|im_start|> assistant\n', '')
-                                                          .replaceAll('<|im_start|>assistant\n', '')
-                                                          .replaceAll('<|im_end|>', '')
-                                                          ;
-                                                }
-                                                print( "✅ Final Response: ${buffer.toString()}");
-                                                setState(() {
-                                                  isLlmProcessing = false;
-                                                });
-                                              }
-                                            },
-                                            
-                                            buttonHeight:
-                                              mapValueDimensionBasedLockOnDesync( 45, 50, sWidth, sHeight),
-                                            buttonWidth:mapValueDimensionBasedLockOnDesync( 45, 50, sWidth, sHeight),
-                                            borderRadius: BorderRadius.circular(
-                                              mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
-                                            animationDuration:
-                                              const Duration(milliseconds: 200),
-                                            animationCurve: Curves.ease,
-                                            subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                            depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                            topDecoration: BoxDecoration(
-                                            color: defaultPalette.extras[3],
-                                            border: Border.all(),
-                                            ),
-                                            topLayerChild:Container(
-                                                
-                                            child: isLlmProcessing
-                                                ? Padding(
-                                                    padding:
-                                                        const EdgeInsets
-                                                            .all(8.0),
-                                                    child: LoadingIndicator(
-                                                        colors: [
-                                                          defaultPalette
-                                                              .primary
-                                                        ],
-                                                        indicatorType:
-                                                            Indicator.values[
-                                                              // 0 + math.Random().nextInt((Indicator.values.length - 1) - 0 +1)
-                                                              31
-                                                              ]),
-                                                  )
-                                                : Transform.rotate(
-                                                    angle: -pi / 2,
-                                                    child: Icon(
-                                                        TablerIcons.send_2,
-                                                        color: defaultPalette.primary))),
-                                                                                            
-                                            baseDecoration: BoxDecoration(
-                                            color: defaultPalette.extras[0],
-                                            // border: Border.all(),
-                                              ),
-                                            ),
-                                            SizedBox(width: 5),
-                                            Expanded(
-                                              child: Container(
-                                                // padding: EdgeInsets.only(left:15, top:5, bottom:5),
-                                                decoration: BoxDecoration(
-                                                    color: defaultPalette
-                                                        .secondary,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20),
-                                                    border:
-                                                        Border.all(width: 2)),
-                                                child: TextFormField(
-                                                  onTapOutside: (event) =>
-                                                      chatFocusNode.unfocus(),
-                                                  focusNode: chatFocusNode,
-                                                  controller:
-                                                      chatTextController,
-                                                  cursorColor:
-                                                      defaultPalette.tertiary,
-                                                  keyboardType:
-                                                      TextInputType.multiline,
-                                                  textInputAction:
-                                                      TextInputAction.newline,
-                                                  selectionControls:
-                                                      NoMenuTextSelectionControls(),
-                                                  textAlign: TextAlign.start,
-                                                  textAlignVertical:
-                                                      TextAlignVertical(
-                                                          y: -1),
-                                                  maxLines: 2,
-                                                  minLines: 1,
-                                                  decoration: InputDecoration(
-                                                    contentPadding:
-                                                        const EdgeInsets.only(
-                                                            left: 15,
-                                                            top: 5,
-                                                            bottom: 5),
-                                                    labelStyle:
-                                                        GoogleFonts.lexend(
-                                                            color:
-                                                                defaultPalette
-                                                                    .black),
-                                                    fillColor: defaultPalette
-                                                        .transparent,
-                                                    border: InputBorder.none,
-                                                    enabledBorder:
-                                                        OutlineInputBorder(
-                                                            borderSide:
-                                                                BorderSide
-                                                                    .none),
-                                                    focusedBorder:
-                                                        OutlineInputBorder(
-                                                            borderSide:
-                                                                BorderSide
-                                                                    .none),
-                                                  ),
-                                                  style: GoogleFonts.lexend(
-                                                      fontSize:
-                                                          mapValueDimensionBasedLockOnDesync(
-                                                              15,
-                                                              20,
-                                                              sWidth,
-                                                              sHeight),
-                                                      color: defaultPalette
-                                                          .extras[0],
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      letterSpacing: -1),
-                                                  onFieldSubmitted:
-                                                      (value) {},
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                          SizedBox(height:5),
-                                          Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal:12.0),
-                                          child: Text(
-                                          'LLMs can make mistakes, or hallucinate. Fact check important stuff.',
-                                          maxLines: 1,
-                                          overflow:TextOverflow.ellipsis,
-                                          style: GoogleFonts.lexend(
-                                            fontSize: mapValueDimensionBasedLockOnDesync( 6, 12, sWidth, sHeight),
-                                              color: defaultPalette.extras[0],
-                                              fontWeight: FontWeight.w500,),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
+                        top: topPadPosDistance 
+                        +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
+                        //height of greetings
+                        +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
+                        //some padding
+                        + mapValueDimensionBasedLockOnDesync(10, 30, sWidth, sHeight)
+                        //height of graph
+                        + sHeight / 4,
+                        // bottom: mapValueDimensionBasedLockOnDesync(18, 28, sWidth, sHeight)+sHeight / 4,
+                        left: mapValueDimensionBasedLockOnDesync(102, 142, sWidth, sHeight),
+                        height: 20,
+                        width: mapValueDimensionBased(380, 1200, sWidth, sHeight,useWidth: true),
+                        child: AnimatedOpacity(
+                          // animate: true,
+                          // manualTrigger: true,
+                          // controller: (p0) {
+                          //   sliderFadeAnimationController = p0;
+                          // },
+                          opacity: isHomeTab ? 1 : 0,
+                          duration: Durations.medium2,
+                          child: IgnorePointer(
+                            ignoring: !isHomeTab,
+                            child: BalloonSlider(
+                                thumbRadius: 3,
+                                trackHeight: 3,
+                                value: (_graphLineSpeedTween.value / 400),
+                                ropeLength: sHeight / 6,
+                                showRope: true,
+                                // onChangeStart: (val) {
+                                //   setState(() {
+                                //     _updateGraphLineSpeed(
+                                //         (val.clamp(0.1, 1.9) * 100).round());
+                                //     // _updateGraphLineSpeed(_graphLineSpeed);
+                                //   });
+                                // },
+                                onChanged: (val) {
+                                  setState(() {
+                                    _updateGraphLineSpeed(
+                                        (val.clamp(0.01, 0.99) * 400).round());
+                                  });
+                                },
+                                // onChangeEnd: (val) {
+                                //   setState(() {
+                                //     _updateGraphLineSpeed(
+                                //         (val.clamp(0.1, 1.9) * 100).round());
+                                //     // _updateGraphLineSpeed(_graphLineSpeed);
+                                //   });
+                                // },
+                                color: Colors.black),
+                          ),
+                        )),
+                      //
                       //STATCARDSSS
                       AnimatedPositioned(
                         duration: defaultDuration,
-                        top: topPadPosDistance + topPadGraphDistance+5 +sHeight / 4+ mapValueDimensionBasedLockOnDesync(20, 35, sWidth, sHeight)
-                        // +
-                        //     topPadGraphDistance +
-                        //     topPadCardsDistance
+                        // bottom: mapValueDimensionBasedLockOnDesync(18, 28, sWidth, sHeight)
+                        // //height pf graph
+                        // +sHeight / 4
+                        // //height of balloon slider
+                        // + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
+                        // //some padding
+                        // + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
+                        top: topPadPosDistance 
+                        +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
+                        //height of greetings
+                        +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
+                        //some padding
+                        + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
+                        //height of graphh
+                        + sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
+                        //some padding
+                        + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
                         ,
                         left: mapValueDimensionBasedLockOnDesync(65, 95, sWidth, sHeight),
-                        height: mapValueDimensionBasedLockOnDesync(100, 180, sWidth, sHeight),
+                        height: mapValueDimensionBasedLockOnDesync(130, 370, sWidth, sHeight),
                         width: mapValueDimensionBased(460, 1310, sWidth, sHeight,useWidth: true),
                         child: IgnorePointer(
                           ignoring: !isHomeTab,
@@ -1752,7 +1433,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           if(index==0)...[
                                             Positioned.fill(
                                               child:Container(
-                                                margin: EdgeInsets.all(5),
+                                                margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                                 decoration: BoxDecoration(
                                                 ),
                                                 // padding: EdgeInsets.all(0).copyWith(left: 20, right:15,top: mapValueDimensionBasedLockOnDesync(15, 25, sWidth, sHeight)),
@@ -1793,7 +1474,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         ),
                                                       ),
                                                     ),
-                                                    
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                     Row(
                                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                       children: [
@@ -1802,7 +1483,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                           overflow:TextOverflow.ellipsis,
                                                           style: GoogleFonts.lexend(
                                                             color: defaultPalette.extras[0],
-                                                            fontSize: mapValueDimensionBasedLockOnDesync(12, 25, sWidth, sHeight),
+                                                            fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                             letterSpacing: -1,
                                                             fontWeight: FontWeight.w500,
                                                             height: 0.6
@@ -1816,12 +1497,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 ),
                                               )
                                             )
-
+            
                                           ],
                                           if(index!=0)...[
                                             Positioned.fill(
                                               child:Container(
-                                                margin: EdgeInsets.all(5),
+                                                margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                                 decoration: BoxDecoration(
                                                 ),
                                                 // padding: EdgeInsets.all(0).copyWith(left: 20, right:15,top: mapValueDimensionBasedLockOnDesync(15, 25, sWidth, sHeight)),
@@ -1870,7 +1551,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         ),
                                                       ),
                                                     ),
-                                                    
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                     Padding(
                                                       padding: const EdgeInsets.symmetric(horizontal: 8),
                                                       child: Row(
@@ -1891,7 +1572,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               maxLines: 1,overflow: TextOverflow.ellipsis,
                                                               style: GoogleFonts.lexend(
                                                                 color: defaultPalette.extras[0],
-                                                                fontSize: mapValueDimensionBasedLockOnDesync(12, 25, sWidth, sHeight),
+                                                                fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                                 letterSpacing: -1,
                                                                 fontWeight: FontWeight.w500,
                                                                 height: 0.6
@@ -1907,7 +1588,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 ),
                                               )
                                             )
-
+            
                                           ],
                                           
                                         ],
@@ -1916,7 +1597,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     },
                                   ),
                                 ),
-                                SizedBox(width:5),
+                                SizedBox(width:mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                 //QUANITYYY OF BILLS AND ALLAT CARDS
                                 Expanded(
                                   child: AppinioSwiper(
@@ -1992,7 +1673,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           if(index==0)...[
                                             Positioned.fill(
                                               child:Container(
-                                                margin: EdgeInsets.all(5),
+                                                margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                                 decoration: BoxDecoration(
                                                 ),
                                                 // padding: EdgeInsets.all(0).copyWith(left: 20, right:15,top: mapValueDimensionBasedLockOnDesync(15, 25, sWidth, sHeight)),
@@ -2031,14 +1712,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         ),
                                                       ),
                                                     ),
-                                                    
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                     Row(
                                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                       children: [
                                                         Text('totalBills',
                                                           style: GoogleFonts.lexend(
                                                             color: defaultPalette.extras[0],
-                                                            fontSize: mapValueDimensionBasedLockOnDesync(12, 25, sWidth, sHeight),
+                                                            fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                             letterSpacing: -1,
                                                             fontWeight: FontWeight.w500,
                                                             height: 0.6
@@ -2052,12 +1733,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 ),
                                               )
                                             )
-
+            
                                           ],
                                           if(index!=0)...[
                                             Positioned.fill(
                                               child:Container(
-                                                margin: EdgeInsets.all(5),
+                                                margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                                 decoration: BoxDecoration(
                                                 ),
                                                 // padding: EdgeInsets.all(0).copyWith(left: 20, right:15,top: mapValueDimensionBasedLockOnDesync(15, 25, sWidth, sHeight)),
@@ -2106,7 +1787,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         ),
                                                       ),
                                                     ),
-                                                    
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                     Row(
                                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                       children: [
@@ -2121,7 +1802,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                     : 'proformaInvoices',
                                                           style: GoogleFonts.lexend(
                                                             color: defaultPalette.extras[0],
-                                                            fontSize: mapValueDimensionBasedLockOnDesync(12, 25, sWidth, sHeight),
+                                                            fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                             letterSpacing: -1,
                                                             fontWeight: FontWeight.w500,
                                                             height: 0.6
@@ -2135,7 +1816,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 ),
                                               )
                                             )
-
+            
                                           ],
                                           
                                         ],
@@ -2144,7 +1825,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     },
                                   ),
                                 ),
-                                SizedBox(width:5),
+                                SizedBox(width:mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                 //PROFITSS OF BILLS AND ALLAT CARDSS
                                 Expanded(
                                   child: AppinioSwiper(
@@ -2221,7 +1902,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           if(index==0)...[
                                             Positioned.fill(
                                               child:Container(
-                                                margin: EdgeInsets.all(5),
+                                                margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                                 decoration: BoxDecoration(
                                                 ),
                                                 // padding: EdgeInsets.all(0).copyWith(left: 20, right:15,top: mapValueDimensionBasedLockOnDesync(15, 25, sWidth, sHeight)),
@@ -2260,14 +1941,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         ),
                                                       ),
                                                     ),
-                                                    
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                     Row(
                                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                       children: [
                                                         Text('totalProfits',
                                                           style: GoogleFonts.lexend(
                                                             color: defaultPalette.extras[0],
-                                                            fontSize: mapValueDimensionBasedLockOnDesync(12, 25, sWidth, sHeight),
+                                                            fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                             letterSpacing: -1,
                                                             fontWeight: FontWeight.w500,
                                                             height: 0.6
@@ -2281,12 +1962,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 ),
                                               )
                                             )
-
+            
                                           ],
                                           if(index!=0)...[
                                             Positioned.fill(
                                               child:Container(
-                                                margin: EdgeInsets.all(5),
+                                                margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                                 decoration: BoxDecoration(
                                                 ),
                                                 // padding: EdgeInsets.all(0).copyWith(left: 20, right:15,top: mapValueDimensionBasedLockOnDesync(15, 25, sWidth, sHeight)),
@@ -2335,7 +2016,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         ),
                                                       ),
                                                     ),
-                                                    
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                     Padding(
                                                       padding: const EdgeInsets.symmetric(horizontal: 8),
                                                       child: Row(
@@ -2356,7 +2037,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               maxLines: 1,overflow: TextOverflow.ellipsis,
                                                               style: GoogleFonts.lexend(
                                                                 color: defaultPalette.extras[0],
-                                                                fontSize: mapValueDimensionBasedLockOnDesync(12, 25, sWidth, sHeight),
+                                                                fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                                 letterSpacing: -1,
                                                                 fontWeight: FontWeight.w500,
                                                                 height: 0.6
@@ -2372,7 +2053,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 ),
                                               )
                                             )
-
+            
                                           ],
                                           
                                         ],
@@ -2387,107 +2068,934 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                      //leftSideButtons and elevated
+                      
+                      //
+                      //AIIIIII CARDS
                       AnimatedPositioned(
                         duration: defaultDuration,
-                        bottom: mapValueDimensionBasedLockOnDesync(0, 95, sWidth, sHeight),
-                        left: mapValueDimensionBasedLockOnDesync(65, 95, sWidth, sHeight),
-                        width: mapValueDimensionBased(450, 1300, sWidth, sHeight,useWidth: true),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Container(
-                              // width: (15 + 65 + 15 + 65 + 15 + 65 + 15 + 45) +
-                              //     mapValueDimensionBased(0, 200, sWidth, sHeight,
-                              //         useWidth: true),
-                              decoration: BoxDecoration(
-                                color: defaultPalette.transparent,
-                                borderRadius: BorderRadius.circular(45),
-                                // border: Border.all(
-                                //   width: 1.5,
-                                //   color: defaultPalette.extras[0],
-                                // ),
-                              ),
-                              child: ElevatedLayerButton(
-                                onClick: () async {
-                                },
-                                
-                                buttonHeight:
-                                  mapValueDimensionBasedLockOnDesync( 75, 95, sWidth, sHeight),
-                                buttonWidth:mapValueDimensionBasedLockOnDesync( 75, 95, sWidth, sHeight),
-                                borderRadius: BorderRadius.circular(
-                                  mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
-                                animationDuration:
-                                  const Duration(milliseconds: 200),
-                                animationCurve: Curves.ease,
-                                subfac: mapValueDimensionBasedLockOnDesync( 4, 8, sWidth, sHeight),
-                                depth: mapValueDimensionBasedLockOnDesync( 4, 8, sWidth, sHeight),
-                                topDecoration: BoxDecoration(
-                                color: defaultPalette.extras[3],
-                                border: Border.all(),
-                                ),
-                                topLayerChild:Container(
-                                    
-                                child: Padding(
-                                        padding:
-                                            const EdgeInsets
-                                                .all(8.0),
-                                        child: LoadingIndicator(
-                                            colors: [
-                                              defaultPalette
-                                                  .primary
-                                            ],
-                                            indicatorType:
-                                                Indicator.values[
-                                                  // 0 + math.Random().nextInt((Indicator.values.length - 1) - 0 +1)
-                                                  4
-                                                  ]),
-                                      )),
-                                                                                
-                                baseDecoration: BoxDecoration(
-                                color: defaultPalette.extras[0],
-                                // border: Border.all(),
+                        top: topPadPosDistance + 10 
+                        // +
+                        //     topPadGraphDistance +
+                        //     topPadCardsDistance
+                        ,
+                        right: 5,
+                        height: sHeight -(topPadPosDistance + 10) -mapValueDimensionBasedLockOnDesync(8, 20, sWidth, sHeight),
+                        width: sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                        child: IgnorePointer(
+                          ignoring: !isHomeTab,
+                          child: AppinioSwiper(
+                            backgroundCardCount: 1,
+                            // initialIndex: ref.read(cCardIndexProvider),
+                            backgroundCardOffset: Offset(5, 5),
+                            duration: Duration(milliseconds: 150),
+                            backgroundCardScale: 1,
+                            loop: isHomeTab,
+                            cardCount: 2,
+                            allowUnSwipe: true,
+                            controller: recentsCardController,
+                            onCardPositionChanged: (position) {
+                              setState(() {
+                                _cardPosition = position.offset.dx.abs() + position.offset.dy.abs();
+                              });
+                            },
+                            onSwipeEnd: (a, b, direction) {
+                              // print(direction.toString());
+                              setState(() {
+                                ref
+                                    .read(cCardIndexProvider.notifier)
+                                    .update((s) => s = b);
+                                // _currentCardIndex = b;
+                                _cardPosition = 0;
+                              });
+                            },
+                            cardBuilder: (BuildContext context, int index) {
+                              int currentCardIndex =
+                                  ref.watch(cCardIndexProvider);
+                              return Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: AnimatedContainer(
+                                      duration: defaultDuration,
+                                      margin: EdgeInsets.all(15),
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(width: 1),
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  Positioned.fill(
+                                    child: AnimatedOpacity(
+                                      opacity: currentCardIndex == index
+                                          ? 0
+                                          : index >= (currentCardIndex + 2) % 10
+                                              ? 1
+                                              : (1 -
+                                                  (_cardPosition / 200)
+                                                      .clamp(0.0, 1.0)),
+                                      duration: Duration(milliseconds: 300),
+                                      child: AnimatedContainer(
+                                        duration: Duration(milliseconds: 300),
+                                        margin: EdgeInsets.all(15),
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: index ==
+                                                  (currentCardIndex + 1) % 10
+                                              ? defaultPalette.extras[0]
+                                              : index ==
+                                                      (currentCardIndex + 2) % 10
+                                                  ? defaultPalette.extras[0]
+                                                  : defaultPalette.extras[0],
+                                          border: Border.all(width: 2),
+                                          borderRadius: BorderRadius.circular(30),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if(index==0)
+                                  //AI CHAT INTERFACE
+                                  Positioned.fill(
+                                      left: 15+mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
+                                      right: 15+mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
+                                      top: 15+10,
+                                      bottom: 15+5,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(0),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          //The name of the model and switch button
+                                          SizedBox(
+                                          child: Row(
+                                            children: [
+                                              SizedBox(width: 30,),
+                                              Expanded(
+                                                child: Text(
+                                                  ref.watch(aiModelPathProvider).split('/').last.replaceAll('.gguf', '').toUpperCase(),
+                                                  maxLines: 1,
+                                                  overflow:TextOverflow.ellipsis,
+                                                  textAlign: TextAlign.center,
+                                                  style: GoogleFonts.pressStart2p(
+                                                    fontSize: mapValueDimensionBasedLockOnDesync(
+                                                            15,
+                                                            20,
+                                                            sWidth,
+                                                            sHeight),
+                                                    color: defaultPalette
+                                                        .extras[0],
+                                                    fontWeight:
+                                                        FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 15,),
+                                              ElevatedLayerButton(
+                                                onClick: () async {
+                                                  final result = await FilePicker.platform.pickFiles(
+                                                    type: FileType.custom,
+                                                    allowedExtensions: ['gguf'], // only allow .gguf
+                                                    allowMultiple: false,
+                                                  );
+                                      
+                                                  if (result != null && result.files.isNotEmpty) {
+                                                      ref.read(aiModelPathProvider.notifier).state = result.files.single.path?.replaceAll('\\', '/')??ref.read(aiModelPathProvider.notifier).state;
+                                                    
+                                                  }
+                                                },
+                                                buttonHeight:
+                                                    mapValueDimensionBasedLockOnDesync(
+                                                        30, 35, sWidth, sHeight),
+                                                buttonWidth:mapValueDimensionBasedLockOnDesync(
+                                                        30, 35, sWidth, sHeight),
+                                                borderRadius: BorderRadius.circular(
+                                                    mapValueDimensionBasedLockOnDesync(
+                                                        16, 30, sWidth, sHeight)),
+                                                animationDuration:
+                                                    const Duration(milliseconds: 200),
+                                                animationCurve: Curves.ease,
+                                                subfac: mapValueDimensionBasedLockOnDesync(
+                                                    2, 4, sWidth, sHeight),
+                                                depth: mapValueDimensionBasedLockOnDesync(
+                                                    2, 4, sWidth, sHeight),
+                                                topDecoration: BoxDecoration(
+                                                  color: defaultPalette.extras[4],
+                                                  border: Border.all(),
+                                                ),
+                                                topLayerChild: Column(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Icon(TablerIcons.replace,size:12,color: defaultPalette.primary,)
+                                                  ],
+                                                ),
+                                                baseDecoration: BoxDecoration(
+                                                  color: defaultPalette.extras[0],
+                                                  // border: Border.all(),
+                                                ),
+                                              ),
+                                              SizedBox(width: 15,),
+                                            ],
+                                          ),
+                                          ),
+                                          SizedBox(height: 8,),
+                                          //Chat interfacee
+                                          Expanded(
+                                            child: ClipRRect(
+                                              borderRadius:BorderRadius.circular(35),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color:defaultPalette.secondary,
+                                                  borderRadius:BorderRadius.circular(35),
+                                                  border: Border.all()
+                                                ),
+                                                child: SingleChildScrollView(
+                                                    padding: EdgeInsets.all(10),
+                                                    child: Column(
+                                                      children: [
+                                                      SizedBox(height: 8,),
+                                                      //USER PROMPT CHAT BUBBLE
+                                                      if(ref.watch(aiPromptProvider).isNotEmpty)
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.end,
+                                                        children: [
+                                                          SizedBox(width:22),
+                                                          Expanded(
+                                                            child: Stack(
+                                                              alignment: Alignment.topRight,
+                                                              children: [
+                                                                Container(
+                                                                  margin: EdgeInsets.only(left:2,top: 2),
+                                                                  padding:EdgeInsets.all(8).copyWith(bottom:8,) ,
+                                                                  decoration:BoxDecoration(
+                                                                    color:defaultPalette.extras[0],
+                                                                    borderRadius:BorderRadius.circular(20),
+                                                                    border: Border.all()
+                                                                  ),
+                                                                  child:Text(
+                                                                  ref.watch(aiPromptProvider),
+                                                                  style: GoogleFonts.lexend(
+                                                                      fontSize:
+                                                                          mapValueDimensionBasedLockOnDesync(
+                                                                              15,
+                                                                              20,
+                                                                              sWidth,
+                                                                              sHeight),
+                                                                      color: defaultPalette
+                                                                          .extras[0],
+                                                                      fontWeight:
+                                                                          FontWeight.w500,
+                                                                      letterSpacing: -0.8),
+                                                                ),),
+                                                                Container(
+                                                                  margin:EdgeInsets.only(right: 2),
+                                                                  padding:EdgeInsets.all(8),
+                                                                  decoration:BoxDecoration(
+                                                                    color:defaultPalette.primary,
+                                                                    borderRadius:BorderRadius.circular(20),
+                                                                    border: Border.all()
+                                                                  ),
+                                                                  child:Text(
+                                                                  ref.watch(aiPromptProvider),
+                                                                  style: GoogleFonts.lexend(
+                                                                      fontSize:
+                                                                          mapValueDimensionBasedLockOnDesync(
+                                                                              15,
+                                                                              20,
+                                                                              sWidth,
+                                                                              sHeight),
+                                                                      color: defaultPalette
+                                                                          .extras[0],
+                                                                      fontWeight:
+                                                                          FontWeight.w500,
+                                                                      letterSpacing: -0.8),
+                                                                ),)
+                                                              ],
+                                                            ),
+                                                          )
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: 12,),
+                                                      //AI RESPONSE CHAT BUBBLE
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.end,
+                                                        children: [
+                                                          Expanded(
+                                                            child: Stack(
+                                                              children: [
+                                                                Container(
+                                                                  margin:EdgeInsets.only(right:22,left: 2,top: 2),
+                                                                  padding:EdgeInsets.all(10) ,
+                                                                  decoration:BoxDecoration(
+                                                                    color:defaultPalette.extras[0],
+                                                                    borderRadius:BorderRadius.circular(20),
+                                                                    border: Border.all()
+                                                                  ),
+                                                                  child:Text(
+                                                                  ref.watch(aiTokenProvider).trimLeft(),
+                                                                  style: GoogleFonts.lexend(
+                                                                      fontSize:
+                                                                          mapValueDimensionBasedLockOnDesync(
+                                                                              15,
+                                                                              20,
+                                                                              sWidth,
+                                                                              sHeight),
+                                                                      color: defaultPalette
+                                                                          .extras[0],
+                                                                      fontWeight:
+                                                                          FontWeight.w500,
+                                                                      letterSpacing: -0.8),
+                                                                ),),
+                                                                Container(
+                                                                  margin:EdgeInsets.only(right:24),
+                                                                  padding:EdgeInsets.all(10),
+                                                                  decoration:BoxDecoration(
+                                                                    color:defaultPalette.tertiary,
+                                                                    borderRadius:BorderRadius.circular(20),
+                                                                    border: Border.all()
+                                                                  ),
+                                                                  child:Text(
+                                                                  ref.watch(aiTokenProvider).trimLeft(),
+                                                                  style: GoogleFonts.lexend(
+                                                                      fontSize:
+                                                                          mapValueDimensionBasedLockOnDesync(
+                                                                              15,
+                                                                              20,
+                                                                              sWidth,
+                                                                              sHeight),
+                                                                      color: defaultPalette
+                                                                          .primary,
+                                                                      fontWeight:
+                                                                          FontWeight.w500,
+                                                                      letterSpacing: -0.8),
+                                                                ),)
+                                                              ],
+                                                            ),
+                                                          )
+                                                        ],
+                                                      ),
+                                                      ],
+                                                    )),
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(height:5),
+                                          
+                                          SizedBox(height:5),
+                                          //SEND PROMPT BUTTON
+                                          Row(
+                                            children: [
+                                              ElevatedLayerButton(
+                                              onClick: () async {
+                                                ref.read(aiPromptProvider.notifier).state = chatTextController.text;
+                                                if (!isLlmProcessing) {
+                                                  setState(() {
+                                                    isLlmProcessing = true;
+                                                  });
+                                                  final receivePort =
+                                                      ReceivePort();
                                               
-                            ),
-                          //   Positioned.fill(
-                          //   child: StarryBackground(
-                              //   numberOfStars: 200,
-                              //   starConfig: StarConfig(
-                              //     minSize: 0.1,
-                              //     maxSize: 1.0,
-                              //     starColor: defaultPalette.primary,
-                              //     movementSpeed: 2.0,
-                              //     enableTwinkling: true,
-                              //   ),
-                              //   backgroundGradient: LinearGradient(
-                              //     colors: [ Color(0xFF000D36),defaultPalette.extras[0],],
-                              //     stops: [0.1,0.9]
-                              //   ),
-                              //   enableShootingStars: true,
-                              //   shootingStarInterval: Duration(seconds: 3),
-                              // ),
-                          // ),
-                          Expanded(child:Text(
-                            'LLMs can make mistakes, or hallucinate. Fact check important stuff.',
-                            maxLines: 1,
-                            overflow:TextOverflow.ellipsis,
-                            textAlign: TextAlign.end,
-                            style: GoogleFonts.lexend(
-                              fontSize: mapValueDimensionBasedLockOnDesync( 6, 12, sWidth, sHeight),
-                                color: defaultPalette.extras[0],
-                                fontWeight: FontWeight.w500,),
-                          )),
-                          ],
+                                                  final prompt =
+                                                      ChatHistory()
+                                                        ..addMessage(
+                                                            role:
+                                                                Role.system,
+                                                            content:
+                                                          """"" You are a concise, analytical assistant.
+                                                                Always focus directly on asnwering the user's prompt, 
+                                                                keep responses short and precise. 
+                                                                Only generate the answer and stop.
+                                                                Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. If you can't answer something just say so but don't remain silent to a question.
+                                                                Do not generate questions or mention unrelated topics. Keep your responses strictly bound to the BillBlaze data and decorate linguistically for the user. 
+                                                                Here's the BillBlaze Data: $typeStats, Selected year: $selectedYear, Selected Month: $selectedMonth, YearStats: $monthRevenueMap, MonthStats: $dayRevenueMap Current Date: ${DateFormat('dd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
+                                                            Payable means our total revenue.
+                                                            Count means number of bills made by the user.
+                                                          """)
+                                                        ..addMessage(
+                                                            role: Role.user,
+                                                            content:
+                                                                chatTextController
+                                                                    .text)
+                                                        ..addMessage(
+                                                            role: Role
+                                                                .assistant,
+                                                            content: "");
+                                              
+                                                  final modelPath = ref.read(aiModelPathProvider);
+                                                  // final modelPath =
+                                                  //     "C:/Users/ANTEC/Downloads/Compressed/Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf";
+                                              
+                                                  // ✅ Pass only data, not Flutter state
+                                                  await Isolate.spawn(
+                                                      runLlamaModel, {
+                                                    'sendPort': receivePort
+                                                        .sendPort,
+                                                    'prompt':
+                                                        prompt.exportFormat(
+                                                            ChatFormat
+                                                                .chatml,
+                                                            leaveLastAssistantOpen:
+                                                                true),
+                                                    'modelPath': modelPath,
+                                                  });
+                                                  ref
+                                                      .read(aiTokenProvider
+                                                          .notifier)
+                                                      .state = '';
+                                              
+                                                  final buffer =
+                                                      StringBuffer();
+                                                  await for (final token
+                                                      in receivePort) {
+                                                    if (token == null)
+                                                      break;
+                                                    buffer.write(token);
+                                                    ref
+                                                        .read(
+                                                            aiTokenProvider
+                                                                .notifier)
+                                                        .state += (token);
+                                                    ref.read(aiTokenProvider.notifier).state = ref.read(
+                                                            aiTokenProvider.notifier).state
+                                                            .replaceAll('<|im_start|> assistant\n', '')
+                                                            .replaceAll('<|im_start|>assistant\n', '')
+                                                            .replaceAll('<|im_end|>', '')
+                                                            ;
+                                                  }
+                                                  print( "✅ Final Response: ${buffer.toString()}");
+                                                  setState(() {
+                                                    isLlmProcessing = false;
+                                                  });
+                                                }
+                                              },
+                                              
+                                              buttonHeight:
+                                                mapValueDimensionBasedLockOnDesync( 45, 50, sWidth, sHeight),
+                                              buttonWidth:mapValueDimensionBasedLockOnDesync( 45, 50, sWidth, sHeight),
+                                              borderRadius: BorderRadius.circular(
+                                                mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
+                                              animationDuration:
+                                                const Duration(milliseconds: 200),
+                                              animationCurve: Curves.ease,
+                                              subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                              depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                              topDecoration: BoxDecoration(
+                                              color: defaultPalette.extras[3],
+                                              border: Border.all(),
+                                              ),
+                                              topLayerChild:Container(
+                                                  
+                                              child: isLlmProcessing
+                                                  ? Padding(
+                                                      padding:
+                                                          const EdgeInsets
+                                                              .all(8.0),
+                                                      child: LoadingIndicator(
+                                                          colors: [
+                                                            defaultPalette
+                                                                .primary
+                                                          ],
+                                                          indicatorType:
+                                                              Indicator.values[
+                                                                // 0 + math.Random().nextInt((Indicator.values.length - 1) - 0 +1)
+                                                                31
+                                                                ]),
+                                                    )
+                                                  : Transform.rotate(
+                                                      angle: -pi / 2,
+                                                      child: Icon(
+                                                          TablerIcons.send_2,
+                                                          color: defaultPalette.primary))),
+                                                                                              
+                                              baseDecoration: BoxDecoration(
+                                              color: defaultPalette.extras[0],
+                                              // border: Border.all(),
+                                                ),
+                                              ),
+                                              SizedBox(width: 5),
+                                              Expanded(
+                                                child: Container(
+                                                  // padding: EdgeInsets.only(left:15, top:5, bottom:5),
+                                                  decoration: BoxDecoration(
+                                                      color: defaultPalette
+                                                          .secondary,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
+                                                      border:
+                                                          Border.all(width: 2)),
+                                                  child: TextFormField(
+                                                    onTapOutside: (event) =>
+                                                        chatFocusNode.unfocus(),
+                                                    onTap: () {
+                                                      FocusManager.instance.primaryFocus?.unfocus();
+                                                      keyboardFocusNode.unfocus();
+                                                      chatFocusNode.requestFocus();
+                                                      chatFocusNode.requestFocus();
+                                                      Future.delayed(Durations.short2).then((value) => chatFocusNode.requestFocus(),);
+                                                    },
+                                                    focusNode: chatFocusNode,
+                                                    controller:
+                                                        chatTextController,
+                                                    cursorColor:
+                                                        defaultPalette.tertiary,
+                                                    keyboardType:
+                                                        TextInputType.multiline,
+                                                    textInputAction:
+                                                        TextInputAction.newline,
+                                                    selectionControls:
+                                                        NoMenuTextSelectionControls(),
+                                                    textAlign: TextAlign.start,
+                                                    textAlignVertical:
+                                                        TextAlignVertical(
+                                                            y: -1),
+                                                    maxLines: 2,
+                                                    minLines: 1,
+                                                    decoration: InputDecoration(
+                                                      contentPadding:
+                                                          const EdgeInsets.only(
+                                                              left: 15,
+                                                              top: 5,
+                                                              bottom: 5),
+                                                      labelStyle:
+                                                          GoogleFonts.lexend(
+                                                              color:
+                                                                  defaultPalette
+                                                                      .black),
+                                                      fillColor: defaultPalette
+                                                          .transparent,
+                                                      border: InputBorder.none,
+                                                      enabledBorder:
+                                                          OutlineInputBorder(
+                                                              borderSide:
+                                                                  BorderSide
+                                                                      .none),
+                                                      focusedBorder:
+                                                          OutlineInputBorder(
+                                                              borderSide:
+                                                                  BorderSide
+                                                                      .none),
+                                                    ),
+                                                    style: GoogleFonts.lexend(
+                                                        fontSize:
+                                                            mapValueDimensionBasedLockOnDesync(
+                                                                15,
+                                                                20,
+                                                                sWidth,
+                                                                sHeight),
+                                                        color: defaultPalette
+                                                            .extras[0],
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        letterSpacing: -1),
+                                                    onFieldSubmitted:
+                                                        (value) {},
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                            SizedBox(height:5),
+                                            Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal:12.0),
+                                            child: Text(
+                                            'LLMs can make mistakes, or hallucinate. Fact check important stuff.',
+                                            maxLines: 1,
+                                            overflow:TextOverflow.ellipsis,
+                                            style: GoogleFonts.lexend(
+                                              fontSize: mapValueDimensionBasedLockOnDesync( 6, 12, sWidth, sHeight),
+                                                color: defaultPalette.extras[0],
+                                                fontWeight: FontWeight.w500,),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )),
+                                  //RECENTSS CARDD
+                                  if(index==1)
+                                  Positioned.fill(
+                                    child: //the layout tiles
+                                    Padding(
+                                      padding: const EdgeInsets.all(12.0),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(40),
+                                        child: Column(
+                                          children: [
+                                            //RECENTSS TITLE
+                                            Row(
+                                            children: [
+                                              Expanded(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(15+8.0).copyWith(bottom: 0),
+                                                  child: Text('RECENT'.toUpperCase(),
+                                                      textAlign: TextAlign.left,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.pressStart2p(
+                                                        color: defaultPalette.extras[0],
+                                                        fontSize: mapValueDimensionBasedLockOnDesync(25, 45, sWidth, sHeight),
+                                                        letterSpacing: -2,
+                                                        fontWeight: FontWeight.w600,
+                                                        height: 1.2)),
+                                                ),
+                                              ),
+                                               SizedBox(
+                                                width: 5,
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(
+                                            height: 0,
+                                          ),
+                                            Expanded(
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Color(0xffc0c0c0).withOpacity(0.5),
+                                                  // color:defaultPalette.primary,
+                                                  borderRadius: BorderRadius.circular(30),
+                                                ),
+                                                margin: EdgeInsets.all(15+mapValueDimensionBasedLockOnDesync(1, 10, sWidth, sHeight)),
+                                                child: ScrollConfiguration(
+                                                  behavior:
+                                                      ScrollBehavior().copyWith(scrollbars: false),
+                                                  child: DynMouseScroll(
+                                                      durationMS: 500,
+                                                      scrollSpeed: 1,
+                                                      builder: (context, controller, physics) {
+                                                        return ScrollbarUltima(
+                                                          alwaysShowThumb: true,
+                                                          controller: controller,
+                                                          scrollbarPosition:
+                                                              ScrollbarPosition.right,
+                                                          backgroundColor: defaultPalette.primary,
+                                                          isDraggable: true,
+                                                          maxDynamicThumbLength: 90,
+                                                          minDynamicThumbLength: 50,
+                                                          thumbBuilder:
+                                                              (context, animation, widgetStates) {
+                                                            return Container(
+                                                              margin: EdgeInsets.only(
+                                                                  right: 3, top: 8, bottom: 8),
+                                                              decoration: BoxDecoration(
+                                                                  color: defaultPalette.primary,
+                                                                  border: Border.all(),
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(15)),
+                                                              width: 6,
+                                                            );
+                                                          },
+                                                          child: ClipRRect(
+                                                            borderRadius: BorderRadius.circular(30),
+                                                            child: ListView.builder(
+                                                              padding: EdgeInsets.only(right: 0,top: 0),
+                                                              controller: controller,
+                                                              physics: physics,
+                                                              itemCount:Boxes.getLayouts()
+                                                                              .values
+                                                                              .toList()
+                                                                              .length +
+                                                                          1,
+                                                              itemBuilder:
+                                                                  (BuildContext context, int i) {
+                                                                // Get all layouts into a list
+                                                                final layouts = Boxes.getLayouts().values.toList();
+                                      
+                                                                // Sort the list by modifiedDate descending (latest first)
+                                                                layouts.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
+                                      
+                                                                // Now use the sorted list
+                                                                if (i == layouts.length) {
+                                                                  return const SizedBox(height: 5);
+                                                                }
+                                      
+                                                                final layoutModel = layouts[i];
+                                                                
+                                                                return Material(
+                                                                    color:
+                                                                        defaultPalette.transparent,
+                                                                    child: InkWell(
+                                                                      hoverColor: defaultPalette
+                                                                          .extras[0]
+                                                                          .withOpacity(0.4),
+                                                                      highlightColor: defaultPalette
+                                                                          .extras[0]
+                                                                          .withOpacity(0.4),
+                                                                      splashColor: defaultPalette
+                                                                          .extras[0]
+                                                                          .withOpacity(0.4),
+                                                                      onTap: () {
+                                                                        Navigator.push(context,
+                                                                            MaterialPageRoute(
+                                                                          builder: (context) {
+                                                                            return PopScope(
+                                                                              canPop: false,
+                                                                              child: LayoutDesigner(
+                                                                                id: layoutModel.id,
+                                                                                onPop: (pdf) {
+                                                                                  setState(() {
+                                                                                    filteredLayoutBox = Boxes.getLayouts().values.toList();
+                                                                                  });
+                                                                                },
+                                                                              ),
+                                                                            );
+                                                                          },
+                                                                        ));
+                                                                        filteredLayoutBox = Boxes.getLayouts().values.toList();
+                                                                      },
+                                                                      child: Container(
+                                                                        height: mapValueDimensionBasedLockOnDesync(75, 170, sWidth, sHeight),
+                                                                        width: 30,
+                                                                        margin: EdgeInsets.only(
+                                                                            bottom: 10, 
+                                                                            right: 8, 
+                                                                            top: mapValueDimensionBasedLockOnDesync(0+(i==0?8:1), 15, sWidth, sHeight),
+                                                                            left:mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                                                        color: defaultPalette
+                                                                            .transparent,
+                                                                        child: Row(
+                                                                          children: [
+                                                                            
+                                                                            //layoutname and created modified
+                                                                            Expanded(
+                                                                              child: Column(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                                              children: [
+                                                                                //layoutname
+                                                                                  Expanded(
+                                                                                    child: Padding(
+                                                                                      padding: const EdgeInsets.only(left: 8.0, top: 5),
+                                                                                      child: Tooltip(
+                                                                                        message:
+                                                                                        layoutModel.name,
+                                                                                        textStyle: GoogleFonts.lexend(
+                                                                                          fontSize: mapValueDimensionBasedLockOnDesync(15,20, sWidth, sHeight),
+                                                                                          color:defaultPalette.primary,
+                                                                                          fontWeight: FontWeight.w600,
+                                                                                          letterSpacing:-0.2,
+                                                                                        ),
+                                                                                        decoration: BoxDecoration(
+                                                                                            color: defaultPalette.extras[0].withOpacity( 0.8),
+                                                                                            borderRadius: BorderRadius.circular( 50)),
+                                                                                        child: Text(
+                                                                                          layoutModel.name,
+                                                                                          maxLines: 1,
+                                                                                          overflow: TextOverflow.ellipsis,
+                                                                                          textAlign: TextAlign.end,
+                                                                                          style: GoogleFonts.lexend(
+                                                                                            fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
+                                                                                            color: defaultPalette.extras[0],
+                                                                                            fontWeight: FontWeight.w600,
+                                                                                            letterSpacing: -0.2,
+                                                                                          ),
+                                                                                        ),
+                                                                                      ),
+                                                                                    ),
+                                                                                  ),
+                                                                                //created modified and pages
+                                                                                Container(
+                                                                                  decoration: BoxDecoration(
+                                                                                    // color:  defaultPalette.primary,
+                                                                                    borderRadius: BorderRadius.circular(12),
+                                                                                    // border: Border.all()
+                                                                                  ),
+                                                                                  padding: EdgeInsets.all( 3  ).copyWith(left: 8),
+                                                                                  child: Column(
+                                                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                    mainAxisAlignment: MainAxisAlignment.start,
+                                                                                    children: [
+                                                                                      SingleChildScrollView(
+                                                                                        scrollDirection: Axis.horizontal,
+                                                                                        child: RichText(
+                                                                                          textAlign: TextAlign.start,
+                                                                                          maxLines: 1,
+                                                                                          // overflow: TextOverflow.ellipsis,
+                                                                                          text: TextSpan(
+                                                                                            style: GoogleFonts.lexend(
+                                                                                              fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                              fontWeight: FontWeight.w300,
+                                                                                              letterSpacing: -0.2,
+                                                                                            ),
+                                                                                            children: [
+                                                                                              TextSpan(
+                                                                                                text: 'Created: ',
+                                                                                                style: GoogleFonts.lexend(
+                                                                                                    color: defaultPalette.extras[0]),
+                                                                                              ),
+                                                                                              TextSpan(
+                                                                                                text: DateFormat("MMM d, y 'at' h:mm a")
+                                                                                                    .format(layoutModel.createdAt),
+                                                                                                style:
+                                                                                                    TextStyle(color: defaultPalette.extras[0]),
+                                                                                              ),
+                                                                                            ],
+                                                                                          ),
+                                                                                        ),
+                                                                                      ),
+                                                                                      SingleChildScrollView(
+                                                                                        scrollDirection: Axis.horizontal,
+                                                                                        child: RichText(
+                                                                                          textAlign: TextAlign.start,
+                                                                                          maxLines: 1,
+                                                                                          overflow: TextOverflow.ellipsis,
+                                                                                          text: TextSpan(
+                                                                                            style: GoogleFonts.lexend(
+                                                                                              fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                              fontWeight: FontWeight.w300,
+                                                                                              letterSpacing: -0.2,
+                                                                                            ),
+                                                                                            children: [
+                                                                                              TextSpan(
+                                                                                                text: 'Modified: ',
+                                                                                                style: GoogleFonts.lexend(
+                                                                                                  color: defaultPalette.extras[0],
+                                                                                                  fontWeight: FontWeight.w400,
+                                                                                                ),
+                                                                                              ),
+                                                                                              TextSpan(
+                                                                                                text: DateFormat("MMM d, y 'at' h:mm a")
+                                                                                                    .format(layoutModel.modifiedAt),
+                                                                                                style:
+                                                                                                    TextStyle(color: defaultPalette.extras[0]),
+                                                                                              ),
+                                                                                            ],
+                                                                                          ),
+                                                                                        ),
+                                                                                      ),
+                                                                                      RichText(
+                                                                                        textAlign: TextAlign.start,
+                                                                                        maxLines: 1,
+                                                                                        overflow: TextOverflow.ellipsis,
+                                                                                        text: TextSpan(
+                                                                                          style: GoogleFonts.lexend(
+                                                                                            fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                            fontWeight: FontWeight.w300,
+                                                                                            letterSpacing: -0.2,
+                                                                                          ),
+                                                                                          children: [
+                                                                                            TextSpan(
+                                                                                              text:
+                                                                                                  '${SheetType.values[layoutModel.type].name} · ',
+                                                                                              style: GoogleFonts.lexend(
+                                                                                                fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                                color: defaultPalette.extras[0],
+                                                                                                fontWeight: FontWeight.w600,
+                                                                                                letterSpacing: -0.2,
+                                                                                              ),
+                                                                                            ),
+                                                                                            TextSpan(
+                                                                                              text:
+                                                                                                  'Pages: ${layoutModel.spreadSheetList.isEmpty ? '1' : layoutModel.spreadSheetList.length.toString()}',
+                                                                                              style: GoogleFonts.lexend(
+                                                                                                fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                                color: defaultPalette.extras[0],
+                                                                                                fontWeight: FontWeight.w400,
+                                                                                                letterSpacing: -0.2,
+                                                                                              ),
+                                                                                            ),
+                                                                                          ],
+                                                                                        ),
+                                                                                      ),
+                                                                                      
+                                                                                    ],
+                                                                                  ),
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                            ),
+                                                                            SizedBox(width: 5),
+                                                                            //mini layout pdf pages swiper
+                                                                            SizedBox(
+                                                                              height: mapValueDimensionBasedLockOnDesync(75, 170, sWidth, sHeight),
+                                                                              width: mapValueDimensionBasedLockOnDesync(58, 125, sWidth, sHeight),
+                                                                              child: AppinioSwiper(
+                                                                                cardCount: (layoutModel.spreadSheetList.length.isNaN || layoutModel.docPropsList.length ==0)
+                                                                                    ? 1
+                                                                                    : layoutModel.docPropsList.length,
+                                                                                backgroundCardCount: 5,
+                                                                                backgroundCardOffset: Offset( 0.8, 0.8),
+                                                                                duration: Duration( milliseconds: 220),
+                                                                                backgroundCardScale: 1,
+                                                                                loop: true,
+                                                                                allowUnSwipe: true,
+                                                                                allowUnlimitedUnSwipe: true,
+                                                                                initialIndex: 0,
+                                                                                cardBuilder: (context, indx) {
+                                                                                  // print(layoutModel.pdf?.length);
+                                                                                  return Stack(
+                                                                                    children: [
+                                                                                      //The main bgCOLOR OF THE CARD
+                                                                                      Positioned.fill(
+                                                                                        child: AnimatedContainer(
+                                                                                          duration: Durations.short3,
+                                                                                          alignment: Alignment.center,
+                                                                                          margin: EdgeInsets.only(
+                                                                                              left: 8,
+                                                                                              top: 8,
+                                                                                              bottom: 2),
+                                                                                          decoration: BoxDecoration(
+                                                                                            color: defaultPalette.primary,
+                                                                                            border: Border.all(
+                                                                                                width: 1.2,
+                                                                                                color: defaultPalette.extras[0],
+                                                                                                strokeAlign: BorderSide.strokeAlignOutside),
+                                                                                            borderRadius: BorderRadius.circular(10),
+                                                                                            image: layoutModel.pdf == null
+                                                                                              ? null
+                                                                                              : DecorationImage(
+                                                                                                  image: MemoryImage(
+                                                                                                    layoutModel.pdf![indx],
+                                                                                                  ),
+                                                                                                  fit: BoxFit.fitWidth),
+                                                                                          ),
+                                                                                          // foregroundDecoration: BoxDecoration(
+                                                                                          //   border: Border.all(width: 2, color:defaultPalette.extras[0]),
+                                                                                          //   borderRadius: BorderRadius.circular(10),
+                                                                                          // ),
+                                                                                        ),
+                                                                                      ),
+                                                                                    ],
+                                                                                  );
+                                                                                },
+                                                                              ),
+                                                                            ),
+                                                                            SizedBox(
+                                                                              width: 10,
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                
+                                                              },
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                                
+                                  )
+                                ],
+                              );
+                            },
+                          ),
                         ),
                       ),
+                      
+                      
                       
                     ],
                   ),
                 ),
               ),
-            ),
 
             //SideNavbar
             Positioned(
@@ -2502,71 +3010,101 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   alignment: Alignment.topLeft,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(0),
-                    child: CurvedNavigationBar(
-                      disp: 50,
-                      bgHeight: 50,
-                      index: homeScreenTabIndex,
-                      radius: 0,
-                      width: sHeight,
-                      s: mapValue(
-                          value: sHeight,
-                          inMin: 480,
-                          inMax: 1190,
-                          outMin: 0.2,
-                          outMax: 0.1),
-                      bottom: 0.7,
-                      height: 70,
-                      animationDuration: Duration(milliseconds: 300),
-                      buttonBackgroundColor: defaultPalette.primary,
-                      buttonBaseDecorationColor:
-                      isHomeTab
-                      ? defaultPalette.tertiary
-                      : isLayoutTab
-                        ? defaultPalette.extras[0]
-                        : isBillTab
-                          ? defaultPalette.extras[0]
-                          : defaultPalette.extras[0],
-                      buttonIconColor: defaultPalette.extras[0],
-                      backgroundColor: Colors.transparent,
-                      color: defaultPalette.extras[0],
-                      items: [
-                        Icon(
-                          IconsaxPlusLinear.home_2,
-                          size: 25,
-                          color: defaultPalette.primary,
-                        ),
-                        Icon(
-                          IconsaxPlusLinear.receipt_1,
-                          size: 25,
-                          color: defaultPalette.primary,
-                        ),
-                        Icon(
-                          IconsaxPlusLinear.direct,
-                          size: 25,
-                          color: defaultPalette.primary,
-                        ),
-                        Icon(
-                          IconsaxPlusLinear.user_square,
-                          size: 25,
-                          color: defaultPalette.primary,
-                        ),
-                      ],
-                      onTap: (index) {
-                        // Handle button tap
-                        ref
-                            .read(homeScreenTabIndexProvider.notifier)
-                            .update((state) => state = index);
-
-                        // print(ref.read(currentTabIndexProvider));
-                        setState(() {
-                                      _updateGraphLineSpeed(
-                                          (2 * 100).round());
-                                    });
-                        _homeTabSwitched(index, ref);
-                        sheetTypeBrowserEntry?.remove();
-                        sheetTypeBrowserEntry = null;
+                    child: MouseRegion(
+                      onEnter: (event) => keyboardFocusNode.requestFocus(),
+                      onExit: (event) => keyboardFocusNode.unfocus(),
+                      child: Focus(
+                        // focusNode: keyboardFocusNode,
+                        // onKeyEvent: (node, event) {
+                        //   if (event is KeyDownEvent) {
+                        //   if (event.logicalKey == LogicalKeyboardKey.digit1) {
+                        //     ref.read(homeScreenTabIndexProvider.notifier).state =0;
+                        //     tabSwitchOnTap(0, ref);
+                        //     return KeyEventResult.handled;
+                        //   }
+                        //   if (event.logicalKey == LogicalKeyboardKey.digit2) {
+                        //     ref.read(homeScreenTabIndexProvider.notifier).state =1;
+                        //     tabSwitchOnTap(1, ref);
+                        //     return KeyEventResult.handled;
+                        //   }
+                        //   if (event.logicalKey == LogicalKeyboardKey.digit3) {
+                        //     ref.read(homeScreenTabIndexProvider.notifier).state =2;
+                        //     tabSwitchOnTap(2, ref);
+                        //     return KeyEventResult.handled;
+                        //   }if (event.logicalKey == LogicalKeyboardKey.digit4) {
+                        //     ref.read(homeScreenTabIndexProvider.notifier).state =3;
+                        //     tabSwitchOnTap(3, ref);
+                        //     return KeyEventResult.handled;
+                        //   }
+                        // }
+                        //   return KeyEventResult.handled;
+                        // },
+                        child: CurvedNavigationBar(
+                          disp: 50,
+                          bgHeight: 50,
+                          index: homeScreenTabIndex,
+                          radius: 0,
+                          width: sHeight,
+                          s: mapValue(
+                              value: sHeight,
+                              inMin: 480,
+                              inMax: 1190,
+                              outMin: 0.2,
+                              outMax: 0.1),
+                          bottom: 0.7,
+                          height: 70,
+                          animationDuration: Duration(milliseconds: 300),
+                          buttonBackgroundColor: defaultPalette.primary,
+                          buttonBaseDecorationColor:
+                          isHomeTab
+                          ? defaultPalette.tertiary
+                          : isLayoutTab
+                            ? defaultPalette.extras[0]
+                            : isBillTab
+                              ? defaultPalette.extras[0]
+                              : defaultPalette.extras[0],
+                          buttonIconColor: defaultPalette.extras[0],
+                          backgroundColor: Colors.transparent,
+                          color: defaultPalette.extras[0],
+                          items: [
+                            Icon(
+                              IconsaxPlusLinear.home_2,
+                              size: 25,
+                              color: defaultPalette.primary,
+                            ),
+                            Icon(
+                              IconsaxPlusLinear.receipt_1,
+                              size: 25,
+                              color: defaultPalette.primary,
+                            ),
+                            Icon(
+                              IconsaxPlusLinear.direct,
+                              size: 25,
+                              color: defaultPalette.primary,
+                            ),
+                            Icon(
+                              IconsaxPlusLinear.user_square,
+                              size: 25,
+                              color: defaultPalette.primary,
+                            ),
+                          ],
+                          onTap: (index) {
+                            // Handle button tap
+                            ref
+                                .read(homeScreenTabIndexProvider.notifier)
+                                .update((state) => state = index);
                         
-                      },
+                            // print(ref.read(currentTabIndexProvider));
+                            tabSwitchOnTap(index, ref);
+                            if (index !=0) {
+                              _updateGraphLineSpeed((10).round());
+                            } else {
+                              _updateGraphLineSpeed((300));
+                            }
+                            
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -2715,160 +3253,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   }),
                 ),
               ),
-            // if (Platform.isWindows)
-              // Consumer(builder: (context, ref, c) {
-              //   return Stack(
-              //     children: [
-              //       AnimatedPositioned(
-              //         right: (isProfileTab || isHomeTab) ? 3 : -80,
-              //         top: 5,
-              //         duration: Durations.short4,
-              //         child: SingleChildScrollView(
-              //           scrollDirection: Axis.horizontal,
-              //           child: AnimatedContainer(
-              //             duration: Durations.short4,
-              //             padding: const EdgeInsets.only(right: 6, bottom: 0),
-              //             margin: const EdgeInsets.only(top: 5),
-              //             decoration: const BoxDecoration(
-              //                 color: Colors.transparent,
-              //                 borderRadius: BorderRadius.only(
-              //                   topLeft: Radius.circular(12),
-              //                   bottomLeft: Radius.circular(12),
-              //                 )),
-              //             child: Column(
-              //               children: [
-              //                 //close button
-              //                 ElevatedLayerButton(
-              //                   // isTapped: false,
-              //                   // toggleOnTap: true,
-              //                   depth: 3, subfac: 3,
-              //                   onClick: () {
-              //                     Future.delayed(Duration.zero).then((y) {
-              //                       appWindow.close();
-              //                     });
-              //                   },
-              //                   buttonHeight:
-              //                       mapValueDimensionBasedLockOnDesync(
-              //                           35, 50, sWidth, sHeight),
-              //                   buttonWidth: mapValueDimensionBasedLockOnDesync(
-              //                       35, 50, sWidth, sHeight),
-              //                   borderRadius: BorderRadius.circular(50),
-              //                   animationDuration:
-              //                       const Duration(milliseconds: 1),
-              //                   animationCurve: Curves.ease,
-              //                   topDecoration: BoxDecoration(
-              //                     color: Colors.white,
-              //                     border: Border.all(),
-              //                   ),
-              //                   topLayerChild: Row(
-              //                     mainAxisAlignment: MainAxisAlignment.center,
-              //                     children: [
-              //                       Icon(
-              //                         TablerIcons.circle_filled,
-              //                         size: 15,
-              //                         color: defaultPalette.extras[4],
-              //                       ),
-              //                     ],
-              //                   ),
-              //                   baseDecoration: BoxDecoration(
-              //                     color: defaultPalette.extras[0],
-              //                     border: Border.all(),
-              //                   ),
-              //                 ),
-              //                 SizedBox(
-              //                   height: 7,
-              //                 ),
-              //                 //
-              //                 //maximize button
-              //                 ElevatedLayerButton(
-              //                   // isTapped: false,
-              //                   // toggleOnTap: true,
-              //                   depth: 3, subfac: 3,
-              //                   onClick: () {
-              //                     Future.delayed(Durations.short1).then((y) {
-              //                       appWindow.maximizeOrRestore();
-              //                     });
-              //                   },
-              //                   buttonHeight:
-              //                       mapValueDimensionBasedLockOnDesync(
-              //                           35, 50, sWidth, sHeight),
-              //                   buttonWidth: mapValueDimensionBasedLockOnDesync(
-              //                       35, 50, sWidth, sHeight),
-              //                   borderRadius: BorderRadius.circular(50),
-              //                   animationDuration:
-              //                       const Duration(milliseconds: 1),
-              //                   animationCurve: Curves.ease,
-              //                   topDecoration: BoxDecoration(
-              //                     color: Colors.white,
-              //                     border: Border.all(),
-              //                   ),
-              //                   topLayerChild: const Row(
-              //                     mainAxisAlignment: MainAxisAlignment.center,
-              //                     children: [
-              //                       Icon(
-              //                         TablerIcons.triangle_filled,
-              //                         size: 15,
-              //                         color: Colors.green,
-              //                       ),
-              //                     ],
-              //                   ),
-              //                   baseDecoration: BoxDecoration(
-              //                     color: defaultPalette.extras[0],
-              //                     border: Border.all(),
-              //                   ),
-              //                 ),
-              //                 SizedBox(
-              //                   height: 7,
-              //                 ),
-
-              //                 //minimize button
-              //                 ElevatedLayerButton(
-              //                   // isTapped: false,
-              //                   // toggleOnTap: true,
-              //                   depth: 3, subfac: 3,
-              //                   onClick: () {
-              //                     Future.delayed(Duration.zero).then((y) {
-              //                       appWindow.minimize();
-              //                     });
-              //                   },
-              //                   buttonHeight:
-              //                       mapValueDimensionBasedLockOnDesync(
-              //                           35, 50, sWidth, sHeight),
-              //                   buttonWidth: mapValueDimensionBasedLockOnDesync(
-              //                       35, 50, sWidth, sHeight),
-              //                   borderRadius: BorderRadius.circular(50),
-              //                   animationDuration:
-              //                       const Duration(milliseconds: 10),
-              //                   animationCurve: Curves.ease,
-              //                   topDecoration: BoxDecoration(
-              //                     color: Colors.white,
-              //                     border: Border.all(),
-              //                   ),
-              //                   topLayerChild: const Row(
-              //                     mainAxisAlignment: MainAxisAlignment.center,
-              //                     children: [
-              //                       Icon(
-              //                         TablerIcons.rectangle_filled,
-              //                         size: 15,
-              //                         color: Colors.blue,
-              //                       ),
-              //                     ],
-              //                   ),
-              //                   baseDecoration: BoxDecoration(
-              //                     color: defaultPalette.extras[0],
-              //                     border: Border.all(),
-              //                   ),
-              //                 ),
-              //               ],
-              //             ),
-              //             //
-              //           ),
-              //         ),
-              //       ),
-              //     ],
-              //   );
-              // }),
-          
+            
           ],
         ));
   }
@@ -2937,7 +3322,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               : s==1
               ? ' height '
               : s==2
-              ? ' pages '
+              ? ' pages: '
               : ' line ',
               style: GoogleFonts.lexend(
                   fontSize: mapValueDimensionBasedLockOnDesync(13, 26, sWidth, sHeight),
@@ -3028,6 +3413,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 
               default:
             }
+            reassignPageFormatControllers();
           });
         },
         child: Text(
@@ -3099,6 +3485,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       'height': format.height,
     };
   }
+  void reassignPageFormatControllers(){
+    pageFormatControllers[0].text = (getPageFormatFromMap(tempLayoutModel.docPropsList[0].pageFormatController).width * pageUnit)
+    .toStringAsFixed(2);
+    pageFormatControllers[1].text = (getPageFormatFromMap(tempLayoutModel.docPropsList[0].pageFormatController).height * pageUnit)
+    .toStringAsFixed(2);
+  }
   void showOpsFormatMenu(BuildContext context, Offset position, double sWidth, double sHeight) {
   final entries = buildOpsFormatContextMenuEntries(sWidth, sHeight);
   var menu = cm.ContextMenu(
@@ -3124,8 +3516,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       return cm.MenuItem(
         label: s.replaceAll('Letter', 'LT').replaceAll('Legal', 'LG'),
         onSelected: () {
-          tempLayoutModel.docPropsList[0].pageFormatController =
-              getMapFromPageFormat(getPageFormatFromString(s));
+          setState(() {
+            tempLayoutModel.docPropsList[0].pageFormatController =
+                getMapFromPageFormat(getPageFormatFromString(s));
+            print( tempLayoutModel.docPropsList[0].pageFormatController);
+            reassignPageFormatControllers();
+          });
         },
         hoverColor: defaultPalette.primary.withOpacity(0.02),
         unfocusedColor: defaultPalette.primary.withOpacity(0.2),
@@ -3147,7 +3543,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     final double originalHeight = pageFormatController['height'];
 
     // max box the page should fit in
-    final double maxWidth = (((sWidth / 2.15) - 70) * (55 / 75)) / 3;
+    final double maxWidth = (((sWidth / 2.15) - 70) * (55 / 75)) / 4;
     final double maxHeight = (sHeight / 2) / 2.5;
 
     // scale factor that keeps aspect ratio
@@ -3321,6 +3717,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               SizedBox(
                                 height: 10,
                               ),
+                              //pagepreview and docPRopss
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -3345,10 +3742,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       )
                                   ),
                                   
-                                  //number of pagess && ORIENTATIONN
+                                  //number of pagess && ORIENTATIONN // to do createdAT
                                   Expanded(
                                     child: SizedBox(
-                                      height: math.max(getScaledPageSize(sWidth, sHeight, tempLayoutModel.docPropsList[0].pageFormatController, tempLayoutModel.docPropsList[0].orientationController).height, (sHeight / 2)/3),
+                                      height: math.max(getScaledPageSize(sWidth, sHeight, tempLayoutModel.docPropsList[0].pageFormatController, tempLayoutModel.docPropsList[0].orientationController).height, (sHeight / 2)/2.5),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
@@ -3391,109 +3788,308 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             children:[ 
                                               ...pagePropertyTile(2, sWidth, sHeight)],
                                           ),
-                                          SizedBox(
-                                            height: mapValueDimensionBasedLockOnDesync(6, 12, sWidth, sHeight),
+                                          //createdAt
+                                          Row(
+                                            children:[ 
+                                               Icon(
+                                                TablerIcons.calendar_event,
+                                                size: mapValueDimensionBasedLockOnDesync(15, 28, sWidth, sHeight),
+                                                color: defaultPalette.extras[0]
+                                              ),
+                                              Expanded(
+                                                child: Text(' createdAt: ',
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: GoogleFonts.lexend(
+                                                      fontSize: mapValueDimensionBasedLockOnDesync(13, 26, sWidth, sHeight),
+                                                      letterSpacing: -1,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: defaultPalette.extras[0]),
+                                                ),
+                                              ),
+                                              Expanded(child: MouseRegion(
+                                                cursor: SystemMouseCursors.click,
+                                                child: GestureDetector(
+                                                  onTap: () async {
+                                                  if (sheetTypeBrowserEntry != null) {
+                                                    sheetTypeBrowserEntry!.remove();
+                                                    sheetTypeBrowserEntry = null;
+                                                  }
+                                                  tempLayoutModel.createdAt =  await showDatePicker(
+                                                          context: context,
+                                                          initialDate: DateTime.now(),
+                                                          firstDate: DateTime(1800),
+                                                          lastDate: DateTime(2100),
+                                                          barrierColor: defaultPalette.extras[0].withOpacity(0.5),
+                                                          builder: (context, child) {
+                                                            return Theme(
+                                                              data: Theme.of(context).copyWith(
+                                                                inputDecorationTheme: InputDecorationTheme(
+                                                                  labelStyle: GoogleFonts.lexend(
+                                                                    fontSize: 12,
+                                                                    color: defaultPalette.extras[0],
+                                                                  ),
+                                                                  hintStyle: GoogleFonts.lexend(
+                                                                    fontSize: 15,
+                                                                    color: defaultPalette.extras[0].withOpacity(0.6),
+                                                                  ),
+                                                                  errorStyle: GoogleFonts.lexend(
+                                                                    fontSize: 15,
+                                                                    color: defaultPalette.extras[0].withOpacity(0.6),
+                                                                  ),
+                                                                  focusedBorder: OutlineInputBorder(
+                                                                    borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+                                                                    borderRadius: BorderRadius.circular(8),
+                                                                  ),
+                                                                ),
+                                                                textTheme: Theme.of(context).textTheme.copyWith(
+                                                                  titleLarge: GoogleFonts.lexend(
+                                                                    fontSize: 24,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    color: defaultPalette.black,
+                                                                  ),
+                                                                  headlineSmall: GoogleFonts.lexend(
+                                                                    fontSize: 20,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    color: defaultPalette.black,
+                                                                  ),
+                                                                  headlineMedium: GoogleFonts.lexend(
+                                                                    fontSize: 20,
+                                                                    fontWeight: FontWeight.w600,
+                                                                    color: defaultPalette.black,
+                                                                  ),
+                                                                ),
+                                                                textButtonTheme: TextButtonThemeData(
+                                                                  style: ButtonStyle(
+                                                                    textStyle: WidgetStateProperty.all(
+                                                                      GoogleFonts.lexend(fontSize: 15, letterSpacing: -1),
+                                                                    ),
+                                                                    foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
+                                                                  ),
+                                                                ),
+                                                                datePickerTheme: DatePickerThemeData(
+                                                                  backgroundColor: defaultPalette.primary,
+                                                                  rangePickerBackgroundColor: defaultPalette.tertiary,
+                                                                  elevation: 20,
+                                                                  dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                                                    if (states.contains(WidgetState.selected)) {
+                                                                      return defaultPalette.tertiary;
+                                                                    }
+                                                                    return null;
+                                                                  }),
+                                                                  locale: const Locale('en', 'IN'),
+                                                                  todayBorder: BorderSide.none,
+                                                                  todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                                                    if (states.contains(WidgetState.selected)) {
+                                                                      return defaultPalette.tertiary;
+                                                                    } else {
+                                                                      return defaultPalette.primary;
+                                                                    }
+                                                                  }),
+                                                                  todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                                                                    if (states.contains(WidgetState.selected)) {
+                                                                      return defaultPalette.primary;
+                                                                    } else {
+                                                                      return defaultPalette.extras[0];
+                                                                    }
+                                                                  }),
+                                                                  yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                                                                    if (states.contains(WidgetState.selected)) {
+                                                                      return defaultPalette.primary;
+                                                                    }
+                                                                    return null;
+                                                                  }),
+                                                                  yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                                                    if (states.contains(WidgetState.selected)) {
+                                                                      return defaultPalette.tertiary;
+                                                                    } else {
+                                                                      return defaultPalette.transparent;
+                                                                    }
+                                                                  }),
+                                                                  dividerColor: defaultPalette.extras[0].withOpacity(0.4),
+                                                                  confirmButtonStyle: ButtonStyle(
+                                                                    textStyle: WidgetStateProperty.all(
+                                                                      GoogleFonts.lexend(
+                                                                        fontSize: 15,
+                                                                        letterSpacing: -1,
+                                                                        color: defaultPalette.tertiary,
+                                                                        fontWeight: FontWeight.w400,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  cancelButtonStyle: ButtonStyle(
+                                                                    textStyle: WidgetStateProperty.all(
+                                                                      GoogleFonts.lexend(
+                                                                        fontSize: 15,
+                                                                        letterSpacing: -1,
+                                                                        color: defaultPalette.tertiary,
+                                                                        fontWeight: FontWeight.w400,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  yearStyle: GoogleFonts.lexend(
+                                                                    fontSize: 15,
+                                                                    color: defaultPalette.tertiary,
+                                                                    letterSpacing: -1,
+                                                                  ),
+                                                                  dayStyle: GoogleFonts.lexend(
+                                                                    fontSize: 15,
+                                                                    color: defaultPalette.tertiary,
+                                                                    letterSpacing: -1,
+                                                                  ),
+                                                                  weekdayStyle: GoogleFonts.lexend(
+                                                                    fontSize: 14,
+                                                                    letterSpacing: -1,
+                                                                    color: defaultPalette.tertiary,
+                                                                    fontWeight: FontWeight.w600,
+                                                                  ),
+                                                                  headerHeadlineStyle: GoogleFonts.lexend(
+                                                                    fontSize: 30,
+                                                                    letterSpacing: -1,
+                                                                    color: defaultPalette.tertiary,
+                                                                    fontWeight: FontWeight.w600,
+                                                                  ),
+                                                                  rangePickerHeaderHeadlineStyle: GoogleFonts.lexend(
+                                                                    fontSize: 14,
+                                                                    letterSpacing: -1,
+                                                                    color: defaultPalette.tertiary,
+                                                                  ),
+                                                                  rangePickerHeaderHelpStyle: GoogleFonts.lexend(
+                                                                    fontSize: 14,
+                                                                    letterSpacing: -1,
+                                                                    color: defaultPalette.tertiary,
+                                                                    fontWeight: FontWeight.w600,
+                                                                  ),
+                                                                headerHelpStyle: GoogleFonts.lexend(
+                                                                  fontSize: 14,
+                                                                  letterSpacing: -1,
+                                                                  color: defaultPalette.tertiary,
+                                                                ),
+                                                                shape: RoundedRectangleBorder(
+                                                                  borderRadius: BorderRadius.circular(16),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            child: child!,
+                                                          );
+                                                        },
+                                                      )??DateTime.now();
+                                                  setState(() {
+                                                    
+                                                  });
+                                                  },
+                                                  child: Text(
+                                                    tempLayoutModel.createdAt.toIso8601String(),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.lexend(
+                                                      fontSize: mapValueDimensionBasedLockOnDesync(13, 26, sWidth, sHeight),
+                                                      letterSpacing: -1,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: defaultPalette.extras[0]),
+                                                    ),
+                                                ),
+                                              ),),
+                                            ],
                                           ),
+                                          // SizedBox(
+                                          //   height: mapValueDimensionBasedLockOnDesync(6, 12, sWidth, sHeight),
+                                          // ),
                                           //porttaittt and landscapee
                                           Row(
                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              SizedBox(width:5),
                                               //PORTRAIT BUTTON
-                                              Expanded(
-                                                child: MouseRegion(
-                                                  cursor: SystemMouseCursors.click,
-                                                   child: GestureDetector(
-                                                    onTap:  () {
-                                                        setState(() {
+                                              Expanded(child: ElevatedLayerButton(
+                                                    isTapped: tempLayoutModel.docPropsList[0].orientationController,
+                                                    // toggleOnTap: true,
+                                                    depth: 3, subfac: 3,
+                                                    onClick: () {
+                                                      setState(() {
                                                           tempLayoutModel.docPropsList[0].orientationController = true;
                                                         });
-                                                      },
-                                                    child: AnimatedContainer(
-                                                      duration: const Duration(milliseconds: 200),
-                                                      height: mapValueDimensionBasedLockOnDesync(30, 55, sWidth, sHeight),
-                                                      decoration: BoxDecoration(
+                                                    },
+                                                    buttonHeight:
+                                                        mapValueDimensionBasedLockOnDesync(
+                                                            35, 50, sWidth, sHeight),
+                                                    buttonWidth: (((sWidth / 2.15) - 70)*(55/75)
+                                                    -getScaledPageSize(sWidth, sHeight, tempLayoutModel.docPropsList[0].pageFormatController, tempLayoutModel.docPropsList[0].orientationController).width
+                                                    )/2-mapValueDimensionBasedLockOnDesync(30, 50, sWidth, sHeight),
+                                                    borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                                    animationDuration:
+                                                        const Duration(milliseconds: 10),
+                                                    animationCurve: Curves.ease,
+                                                    topDecoration: BoxDecoration(
                                                         color:!tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0],
                                                         borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                                         border: Border.all(
                                                           width: 1,
-                                                          color: defaultPalette.extras[0])
+                                                          color: tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0],)
                                                       ),
-                                                      child: Row(
-                                                      mainAxisAlignment:MainAxisAlignment.spaceBetween,
+                                                    topLayerChild: Row(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
                                                       children: [
-                                                        SizedBox(width:5),
-                                                        Icon(TablerIcons.building_estate, 
-                                                        size:mapValueDimensionBasedLockOnDesync(18, 25, sWidth, sHeight), 
-                                                        color: tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0]),
-                                                        Expanded(
-                                                          child: Text(
-                                                            ' PORTRAIT'.toLowerCase(),
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
-                                                              fontSize: mapValueDimensionBasedLockOnDesync(12, 20, sWidth, sHeight),
-                                                              color:tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0],
-                                                              letterSpacing: -0.5,
-                                                              height:0.9,
-                                                              fontWeight: FontWeight.w500,
-                                                            ),
-                                                          ),
-                                                        ),
+                                                        Icon(
+                                                          TablerIcons.building_estate,
+                                                          size:mapValueDimensionBasedLockOnDesync(18, 25, sWidth, sHeight), 
+                                                          color: tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0]),
+                                                        
                                                       ],
-                                                      ),
                                                     ),
-                                                   ),
-                                                 ),
-                                              ),
-                                              //LANDSCAPE BUTTON
-                                              SizedBox(width:5),
-                                              Expanded(
-                                                child: MouseRegion(
-                                                  cursor: SystemMouseCursors.click,
-                                                   child: GestureDetector(
-                                                    onTap:  () {
-                                                        setState(() {
-                                                          tempLayoutModel.docPropsList[0].orientationController = false;
-                                                        });
-                                                      },
-                                                    child: AnimatedContainer(
-                                                      duration: const Duration(milliseconds: 200),
-                                                      height: mapValueDimensionBasedLockOnDesync(30, 55, sWidth, sHeight),
-                                                      
-                                                      decoration: BoxDecoration(
+                                                    baseDecoration: BoxDecoration(
                                                         color: tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0],
                                                         borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                                         border: Border.all()
                                                       ),
-                                                      child: Row(
-                                                      mainAxisAlignment:MainAxisAlignment.spaceBetween,
-                                                      children: [
-                                                        SizedBox(width:5),
-                                                        Icon(TablerIcons.sunset_2, 
-                                                        size: mapValueDimensionBasedLockOnDesync(18, 26, sWidth, sHeight), 
-                                                        color: !tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0]),
-                                                        Expanded(
-                                                          child: Text(
-                                                            ' landscape'.toLowerCase(),
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
-                                                              fontSize: mapValueDimensionBasedLockOnDesync(12, 20, sWidth, sHeight),
-                                                              color: !tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0],
-                                                              letterSpacing: -0.5,
-                                                              height:0.9,
-                                                              fontWeight: FontWeight.w500,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                      ),
-                                                    ),
-                                                   ),
-                                                 ),
+                                                  ),
                                               ),
+                                              //LANDSCAPE BUTTON
+                                              SizedBox(width:5),
+                                              Expanded(child: ElevatedLayerButton(
+                                                    isTapped: !tempLayoutModel.docPropsList[0].orientationController,
+                                                    // toggleOnTap: true,
+                                                    depth: 3, subfac: 3,
+                                                    onClick: () {
+                                                      setState(() {
+                                                          tempLayoutModel.docPropsList[0].orientationController = false;
+                                                        });
+                                                    },
+                                                    buttonHeight:
+                                                        mapValueDimensionBasedLockOnDesync(
+                                                            35, 50, sWidth, sHeight),
+                                                    buttonWidth:(((sWidth / 2.15) - 70)*(55/75)
+                                                    -getScaledPageSize(sWidth, sHeight, tempLayoutModel.docPropsList[0].pageFormatController, tempLayoutModel.docPropsList[0].orientationController).width
+                                                    )/2-mapValueDimensionBasedLockOnDesync(30, 50, sWidth, sHeight),
+                                                    borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                                    animationDuration:
+                                                        const Duration(milliseconds: 10),
+                                                    animationCurve: Curves.ease,
+                                                    topDecoration: BoxDecoration(
+                                                        color:tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0],
+                                                        borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                                        border: Border.all(
+                                                          width: 1,
+                                                          color: !tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0],)
+                                                      ),
+                                                    topLayerChild: Row(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Icon(
+                                                          TablerIcons.sunset_2,
+                                                          size:mapValueDimensionBasedLockOnDesync(18, 25, sWidth, sHeight), 
+                                                          color: !tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0]),
+                                                        
+                                                      ],
+                                                    ),
+                                                    baseDecoration: BoxDecoration(
+                                                        color: !tempLayoutModel.docPropsList[0].orientationController?defaultPalette.primary: defaultPalette.extras[0],
+                                                        borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                                        border: Border.all()
+                                                      ),
+                                                  ),
                                               
+                                              ),
+
                                               
                                             ],
                                           ),
@@ -3514,28 +4110,25 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                 SizedBox(width: 8,),
-                                Expanded(
-                                  child:  MouseRegion(
-                                    cursor:SystemMouseCursors.click,
-                                    child: GestureDetector(
-                                          onTapDown: (details) {
+                                ElevatedLayerButton(
+                                  depth: 3, subfac: 3,
+                                  onTapDown:  (details) {
                                             showOpsFormatMenu(context, details.globalPosition, sWidth, sHeight);
                                           },
-                                          onSecondaryTapDown: (details) {
-                                            showOpsFormatMenu(context, details.globalPosition, sWidth, sHeight);
-                                          },
-                                          child:  Container(
-                                            decoration: BoxDecoration(
-                                              color: defaultPalette.extras[0],
-                                              borderRadius: BorderRadius.circular(
-                                                mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight),
-                                              ),
-                                            ),
-                                            constraints: BoxConstraints(
-                                              minWidth: (((sWidth / 2.15) - 70) * (55 / 75)) / 4.2,
-                                              minHeight: mapValueDimensionBasedLockOnDesync(35, 75, sWidth, sHeight),
-                                            ),
-                                            child: Center(
+                                  buttonWidth: (((sWidth / 2.15) - 70) * (55 / 75)) / 4.2,
+                                  buttonHeight: mapValueDimensionBasedLockOnDesync(35, 75, sWidth, sHeight),
+                                  borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                  animationDuration:
+                                      const Duration(milliseconds: 10),
+                                  animationCurve: Curves.ease,
+                                  topDecoration: BoxDecoration(
+                                      color:defaultPalette.primary,
+                                      borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                      border: Border.all(
+                                        width: 1,
+                                        color:  defaultPalette.extras[0],)
+                                    ),
+                                  topLayerChild: Center(
                                               child: SizedBox(
                                                 width: (((sWidth / 2.15) - 70) * (55 / 75)) / 10,
                                                 child: Row(
@@ -3547,7 +4140,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       ),
                                                       style: GoogleFonts.lexend(
                                                         fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
-                                                        color: defaultPalette.primary,
+                                                        color: defaultPalette.extras[0],
                                                         fontWeight: FontWeight.w800
                                                       ),
                                                     ),
@@ -3555,12 +4148,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                        ),
-                                  )
-                                  ,
+                                  baseDecoration: BoxDecoration(
+                                      color: defaultPalette.extras[0],
+                                      borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                      border: Border.all()
+                                    ), onClick: () {  },
                                 ),
-
+                                 
                                 
                                 SizedBox(width:8),
                                   Expanded(
@@ -3593,12 +4187,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           borderRadius:
                                               BorderRadius.circular(mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight)),
                                           child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.end,
+                                            crossAxisAlignment: CrossAxisAlignment.end,
                                             children: [//teh horizontal layout scroll
                                               
                                               Expanded(
-                                                  flex: 50,
                                                   child: Container(
                                                     decoration: BoxDecoration(
                                                       // color: defaultPalette
@@ -3618,10 +4210,19 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                 children: [
                                                                   Container(
                                                                     // height: 112,
-                                                                    // margin: const EdgeInsets.all(2).copyWith(left: 0, right: 0),
+                                                                    margin: const EdgeInsets.all(0).copyWith(left: 4, top: 4),
                                                                     decoration: BoxDecoration(
                                                                       color: defaultPalette.extras[0],
-                                                                      borderRadius: BorderRadius.circular(12),
+                                                                      borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(12, 30, sWidth, sHeight)),
+                                                                    ),
+                                                                  ),
+                                                                  Container(
+                                                                    // height: 112,
+                                                                    margin: const EdgeInsets.all(0).copyWith(left: 0, right: 4,bottom: 4),
+                                                                    decoration: BoxDecoration(
+                                                                      color: defaultPalette.primary,
+                                                                      borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(12, 30, sWidth, sHeight)),
+                                                                      border:Border.all()
                                                                     ),
                                                                   ),
                                                                   Positioned(
@@ -3630,19 +4231,23 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                     child: Icon(
                                                                       TablerIcons.north_star,
                                                                       size: 150,
-                                                                      color: defaultPalette.primary.withOpacity(0.05),
+                                                                      color: defaultPalette.extras[0].withOpacity(0.05),
                                                                     )),
                                                                   Container(
-                                                                    margin: const EdgeInsets.all(2).copyWith(left: 0, right: 0),
+                                                                    margin: const EdgeInsets.all(2).copyWith(left: 0, right: 0,bottom: 4),
                                                                     child: Row(
                                                                       crossAxisAlignment: CrossAxisAlignment.start,
                                                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                                       children: [
+                                                                        //req numbersss 19 13 7
                                                                         Container(
                                                                           width:mapValueDimensionBasedLockOnDesync(35, 140, sWidth, sHeight),
                                                                           margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(4, 8, sWidth, sHeight)),
                                                                           alignment: Alignment(0, -0.8),
-                                                                          decoration: BoxDecoration(color: defaultPalette.primary, borderRadius: BorderRadius.circular(10)),
+                                                                          decoration: BoxDecoration(
+                                                                            color: defaultPalette.extras[0], 
+                                                                            border: Border.all(width:0.5),
+                                                                            borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(10, 28, sWidth, sHeight))),
                                                                           child: SingleChildScrollView(
                                                                             child: Column(
                                                                               children: [
@@ -3651,7 +4256,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                   maxLines: 1,
                                                                                   style: GoogleFonts.lexend(
                                                                                     height:1.35,
-                                                                                    fontSize: mapValueDimensionBasedLockOnDesync(20, 85, sWidth, sHeight), letterSpacing: -1, color: defaultPalette.extras[0], fontWeight: FontWeight.w500),
+                                                                                    fontSize: mapValueDimensionBasedLockOnDesync(20, 85, sWidth, sHeight), letterSpacing: -1, color: defaultPalette.primary, fontWeight: FontWeight.w500),
                                                                                 ),
                                                                                 Row(
                                                                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -3682,7 +4287,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                         maxLines: 1,
                                                                                         textAlign: TextAlign.center,
                                                                                         style: GoogleFonts.lexend(
-                                                                                          fontSize: mapValueDimensionBasedLockOnDesync(12, 55, sWidth, sHeight), letterSpacing: -1, color: defaultPalette.extras[0], fontWeight: FontWeight.w500),
+                                                                                          fontSize: mapValueDimensionBasedLockOnDesync(12, 55, sWidth, sHeight), letterSpacing: -1, color: defaultPalette.primary, fontWeight: FontWeight.w500),
                                                                                       ),
                                                                                     ),
                                                                                   ],
@@ -3691,6 +4296,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                             ),
                                                                           ),
                                                                         ),
+                                                                        //the scrolllist of fields
                                                                         Expanded(
                                                                             child: ScrollConfiguration(
                                                                               behavior: ScrollBehavior().copyWith(scrollbars: false),
@@ -3709,8 +4315,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                       scrollbarPadding: EdgeInsets.only(bottom: 8, top: 20, left: 0),
                                                                                       thumbBuilder: (context, animation, widgetStates) {
                                                                                         return Container(
-                                                                                          decoration: BoxDecoration(color: defaultPalette.primary, borderRadius: BorderRadius.circular(2)),
-                                                                                          width: 5,
+                                                                                          decoration: BoxDecoration(color: defaultPalette.extras[0], borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(2, 30, sWidth, sHeight))),
+                                                                                          width: mapValueDimensionBasedLockOnDesync(4, 10, sWidth, sHeight),
                                                                                         );
                                                                                       },
                                                                                       child: SingleChildScrollView(
@@ -3733,21 +4339,25 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                     text: TextSpan(children: [
                                                                                                       TextSpan(
                                                                                                         text: '${ent.key + 1}.',
-                                                                                                        style: GoogleFonts.lexend(fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight), letterSpacing: -0.2, color: ent.value.isOptional ? defaultPalette.primary.withOpacity(0.6) : defaultPalette.extras[4], fontWeight: FontWeight.w300),
+                                                                                                        style: GoogleFonts.lexend(fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight), letterSpacing: -0.2, color: ent.value.isOptional ? defaultPalette.extras[0].withOpacity(0.95) : defaultPalette.extras[4], fontWeight: FontWeight.w300),
                                                                                                       ),
                                                                                                       TextSpan(
                                                                                                         text: ' ${ent.value.name}',
-                                                                                                        style: GoogleFonts.lexend(fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight), letterSpacing: -0.2, color: defaultPalette.primary.withOpacity(0.6), fontWeight: FontWeight.w300),
+                                                                                                        style: GoogleFonts.lexend(fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight), letterSpacing: -0.2, color: defaultPalette.extras[0].withOpacity(0.95), fontWeight: FontWeight.w300),
                                                                                                       )
                                                                                                     ]));
                                                                                               },
-                                                                                            ).toList()
+                                                                                            ).toList(),
+                                                                                            SizedBox(
+                                                                                              height: mapValueDimensionBasedLockOnDesync(5, 20, sWidth, sHeight),
+                                                                                            ),
                                                                                           ],
                                                                                         ),
                                                                                       ),
                                                                                     );
                                                                                   }),
                                                                             )),
+                                                                        //the type name and bar below
                                                                         SizedBox(
                                                                           // height: 110,
                                                                           child: Column(
@@ -3756,20 +4366,20 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                             children: [
                                                                               Expanded(
                                                                                 child: Padding(
-                                                                                  padding: EdgeInsets.only(right:mapValueDimensionBasedLockOnDesync(8, 10, sWidth, sHeight),top:mapValueDimensionBasedLockOnDesync(4, 10, sWidth, sHeight)),
+                                                                                  padding: EdgeInsets.only(right:mapValueDimensionBasedLockOnDesync(12, 20, sWidth, sHeight),top:mapValueDimensionBasedLockOnDesync(4, 10, sWidth, sHeight)),
                                                                                   child: Text(
                                                                                     SheetType.values[tempLayoutModel.type].name.replaceFirstMapped(RegExp(r'^[a-z]+(?=[A-Z])'), (m) => '${m[0]}\n'),
                                                                                     maxLines: 2,
                                                                                     textAlign: TextAlign.end,
-                                                                                    style: GoogleFonts.lexend(fontSize:  mapValueDimensionBasedLockOnDesync(12, 30, sWidth, sHeight), letterSpacing: -1, height: 1, color: defaultPalette.primary, fontWeight: FontWeight.w500),
+                                                                                    style: GoogleFonts.lexend(fontSize:  mapValueDimensionBasedLockOnDesync(12, 30, sWidth, sHeight), letterSpacing: -1, height: 1, color: defaultPalette.extras[0], fontWeight: FontWeight.w500),
                                                                                   ),
                                                                                 ),
                                                                               ),
                                                                               Container(
-                                                                                height: 5,
-                                                                                width: 50,
-                                                                                margin: EdgeInsets.all(8),
-                                                                                decoration: BoxDecoration(color: defaultPalette.primary, borderRadius: BorderRadius.circular(10)),
+                                                                                height: mapValueDimensionBasedLockOnDesync(4, 10, sWidth, sHeight),
+                                                                                width: mapValueDimensionBasedLockOnDesync(50, 130, sWidth, sHeight),
+                                                                                margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(8, 12, sWidth, sHeight)).copyWith(right: mapValueDimensionBasedLockOnDesync(8, 20, sWidth, sHeight)),
+                                                                                decoration: BoxDecoration(color: defaultPalette.extras[0], borderRadius: BorderRadius.circular(100)),
                                                                               )
                                                                             ],
                                                                           ),
@@ -3839,9 +4449,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               width: oWidth,
                                                               height: oHeight,
                                                               padding:
-                                                                const EdgeInsets.all(4).copyWith(
-                                                                right: 0,
-                                                                left: 0),
+                                                                EdgeInsets.all( mapValueDimensionBased(10, 15, sWidth, sHeight)),
                                                               decoration: BoxDecoration(
                                                                 color: defaultPalette.primary,
                                                                 borderRadius: BorderRadius.circular( 20),
@@ -4445,9 +5053,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           }
                                         },
                                         buttonHeight: mapValueDimensionBased(
-                                            30, 43, sWidth, sHeight),
+                                            25, 53, sWidth, sHeight),
                                         buttonWidth: mapValueDimensionBased(
-                                            30, 43, sWidth, sHeight),
+                                            25, 53, sWidth, sHeight),
                                         borderRadius: BorderRadius.circular(999),
                                         animationDuration:
                                             const Duration(milliseconds: 100),
@@ -4457,7 +5065,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               .extras[4],
                                           border: Border.all(
                                             width: 2,
-                                            color: defaultPalette.primary,
+                                            color: defaultPalette.extras[0],
                                           ),
                                         ),
                                         topLayerChild: Center(
@@ -4465,7 +5073,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           TablerIcons.north_star,
                                           color: defaultPalette.primary,
                                           size: mapValueDimensionBased(
-                                              16, 28, sWidth, sHeight),
+                                              13, 28, sWidth, sHeight),
                                         )),
                                         subfac: 3,
                                         depth: 3,
@@ -4492,6 +5100,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
+                      //ADD BUTONS CLOUD BUTTONS
                       Expanded(
                           flex: 20,
                           child: Column(
@@ -4532,7 +5141,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     type: tempLayoutModel.type,
                                     docPropsList: docPropsList,
                                     spreadSheetList: spreadSheetList,
-                                    createdAt: DateTime.now(),
+                                    createdAt: tempLayoutModel.createdAt,
                                     modifiedAt: DateTime.now(),
                                   );
 
@@ -4653,7 +5262,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     type: tempLayoutModel.type,
                                     docPropsList: docPropsList,
                                     spreadSheetList: spreadSheetList,
-                                    createdAt: DateTime.now(),
+                                    createdAt: tempLayoutModel.createdAt,
                                     modifiedAt: DateTime.now(),
                                   );
 
@@ -6085,21 +6694,15 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   ? Boxes.getLayouts()
                                                           .values
                                                           .toList()
-                                                          .length +
-                                                      1
-                                                  : filteredLayoutBox.length +
-                                                      1,
+                                                          .length + 1
+                                                  : filteredLayoutBox.length +1,
                                           itemBuilder:
                                               (BuildContext context, int i) {
                                             if (i ==
                                                 (layoutSearchController.text ==
                                                         ''
-                                                    ? Boxes.getLayouts()
-                                                        .values
-                                                        .toList()
-                                                        .length
-                                                    : filteredLayoutBox
-                                                        .length)) {
+                                                    ? Boxes.getLayouts().values.toList().length
+                                                    : filteredLayoutBox.length)) {
                                               return SizedBox(
                                                 height: 5,
                                               );
@@ -6107,9 +6710,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             final layoutModel =
                                                 layoutSearchController.text ==
                                                         ''
-                                                    ? Boxes.getLayouts()
-                                                        .values
-                                                        .toList()[i]
+                                                    ? Boxes.getLayouts().values.toList()[i]
                                                     : filteredLayoutBox[i];
                                             if (layoutModel.id
                                                 .startsWith('BI-')) {
@@ -6120,15 +6721,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 color:
                                                     defaultPalette.transparent,
                                                 child: InkWell(
-                                                  hoverColor: defaultPalette
-                                                      .extras[0]
-                                                      .withOpacity(0.4),
-                                                  highlightColor: defaultPalette
-                                                      .extras[0]
-                                                      .withOpacity(0.4),
-                                                  splashColor: defaultPalette
-                                                      .extras[0]
-                                                      .withOpacity(0.4),
+                                                  hoverColor: defaultPalette.extras[0].withOpacity(0.4),
+                                                  highlightColor: defaultPalette.extras[0].withOpacity(0.4),
+                                                  splashColor: defaultPalette.extras[0].withOpacity(0.4),
                                                   onTap: () {
                                                     Navigator.push(context,
                                                         MaterialPageRoute(
@@ -6136,13 +6731,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         return PopScope(
                                                           canPop: false,
                                                           child: LayoutDesigner(
-                                                            id: Boxes
-                                                                    .getLayouts()
-                                                                .keyAt(i),
+                                                            id: Boxes.getLayouts().keyAt(i),
                                                             onPop: (pdf) {
                                                               setState(() {
-                                                                filteredLayoutBox =
-                                                                    Boxes.getLayouts()
+                                                                filteredLayoutBox = Boxes.getLayouts()
                                                                         .values
                                                                         .toList();
                                                               });
@@ -6275,42 +6867,22 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               textStyle:
                                                                   GoogleFonts
                                                                       .lexend(
-                                                                fontSize:
-                                                                    mapValueDimensionBased(
-                                                                        15,
-                                                                        20,
-                                                                        sWidth,
-                                                                        sHeight),
-                                                                color:
-                                                                    defaultPalette
-                                                                        .primary,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                letterSpacing:
-                                                                    -0.2,
+                                                                fontSize: mapValueDimensionBased(
+                                                                        15, 20, sWidth, sHeight),
+                                                                color: defaultPalette.primary,
+                                                                fontWeight: FontWeight.w600,
+                                                                letterSpacing: -0.2,
                                                               ),
                                                               decoration: BoxDecoration(
-                                                                  color: defaultPalette
-                                                                      .extras[0]
-                                                                      .withOpacity(
-                                                                          0.8),
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              50)),
+                                                                  color: defaultPalette.extras[0].withOpacity(0.8),
+                                                                  borderRadius: BorderRadius.circular(50)),
                                                               child:
                                                                   ElevatedLayerButton(
                                                                 onClick: () {
-                                                                  final box = Boxes
-                                                                      .getLayouts();
-                                                                  final name = Boxes
-                                                                      .getBillName();
-                                                                  var key =
-                                                                      'BI-${const Uuid().v4()}';
-                                                                  var prevLm =
-                                                                      box.getAt(
-                                                                          i);
+                                                                  final box = Boxes.getLayouts();
+                                                                  final name = Boxes.getBillName();
+                                                                  var key ='BI-${const Uuid().v4()}';
+                                                                  var prevLm = box.getAt(i);
                                                                   // keyIndex = box.length;
                                                                   var lm =
                                                                       LayoutModel(
@@ -6406,26 +6978,22 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                             ElevatedLayerButton(
                                                               onClick:
                                                                   () async {
-                                                                print(
-                                                                    filteredLayoutBox);
-                                                                final layoutsBox =
-                                                                    Boxes
-                                                                        .getLayouts();
-                                                                // Delete the item
-                                                                print(
-                                                                    layoutsBox);
-                                                                await layoutsBox
-                                                                    .get(layoutsBox
-                                                                        .keyAt(
-                                                                            i))
-                                                                    ?.delete();
-                                                                print('delete');
+                                                                final layoutsBox = Boxes.getLayouts();
+                                                                // // Delete the item
+                                                                // // print(layoutsBox);
+                                                                await layoutsBox.get(layoutsBox.keyAt(i))?.delete();
                                                                 setState(() {
-                                                                  filteredLayoutBox =
-                                                                      Boxes.getLayouts()
-                                                                          .values
-                                                                          .toList();
+                                                                  filteredLayoutBox = Boxes.getLayouts().values.toList();
                                                                 });
+                                                                // layoutsBox.get(layoutModel.id)?.toJson();
+                                                                // final file = File('assets/layouts/${layoutModel.id}.json');
+
+                                                                // try {
+                                                                //   await file.writeAsString( layoutsBox.get(layoutModel.id)?.toJson()??'');
+                                                                //   print('File written: ${file.path}');
+                                                                // } catch (e) {
+                                                                //   print('Error writing file: $e');
+                                                                // }
                                                               },
                                                               buttonHeight: 45,
                                                               buttonWidth: 45,
@@ -6758,11 +7326,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
+                      
                       ],
                     ),
                   ),
                 ),
               ),
+            
             ],
           ),
         ),
@@ -9864,8 +10434,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
   Widget _getCreatedAndModified(LayoutModel layoutModel, double sWidth,
       double sHeight, bool isNotLayoutTileView,
-      {bool isBill = false}) {
-    double fontSize = isBill ? 10 : 12;
+      {bool isBill = false, isRecent = false}) {
+    double fontSize = isBill ? 10 :isRecent?8: 12;
     return Expanded(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -9876,17 +10446,30 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(left: 8.0, top: 15),
-                child: Text(
+                child: Tooltip(
+                  message:
                   layoutModel.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  style: GoogleFonts.lexend(
-                    fontSize: mapValueDimensionBased(
-                        isBill ? 18 : 25, isBill ? 20 : 35, sWidth, sHeight),
-                    color: defaultPalette.extras[0],
+                  textStyle: GoogleFonts.lexend(
+                    fontSize: mapValueDimensionBased(15,20, sWidth, sHeight),
+                    color:defaultPalette.primary,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: -0.2,
+                    letterSpacing:-0.2,
+                  ),
+                  decoration: BoxDecoration(
+                      color: defaultPalette.extras[0].withOpacity( 0.8),
+                      borderRadius: BorderRadius.circular( 50)),
+                  child: Text(
+                    layoutModel.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: GoogleFonts.lexend(
+                      fontSize: mapValueDimensionBased(
+                          isBill ? 18 :isRecent?10: 25, isBill ? 20 :isRecent?15: 35, sWidth, sHeight),
+                      color: defaultPalette.extras[0],
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.2,
+                    ),
                   ),
                 ),
               ),
@@ -10089,29 +10672,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              // Positioned.fill(
-              //   child: StarryBackground(
-              //             numberOfStars: 200,
-              //             starConfig: StarConfig(
-              //               minSize: 0.1,
-              //               maxSize: 1.0,
-              //               starColor: defaultPalette.primary,
-              //               movementSpeed: 2.0,
-              //               enableTwinkling: true,
-              //             ),
-              //             backgroundGradient: LinearGradient(
-              //               colors: [ Color(0xFF000D36),defaultPalette.transparent,],
-              //               stops: [0.5,0.8]
-              //             ),
-              //             enableShootingStars: true,
-              //             shootingStarInterval: Duration(seconds: 3),
-              //           ),
-              // ),
-
-              //   ),
-              // ),
-              // //
-              //
               //Profile$€₹
               AnimatedPositioned(
                 duration: Durations.medium2,
@@ -10159,13 +10719,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                        child: Align(
-                            alignment: Alignment(0.8, -0.8),
-                            child: Username(
-                              text: user?.email?.split('@')[0] ?? '',
-                              sHeight: sHeight,
-                              sWidth: sWidth,
-                            ))),
+                      child: Align(
+                        alignment: Alignment(0.8, -0.8),
+                        child: Username(
+                          text: user?.email?.split('@')[0] ?? '',
+                          sHeight: sHeight,
+                          sWidth: sWidth,
+                        ))),
                     Container(
                       height: sHeight - (2 * titleFontSize),
                       width: (15 + 65 + 15 + 65 + 15 + 65 + 15 + 45) +
@@ -10403,7 +10963,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               children: [
                                 Expanded(
                                   child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(30),
+                                    borderRadius: BorderRadius.circular(30).copyWith(
+                                      bottomLeft: Radius.circular(0),
+                                      bottomRight: Radius.circular(0),
+                                    ),
                                     child: InAppWebView(
                                       initialUrlRequest: URLRequest(
                                           url: WebUri.uri(Uri.parse(ref
@@ -10432,7 +10995,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   ),
                                 ),
                                 SizedBox(
-                                  height: 50,
+                                  height: 75,
                                 )
                               ],
                             ),
@@ -10510,31 +11073,48 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             ),
                                           ),
                                           Expanded(
-                                            child: Text(
-                                              ' FLUX',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              textAlign: TextAlign.center,
+                                            child:  RichText(
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            textAlign: TextAlign.center,
+                                            // overflow: TextOverflow.ellipsis,
+                                            text: TextSpan(
                                               style: GoogleFonts.lexend(
                                                 fontSize:
-                                                    mapValueDimensionBased(
+                                                    mapValueDimensionBasedLockOnDesync(
                                                   12,
                                                   35,
                                                   sWidth,
                                                   sHeight,
                                                 ),
                                                 color: defaultPalette.extras[0],
-                                                letterSpacing:
-                                                    mapValueDimensionBased(
-                                                  5,
-                                                  15,
-                                                  sWidth,
-                                                  sHeight,
+                                                letterSpacing: mapValueDimensionBasedLockOnDesync( 5, 15, sWidth, sHeight,
                                                 ),
                                                 height: 1,
                                                 fontWeight: FontWeight.w400,
                                               ),
+                                              children: [
+                                                TextSpan(
+                                                  text: ' FLUX',
+                                                  style: GoogleFonts.lexend(
+                                                      color: defaultPalette.extras[0]),
+                                                ),
+                                                TextSpan(
+                                                  text: 'TV',
+                                                  style:
+                                                      TextStyle(
+                                                        fontSize:
+                                                    mapValueDimensionBasedLockOnDesync(
+                                                  8,
+                                                  30,
+                                                  sWidth,
+                                                  sHeight,
+                                                ),
+                                                        color: defaultPalette.extras[0]),
+                                                ),
+                                              ],
                                             ),
+                                          ),
                                           ),
                                         ],
                                       ),
@@ -10765,72 +11345,96 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           Clipboard.setData(
                                               ClipboardData(text: url));
                                         },
-                                        child: Container(
-                                          height:
-                                              mapValueDimensionBasedLockOnDesync(
-                                                  15, 50, sWidth, sHeight),
-                                          margin: EdgeInsets.all(0).copyWith(
-                                              left: 10 +
-                                                  mapValueDimensionBasedLockOnDesync(
-                                                      6, 20, sWidth, sHeight),
-                                              right:
-                                                  mapValueDimensionBasedLockOnDesync(
-                                                      6, 20, sWidth, sHeight)),
-                                          decoration: BoxDecoration(
-                                              color: defaultPalette.extras[0],
-                                              borderRadius:
-                                                  BorderRadius.circular(50)),
-                                          padding: EdgeInsets.all(0)
-                                              .copyWith(left: 10, right: 10),
-                                          alignment: Alignment(0, 0),
-                                          child: Row(
-                                            children: [
-                                              Text(
-                                                ' //',
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                textAlign: TextAlign.center,
-                                                style: GoogleFonts.lexend(
-                                                  fontSize:
-                                                      mapValueDimensionBased(
-                                                    8,
-                                                    25,
-                                                    sWidth,
-                                                    sHeight,
-                                                  ),
-                                                  color: defaultPalette.primary,
-                                                  letterSpacing: -1,
-                                                  height: 1,
-                                                  fontWeight: FontWeight.w400,
-                                                ),
-                                              ),
-                                              Expanded(
-                                                child: Text(
-                                                  ref.watch(
-                                                      loginPageUrlProvider),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  textAlign: TextAlign.center,
-                                                  style: GoogleFonts
-                                                      .redactedScript(
-                                                    fontSize:
-                                                        mapValueDimensionBased(
-                                                      8,
-                                                      25,
-                                                      sWidth,
-                                                      sHeight,
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Container(
+                                                height:
+                                                    mapValueDimensionBasedLockOnDesync(
+                                                        15, 50, sWidth, sHeight),
+                                                margin: EdgeInsets.all(0).copyWith(
+                                                    left: 10 +
+                                                        mapValueDimensionBasedLockOnDesync(
+                                                            6, 20, sWidth, sHeight),
+                                                    right:
+                                                        mapValueDimensionBasedLockOnDesync(
+                                                            2, 5, sWidth, sHeight)),
+                                                decoration: BoxDecoration(
+                                                    color: defaultPalette.extras[0],
+                                                    borderRadius:
+                                                        BorderRadius.circular(50)),
+                                                padding: EdgeInsets.all(0)
+                                                    .copyWith(left: 10, right: 10),
+                                                alignment: Alignment(0, 0),
+                                                child: Row(
+                                                  children: [
+                                                    Text(
+                                                      ' //',
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.center,
+                                                      style: GoogleFonts.lexend(
+                                                        fontSize:
+                                                            mapValueDimensionBased(
+                                                          8,
+                                                          25,
+                                                          sWidth,
+                                                          sHeight,
+                                                        ),
+                                                        color: defaultPalette.primary,
+                                                        letterSpacing: -1,
+                                                        height: 1,
+                                                        fontWeight: FontWeight.w400,
+                                                      ),
                                                     ),
-                                                    color:
-                                                        defaultPalette.primary,
-                                                    letterSpacing: -1,
-                                                    height: 1,
-                                                    fontWeight: FontWeight.w400,
-                                                  ),
+                                                    Expanded(
+                                                      child: Text(
+                                                        ref.watch(
+                                                            loginPageUrlProvider),
+                                                        maxLines: 1,
+                                                        overflow:
+                                                            TextOverflow.ellipsis,
+                                                        textAlign: TextAlign.center,
+                                                        style: GoogleFonts
+                                                            .redactedScript(
+                                                          fontSize:
+                                                              mapValueDimensionBased(
+                                                            8,
+                                                            25,
+                                                            sWidth,
+                                                            sHeight,
+                                                          ),
+                                                          color:
+                                                              defaultPalette.primary,
+                                                          letterSpacing: -1,
+                                                          height: 1,
+                                                          fontWeight: FontWeight.w400,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                            Tooltip(
+                                              message:'FluxTV showcases cool websites made by cool creators. \nAll content belongs to its original owners.',
+                                              textStyle: GoogleFonts.lexend(
+                                                fontSize: mapValueDimensionBasedLockOnDesync(10,20, sWidth, sHeight),
+                                                color:defaultPalette.primary,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              padding: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(8,16, sWidth, sHeight)).copyWith(left:mapValueDimensionBasedLockOnDesync(15,25, sWidth, sHeight)),
+                                              decoration: BoxDecoration(
+                                                  color: defaultPalette.extras[0].withOpacity(0.95),
+                                                  borderRadius: BorderRadius.circular( 50)),
+                                            child: Icon(TablerIcons.info_circle_filled,
+                                            color: defaultPalette.extras[0],
+                                             size: mapValueDimensionBasedLockOnDesync(18,65, sWidth, sHeight),)),
+                                            SizedBox(
+                                              width:mapValueDimensionBasedLockOnDesync(
+                                                            6, 20, sWidth, sHeight),
+                                            )
+                                          ],
                                         ),
                                       ),
                                       SizedBox(

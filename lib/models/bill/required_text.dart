@@ -26,7 +26,7 @@ class RequiredText {
   });
   
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'name': name,
       'sheetTextType': sheetTextType,
@@ -35,7 +35,7 @@ class RequiredText {
     };
   }
 
-  factory RequiredText.fromJson(Map<String, dynamic> map) {
+  factory RequiredText.fromMap(Map<String, dynamic> map) {
     return RequiredText(
       name: map['name'] as String,
       sheetTextType: map['sheetTextType'] as int,
@@ -43,5 +43,6 @@ class RequiredText {
       isOptional: map['isOptional'] as bool,
     );
   }
-
+  String toJson() => json.encode(toMap());
+  factory RequiredText.fromJson(String source) => RequiredText.fromMap(json.decode(source) as Map<String, dynamic>);
 }

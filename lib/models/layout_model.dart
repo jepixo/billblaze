@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_quill/flutter_quill.dart';
@@ -77,74 +78,53 @@ class LayoutModel extends HiveObject {
       labelList: labelList ?? this.labelList,
     );
   }
-}
 
-List<Map<String, dynamic>> extractBIAnalyticsData(Box<LayoutModel> box) {
-  Map<String, LayoutModel> finalLayouts = {};
-
-  for (final lm in box.values) {
-    if (!lm.id.startsWith('BI')) continue;
-
-    final baseName = lm.name.replaceAll('-revised', '');
-
-    if (lm.name.contains('-revised')) {
-      finalLayouts[baseName] = lm;
-    } else if (!finalLayouts.containsKey(baseName)) {
-      finalLayouts[baseName] = lm;
-    }
-  }
-
-  List<Map<String, dynamic>> result = [];
-
-  for (final lm in finalLayouts.values) {
-    final entry = <String, dynamic>{
-      'id': lm.id,
-      'name': lm.name,
-      'type': SheetType.values[lm.type].name,
-      'createdAt': lm.createdAt.toIso8601String(),
-      'modifiedAt': lm.modifiedAt.toIso8601String(),
-      'createdMonth': '${lm.createdAt.year}-${lm.createdAt.month.toString().padLeft(2, '0')}',
-      'createdDate': '${lm.createdAt.year}-${lm.createdAt.month.toString().padLeft(2, '0')}-${lm.createdAt.day.toString().padLeft(2, '0')}',
-      'modifiedMonth': '${lm.modifiedAt.year}-${lm.modifiedAt.month.toString().padLeft(2, '0')}',
-      'modLagDays': lm.modifiedAt.difference(lm.createdAt).inDays,
-      
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'docPropsList': docPropsList.map((x) => x.toMap()).toList(),
+      'spreadSheetList': spreadSheetList.map((x) => x.toMap()).toList(),
+      'id': id,
+      'name': name,
+      'createdAt': createdAt.millisecondsSinceEpoch,
+      'modifiedAt': modifiedAt.millisecondsSinceEpoch,
+      'pdf': pdf,
+      'type': type,
+      'labelList': labelList.map((x) => x.toMap()).toList(),
     };
-
-    for (final rt in lm.labelList) {
-      if (rt.name == 'itemSheet') continue;
-
-      final item = getItemAtPath(rt.indexPath, lm.spreadSheetList);
-      if (item is! SheetTextBox) continue;
-
-      final raw = Document.fromDelta(Delta.fromJson(item.textEditorController)).toPlainText().trim();
-      dynamic parsed;
-
-      switch (SheetTextType.values[rt.sheetTextType]) {
-        case SheetTextType.number:
-          parsed = double.tryParse(raw);
-          break;
-        case SheetTextType.integer:
-          parsed = int.tryParse(raw);
-          break;
-        case SheetTextType.bool:
-          parsed = raw.toLowerCase() == 'true';
-          break;
-        case SheetTextType.date:
-        case SheetTextType.time:
-        case SheetTextType.phone:
-        case SheetTextType.string:
-        default:
-          parsed = raw;
-          break;
-      }
-
-      entry[rt.name] = parsed;
-    }
-
-    result.add(entry);
   }
 
-  return result;
+  factory LayoutModel.fromMap(Map<String, dynamic> map) {
+    return LayoutModel(
+      docPropsList: List<DocumentPropertiesBox>.from((map['docPropsList']).map<DocumentPropertiesBox>((x) => DocumentPropertiesBox.fromMap(x as Map<String,dynamic>),),),
+      spreadSheetList: List<SheetListBox>.from((map['spreadSheetList']).map<SheetListBox>((x) => SheetListBox.fromMap(x as Map<String,dynamic>),),),
+      id: map['id'] as String,
+      name: map['name'] as String,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
+      modifiedAt: DateTime.fromMillisecondsSinceEpoch(map['modifiedAt'] as int),
+      pdf: () {
+        final pdfList = map['pdf'];
+        if (pdfList is List) {
+          return pdfList.map((e) {
+            if (e is List) {
+              // each element should be List<int>
+              return Uint8List.fromList(
+                e.map((x) => (x as num).toInt()).toList(),
+              );
+            }
+            throw Exception('Invalid pdf entry: $e');
+          }).toList();
+        }
+        return null;
+      }(),
+
+      type: map['type'] as int,
+      labelList: List<RequiredText>.from((map['labelList']).map<RequiredText>((x) => RequiredText.fromMap(x as Map<String,dynamic>),),),
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory LayoutModel.fromJson(String source) => LayoutModel.fromMap(json.decode(source) as Map<String, dynamic>);
 }
 
 SheetItem getItemAtPath(IndexPath indexPath, List<SheetListBox> spreadSheetList) {

@@ -67,6 +67,7 @@ Future<void> main() async {
   Hive.registerAdapter(InputBlockFunctionAdapter());
   Hive.registerAdapter(UniStatFunctionAdapter());
   Hive.registerAdapter(BiStatFunctionAdapter());
+  Hive.registerAdapter(UidGeneratorFunctionAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   // await Hive.deleteBoxFromDisk('fetchedLayoutBox');
@@ -84,7 +85,6 @@ Future<void> main() async {
   // await LlamaRepository.init(
   //   modelPath: Directory.current.path +"/assets/models/Phi-3-mini-4k-instruct-q4.gguf",
   // );
-  
   
 
   runApp(const ProviderScope(child: MainApp()));
