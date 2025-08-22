@@ -22,6 +22,7 @@ import 'package:billblaze/providers/url_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
 import 'package:billblaze/repo/llama_repository.dart';
 import 'package:billblaze/screens/account_info.dart';
+import 'package:billblaze/util/asset_manifest.dart';
 import 'package:billblaze/util/numeric_input_formatter.dart';
 import 'package:billblaze/util/static_noise.dart';
 import 'package:cool_background_animation/cool_background_animation.dart';
@@ -285,8 +286,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       TextEditingController()..text = monthNames[selectedMonth - 1],
       TextEditingController()..text = selectedYear.toString()
     ];
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async{
       _updateGraphLineSpeed(100);
+      await syncLayoutsWithAssets();
     },);
     
   }
@@ -3809,6 +3811,10 @@ void _getCurrentTime() {
                                                 cursor: SystemMouseCursors.click,
                                                 child: GestureDetector(
                                                   onTap: () async {
+                                                  if (sheetTypeBrowserEntry != null) {
+                                                    sheetTypeBrowserEntry!.remove();
+                                                    sheetTypeBrowserEntry = null;
+                                                  }
                                                   tempLayoutModel.createdAt =  await showDatePicker(
                                                           context: context,
                                                           initialDate: DateTime.now(),
@@ -4341,7 +4347,10 @@ void _getCurrentTime() {
                                                                                                       )
                                                                                                     ]));
                                                                                               },
-                                                                                            ).toList()
+                                                                                            ).toList(),
+                                                                                            SizedBox(
+                                                                                              height: mapValueDimensionBasedLockOnDesync(5, 20, sWidth, sHeight),
+                                                                                            ),
                                                                                           ],
                                                                                         ),
                                                                                       ),
@@ -6685,21 +6694,15 @@ void _getCurrentTime() {
                                                   ? Boxes.getLayouts()
                                                           .values
                                                           .toList()
-                                                          .length +
-                                                      1
-                                                  : filteredLayoutBox.length +
-                                                      1,
+                                                          .length + 1
+                                                  : filteredLayoutBox.length +1,
                                           itemBuilder:
                                               (BuildContext context, int i) {
                                             if (i ==
                                                 (layoutSearchController.text ==
                                                         ''
-                                                    ? Boxes.getLayouts()
-                                                        .values
-                                                        .toList()
-                                                        .length
-                                                    : filteredLayoutBox
-                                                        .length)) {
+                                                    ? Boxes.getLayouts().values.toList().length
+                                                    : filteredLayoutBox.length)) {
                                               return SizedBox(
                                                 height: 5,
                                               );
@@ -6707,9 +6710,7 @@ void _getCurrentTime() {
                                             final layoutModel =
                                                 layoutSearchController.text ==
                                                         ''
-                                                    ? Boxes.getLayouts()
-                                                        .values
-                                                        .toList()[i]
+                                                    ? Boxes.getLayouts().values.toList()[i]
                                                     : filteredLayoutBox[i];
                                             if (layoutModel.id
                                                 .startsWith('BI-')) {
@@ -6720,15 +6721,9 @@ void _getCurrentTime() {
                                                 color:
                                                     defaultPalette.transparent,
                                                 child: InkWell(
-                                                  hoverColor: defaultPalette
-                                                      .extras[0]
-                                                      .withOpacity(0.4),
-                                                  highlightColor: defaultPalette
-                                                      .extras[0]
-                                                      .withOpacity(0.4),
-                                                  splashColor: defaultPalette
-                                                      .extras[0]
-                                                      .withOpacity(0.4),
+                                                  hoverColor: defaultPalette.extras[0].withOpacity(0.4),
+                                                  highlightColor: defaultPalette.extras[0].withOpacity(0.4),
+                                                  splashColor: defaultPalette.extras[0].withOpacity(0.4),
                                                   onTap: () {
                                                     Navigator.push(context,
                                                         MaterialPageRoute(
@@ -6736,13 +6731,10 @@ void _getCurrentTime() {
                                                         return PopScope(
                                                           canPop: false,
                                                           child: LayoutDesigner(
-                                                            id: Boxes
-                                                                    .getLayouts()
-                                                                .keyAt(i),
+                                                            id: Boxes.getLayouts().keyAt(i),
                                                             onPop: (pdf) {
                                                               setState(() {
-                                                                filteredLayoutBox =
-                                                                    Boxes.getLayouts()
+                                                                filteredLayoutBox = Boxes.getLayouts()
                                                                         .values
                                                                         .toList();
                                                               });
@@ -6875,42 +6867,22 @@ void _getCurrentTime() {
                                                               textStyle:
                                                                   GoogleFonts
                                                                       .lexend(
-                                                                fontSize:
-                                                                    mapValueDimensionBased(
-                                                                        15,
-                                                                        20,
-                                                                        sWidth,
-                                                                        sHeight),
-                                                                color:
-                                                                    defaultPalette
-                                                                        .primary,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                letterSpacing:
-                                                                    -0.2,
+                                                                fontSize: mapValueDimensionBased(
+                                                                        15, 20, sWidth, sHeight),
+                                                                color: defaultPalette.primary,
+                                                                fontWeight: FontWeight.w600,
+                                                                letterSpacing: -0.2,
                                                               ),
                                                               decoration: BoxDecoration(
-                                                                  color: defaultPalette
-                                                                      .extras[0]
-                                                                      .withOpacity(
-                                                                          0.8),
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              50)),
+                                                                  color: defaultPalette.extras[0].withOpacity(0.8),
+                                                                  borderRadius: BorderRadius.circular(50)),
                                                               child:
                                                                   ElevatedLayerButton(
                                                                 onClick: () {
-                                                                  final box = Boxes
-                                                                      .getLayouts();
-                                                                  final name = Boxes
-                                                                      .getBillName();
-                                                                  var key =
-                                                                      'BI-${const Uuid().v4()}';
-                                                                  var prevLm =
-                                                                      box.getAt(
-                                                                          i);
+                                                                  final box = Boxes.getLayouts();
+                                                                  final name = Boxes.getBillName();
+                                                                  var key ='BI-${const Uuid().v4()}';
+                                                                  var prevLm = box.getAt(i);
                                                                   // keyIndex = box.length;
                                                                   var lm =
                                                                       LayoutModel(
@@ -7006,26 +6978,22 @@ void _getCurrentTime() {
                                                             ElevatedLayerButton(
                                                               onClick:
                                                                   () async {
-                                                                print(
-                                                                    filteredLayoutBox);
-                                                                final layoutsBox =
-                                                                    Boxes
-                                                                        .getLayouts();
-                                                                // Delete the item
-                                                                print(
-                                                                    layoutsBox);
-                                                                await layoutsBox
-                                                                    .get(layoutsBox
-                                                                        .keyAt(
-                                                                            i))
-                                                                    ?.delete();
-                                                                print('delete');
+                                                                final layoutsBox = Boxes.getLayouts();
+                                                                // // Delete the item
+                                                                // // print(layoutsBox);
+                                                                await layoutsBox.get(layoutsBox.keyAt(i))?.delete();
                                                                 setState(() {
-                                                                  filteredLayoutBox =
-                                                                      Boxes.getLayouts()
-                                                                          .values
-                                                                          .toList();
+                                                                  filteredLayoutBox = Boxes.getLayouts().values.toList();
                                                                 });
+                                                                // layoutsBox.get(layoutModel.id)?.toJson();
+                                                                // final file = File('assets/layouts/${layoutModel.id}.json');
+
+                                                                // try {
+                                                                //   await file.writeAsString( layoutsBox.get(layoutModel.id)?.toJson()??'');
+                                                                //   print('File written: ${file.path}');
+                                                                // } catch (e) {
+                                                                //   print('Error writing file: $e');
+                                                                // }
                                                               },
                                                               buttonHeight: 45,
                                                               buttonWidth: 45,

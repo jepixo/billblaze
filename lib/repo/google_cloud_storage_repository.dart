@@ -161,7 +161,7 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
         layout.type,
         docId,
         jsonEncode(layout.docPropsList.map((e) => e.toJson()).toList()),
-        jsonEncode(layout.labelList.map((e) => e.toJson()).toList()),
+        jsonEncode(layout.labelList.map((e) => e.toMap()).toList()),
         layout.pdf != null && layout.pdf!.isNotEmpty ? "yes" : "no"
       ]);
     }
@@ -306,7 +306,7 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref, Over
             .map((e) => DocumentPropertiesBox.fromJson(e))
             .toList(),
         labelList: (jsonDecode(data['labelList']) as List)
-            .map((e) => RequiredText.fromJson(e))
+            .map((e) => RequiredText.fromMap(e))
             .toList(),
         pdf: (data['hasPdf'] == 'yes') ? [] : null,
       );
