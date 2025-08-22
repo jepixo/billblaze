@@ -2215,32 +2215,68 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     final url = Uri.parse(
       "https://www.googleapis.com/webfonts/v1/webfonts?key=$googleFontsApiKey",
     );
-    final response = await http.get(url);
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final fonts = data['items'];
+    try {
+      final response = await http.get(url);
 
-      // Classify fonts into categories
-      final Map<String, List<String>> tempCategories = {};
-      for (var font in fonts) {
-        final String category = font['category'];
-        final String fontName = font['family'];
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final fonts = data['items'];
 
-        if (!tempCategories.containsKey(category)) {
-          tempCategories[category] = [];
+        // Classify fonts into categories
+        final Map<String, List<String>> tempCategories = {};
+        for (var font in fonts) {
+          final String category = font['category'];
+          final String fontName = font['family'];
+
+          tempCategories.putIfAbsent(category, () => []);
+          tempCategories[category]!.add(fontName);
         }
-        tempCategories[category]!.add(fontName);
-      }
 
-      setState(() {
-        categorizedFonts = tempCategories;
-        // prnt(categorizedFonts);
-      });
-    } else {
-      print('Failed to fetch fonts: ${response.statusCode}');
+        // Save into local file (not inside assets — assets are read-only at runtime)
+        final dir = await getApplicationDocumentsDirectory();
+        final file = File('${dir.path}/fonts.json');
+        await file.writeAsString(jsonEncode(tempCategories));
+
+        setState(() {
+          categorizedFonts = tempCategories;
+        });
+
+      } else {
+        print('Failed to fetch fonts: ${response.statusCode}');
+        await _loadFontsFromLocal();
+      }
+    } catch (e) {
+      print("Error fetching fonts: $e");
+      await _loadFontsFromLocal();
     }
   }
+
+  Future<void> _loadFontsFromLocal() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/fonts.json');
+
+      if (await file.exists()) {
+        final jsonString = await file.readAsString();
+        final Map<String, dynamic> data = jsonDecode(jsonString);
+
+        final Map<String, List<String>> tempCategories = {};
+        data.forEach((category, fonts) {
+          tempCategories[category] = List<String>.from(fonts);
+        });
+
+        setState(() {
+          categorizedFonts = tempCategories;
+        });
+      } else {
+        print("No local fonts.json found");
+      }
+    } catch (e) {
+      print("Error loading local fonts: $e");
+    }
+  }
+
 
   void _findItem() {
     print('findItem called');
