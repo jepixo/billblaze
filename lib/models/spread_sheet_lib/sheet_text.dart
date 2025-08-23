@@ -14,6 +14,7 @@ import 'package:flutter_quill/quill_delta.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
+import 'package:uuid/uuid.dart';
 part 'sheet_text.g.dart';
 
 //  ignore: depend_on_referenced_packages
@@ -180,6 +181,13 @@ class SheetText extends SheetItem {
     return textEditorController.document.toDelta().toJson();
   }
 
+  @override
+  String newId() {
+    // TODO: implement newId
+    return 'TX-${Uuid().v4()}';
+  }
+
+  @override
   SheetText copyWith({
     QuillController? textEditorController,
     QuillEditorConfigurations? textEditorConfigurations,

@@ -287,8 +287,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       TextEditingController()..text = selectedYear.toString()
     ];
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async{
+      await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
       _updateGraphLineSpeed(100);
       await syncLayoutsWithAssets();
+      
     },);
     
   }
@@ -6893,11 +6895,11 @@ void _getCurrentTime() {
                                                                             .now(),
                                                                     name: name,
                                                                     docPropsList:
-                                                                        prevLm?.docPropsList ??
-                                                                            [],
+                                                                        [...(prevLm?.docPropsList ??
+                                                                            [])],
                                                                     spreadSheetList:
-                                                                        prevLm?.spreadSheetList ??
-                                                                            [],
+                                                                        [...(prevLm?.spreadSheetList ??
+                                                                            [])],
                                                                     id: key,
                                                                     type: tempLayoutModel.type,
                                                                     labelList:tempLayoutModel.labelList,

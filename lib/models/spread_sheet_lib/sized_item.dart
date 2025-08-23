@@ -1,14 +1,16 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
-import 'package:billblaze/colors.dart';
-import 'package:billblaze/models/index_path.dart';
-import 'package:billblaze/screens/layout_designer.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'package:billblaze/colors.dart';
+import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
+import 'package:billblaze/screens/layout_designer.dart';
+import 'package:uuid/uuid.dart';
+
 part 'sized_item.g.dart';
 
 @HiveType(typeId: 23)
@@ -129,4 +131,31 @@ class SheetSizedItem extends SheetItem {
     );
   }
 
+  
+  @override
+  String newId() {
+    // TODO: implement newId
+    return 'SZ-${Uuid().v4()}';
+  }
+
+  @override
+  SheetSizedItem copyWith({
+    String? id,
+    String? parentId,
+    IndexPath? indexPath,
+    double? width,
+    double? height,
+    String? sizedItemDecoration,
+    bool? hide,
+  }) {
+    return SheetSizedItem(
+      id: id ?? this.id,
+      parentId: parentId ?? this.parentId,
+      indexPath: indexPath ?? this.indexPath,
+      width: width ?? this.width,
+      height: height ?? this.height,
+      sizedItemDecoration: sizedItemDecoration ?? this.sizedItemDecoration,
+      hide: hide ?? this.hide,
+    );
+  }
 }

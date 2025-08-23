@@ -3,20 +3,19 @@
 
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
+
 import 'package:billblaze/colors.dart';
+import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/models/spread_sheet_lib/sized_item.dart';
 import 'package:billblaze/screens/layout_designer.dart';
-import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:uuid/uuid.dart';
-
-import 'package:billblaze/models/index_path.dart';
 
 part 'sheet_item.g.dart';
-
 
 @HiveType(typeId: 1)
 class SheetItem extends HiveObject {
@@ -134,4 +133,18 @@ class SheetItem extends HiveObject {
     // TODO: implement toString
     return '${id}, ${parentId}, ${indexPath}, ${runtimeType}';
   }
+
+  SheetItem copyWith({
+    String? id,
+    String? parentId,
+    IndexPath? indexPath,
+  }) {
+    return SheetItem(
+      id: id ?? this.id,
+      parentId: parentId ?? this.parentId,
+      indexPath: indexPath ?? this.indexPath,
+    );
+  }
+
+  String newId() => 'yo';
 }

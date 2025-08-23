@@ -74,7 +74,7 @@ Future<void> main() async {
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   // await Hive.deleteBoxFromDisk('fetchedLayoutBox');
-  await Hive.openBox<LayoutModel>('layouts');
+  await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
   await Hive.openBox<SheetDecoration>('decorations');
   
   // await Hive.box<LayoutModel>('decorations').clear();
@@ -114,6 +114,9 @@ class _MainAppState extends State<MainApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async{
+      await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
+    },);
   }
 
   @override

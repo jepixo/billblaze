@@ -31,6 +31,24 @@ class SheetDecoration extends HiveObject {
   final Access access;
   SheetDecoration(
       {required this.id, required this.name, this.access = Access.global});
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'id': id,
+      'name': name,
+    };
+  }
+
+  factory SheetDecoration.fromMap(Map<String, dynamic> map) {
+    switch (map['type']) {
+      case 'SuperDecorationBox':
+        return SuperDecorationBox.fromMap(map);
+      case 'ItemDecoration':
+        return ItemDecorationBox.fromMap(map);
+      default:
+        throw UnimplementedError('in sheetDecorationFromMap: ${map['type']}');
+    }
+  }
 }
 
 @HiveType(typeId: 7)
@@ -93,6 +111,7 @@ class ItemDecorationBox extends SheetDecoration {
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
+      'type': 'ItemDecoration',
       'itemDecoration': itemDecoration,
       'id': super.id,
       'name': super.name,
