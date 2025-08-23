@@ -1,12 +1,15 @@
 import 'dart:math';
 
 import 'package:billblaze/models/layout_model.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart'; 
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
+import 'package:billblaze/providers/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; 
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
+final globalContainer = ProviderContainer();
 
 class Boxes {
-  static Box<LayoutModel> getLayouts() => Hive.box<LayoutModel>('layouts');
+  static Box<LayoutModel> getLayouts() => Hive.box<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
   static Box<SheetDecoration> getDecorations() => Hive.box<SheetDecoration>('decorations');
 
   static String getLayoutName() {

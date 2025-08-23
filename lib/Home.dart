@@ -21,7 +21,7 @@ import 'package:billblaze/providers/llama_provider.dart';
 import 'package:billblaze/providers/url_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
 import 'package:billblaze/repo/llama_repository.dart';
-import 'package:billblaze/screens/account_info.dart';
+import 'package:billblaze/components/widgets/username.dart';
 import 'package:billblaze/util/asset_manifest.dart';
 import 'package:billblaze/util/numeric_input_formatter.dart';
 import 'package:billblaze/util/static_noise.dart';
@@ -287,8 +287,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       TextEditingController()..text = selectedYear.toString()
     ];
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async{
+      await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
       _updateGraphLineSpeed(100);
       await syncLayoutsWithAssets();
+      
     },);
     
   }
@@ -642,6 +644,7 @@ void _getCurrentTime() {
     bool isBillTab = homeScreenTabIndex == 2;
     bool isProfileTab = homeScreenTabIndex == 3;
     final User? user = ref.watch(authPr).currentUser;
+    // RefHolder.ref = ref;
 
     // print(mapValue(value: sHeight, inMin: 480, inMax: 1186, outMin: 0.18, outMax: 0.1));
     // print(sHeight);
@@ -6886,26 +6889,20 @@ void _getCurrentTime() {
                                                                   // keyIndex = box.length;
                                                                   var lm =
                                                                       LayoutModel(
-                                                                    createdAt:
-                                                                        DateTime
-                                                                            .now(),
+                                                                    createdAt:tempLayoutModel.createdAt,
                                                                     modifiedAt:
                                                                         DateTime
                                                                             .now(),
                                                                     name: name,
                                                                     docPropsList:
-                                                                        prevLm?.docPropsList ??
-                                                                            [],
+                                                                        [...(prevLm?.docPropsList ??
+                                                                            [])],
                                                                     spreadSheetList:
-                                                                        prevLm?.spreadSheetList ??
-                                                                            [],
+                                                                        [...(prevLm?.spreadSheetList ??
+                                                                            [])],
                                                                     id: key,
-                                                                    type: SheetType
-                                                                        .taxInvoice
-                                                                        .index,
-                                                                    labelList:
-                                                                        prevLm?.labelList ??
-                                                                            [],
+                                                                    type: tempLayoutModel.type,
+                                                                    labelList:tempLayoutModel.labelList,
                                                                   );
 
                                                                   box.put(
@@ -8470,7 +8467,7 @@ void _getCurrentTime() {
                 top: isBillTab ? 60 : sHeight / 4,
                 child: ValueListenableBuilder(
                     valueListenable:
-                        Hive.box<LayoutModel>('layouts').listenable(),
+                        Hive.box<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts').listenable(),
                     builder: (context, Box<LayoutModel> box, _) {
                       monthRevenueMap = {};
                       dayRevenueMap = {};
@@ -9383,7 +9380,7 @@ void _getCurrentTime() {
                 top: isBillTab ? 70 + sHeight / 1.8 : sHeight / 4,
                 child: ValueListenableBuilder(
                     valueListenable:
-                        Hive.box<LayoutModel>('layouts').listenable(),
+                        Hive.box<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts').listenable(),
                     builder: (context, Box<LayoutModel> box, _) {
                       final allLayouts = box.values.toList();
 
@@ -9869,7 +9866,7 @@ void _getCurrentTime() {
                 top: isBillTab ? 70 + sHeight / 1.8 : sHeight / 4,
                 child: ValueListenableBuilder(
                     valueListenable:
-                        Hive.box<LayoutModel>('layouts').listenable(),
+                        Hive.box<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts').listenable(),
                     builder: (context, Box<LayoutModel> box, _) {
                       final allLayouts = box.values.toList();
 

@@ -6,20 +6,24 @@ import 'package:billblaze/models/bill/bill_type.dart';
 import 'package:billblaze/models/bill/required_text.dart';
 import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/layout_model.dart';
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/providers/auth_provider.dart';
+import 'package:billblaze/providers/box_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as gap;
+import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart'
+    as gap;
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 
-Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetRef ref, OverlayEntry? overlay) async {
-  final googleSignIn = ref.read(gapSignInProvider);
+Future<bool> authenticateAndSyncLayoutModels(
+    Box<LayoutModel> layoutBox, WidgetRef ref, OverlayEntry? overlay) async {
   try {
+    final googleSignIn = ref.read(gapSignInProvider);
     ref.read(processMessageProvider.notifier).state = "Signing in to Google...";
     overlay?.markNeedsBuild();
     final authManager = ref.read(authTokenManagerProvider.notifier);
@@ -27,19 +31,22 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
     // 🔁 Check and refresh token if needed
     if (!authManager.state.isValid) {
       print("🔐 Token expired or missing. Signing in again...");
-      ref.read(processMessageProvider.notifier).state = "🔐 Token expired or missing. Signing in again...";
+      ref.read(processMessageProvider.notifier).state =
+          "🔐 Token expired or missing. Signing in again...";
       overlay?.markNeedsBuild();
       creds = await googleSignIn.signInOnline();
       if (creds == null) {
         print("❌ Google Sign-In failed or was canceled.");
-        ref.read(processMessageProvider.notifier).state = "❌ Google Sign-In failed or was canceled.";
+        ref.read(processMessageProvider.notifier).state =
+            "❌ Google Sign-In failed or was canceled.";
         overlay?.markNeedsBuild();
         overlay?.remove();
         return false;
       }
       authManager.state = AuthTokenManager(
         credentials: creds,
-        expiryTime: DateTime.now().add(Duration(hours: 1)), // adjust if you know exact expiry
+        expiryTime: DateTime.now()
+            .add(Duration(hours: 1)), // adjust if you know exact expiry
       );
     } else {
       creds = authManager.state.credentials;
@@ -47,7 +54,8 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
     final authClient = authenticatedClient(
       http.Client(),
       AccessCredentials(
-        AccessToken('Bearer', creds!.accessToken, DateTime.now().toUtc().add(Duration(hours: 1))),
+        AccessToken('Bearer', creds!.accessToken,
+            DateTime.now().toUtc().add(Duration(hours: 1))),
         creds.refreshToken,
         [
           'https://www.googleapis.com/auth/drive',
@@ -66,7 +74,8 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
     if (fileList.files != null && fileList.files!.isNotEmpty) {
       sheetId = fileList.files!.first.id!;
       print("📄 Found existing sheet with ID: $sheetId");
-      ref.read(processMessageProvider.notifier).state = "📄 Found existing storage with ID: $sheetId";
+      ref.read(processMessageProvider.notifier).state =
+          "📄 Found existing storage with ID: $sheetId";
       overlay?.markNeedsBuild();
     } else {
       final newFile = await driveApi.files.create(drive.File()
@@ -74,7 +83,8 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
         ..mimeType = "application/vnd.google-apps.spreadsheet");
       sheetId = newFile.id!;
       print("✅ Created new sheet with ID: $sheetId");
-      ref.read(processMessageProvider.notifier).state = "✅ Created new storage with ID: $sheetId";
+      ref.read(processMessageProvider.notifier).state =
+          "✅ Created new storage with ID: $sheetId";
       overlay?.markNeedsBuild();
     }
     // 2️⃣ Clear sheet
@@ -102,16 +112,19 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
         q: "name='${layout.id}' and mimeType='application/vnd.google-apps.document'",
       );
       String docId;
-      if (existingDocSearch.files != null && existingDocSearch.files!.isNotEmpty) {
+      if (existingDocSearch.files != null &&
+          existingDocSearch.files!.isNotEmpty) {
         final oldDocId = existingDocSearch.files!.first.id!;
         try {
           await driveApi.files.delete(oldDocId);
           print("🗑️ Deleted existing doc for ${layout.id} (ID: $oldDocId)");
-          ref.read(processMessageProvider.notifier).state = "🗑️ Deleted existing spreadsheet for ${layout.name}";
+          ref.read(processMessageProvider.notifier).state =
+              "🗑️ Deleted existing spreadsheet for ${layout.name}";
           overlay?.markNeedsBuild();
         } catch (e) {
           print("⚠️ Couldn't delete old doc for ${layout.id}: $e");
-          ref.read(processMessageProvider.notifier).state = "⚠️ Couldn't delete old spreadsheet for ${layout.name}: $e";
+          ref.read(processMessageProvider.notifier).state =
+              "⚠️ Couldn't delete old spreadsheet for ${layout.name}: $e";
           overlay?.markNeedsBuild();
         }
       }
@@ -126,17 +139,20 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
       );
       if (docResponse.statusCode != 200) {
         print("❌ Failed to create doc for layout ${layout.id}");
-        ref.read(processMessageProvider.notifier).state = "❌ Failed to create spreadsheet for ${layout.name}";
+        ref.read(processMessageProvider.notifier).state =
+            "❌ Failed to create spreadsheet for ${layout.name}";
         overlay?.markNeedsBuild();
         continue;
       }
       docId = jsonDecode(docResponse.body)['documentId'];
       print("🆕 Created new doc with ID: $docId");
-      ref.read(processMessageProvider.notifier).state = "🆕 Created new spreadsheet for ${layout.name}";
+      ref.read(processMessageProvider.notifier).state =
+          "🆕 Created new spreadsheet for ${layout.name}";
       overlay?.markNeedsBuild();
       // ✍️ Insert spreadsheetList JSON
       await http.post(
-        Uri.parse('https://docs.googleapis.com/v1/documents/$docId:batchUpdate'),
+        Uri.parse(
+            'https://docs.googleapis.com/v1/documents/$docId:batchUpdate'),
         headers: {
           'Authorization': 'Bearer ${creds.accessToken}',
           'Content-Type': 'application/json',
@@ -146,7 +162,8 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
             {
               'insertText': {
                 'location': {'index': 1},
-                'text': jsonEncode(layout.spreadSheetList.map((e) => e.toMap()).toList()),
+                'text': jsonEncode(
+                    layout.spreadSheetList.map((e) => e.toMap()).toList()),
               }
             }
           ]
@@ -172,13 +189,55 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
       "Sheet1!A1",
       valueInputOption: "RAW",
     );
-    print("✅ Synced all LayoutModels to Google Sheet and Docs.");
-    ref.read(processMessageProvider.notifier).state = "✅ Synced all Layouts&Bills to Google Drive.";
+
+    ///SHEETDECORATIONS
+    ///
+    ///
+    // 🔹 Convert decorations to JSON string
+    final decorationsJson = jsonEncode(
+      Boxes.getDecorations().values.map((d) => d.toMap()).toList(),
+    );
+
+    // 🔎 Search for existing JSON file "SheetDecorationBox.json"
+    final decoFileSearch = await driveApi.files.list(
+      q: "name='SheetDecorationBox.json' and mimeType='application/json'",
+    );
+
+    if (decoFileSearch.files != null && decoFileSearch.files!.isNotEmpty) {
+      // If exists, update content
+      final existingFileId = decoFileSearch.files!.first.id!;
+      final media = drive.Media(
+        Stream.value(utf8.encode(decorationsJson)),
+        decorationsJson.length,
+      );
+      await driveApi.files
+          .update(drive.File(), existingFileId, uploadMedia: media);
+      print("✅ Updated existing SheetDecorationBox.json");
+    } else {
+      // Create new JSON file
+      final newFile = drive.File()
+        ..name = 'SheetDecorationBox.json'
+        ..mimeType = 'application/json';
+      final media = drive.Media(
+        Stream.value(utf8.encode(decorationsJson)),
+        decorationsJson.length,
+      );
+      await driveApi.files.create(newFile, uploadMedia: media);
+      print("✅ Created new SheetDecorationBox.json");
+    }
+    // print("✅ Created new doc with ID: $decorationDocId");
+    // ref.read(processMessageProvider.notifier).state = "✅ Created new decoration storage with ID: $decorationDocId";
+
+    print(
+        "✅ Synced all LayoutModels and Decorations to Google Sheet and Docs.");
+    ref.read(processMessageProvider.notifier).state =
+        "✅ Synced all Layouts&Bills to Google Drive.";
     overlay?.markNeedsBuild();
     authClient.close();
   } catch (e) {
     print("❌ Error during authentication or data sync: $e");
-    ref.read(processMessageProvider.notifier).state = "❌ Error during authentication or data sync: $e";
+    ref.read(processMessageProvider.notifier).state =
+        "❌ Error during authentication or data sync: $e";
     overlay?.markNeedsBuild();
     overlay?.remove();
     return false;
@@ -187,9 +246,100 @@ Future<bool> authenticateAndSyncLayoutModels(Box<LayoutModel> layoutBox, WidgetR
 }
 //
 //
+
+Future<Map<String, SheetDecoration>> fetchDecorationsFromDrive(
+    WidgetRef ref, OverlayEntry? overlay) async {
+  final googleSignIn = ref.read(gapSignInProvider);
+  try {
+    final authManager = ref.read(authTokenManagerProvider.notifier);
+    ref.read(processMessageProvider.notifier).state =
+        "Signing in to Google for decorations...";
+    overlay?.markNeedsBuild();
+
+    gap.GoogleSignInCredentials? creds;
+    if (!authManager.state.isValid) {
+      creds = await googleSignIn.signInOnline();
+      if (creds == null) {
+        ref.read(processMessageProvider.notifier).state =
+            "❌ Google Sign-In failed for decorations.";
+        overlay?.markNeedsBuild();
+        overlay?.remove();
+        return {};
+      }
+      authManager.state = AuthTokenManager(
+        credentials: creds,
+        expiryTime: DateTime.now().add(Duration(hours: 1)),
+      );
+    } else {
+      creds = authManager.state.credentials;
+    }
+
+    final authClient = authenticatedClient(
+      http.Client(),
+      AccessCredentials(
+        AccessToken('Bearer', creds!.accessToken,
+            DateTime.now().toUtc().add(Duration(hours: 1))),
+        creds.refreshToken,
+        ['https://www.googleapis.com/auth/drive'],
+      ),
+    );
+    final driveApi = drive.DriveApi(authClient);
+
+    // 🔍 Search for the JSON file
+    final fileList = await driveApi.files.list(
+      q: "name='SheetDecorationBox.json' and mimeType='application/json'",
+    );
+
+    if (fileList.files == null || fileList.files!.isEmpty) {
+      ref.read(processMessageProvider.notifier).state =
+          "❌ SheetDecorationBox.json not found.";
+      overlay?.markNeedsBuild();
+      overlay?.remove();
+      return {};
+    }
+
+    final fileId = fileList.files!.first.id!;
+    ref.read(processMessageProvider.notifier).state =
+        "📥 Fetching SheetDecorationBox.json from Drive...";
+    overlay?.markNeedsBuild();
+
+    final media = await driveApi.files.get(
+      fileId,
+      downloadOptions: drive.DownloadOptions.fullMedia,
+    ) as drive.Media;
+
+    // Collect the stream into a single string
+    final chunks = await media.stream.toList();
+    final allBytes = chunks.expand((chunk) => chunk).toList();
+    final jsonString = utf8.decode(allBytes);
+
+    final List<dynamic> jsonList = jsonDecode(jsonString);
+    final Map<String, SheetDecoration> decorations = {};
+
+    for (final item in jsonList) {
+      final deco =
+          SheetDecoration.fromMap(item); // implement fromMap in your class
+      decorations[deco.id] = deco;
+    }
+
+    ref.read(processMessageProvider.notifier).state =
+        "✅ Decorations loaded from Drive.";
+
+    return decorations;
+  } catch (e) {
+    print("❌ Failed to fetch decorations: $e");
+    ref.read(processMessageProvider.notifier).state =
+        "❌ Failed to fetch decorations: $e";
+    overlay?.markNeedsBuild();
+    overlay?.remove();
+    return {};
+  }
+}
+
 //
 //
-Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref, OverlayEntry? overlay) async {
+Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(
+    WidgetRef ref, OverlayEntry? overlay) async {
   final googleSignIn = ref.read(gapSignInProvider);
   try {
     final authManager = ref.read(authTokenManagerProvider.notifier);
@@ -199,12 +349,14 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref, Over
     // 🔁 Check and refresh token if needed
     if (!authManager.state.isValid) {
       print("🔐 Token expired or missing. Signing in again...");
-      ref.read(processMessageProvider.notifier).state = "🔐 Token expired or missing. Signing in again...";
+      ref.read(processMessageProvider.notifier).state =
+          "🔐 Token expired or missing. Signing in again...";
       overlay?.markNeedsBuild();
       creds = await googleSignIn.signInOnline();
       if (creds == null) {
         print("❌ Google Sign-In failed.");
-        ref.read(processMessageProvider.notifier).state = "❌ Google Sign-In failed.";
+        ref.read(processMessageProvider.notifier).state =
+            "❌ Google Sign-In failed.";
         overlay?.markNeedsBuild();
         overlay?.remove();
       }
@@ -218,7 +370,8 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref, Over
     final authClient = authenticatedClient(
       http.Client(),
       AccessCredentials(
-        AccessToken('Bearer', creds!.accessToken, DateTime.now().toUtc().add(Duration(hours: 1))),
+        AccessToken('Bearer', creds!.accessToken,
+            DateTime.now().toUtc().add(Duration(hours: 1))),
         creds.refreshToken,
         [
           'https://www.googleapis.com/auth/drive',
@@ -235,25 +388,28 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref, Over
     );
     if (fileList.files == null || fileList.files!.isEmpty) {
       print("❌ LayoutModelBox spreadsheet not found.");
-      ref.read(processMessageProvider.notifier).state = "❌ Storage not found in drive.";
+      ref.read(processMessageProvider.notifier).state =
+          "❌ Storage not found in drive.";
       overlay?.markNeedsBuild();
       overlay?.remove();
       return {};
     }
-    
+
     final sheetId = fileList.files!.first.id!;
-    ref.read(processMessageProvider.notifier).state = "📄 Found existing storage with ID: ${sheetId}";
+    ref.read(processMessageProvider.notifier).state =
+        "📄 Found existing storage with ID: ${sheetId}";
     print("📄 Found existing sheet with ID: $sheetId");
     overlay?.markNeedsBuild();
-    final sheetData = await sheetsApi.spreadsheets.values.get(sheetId, "Sheet1");
+    final sheetData =
+        await sheetsApi.spreadsheets.values.get(sheetId, "Sheet1");
     final rows = sheetData.values;
     if (rows == null || rows.length < 2) {
       print("❌ No layout data found in sheet.");
-      ref.read(processMessageProvider.notifier).state = "❌ No data found in storage.";
+      ref.read(processMessageProvider.notifier).state =
+          "❌ No data found in storage.";
       overlay?.markNeedsBuild();
       overlay?.remove();
       return {};
-
     }
     final headers = rows.first;
     final Map<String, dynamic> box = {};
@@ -275,11 +431,13 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref, Over
       );
       if (docResponse.statusCode != 200) {
         print("❌ Failed to fetch Google Doc $docId");
-        ref.read(processMessageProvider.notifier).state = "❌ Failed to fetch spreadSheetList for ${data['name']}";
+        ref.read(processMessageProvider.notifier).state =
+            "❌ Failed to fetch spreadSheetList for ${data['name']}";
         overlay?.markNeedsBuild();
         continue;
       }
-      ref.read(processMessageProvider.notifier).state = "📥 Fetched spreadsheetList from Google Doc for ${data['name']}";
+      ref.read(processMessageProvider.notifier).state =
+          "📥 Fetched spreadsheetList from Google Doc for ${data['name']}";
       overlay?.markNeedsBuild();
       final docBody = jsonDecode(docResponse.body);
       final content = docBody['body']['content'] as List? ?? [];
@@ -289,7 +447,8 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref, Over
           .whereType<String>();
       final firstTextElement = textRuns.join();
       // 🧱 Rebuild spreadsheetList
-      ref.read(processMessageProvider.notifier).state = "🧱 Decoding spreadsheetList for ${data['name']}";
+      ref.read(processMessageProvider.notifier).state =
+          "🧱 Decoding spreadsheetList for ${data['name']}";
       final spreadsheetListRaw = jsonDecode(firstTextElement.trim());
       final List<SheetListBox> spreadsheetList = (spreadsheetListRaw as List)
           .map((e) => SheetListBox.fromMap(e))
@@ -312,92 +471,28 @@ Future<Map<String, dynamic>> fetchAndReconstructLayoutModels(WidgetRef ref, Over
       );
       box.addAll({model.id: model});
     }
-    print("✅ LayoutModelBox loaded from Google Sheet and Docs");
-    ref.read(processMessageProvider.notifier).state = "✅ Layouts&Bills loaded from Google Drive.";
+    var decorationsMap = await fetchDecorationsFromDrive(ref, overlay);
+
+    for (var dcEntry in decorationsMap.entries) {
+      var decorationsBox = Boxes.getDecorations();
+      var existing = decorationsBox.get(dcEntry.key);
+      if (existing!=null) {
+        decorationsBox.put(dcEntry.key,dcEntry.value);
+      }
+    }
+
+    print("✅ LayoutModelBox and SheetDecorations loaded from Google Sheet and Docs");
+    ref.read(processMessageProvider.notifier).state =
+        "✅ Layouts&Bills and SheetDecorations loaded from Google Drive.";
     overlay?.markNeedsBuild();
     overlay?.remove();
     return box;
   } catch (e) {
     print("❌ Failed to fetch LayoutModels: $e");
-    ref.read(processMessageProvider.notifier).state = "❌ Failed to fetch Layouts&Bills: $e";
+    ref.read(processMessageProvider.notifier).state =
+        "❌ Failed to fetch Layouts&Bills: $e";
     overlay?.markNeedsBuild();
     overlay?.remove();
     return {};
   }
-}
-            
-Future<String> _dumpLayoutDataAsJson() async {
-  final box = await Hive.openBox<LayoutModel>("layouts");
-  final all = box.values.toList();
-
-  // filter out ‘-old’ and keep only latest
-  final revised = all.where((l) => l.name.endsWith('-revised'))
-                     .map((l) => l.name.replaceFirst('-revised', ''))
-                     .toSet();
-  final layouts = all.where((l) {
-    final n = l.name;
-    return !n.endsWith('-old') && !revised.contains(n);
-  }).toList();
-
-  // aggregate
-  double totalRevenue = 0;
-  int totalBills = layouts.length, totalTax=0, totalCredit=0;
-  final monthMap = <String,double>{};
-  final yearMap  = <String,double>{};
-
-  for (var l in layouts) {
-    final v = _extractTotalPayable(l);
-    totalRevenue += v;
-    if (l.type == SheetType.taxInvoice.index) totalTax++;
-    if (l.type == SheetType.creditNote.index) totalCredit++;
-
-    final ym = "${l.createdAt.year}-${l.createdAt.month.toString().padLeft(2,'0')}";
-    monthMap[ym] = (monthMap[ym] ?? 0) + v;
-    yearMap["${l.createdAt.year}"] = (yearMap["${l.createdAt.year}"] ?? 0) + v;
-  }
-
-  // detailed per‐year→per‐month:
-  final byYear = <String, Map<String,double>>{};
-  yearMap.forEach((yr, _) {
-    byYear[yr] = Map.fromEntries(
-      monthMap.entries
-        .where((e) => e.key.startsWith("$yr-"))
-        .map((e) => MapEntry(e.key.substring(5), e.value))
-    );
-  });
-
-  // also build detailed invoice info map:
-  final detail = <String, Map<String,dynamic>>{};
-  for (var l in layouts) {
-    detail[l.id] = {
-      'billName': l.name,
-      'type': SheetType.values[l.type].name,
-      'invoiceNumber': _extractInvoiceNumber(l),
-      // ... copy any other labels you need
-    };
-  }
-
-  final out = {
-    'totalRevenue'   : totalRevenue,
-    'totalBills'     : totalBills,
-    'taxInvoiceCount': totalTax,
-    'creditNoteCount': totalCredit,
-    'yearly'         : byYear,
-    'details'        : detail,
-  };
-
-  return JsonEncoder.withIndent("  ").convert(out);
-}
-
-double _extractTotalPayable(LayoutModel l) {
-  // find the 'totalPayable' label in l.labelList...
-  // parse text → number
-  // return 0 if not found
-  // (Your existing logic here)
-  return 0.0; 
-}
-
-String _extractInvoiceNumber(LayoutModel l) {
-  // find the RequiredText 'invoiceNumber' and extract...
-  return "";
 }

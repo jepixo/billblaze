@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/env_provider.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:hive/hive.dart';
 import 'package:platform/platform.dart';
 import 'package:billblaze/providers/auth_provider.dart';
 import 'package:billblaze/providers/firebase_providers.dart';
@@ -88,6 +90,7 @@ class AuthRepository {
       // Sign in with Firebase using the Google credentials
       final userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
+      await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
       print('Signed in successfully: ${userCredential.user}');
     } catch (e) {
       print('Error signing in with Google: $e');

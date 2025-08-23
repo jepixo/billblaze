@@ -1,14 +1,6 @@
-import 'dart:io';
-import 'dart:ui';
 import 'package:billblaze/colors.dart';
-import 'package:billblaze/components/elevated_button.dart';
 import 'package:billblaze/home.dart';
-import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:billblaze/providers/auth_provider.dart';
-import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 
@@ -36,9 +28,9 @@ class Username extends StatelessWidget {
     if (div4 >= div3 && div4 > 1 && div2 <= 4) {
       idealDivd = 4;
     } else if (div3 >= div4 && (div3 <= div2 && sym3 <= sym2)) {
-      idealDivd = 3;
+      idealDivd = 5;
     } else {
-      idealDivd = 2;
+      idealDivd = 4;
     }
 
     List<String> dividedWord = [];
@@ -71,7 +63,7 @@ class Username extends StatelessWidget {
               // Animated
               Text(
                 substring.toUpperCase(),
-                textAlign: TextAlign.start,
+                textAlign: TextAlign.end,
                 style: GoogleFonts.leagueSpartan(
                   fontWeight: FontWeight.w900,
                   height: 1.3,

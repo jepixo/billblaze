@@ -14,6 +14,7 @@ import 'package:flutter_quill/quill_delta.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
+import 'package:uuid/uuid.dart';
 part 'sheet_text.g.dart';
 
 //  ignore: depend_on_referenced_packages
@@ -180,6 +181,13 @@ class SheetText extends SheetItem {
     return textEditorController.document.toDelta().toJson();
   }
 
+  @override
+  String newId() {
+    // TODO: implement newId
+    return 'TX-${Uuid().v4()}';
+  }
+
+  @override
   SheetText copyWith({
     QuillController? textEditorController,
     QuillEditorConfigurations? textEditorConfigurations,
@@ -212,7 +220,8 @@ class SheetText extends SheetItem {
     );
   }
 
-  SheetTextBox toTEItemBox(SheetText item) {
+  @override
+  SheetTextBox toBox() {
     // print(
     //     'conversion text: ${item.textEditorController.document.toDelta().toJson()}');
     // print(
@@ -220,16 +229,16 @@ class SheetText extends SheetItem {
     // print('ToBOX name: ${item.name}, and locked: ${item.locked}');
     return SheetTextBox(
         textEditorController:
-            textEditorController.document.toDelta().toJson(),
-        id: item.id,
-        parentId: item.parentId,
-        hide: item.hide,
-        name: item.name,
+        textEditorController.document.toDelta().toJson(),
+        id: super.id,
+        parentId: super.parentId,
+        hide: hide,
+        name: name,
         indexPath: indexPath,
-        textDecoration: item.textDecoration.toSuperDecorationBox(),
-        inputBlocks: item.inputBlocks,
-        type: item.type.index,
-        locked: item.locked,
+        textDecoration: textDecoration.toSuperDecorationBox(),
+        inputBlocks: inputBlocks,
+        type: type.index,
+        locked: locked,
         );
   }
 

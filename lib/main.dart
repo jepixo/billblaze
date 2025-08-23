@@ -19,7 +19,9 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/firebase_options.dart';
 import 'package:billblaze/models/document_properties_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
+import 'package:billblaze/models/spread_sheet_lib/sized_item.dart';
 import 'package:billblaze/providers/auth_provider.dart';
+import 'package:billblaze/providers/box_provider.dart';
 import 'package:billblaze/repo/llama_repository.dart';
 import 'package:billblaze/screens/login_sign_up.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -68,10 +70,11 @@ Future<void> main() async {
   Hive.registerAdapter(UniStatFunctionAdapter());
   Hive.registerAdapter(BiStatFunctionAdapter());
   Hive.registerAdapter(UidGeneratorFunctionAdapter());
+  Hive.registerAdapter(SheetSizedItemAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   // await Hive.deleteBoxFromDisk('fetchedLayoutBox');
-  await Hive.openBox<LayoutModel>('layouts');
+  await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
   await Hive.openBox<SheetDecoration>('decorations');
   
   // await Hive.box<LayoutModel>('decorations').clear();
@@ -111,6 +114,9 @@ class _MainAppState extends State<MainApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async{
+      await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
+    },);
   }
 
   @override
@@ -129,6 +135,7 @@ class _MainAppState extends State<MainApp> {
       ),
       // home: RootRouter(),
       home: Consumer(builder: (context, ref, c) {
+        // RefHolder.ref = ref;
         return StreamBuilder(
             stream: FirebaseAuth.instance.authStateChanges(),
             builder: (context, stream) {
@@ -136,6 +143,7 @@ class _MainAppState extends State<MainApp> {
                 // ref
                 //     .read(authRepositoryProvider)
                 //     .checkAndCreateUserDocument(context, ref);
+                () async{await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');}();
                 return Home();
                 // return SafeArea(
                 //     child: Material(
@@ -162,249 +170,5 @@ class _MainAppState extends State<MainApp> {
   @override
   void dispose() {
     super.dispose();
-  }
-}
-
-class RootRouter extends ConsumerStatefulWidget {
-  const RootRouter({Key? key}) : super(key: key);
-
-  @override
-  ConsumerState<RootRouter> createState() => _RootRouterState();
-}
-
-class _RootRouterState extends ConsumerState<RootRouter> {
-  bool _listenerRegistered = false;
-  bool _navigated = false;
-
-  @override
-  Widget build(BuildContext context) {
-    // Register the listener exactly once, but do it from inside build
-    if (!_listenerRegistered) {
-      ref.listen<AsyncValue<User?>>(authStateStreamProvider, (prev, next) {
-        next.whenData((user) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            if (_navigated) return; // guard against double navigation
-            _navigated = true;
-
-            if (user != null) {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => Home()),
-              );
-            } else {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => LoginSignUp()),
-              );
-            }
-          });
-        });
-      });
-
-      _listenerRegistered = true;
-    }
-
-    double sWidth = MediaQuery.of(context).size.width;
-    double sHeight = MediaQuery.of(context).size.height;
-    double titleFontSize = sHeight / 9;
-    return Scaffold(body: 
-    Stack(
-      children: [
-        Center(
-          child: SizedBox(
-            height: 150,
-            child: LoadingIndicator(
-                indicatorType: Indicator.pacman, /// Required, The loading type of the widget
-                colors: [defaultPalette.extras[0],defaultPalette.extras[0],defaultPalette.extras[0]],       /// Optional, The color collections
-                strokeWidth: 2,                     /// Optional, The stroke of the line, only applicable to widget which contains line
-                backgroundColor: defaultPalette.transparent,      /// Optional, Background of the widget
-                pathBackgroundColor: defaultPalette.tertiary  /// Optional, the stroke backgroundColor
-            ),
-          )
-        ),
-          
-        if (Platform.isWindows)
-          GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onPanStart: (details) {
-              appWindow.startDragging();
-            },
-            onDoubleTap: () {
-              appWindow.maximizeOrRestore();
-            },
-            child: SizedBox(
-              height: 30,
-              child: Consumer(builder: (context, ref, c) {
-                return Stack(
-                  children: [
-                    AnimatedPositioned(
-                      right: 0,
-                      top: 0,
-                      duration: Durations.short4,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: AnimatedContainer(
-                          duration: Durations.short4,
-                          padding: const EdgeInsets.only(
-                              right: 6, bottom: 0),
-                          margin: const EdgeInsets.only(top: 5),
-                          decoration: const BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(12),
-                                bottomLeft: Radius.circular(12),
-                              )),
-                          child: Row(
-                            children: [
-                              //minimize button
-                              ElevatedLayerButton(
-                                // isTapped: false,
-                                // toggleOnTap: true,
-                                depth: 2.5, subfac: 2.5,
-                                onClick: () {
-                                  Future.delayed(Duration.zero)
-                                      .then((y) {
-                                    appWindow.minimize();
-                                  });
-                                },
-                                buttonHeight: 22,
-                                buttonWidth: 22,
-                                borderRadius:
-                                    BorderRadius.circular(5),
-                                animationDuration:
-                                    const Duration(milliseconds: 10),
-                                animationCurve: Curves.ease,
-                                topDecoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(),
-                                ),
-                                topLayerChild: const Icon(
-                                  TablerIcons.rectangle,
-                                  size: 15,
-                                  // color: Colors.blue,
-                                ),
-                                baseDecoration: BoxDecoration(
-                                  color: Colors.green,
-                                  border: Border.all(),
-                                ),
-                              ),
-                              SizedBox(width: 7,),
-                              //
-                              //maximize button
-                              ElevatedLayerButton(
-                                // isTapped: false,
-                                // toggleOnTap: true,
-                                depth: 2.5, subfac:2.5,
-                                onClick: () {
-                                  Future.delayed(Durations.short1)
-                                      .then((y) {
-                                    appWindow.maximizeOrRestore();
-                                  });
-                                },
-                                buttonHeight: 22,
-                                buttonWidth: 22,
-                                borderRadius:
-                                    BorderRadius.circular(5),
-                                animationDuration:
-                                    const Duration(milliseconds: 1),
-                                animationCurve: Curves.ease,
-                                topDecoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(),
-                                ),
-                                topLayerChild: const Icon(
-                                  TablerIcons.triangle,
-                                  size: 14,
-                                  // color: Colors.amber,
-                                ),
-                                baseDecoration: BoxDecoration(
-                                  color: Colors.green,
-                                  border: Border.all(),
-                                ),
-                              ),
-                            ],
-                          ),
-                          //
-                        ),
-                      ),
-                    ),
-                    //BILLBLAZE MAIN TITLE
-                    AnimatedPositioned(
-                      duration: Durations.medium3,
-                      top: 60,
-                      left: 70,
-                      child: Hero(
-                        tag: 'login',
-                        child: AnimatedTextKit(
-                          key: ValueKey(sHeight*sWidth),
-                          animatedTexts: [
-                            TypewriterAnimatedText(
-                              "Bill\nBlaze.",
-                              textStyle: GoogleFonts.abrilFatface(
-                                  fontSize: titleFontSize,
-                                  color: defaultPalette.primary,
-                                  height: 0.9),
-                              speed: const Duration(milliseconds: 100)),
-                            TypewriterAnimatedText(
-                              "Bill\nBlaze.",
-                              textStyle: GoogleFonts.zcoolKuaiLe(
-                                  fontSize:titleFontSize,
-                                  color: defaultPalette.primary,
-                                  height: 0.9),
-                              speed: const Duration(milliseconds: 100)),
-                            TypewriterAnimatedText(
-                              "Bill\nBlaze.",
-                              textStyle: GoogleFonts.ballet(
-                                  fontSize: titleFontSize,
-                                  color:defaultPalette.primary,
-                                  height: 0.9),
-                              speed: const Duration(milliseconds: 100)),
-                            TypewriterAnimatedText(
-                              "Bill\nBlaze",
-                              textStyle: GoogleFonts.rubikDoodleShadow(
-                                  fontSize: titleFontSize ,
-                                  letterSpacing: -0.5,
-                                  height: 1),
-                              speed: const Duration(milliseconds: 100)),
-                            TypewriterAnimatedText(
-                              "Bill\nBlaze.",
-                              textStyle: GoogleFonts.redactedScript(
-                                  fontSize: titleFontSize,
-                                  color: defaultPalette.primary,
-                                  height: 0.9),
-                              speed: const Duration(milliseconds: 100)),
-                            TypewriterAnimatedText("Bill\nBlaze.",
-                                textStyle: GoogleFonts.silkscreen(
-                                    fontSize: titleFontSize,
-                                    color: defaultPalette.primary,
-                                    height: 0.9),
-                                speed: const Duration(milliseconds: 100)),
-                            // TypewriterAnimatedText("Bill\nBlaze.",
-                            //     textStyle: GoogleFonts.nabla(
-                            //         fontSize: isHomeTab
-                            //             ? titleFontSize
-                            //             : titleFontSize / 3,
-                            //         color: isHomeTab
-                            //             ? Colors.black
-                            //             : Color(0xFF000000).withOpacity(0.8),
-                            //         height: 0.9),
-                            //     speed: Duration(milliseconds: 100)),
-                          ],
-                          // totalRepeatCount: 1,
-                          repeatForever: true,
-                          pause: const Duration(milliseconds: 30000),
-                          displayFullTextOnTap: true,
-                          stopPauseOnTap: true,
-                        ),
-                      ),
-                    ),
-            
-                  ],
-                );
-              }),
-            ),
-          ),
-
-      ],
-    ),);
   }
 }

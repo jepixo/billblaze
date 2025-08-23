@@ -37,6 +37,7 @@ class LayoutModel extends HiveObject {
   int type;
   @HiveField(8)
   List<RequiredText> labelList;
+  
 
   LayoutModel({
     required this.docPropsList,

@@ -167,12 +167,12 @@ class SheetList extends SheetItem {
   List<SheetItem> boxSheetList(List<SheetItem> sheetList) {
     return sheetList.map((e) {
        if (e is SheetText) {
-        return e.toTEItemBox(e);
+        return e.toBox();
       } else if (e is SheetList) {
         return e.toSheetListBox();
       } else if (e is SheetTable) {
         return e.toSheetTableBox();
-      }
+      } else {e.toBox();}
       return e;
     },).toList();
   }
