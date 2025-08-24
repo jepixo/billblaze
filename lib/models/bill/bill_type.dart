@@ -68,20 +68,15 @@ List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
         RequiredText(name: 'title', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false), // "Credit Note"
         RequiredText(name: 'creditNoteNumber', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'creditNoteDate', sheetTextType: SheetTextType.date.index, indexPath: IndexPath(index: -951), isOptional: false),
-
         RequiredText(name: 'originalInvoiceNumber', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'originalInvoiceDate', sheetTextType: SheetTextType.date.index, indexPath: IndexPath(index: -951), isOptional: false),
-
         RequiredText(name: 'reasonForIssue', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
-
         RequiredText(name: 'sellerName', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'sellerAddress', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'sellerGSTIN', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
-
         RequiredText(name: 'recipientName', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'recipientAddress', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'recipientGSTIN/UIN', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
-
         RequiredText(name: 'placeOfSupply', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'state/PlaceCode', sheetTextType: SheetTextType.integer.index, indexPath: IndexPath(index: -951), isOptional: true),
         RequiredText(name: 'e-WayBillNo', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
@@ -96,20 +91,15 @@ List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
         RequiredText(name: 'title', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false), // "Debit Note"
         RequiredText(name: 'debitNoteNumber', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'debitNoteDate', sheetTextType: SheetTextType.date.index, indexPath: IndexPath(index: -951), isOptional: false),
-
         RequiredText(name: 'originalInvoiceNumber', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'originalInvoiceDate', sheetTextType: SheetTextType.date.index, indexPath: IndexPath(index: -951), isOptional: false),
-
         RequiredText(name: 'reasonForIssue', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
-
         RequiredText(name: 'sellerName', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'sellerAddress', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'sellerGSTIN', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
-
         RequiredText(name: 'recipientName', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'recipientAddress', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'recipientGSTIN/UIN', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
-
         RequiredText(name: 'placeOfSupply', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'state/PlaceCode', sheetTextType: SheetTextType.integer.index, indexPath: IndexPath(index: -951), isOptional: true),
         RequiredText(name: 'e-WayBillNo', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),

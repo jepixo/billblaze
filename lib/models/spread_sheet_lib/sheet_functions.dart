@@ -26,6 +26,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/screens/layout_designer.dart' as ly;
 import 'package:billblaze/util/numeric_input_formatter.dart';
+import 'package:uuid/uuid.dart';
 
 part 'sheet_functions.g.dart';
 
@@ -2242,11 +2243,15 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
   @HiveField(5)
   String func;
 
+  @HiveField(6)
+  DateTime? dateTime;
+
   UidGeneratorFunction({
     required this.template,
     this.resultJson = const [],
     this.idKey = '00',
-    this.func = 'uidGenerator'
+    this.func = 'uidGenerator',
+    required this.dateTime
   }):super(1, 'uidgen');
 
   
@@ -2257,12 +2262,14 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
       'returnType': returnType,
       'template': template,
       'resultJson': resultJson,
+      'dateTime': dateTime?.millisecondsSinceEpoch,
     };
   }
 
   factory UidGeneratorFunction.fromMap(Map<String, dynamic> map) {
     return UidGeneratorFunction(
       template: map['template'] as String,
+      dateTime: DateTime.fromMillisecondsSinceEpoch(((map['dateTime'])?? DateTime.now().millisecondsSinceEpoch)as int),
       resultJson:() {
           final result = map['resultJson'];
           if (result is List) {
@@ -2420,11 +2427,44 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
           child: Column(
             children: [
               const SizedBox(height: 2),
-              //title icon and close button
+              //title icon and close button and randomise button
               Row(
                 children: [
                   const SizedBox(width: 4),
-                  Icon(TablerIcons.dice_5, size: 20,color:defaultPalette.primary),
+                  //randomise
+                  ElevatedLayerButton(
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(5),
+                      topLeft: Radius.circular(5),
+                      bottomRight: Radius.circular(10),
+                      bottomLeft: Radius.circular(10),
+                    ),
+                    animationDuration: const Duration(milliseconds: 100),
+                    animationCurve: Curves.ease,
+                    topDecoration: BoxDecoration(
+                      color: defaultPalette.primary,
+                      border: Border.all(color: defaultPalette.extras[0]),
+                    ),
+                    topLayerChild: Icon(TablerIcons.dice_5, size: 15, color: defaultPalette.extras[0]),
+                    baseDecoration: BoxDecoration(
+                      color: defaultPalette.extras[0],
+                      border: Border.all(color: defaultPalette.extras[0]),
+                    ),
+                    depth: 2,
+                    subfac: 2,
+                    buttonHeight: 24,
+                    buttonWidth: 24,
+                    onClick: () async{
+                      
+
+                      setStateCallback((){
+                      // inputBlock.removeAt(index);
+                      // inputBlockExpansionList.removeAt(index);
+                      idKey = Uuid().v4();
+                    });
+                    },
+                  ),
+                    
                   Expanded(
                     child: Text("randomStr ",
                     textAlign: TextAlign.end,
@@ -2523,11 +2563,210 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
           child: Column(
             children: [
               const SizedBox(height: 2),
-              // title row
+              // title row and pick date and close
               Row(
                 children: [
                   const SizedBox(width: 4),
-                  Icon(TablerIcons.calendar_event, size: 20, color: defaultPalette.primary),
+                  //add date
+                  ElevatedLayerButton(
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(5),
+                      topLeft: Radius.circular(5),
+                      bottomRight: Radius.circular(10),
+                      bottomLeft: Radius.circular(10),
+                    ),
+                    animationDuration: const Duration(milliseconds: 100),
+                    animationCurve: Curves.ease,
+                    topDecoration: BoxDecoration(
+                      color: defaultPalette.primary,
+                      border: Border.all(color: defaultPalette.extras[0]),
+                    ),
+                    topLayerChild: Icon(TablerIcons.calendar_event, size: 15, color: defaultPalette.extras[0]),
+                    baseDecoration: BoxDecoration(
+                      color: defaultPalette.extras[0],
+                      border: Border.all(color: defaultPalette.extras[0]),
+                    ),
+                    depth: 2,
+                    subfac: 2,
+                    buttonHeight: 24,
+                    buttonWidth: 24,
+                    onClick: () async{
+                      dateTime = (await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(1800),
+                          lastDate: DateTime(2100),
+                          barrierColor: defaultPalette.extras[0].withOpacity(0.5),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                inputDecorationTheme: InputDecorationTheme(
+                                  labelStyle: GoogleFonts.lexend(
+                                    fontSize: 12,
+                                    color: defaultPalette.extras[0],
+                                  ),
+                                  hintStyle: GoogleFonts.lexend(
+                                    fontSize: 15,
+                                    color: defaultPalette.extras[0].withOpacity(0.6),
+                                  ),
+                                  errorStyle: GoogleFonts.lexend(
+                                    fontSize: 15,
+                                    color: defaultPalette.extras[0].withOpacity(0.6),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                textTheme: Theme.of(context).textTheme.copyWith(
+                                  titleLarge: GoogleFonts.lexend(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w600,
+                                    color: defaultPalette.black,
+                                  ),
+                                  headlineSmall: GoogleFonts.lexend(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: defaultPalette.black,
+                                  ),
+                                  headlineMedium: GoogleFonts.lexend(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: defaultPalette.black,
+                                  ),
+                                ),
+                                textButtonTheme: TextButtonThemeData(
+                                  style: ButtonStyle(
+                                    textStyle: WidgetStateProperty.all(
+                                      GoogleFonts.lexend(fontSize: 15, letterSpacing: -1),
+                                    ),
+                                    foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
+                                  ),
+                                ),
+                                datePickerTheme: DatePickerThemeData(
+                                  backgroundColor: defaultPalette.primary,
+                                  rangePickerBackgroundColor: defaultPalette.tertiary,
+                                  elevation: 20,
+                                  dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                    if (states.contains(WidgetState.selected)) {
+                                      return defaultPalette.tertiary;
+                                    }
+                                    return null;
+                                  }),
+                                  locale: const Locale('en', 'IN'),
+                                  todayBorder: BorderSide.none,
+                                  todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                    if (states.contains(WidgetState.selected)) {
+                                      return defaultPalette.tertiary;
+                                    } else {
+                                      return defaultPalette.primary;
+                                    }
+                                  }),
+                                  todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                                    if (states.contains(WidgetState.selected)) {
+                                      return defaultPalette.primary;
+                                    } else {
+                                      return defaultPalette.extras[0];
+                                    }
+                                  }),
+                                  yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                                    if (states.contains(WidgetState.selected)) {
+                                      return defaultPalette.primary;
+                                    }
+                                    return null;
+                                  }),
+                                  yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                                    if (states.contains(WidgetState.selected)) {
+                                      return defaultPalette.tertiary;
+                                    } else {
+                                      return defaultPalette.transparent;
+                                    }
+                                  }),
+                                  dividerColor: defaultPalette.extras[0].withOpacity(0.4),
+                                  confirmButtonStyle: ButtonStyle(
+                                    textStyle: WidgetStateProperty.all(
+                                      GoogleFonts.lexend(
+                                        fontSize: 15,
+                                        letterSpacing: -1,
+                                        color: defaultPalette.tertiary,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                  cancelButtonStyle: ButtonStyle(
+                                    textStyle: WidgetStateProperty.all(
+                                      GoogleFonts.lexend(
+                                        fontSize: 15,
+                                        letterSpacing: -1,
+                                        color: defaultPalette.tertiary,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                  yearStyle: GoogleFonts.lexend(
+                                    fontSize: 15,
+                                    color: defaultPalette.tertiary,
+                                    letterSpacing: -1,
+                                  ),
+                                  dayStyle: GoogleFonts.lexend(
+                                    fontSize: 15,
+                                    color: defaultPalette.tertiary,
+                                    letterSpacing: -1,
+                                  ),
+                                  weekdayStyle: GoogleFonts.lexend(
+                                    fontSize: 14,
+                                    letterSpacing: -1,
+                                    color: defaultPalette.tertiary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  headerHeadlineStyle: GoogleFonts.lexend(
+                                    fontSize: 30,
+                                    letterSpacing: -1,
+                                    color: defaultPalette.tertiary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  rangePickerHeaderHeadlineStyle: GoogleFonts.lexend(
+                                    fontSize: 14,
+                                    letterSpacing: -1,
+                                    color: defaultPalette.tertiary,
+                                  ),
+                                  rangePickerHeaderHelpStyle: GoogleFonts.lexend(
+                                    fontSize: 14,
+                                    letterSpacing: -1,
+                                    color: defaultPalette.tertiary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                headerHelpStyle: GoogleFonts.lexend(
+                                  fontSize: 14,
+                                  letterSpacing: -1,
+                                  color: defaultPalette.tertiary,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      )??(dateTime??DateTime.now()))
+                      .copyWith(
+                        hour:(dateTime??DateTime.now()).hour,
+                        minute: (dateTime??DateTime.now()).minute,
+                        second: (dateTime??DateTime.now()).second,
+                        millisecond: (dateTime??DateTime.now()).millisecond,
+                        microsecond: (dateTime??DateTime.now()).microsecond
+                        
+                         ); 
+
+                      setStateCallback((){
+                      // inputBlock.removeAt(index);
+                      // inputBlockExpansionList.removeAt(index);
+                      
+                    });
+                    },
+                  ),
+                        
                   Expanded(
                     child: Text(
                       "date",
@@ -2652,11 +2891,166 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
           child: Column(
             children: [
               const SizedBox(height: 2),
-              // title row
+              // title row and pick time and close
               Row(
                 children: [
                   const SizedBox(width: 4),
-                  Icon(TablerIcons.clock_hour_4, size: 20, color: defaultPalette.primary),
+                  //add date
+                  ElevatedLayerButton(
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(5),
+                      topLeft: Radius.circular(5),
+                      bottomRight: Radius.circular(10),
+                      bottomLeft: Radius.circular(10),
+                    ),
+                    animationDuration: const Duration(milliseconds: 100),
+                    animationCurve: Curves.ease,
+                    topDecoration: BoxDecoration(
+                      color: defaultPalette.primary,
+                      border: Border.all(color: defaultPalette.extras[0]),
+                    ),
+                    topLayerChild: Icon(TablerIcons.clock_hour_4, size: 15, color: defaultPalette.extras[0]),
+                    baseDecoration: BoxDecoration(
+                      color: defaultPalette.extras[0],
+                      border: Border.all(color: defaultPalette.extras[0]),
+                    ),
+                    depth: 2,
+                    subfac: 2,
+                    buttonHeight: 24,
+                    buttonWidth: 24,
+                    onClick: () async{
+                      var picked = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay(hour: (dateTime??DateTime.now()).hour, minute: (dateTime??DateTime.now()).minute),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              inputDecorationTheme: InputDecorationTheme(
+                                labelStyle: GoogleFonts.lexend(
+                                  fontSize: 24,
+                                  color: defaultPalette.extras[0],
+                                ),
+                                hintStyle: GoogleFonts.lexend(
+                                  fontSize: 15,
+                                  color: defaultPalette.extras[0].withOpacity(0.6),
+                                ),
+                                errorStyle: GoogleFonts.lexend(
+                                  fontSize: 15,
+                                  color: defaultPalette.extras[0].withOpacity(0.6),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              textTheme: Theme.of(context).textTheme.copyWith(
+                                titleLarge: GoogleFonts.lexend(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w600,
+                                  color: defaultPalette.black,
+                                ),
+                                titleMedium: GoogleFonts.lexend(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.w600,
+                                  color: defaultPalette.black,
+                                ),
+                                titleSmall: GoogleFonts.lexend(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.w600,
+                                  color: defaultPalette.black,
+                                ),
+                                headlineSmall: GoogleFonts.lexend(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: defaultPalette.black,
+                                ),
+                                headlineMedium: GoogleFonts.lexend(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: defaultPalette.black,
+                                ),
+                                bodyLarge: GoogleFonts.lexend(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: defaultPalette.black,
+                                ),
+                                displayLarge: GoogleFonts.lexend(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: defaultPalette.black,
+                                ),
+                                headlineLarge: GoogleFonts.lexend(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: defaultPalette.black,
+                                ),
+                              ),
+                              textButtonTheme: TextButtonThemeData(
+                                style: ButtonStyle(
+                                  textStyle: WidgetStateProperty.all(
+                                    GoogleFonts.lexend(
+                                      fontSize: 15,
+                                      letterSpacing: -1,
+                                    ),
+                                  ),
+                                  foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
+                                ),
+                              ),
+                              timePickerTheme: TimePickerThemeData(
+                                backgroundColor: defaultPalette.primary,
+                                hourMinuteTextStyle: GoogleFonts.lexend(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.w600,
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1,
+                                ),
+                                dayPeriodTextStyle: GoogleFonts.lexend(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1,
+                                ),
+                                helpTextStyle: GoogleFonts.lexend(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w400,
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1,
+                                ),
+                                entryModeIconColor: defaultPalette.extras[0],
+                                dialHandColor: defaultPalette.tertiary,
+                                dialBackgroundColor: defaultPalette.primary,
+                                hourMinuteColor: defaultPalette.primary,
+                                timeSelectorSeparatorTextStyle: WidgetStatePropertyAll(
+                                  GoogleFonts.lexend(
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.w400,
+                                    color: defaultPalette.extras[0],
+                                    letterSpacing: -1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            child: Localizations.override(
+                              context: context,
+                              locale: const Locale('en', 'GB'), // DD/MM/YYYY and 24-hour format
+                              child: child!,
+                            ),
+                          );
+                        },
+                      );
+                      dateTime = (dateTime??DateTime.now()).copyWith(
+                        hour: (picked??TimeOfDay(hour: (dateTime??DateTime.now()).hour, minute: (dateTime??DateTime.now()).minute)).hour,
+                        minute: (picked??TimeOfDay(hour: (dateTime??DateTime.now()).hour, minute: (dateTime??DateTime.now()).minute)).minute
+                      );
+
+                      setStateCallback((){
+                      // inputBlock.removeAt(index);
+                      // inputBlockExpansionList.removeAt(index);
+                      
+                    });
+                    },
+                  ),
+                   
                   Expanded(
                     child: Text(
                       "time",
@@ -2916,7 +3310,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
     bool returnFormatted = false,
   }) {
     
-    var newText = UidGenerator.generate(template,idKey: idKey);
+    var newText = UidGenerator.generate(template,idKey: idKey, dateTime:dateTime);
     final oldDelta = Delta.fromJson(resultJson);
     final oldOps = oldDelta.toList();
     final newDelta = _applyStylingFromOldOps(oldOps, newText);

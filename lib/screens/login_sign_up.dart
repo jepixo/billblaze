@@ -367,9 +367,10 @@ class _LoginSignUpState extends State<LoginSignUp> {
                             ref.read(loginPageUrlProvider.notifier).state ="https://github.com/jepixo";
                             if (_controller != null && ref.read(loginPageUrlProvider).isNotEmpty) {
                               // startWhiteNoise();
-                              await _controller!.loadUrl(
-                                urlRequest: URLRequest(url: WebUri("D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
-                              );
+                              final htmlString = await rootBundle.loadString('assets/static.html');
+                                    
+                              await _controller!.loadData(data: htmlString, mimeType: 'text/html', encoding: 'utf8');
+                                    
                               await Future.delayed(const Duration(milliseconds: 100));
                               startWhiteNoise();
                               await Future.delayed(const Duration(milliseconds: 400));
@@ -430,7 +431,10 @@ class _LoginSignUpState extends State<LoginSignUp> {
                 buttonWidth: (sWidth -(15+65+15+65+15+65+15+65+65)-80-mapValueDimensionBased(0, 200, sWidth, sHeight,useWidth: true)).clamp(0, double.infinity),
                 buttonHeight: sHeight-(2*titleFontSize),
                 borderRadius:
-                    BorderRadius.circular(35),
+                    BorderRadius.circular(35).copyWith(
+                      bottomLeft: Radius.circular(0),
+                      bottomRight: Radius.circular(0),
+                    ),
                 animationDuration:
                     const Duration(milliseconds: 100),
                 animationCurve: Curves.ease,
@@ -449,7 +453,10 @@ class _LoginSignUpState extends State<LoginSignUp> {
                           children: [
                             Expanded(
                               child: ClipRRect(
-                                borderRadius:BorderRadius.circular(30),
+                                borderRadius:BorderRadius.circular(30).copyWith(
+                                  bottomLeft: Radius.circular(0),
+                                  bottomRight: Radius.circular(0),
+                                ),
                                 child: 
                                 InAppWebView(
                                   initialUrlRequest: URLRequest(url: WebUri.uri(Uri.parse(ref.watch(loginPageUrlProvider)))),
@@ -477,7 +484,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 50,)
+                            SizedBox(height: 70,)
                           ],
                         ),
                       ),
@@ -592,9 +599,10 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                           ref.read(loginPageUrlProvider.notifier).state =loginPageUrls[Random().nextInt(loginPageUrls.length-1)];
                                           if (_controller != null && ref.read(loginPageUrlProvider).isNotEmpty) {
                                               // startWhiteNoise();
-                                              await _controller!.loadUrl(
-                                                urlRequest: URLRequest(url: WebUri("D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
-                                              );
+                                              final htmlString = await rootBundle.loadString('assets/static.html');
+                                    
+                                              await _controller!.loadData(data: htmlString, mimeType: 'text/html', encoding: 'utf8');
+                                    
                                               await Future.delayed(const Duration(milliseconds: 100));
                                               startWhiteNoise();
                                               await Future.delayed(const Duration(milliseconds: 400));
@@ -653,9 +661,10 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                           final newUrl = ref.read(loginPageUrlProvider);
                                           if (_controller != null && newUrl.isNotEmpty) {
                                             // startWhiteNoise();
-                                            await _controller!.loadUrl(
-                                              urlRequest: URLRequest(url: WebUri("D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
-                                            );
+                                            final htmlString = await rootBundle.loadString('assets/static.html');
+                                    
+                                            await _controller!.loadData(data: htmlString, mimeType: 'text/html', encoding: 'utf8');
+                                    
                                             await Future.delayed(const Duration(milliseconds: 100));
                                             startWhiteNoise();
                                             await Future.delayed(const Duration(milliseconds: 400));

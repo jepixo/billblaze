@@ -217,11 +217,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     name: 'INR',
     decimalDigits: 0,
   );
+  bool isLoading = true;
   
 
   @override
   void initState() {
     super.initState();
+    isLoading = true;
     tempLayoutModel = LayoutModel(
       name: 'New Layout',
       id: Uuid().v4(),
@@ -280,17 +282,24 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       squiggleFadeAnimationController.forward();
       sliderFadeAnimationController.forward();
     }
-    filteredLayoutBox = Boxes.getLayouts().values.toList();
+    
     // titleFontFadeController.forward();
     dateTextControllers = [
       TextEditingController()..text = monthNames[selectedMonth - 1],
       TextEditingController()..text = selectedYear.toString()
     ];
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async{
-      await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
-      _updateGraphLineSpeed(100);
-      await syncLayoutsWithAssets();
-      
+      try {
+        await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
+        filteredLayoutBox = Boxes.getLayouts().values.toList();
+        _updateGraphLineSpeed(100);
+        await syncLayoutsWithAssets();
+      } on Exception catch (e) {
+        // TODO
+      }finally{
+      setState(() {
+        isLoading = false;
+      });}
     },);
     
   }
@@ -648,6 +657,191 @@ void _getCurrentTime() {
 
     // print(mapValue(value: sHeight, inMin: 480, inMax: 1186, outMin: 0.18, outMax: 0.1));
     // print(sHeight);
+    if(isLoading){
+      return Scaffold(
+          backgroundColor: defaultPalette.tertiary,
+          body: Center(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                child: LoadingAnimationWidget.newtonCradle(
+                  color: Colors.white,
+                  size: 150,
+                ),
+              ),
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: ()async{
+                  await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
+                  filteredLayoutBox = Boxes.getLayouts().values.toList();
+                  setState(() {
+                    isLoading = false;
+                  });
+                },
+                  child: Center(
+                    child: Text(
+                    'log',
+                    style: GoogleFonts.lexend(
+                      color: defaultPalette.extras[0],
+                      letterSpacing: -1,
+                      fontSize: mapValueDimensionBasedLockOnDesync(15, 45, sWidth, sHeight),
+                    ),
+                  ),
+                  ),
+                )
+              ),
+              
+              if (Platform.isWindows)
+                Positioned.fill(
+                top:0,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onPanStart: (details) {
+                    appWindow.startDragging();
+                  },
+                  onDoubleTap: () {
+                    appWindow.maximizeOrRestore();
+                  },
+                  child: SizedBox(
+                    height: 50,
+                    child: Consumer(builder: (context, ref, c) {
+                      return Stack(
+                        children: [
+                          AnimatedPositioned(
+                            right: 0,
+                            top:  0,
+                            duration: Durations.short4,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: AnimatedContainer(
+                                duration: Durations.short4,
+                                padding:
+                                    const EdgeInsets.only(right: 9, bottom: 0),
+                                margin: const EdgeInsets.only(top: 8),
+                                decoration: const BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(12),
+                                      bottomLeft: Radius.circular(12),
+                                    )),
+                                child: Row(
+                                  children: [
+                                    //minimize button
+                                    ElevatedLayerButton(
+                                      // isTapped: false,
+                                      // toggleOnTap: true,
+                                      depth: 2.5, subfac: 2.5,
+                                      onClick: () {
+                                        Future.delayed(Duration.zero).then((y) {
+                                          appWindow.minimize();
+                                        });
+                                      },
+                                      buttonHeight: 28,
+                                      buttonWidth: 28,
+                                      borderRadius: BorderRadius.circular(8),
+                                      animationDuration:
+                                          const Duration(milliseconds: 10),
+                                      animationCurve: Curves.ease,
+                                      topDecoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(),
+                                      ),
+                                      topLayerChild: const Icon(
+                                        TablerIcons.rectangle_filled,
+                                        size: 14,
+                                        color: Colors.blue,
+                                      ),
+                                      baseDecoration: BoxDecoration(
+                                        color: defaultPalette.extras[0],
+                                        border: Border.all(),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 5,
+                                    ),
+                                    //
+                                    //maximize button
+                                    ElevatedLayerButton(
+                                      // isTapped: false,
+                                      // toggleOnTap: true,
+                                      depth: 2.5, subfac: 2.5,
+                                      onClick: () {
+                                        Future.delayed(Durations.short1)
+                                            .then((y) {
+                                          appWindow.maximizeOrRestore();
+                                        });
+                                      },
+                                      buttonHeight: 28,
+                                      buttonWidth: 28,
+                                      borderRadius: BorderRadius.circular(8),
+                                      animationDuration:
+                                          const Duration(milliseconds: 1),
+                                      animationCurve: Curves.ease,
+                                      topDecoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(),
+                                      ),
+                                      topLayerChild: const Icon(
+                                        TablerIcons.triangle_filled,
+                                        size: 14,
+                                        color: Colors.green,
+                                      ),
+                                      baseDecoration: BoxDecoration(
+                                        color: defaultPalette.extras[0],
+                                        border: Border.all(),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 5,
+                                    ),
+                                    //close button
+                                    ElevatedLayerButton(
+                                      // isTapped: false,
+                                      // toggleOnTap: true,
+                                      depth: 2.5, subfac: 2.5,
+                                      onClick: () {
+                                        Future.delayed(Duration.zero).then((y) {
+                                          appWindow.close();
+                                        });
+                                      },
+                                      buttonHeight: 28,
+                                      buttonWidth: 28,
+                                      borderRadius: BorderRadius.circular(8),
+                                      animationDuration:
+                                          const Duration(milliseconds: 1),
+                                      animationCurve: Curves.ease,
+                                      topDecoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(),
+                                      ),
+                                      topLayerChild:Icon(
+                                        TablerIcons.circle_filled,
+                                        size: 15,
+                                        color: defaultPalette.extras[4],
+                                      ),
+                                      baseDecoration: BoxDecoration(
+                                        color: defaultPalette.extras[0],
+                                        border: Border.all(),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                //
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            
+              ]
+            ),
+          ),);
+    }
+    
     return Scaffold(
         // resizeToAvoidBottomInset: true,
         backgroundColor: defaultPalette.extras[0],
@@ -1411,20 +1605,16 @@ void _getCurrentTime() {
                                             child: AnimatedOpacity(
                                               opacity: currentCardIndex == index
                                                   ? 0
-                                                  :  (1 -
-                                                          (_revCardPosition / 200)
-                                                              .clamp(0.0, 1.0)),
+                                                  :  (1 - (_revCardPosition / 200).clamp(0.0, 1.0)),
                                               duration: Duration(milliseconds: 300),
                                               child: AnimatedContainer(
                                                 duration: Duration(milliseconds: 300),
                                                 margin: EdgeInsets.all(5),
                                                 alignment: Alignment.center,
                                                 decoration: BoxDecoration(
-                                                  color: index ==
-                                                          (currentCardIndex + 1) % 10
+                                                  color: index == (currentCardIndex + 1) % 10
                                                       ? defaultPalette.extras[0]
-                                                      : index ==
-                                                              (currentCardIndex + 2) % 10
+                                                      : index == (currentCardIndex + 2) % 10
                                                           ? defaultPalette.extras[0]
                                                           : defaultPalette.extras[0],
                                                   border: Border.all(width: 2),
@@ -2913,7 +3103,7 @@ void _getCurrentTime() {
                                                                               height: mapValueDimensionBasedLockOnDesync(75, 170, sWidth, sHeight),
                                                                               width: mapValueDimensionBasedLockOnDesync(58, 125, sWidth, sHeight),
                                                                               child: AppinioSwiper(
-                                                                                cardCount: (layoutModel.spreadSheetList.length.isNaN || layoutModel.docPropsList.length ==0)
+                                                                                cardCount: (layoutModel.spreadSheetList.length.isNaN || layoutModel.docPropsList.isEmpty)
                                                                                     ? 1
                                                                                     : layoutModel.docPropsList.length,
                                                                                 backgroundCardCount: 5,
@@ -2944,7 +3134,7 @@ void _getCurrentTime() {
                                                                                                 color: defaultPalette.extras[0],
                                                                                                 strokeAlign: BorderSide.strokeAlignOutside),
                                                                                             borderRadius: BorderRadius.circular(10),
-                                                                                            image: layoutModel.pdf == null
+                                                                                            image:( layoutModel.pdf == null || layoutModel.pdf!.isEmpty)
                                                                                               ? null
                                                                                               : DecorationImage(
                                                                                                   image: MemoryImage(
@@ -3818,7 +4008,7 @@ void _getCurrentTime() {
                                                     sheetTypeBrowserEntry!.remove();
                                                     sheetTypeBrowserEntry = null;
                                                   }
-                                                  tempLayoutModel.createdAt =  await showDatePicker(
+                                                  tempLayoutModel.createdAt =  ((await showDatePicker(
                                                           context: context,
                                                           initialDate: DateTime.now(),
                                                           firstDate: DateTime(1800),
@@ -3976,7 +4166,15 @@ void _getCurrentTime() {
                                                             child: child!,
                                                           );
                                                         },
-                                                      )??DateTime.now();
+                                                      )??DateTime.now())).copyWith(
+                                                      hour:(tempLayoutModel.createdAt).hour,
+                                                      minute: (tempLayoutModel.createdAt).minute,
+                                                      second: (tempLayoutModel.createdAt).second,
+                                                      millisecond: (tempLayoutModel.createdAt).millisecond,
+                                                      microsecond: (tempLayoutModel.createdAt).microsecond
+                                                      
+                                                      );
+                                                  
                                                   setState(() {
                                                     
                                                   });
@@ -5362,9 +5560,7 @@ void _getCurrentTime() {
                                   // border: Border.all(),
                                 ),
                               ),
-                              SizedBox(
-                                  height: mapValueDimensionBased(
-                                      5, 10, sWidth, sHeight)),
+                              SizedBox( height: mapValueDimensionBased( 5, 10, sWidth, sHeight)),
                               //CLOUD BUTTONS
                               Expanded(
                                 child: Stack(
@@ -5372,22 +5568,14 @@ void _getCurrentTime() {
                                     // BG templatelbutton
                                     Positioned(
                                       right: 0,
-                                      top: mapValueDimensionBased(
-                                          4, 8, sWidth, sHeight),
+                                      top: mapValueDimensionBased( 4, 8, sWidth, sHeight),
                                       child: AnimatedContainer(
                                         duration: Durations.medium3,
                                         curve: Curves.easeIn,
-                                        height:
-                                            mapValueDimensionBasedLockOnDesync(
-                                                    75, 155, sWidth, sHeight) -
-                                                mapValueDimensionBased(
-                                                    4, 8, sWidth, sHeight),
-                                        width:
-                                            ((sWidth / 2.15) - 70) * (20 / 75) -
-                                                mapValueDimensionBased(
-                                                    20, 30, sWidth, sHeight) -
-                                                mapValueDimensionBased(
-                                                    4, 8, sWidth, sHeight),
+                                        height: (mapValueDimensionBasedLockOnDesync( 75, 155, sWidth, sHeight) -
+                                                mapValueDimensionBased(4, 8, sWidth, sHeight)).clamp(0, double.infinity),
+                                        width:(((sWidth / 2.15) - 70) * (20 / 75) - mapValueDimensionBased( 20, 30, sWidth, sHeight) -
+                                                mapValueDimensionBased( 4, 8, sWidth, sHeight)).clamp(0, double.infinity),
                                         alignment: Alignment.topLeft,
                                         decoration: BoxDecoration(
                                             color: defaultPalette.extras[0],
@@ -8433,7 +8621,7 @@ void _getCurrentTime() {
                 // left: 90+5,
                 top: isBillTab ? 60+5 : sHeight / 4,
                 child:AnimatedContainer(
-                      duration: Durations.extralong1,
+                  duration: Durations.extralong1,
                   curve: Curves.decelerate,
                   transform: Matrix4.identity()
                     // Translate
@@ -8450,8 +8638,8 @@ void _getCurrentTime() {
                     ..rotateX(isBillTab ? 0 : 0.8)
                     // Scale
                     ..scale(isBillTab ? 1.0 : 1.3, isBillTab ? 1.0 : 0.6),
-                  width: sWidth / 1.73 - 100,
-                  height: sHeight / 1.8-10,
+                  width: (sWidth / 1.73 - 100).clamp(0, double.infinity),
+                  height: (sHeight / 1.8-10).clamp(0, double.infinity),
                   padding: EdgeInsets.all(5).copyWith(right: 10),
                   decoration: BoxDecoration(
                       color: defaultPalette.extras[0],
@@ -8465,9 +8653,10 @@ void _getCurrentTime() {
                 // left: 90,
                 right: 15,
                 top: isBillTab ? 60 : sHeight / 4,
+                width:(isBillTab ? (sWidth / 1.73 - 100).clamp(0, double.infinity):450),
+                height:( sHeight / 1.8-10),
                 child: ValueListenableBuilder(
-                    valueListenable:
-                        Hive.box<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts').listenable(),
+                    valueListenable: Hive.box<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts').listenable(),
                     builder: (context, Box<LayoutModel> box, _) {
                       monthRevenueMap = {};
                       dayRevenueMap = {};
@@ -9361,8 +9550,8 @@ void _getCurrentTime() {
                     // Scale
                     ..scale(isBillTab ? 1.0 : 1.3, isBillTab ? 1.0 : 0.6)
                     ,
-                        width: (sWidth / 1.73 - 100) / 2 -10,
-                        height: sHeight - (sHeight / 1.8) - 90, // 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
+                        width: ((sWidth / 1.73 - 100) / 2 -10).clamp(0, double.infinity),
+                        height: (sHeight - (sHeight / 1.8) - 90).clamp(0, double.infinity), // 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
                         padding: EdgeInsets.all(5).copyWith(
                             right: 8,
                             bottom: 8,
@@ -9470,15 +9659,12 @@ void _getCurrentTime() {
                     ..rotateX(isBillTab ? 0 : 0.8)
                     // Scale
                     ..scale(isBillTab ? 1.0 : 1.3, isBillTab ? 1.0 : 0.6),
-                        width:isBillTab ? (sWidth / 1.73 - 100) / 2 -10:80,
-                        height: sHeight -
-                            (sHeight / 1.8) -
-                            90, // 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
+                        width:isBillTab ? ((sWidth / 1.73 - 100) / 2 -10).clamp(0, double.infinity):80,
+                        height:( sHeight - (sHeight / 1.8) - 90).clamp(0, double.infinity), // 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
                         padding: EdgeInsets.all(5).copyWith(
                             right: 8,
                             bottom: 8,
-                            left:
-                                mapValueDimensionBased(8, 10, sWidth, sHeight)),
+                            left: mapValueDimensionBased(8, 10, sWidth, sHeight)),
                         decoration: BoxDecoration(
                             color: defaultPalette.primary,
                             border:Border.all(),
@@ -9849,11 +10035,8 @@ void _getCurrentTime() {
                     // Scale
                     ..scale(isBillTab ? 1.0 : 1.3, isBillTab ? 1.0 : 0.6)
                     ,
-                  width: (sWidth / 1.73 - 100) / 2 -
-                      10, // -10 because of the gap between the two charts
-                  height: sHeight -
-                      (sHeight / 1.8) -
-                      90, // 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
+                  width: ((sWidth / 1.73 - 100) / 2 - 10).clamp(0, double.infinity), // -10 because of the gap between the two charts
+                  height: (sHeight - (sHeight / 1.8) - 90).clamp(0, double.infinity), // 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
                   padding: EdgeInsets.all(5).copyWith(right: 5),
                   decoration: BoxDecoration(
                       color: defaultPalette.extras[0],
@@ -9937,11 +10120,8 @@ void _getCurrentTime() {
                     ..rotateX(isBillTab ? 0 : 0.8)
                     // Scale
                     ..scale(isBillTab ? 1.0 : 1.3, isBillTab ? 1.0 : 0.6),
-                        width: (sWidth / 1.73 - 100) / 2 -
-                            10, // -10 because of the gap between the two charts
-                        height: sHeight -
-                            (sHeight / 1.8) -
-                            90, // 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
+                        width: ((sWidth / 1.73 - 100) / 2 - 10).clamp(0, double.infinity), // -10 because of the gap between the two charts
+                        height: (sHeight - (sHeight / 1.8) - 90).clamp(0, double.infinity), // 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
                         padding: EdgeInsets.all(5).copyWith(right: 5),
                         decoration: BoxDecoration(
                             color: defaultPalette.primary,
@@ -10811,11 +10991,14 @@ void _getCurrentTime() {
                                           .read(loginPageUrlProvider)
                                           .isNotEmpty) {
                                     // startWhiteNoise();
-                                    await _controller!.loadUrl(
-                                      urlRequest: URLRequest(
-                                          url: WebUri(
-                                              "D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
-                                    );
+                                    // await _controller!.loadUrl(
+                                    //   urlRequest: URLRequest(
+                                    //       url: WebUri(
+                                    //           "D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
+                                    // );
+                                    final htmlString = await rootBundle.loadString('assets/static.html');
+                                    
+                                    await _controller!.loadData(data: htmlString, mimeType: 'text/html', encoding: 'utf8');
                                     await Future.delayed(
                                         const Duration(milliseconds: 100));
                                     startWhiteNoise();
@@ -11143,11 +11326,10 @@ void _getCurrentTime() {
                                                               loginPageUrlProvider)
                                                           .isNotEmpty) {
                                                     // startWhiteNoise();
-                                                    await _controller!.loadUrl(
-                                                      urlRequest: URLRequest(
-                                                          url: WebUri(
-                                                              "D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
-                                                    );
+                                                    final htmlString = await rootBundle.loadString('assets/static.html');
+                                    
+                                                    await _controller!.loadData(data: htmlString, mimeType: 'text/html', encoding: 'utf8');
+                                    
                                                     await Future.delayed(
                                                         const Duration(
                                                             milliseconds: 100));
@@ -11246,11 +11428,10 @@ void _getCurrentTime() {
                                                   if (_controller != null &&
                                                       newUrl.isNotEmpty) {
                                                     // startWhiteNoise();
-                                                    await _controller!.loadUrl(
-                                                      urlRequest: URLRequest(
-                                                          url: WebUri(
-                                                              "D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
-                                                    );
+                                                    final htmlString = await rootBundle.loadString('assets/static.html');
+                                    
+                                                    await _controller!.loadData(data: htmlString, mimeType: 'text/html', encoding: 'utf8');
+                                    
                                                     await Future.delayed(
                                                         const Duration(
                                                             milliseconds: 100));
@@ -11846,7 +12027,7 @@ void _getCurrentTime() {
     return Container(
       padding: EdgeInsets.all(mapValueDimensionBased(5, 10, sWidth, sHeight)),
       margin: EdgeInsets.only(
-          bottom: mapValueDimensionBased(5, 10, sWidth, sHeight), right: 0),
+          bottom: mapValueDimensionBased(5, 10, sWidth, sHeight), right: 1,left:1),
       decoration: BoxDecoration(
         color: defaultPalette.secondary,
         borderRadius: BorderRadius.circular(12),
