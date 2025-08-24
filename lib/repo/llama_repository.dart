@@ -19,7 +19,8 @@ void runLlamaModel(Map args) async {
     ..penaltyRepeat = 1.1;
 
   //TODO: for release turn this into llama.dll only since it will be in the root 
-  Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
+  // Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
+  Llama.libraryPath = 'llama.dll';
   final llama = Llama(modelPath, ModelParams(), contextParams, samplerParams, false);
   print(llama.status);
 

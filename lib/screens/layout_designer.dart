@@ -17,6 +17,7 @@ import 'package:billblaze/home.dart';
 import 'package:billblaze/components/widgets/pickers/hsv_picker.dart';
 import 'package:billblaze/components/widgets/pickers/wheel_picker.dart';
 import 'package:billblaze/components/widgets/pickers/alpha_picker.dart';
+import 'package:billblaze/main.dart';
 import 'package:billblaze/models/bill/bill_type.dart';
 import 'package:billblaze/models/bill/required_text.dart';
 import 'package:billblaze/models/index_path.dart';
@@ -52,7 +53,6 @@ import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
 import 'package:iconify_flutter_plus/icons/majesticons.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
-import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
 import 'package:number_counting_animation/number_counting_animation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
@@ -133,7 +133,10 @@ class PanelIndex {
     itemIndexPath = sheetItem.indexPath;
     parentIndexPath = sheetItem.indexPath.parent;
   }
-
+  void setParent(SheetItem sheetItem) {
+    parentId = sheetItem.id;
+    parentIndexPath = sheetItem.indexPath;
+  }
   @override
   String toString() => 'PanelIndex(id: $id, parentId: $parentId)';
 
@@ -1378,10 +1381,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 child: Container(
                   decoration: BoxDecoration(
                     border: currentPageIndex == i
-                        ? DashedBorder.fromBorderSide(
-                          side: BorderSide(color: defaultPalette.tertiary.withOpacity(0.8),
+                        ? Border.fromBorderSide(
+                          BorderSide(color: defaultPalette.tertiary.withOpacity(0.8),
                             strokeAlign: BorderSide.strokeAlignOutside,
-                            width: 6), dashLength:40, spaceLength:20
+                            width: 6),
                             )
                         : null,
                   ),
@@ -1574,7 +1577,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                               key: ValueKey(item),
                               child: buildDecoratedContainer(
                                 sizedItemDecor,item.build(),false));
-                            }
+                          } else if (item is SheetTable) {
+                            return Row(
+                              children: [
+                                item.expand?
+                                Expanded(child: _buildSheetTableWidget(item,))
+                                :_buildSheetTableWidget(item,)
+                                ,
+                              ],
+                            );
+                          } 
                           return const SizedBox();
                         }),
                       ),
@@ -2459,7 +2471,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           try {
             sheetTable =  getItemAtPath(panelIndex.parentIndexPath!) as SheetTable;
             // _sheetTableIterator(panelIndex.parentId, spreadSheetList[currentPageIndex])!;
-            
+            print(sheetTable);
             try {
               _findItem();
             } on Exception catch (e) {
@@ -2494,10 +2506,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         whichPropertyTabIsClicked = 4;
         decorationIndex=-1;
         if(updateVariables) updateSheetTableVariables(sheetTable!);
-        tableDecorationNameController.text = sheetDecorationMap[sheetTable!.sheetTableDecoration.id]!.name;
+        tableDecorationNameController.text = sheetDecorationMap[sheetTable!.sheetTableDecoration.id]?.name??'[Unassigned]';
         tableDecorationPath..clear()..add(sheetTable!.sheetTableDecoration.id);
-        tablebgDecorationNameController.text = sheetDecorationMap[sheetTable!.sheetTablebgDecoration.id]!.name;
-        tablebgDecorationPath..clear()..add(sheetDecorationMap[sheetTable!.sheetTablebgDecoration.id]!.id);
+        tablebgDecorationNameController.text = sheetDecorationMap[sheetTable!.sheetTablebgDecoration.id]?.name??'[Unassigned]';
+        tablebgDecorationPath..clear()..add(sheetDecorationMap[sheetTable!.sheetTablebgDecoration.id]?.id??'yo');
         // rowDecorationNameController.text = sheetDecorationMap[sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration]!.name; 
         // rowDecorationPath..clear()..add(sheetDecorationMap[sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration]!.id); 
         // columnDecorationNameController.text = sheetDecorationMap[sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration]!.name;   
@@ -2505,16 +2517,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         
          switch (whichTableDecorationIsClicked) {
           case 0:
-            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.sheetTableDecoration.id] as SuperDecoration);
+            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.sheetTableDecoration.id] as SuperDecoration?);
             break;
           case 1:
-            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.sheetTablebgDecoration.id] as SuperDecoration);
+            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.sheetTablebgDecoration.id] as SuperDecoration?);
             break;
           case 2:
-            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration]! as SuperDecoration);
+            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.rowData[sheetTableVariables.rowLayerIndex].rowDecoration] as SuperDecoration?);
             break;
           case 3:
-            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration]! as SuperDecoration);
+            updateSheetDecorationvariables(sheetDecorationMap[sheetTable!.columnData[sheetTableVariables.columnLayerIndex].columnDecoration] as SuperDecoration?);
             break;
           default:
         }
@@ -2990,7 +3002,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       ),
     ),);
     }
-    if (true) {
+    try {
       //Desktop WEB
       return Scaffold(
           resizeToAvoidBottomInset: false,
@@ -3073,329 +3085,349 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                   ///////Side TOOL BAR
                                   child: Column(
                                     children: [
-                                      Padding(
-                                        padding: EdgeInsets.only(top:50, left:4,right:3),
-                                        child:Text(
-                                          'text',
-                                          style: GoogleFonts.lexend(
-                                            color:defaultPalette.tertiary,
-                                            fontSize: 12,
-                                            letterSpacing: -0.5,
-                                            fontWeight: FontWeight.w600,
+                                      Expanded(
+                                        child: ScrollConfiguration(
+                                          behavior:
+                                              ScrollBehavior().copyWith(scrollbars: false),
+                                          child: DynMouseScroll(
+                                              durationMS: 500,
+                                              scrollSpeed: 1,
+                                              builder: (context, controller, physics) {
+                                              return SingleChildScrollView(
+                                                controller:controller,
+                                                physics:physics,
+                                                child: Column(
+                                                  children: [
+                                                    Padding(
+                                                      padding: EdgeInsets.only(top:50, left:4,right:3),
+                                                      child:Text(
+                                                        'text',
+                                                        style: GoogleFonts.lexend(
+                                                          color:defaultPalette.tertiary,
+                                                          fontSize: 12,
+                                                          letterSpacing: -0.5,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      ),
+                                                      ),
+                                                    SizedBox(height:2),
+                                                    toolBarButton(TablerIcons.cursor_text, 'text',
+                                                    fontSize: 12,
+                                                    iconSize: 15,
+                                                    tooltip:'add a text field',
+                                                    onTap: () {
+                                                      var newId = 'TX-${Uuid().v4()}';
+                                                      _addTextField(
+                                                        id: newId,
+                                                        textDecoration: newSuperDecoration(),
+                                                        indexPath: IndexPath(
+                                                          parent: spreadSheetList[currentPageIndex].indexPath,
+                                                          index: spreadSheetList[currentPageIndex].length),
+                                                          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
+                                                        );
+                                                    },
+                                                    ),
+                                                    //num
+                                                    toolBarButton(TablerIcons.numbers, 'num',
+                                                    fontSize: 12,
+                                                    iconSize: 13,
+                                                    tooltip: 'add a number field. \nThis will allow the input of a single real number.',
+                                                    onTap: () {
+                                                      var newId = 'TX-${Uuid().v4()}';
+                                                      _addTextField(
+                                                        id: newId,
+                                                        textDecoration: newSuperDecoration(),
+                                                        type: SheetTextType.number,
+                                                        indexPath: IndexPath(
+                                                          parent: spreadSheetList[currentPageIndex].indexPath,
+                                                          index: spreadSheetList[currentPageIndex].length),
+                                                          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
+                                                        );
+                                                    },
+                                                    ),
+                                                    //int
+                                                    toolBarButton(TablerIcons.number_123, 'int',
+                                                    fontSize: 12,
+                                                    iconSize: 15,
+                                                    tooltip: 'add an integer field. \nThis will allow the input of a single integer.',
+                                                    onTap: () {
+                                                      print( '________addText pressed LD_________');
+                                                      var newId = 'TX-${Uuid().v4()}';
+                                                      _addTextField(
+                                                        id: newId,
+                                                        textDecoration: newSuperDecoration(),
+                                                        type: SheetTextType.integer,
+                                                        indexPath: IndexPath(
+                                                          parent: spreadSheetList[currentPageIndex].indexPath,
+                                                          index: spreadSheetList[currentPageIndex].length),
+                                                          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
+                                                        );
+                                                    },
+                                                    ),
+                                                    //bool
+                                                    toolBarButton(TablerIcons.circuit_switch_open, 'bool',
+                                                    fontSize: 12,
+                                                    iconSize: 13,
+                                                    tooltip: 'add a boolean field. \nThis allows binary true or false input.',
+                                                    onTap: () {
+                                                      var newId = 'TX-${Uuid().v4()}';
+                                                      _addTextField(
+                                                        id: newId,
+                                                        textDecoration: newSuperDecoration(),
+                                                        type: SheetTextType.bool,
+                                                        indexPath: IndexPath(
+                                                          parent: spreadSheetList[currentPageIndex].indexPath,
+                                                          index: spreadSheetList[currentPageIndex].length),
+                                                          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
+                                                        );
+                                                    },
+                                                    ),
+                                                    //date
+                                                    toolBarButton(TablerIcons.calendar_event, 'date',
+                                                    fontSize: 12,
+                                                    iconSize: 13,
+                                                    tooltip: 'add a date field. \nThis field comes with a date-picker. \nThis allows text input and tries to extract the date.',
+                                                    onTap: () {
+                                                      print( '________addText pressed LD_________');
+                                                      var newId = 'TX-${Uuid().v4()}';
+                                                      _addTextField(
+                                                        id: newId,
+                                                        textDecoration: newSuperDecoration(),
+                                                        type: SheetTextType.date,
+                                                        indexPath: IndexPath(
+                                                          parent: spreadSheetList[currentPageIndex].indexPath,
+                                                          index: spreadSheetList[currentPageIndex].length),
+                                                          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
+                                                        );
+                                                    },
+                                                    ),
+                                                    //time
+                                                    toolBarButton(TablerIcons.clock_hour_4, 'time',
+                                                    fontSize: 12,
+                                                    iconSize: 13,
+                                                    tooltip: 'add a time field. \nThis field comes with a time-picker. \nThis allows text input and tries to extract the time.',
+                                                    onTap: () {
+                                                      var newId = 'TX-${Uuid().v4()}';
+                                                      _addTextField(
+                                                        id: newId,
+                                                        textDecoration: newSuperDecoration(),
+                                                        type: SheetTextType.time,
+                                                        indexPath: IndexPath(
+                                                          parent: spreadSheetList[currentPageIndex].indexPath,
+                                                          index: spreadSheetList[currentPageIndex].length),
+                                                          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
+                                                        );
+                                                    },
+                                                    ),
+                                                    //phone
+                                                    toolBarButton(TablerIcons.phone, 'phone',
+                                                    fontSize: 12,
+                                                    iconSize: 13,
+                                                    tooltip: 'add a telephone field. \nThis allows non-alphabet input. \nThis comes with a country code browser.',
+                                                    onTap: () {
+                                                      var newId = 'TX-${Uuid().v4()}';
+                                                      _addTextField(
+                                                        id: newId,
+                                                        textDecoration: newSuperDecoration(),
+                                                        type: SheetTextType.phone,
+                                                        indexPath: IndexPath(
+                                                          parent: spreadSheetList[currentPageIndex].indexPath,
+                                                          index: spreadSheetList[currentPageIndex].length),
+                                                          inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
+                                                        );
+                                                    },
+                                                    ),
+                                                    
+                                                    Padding(
+                                                      padding: EdgeInsets.only(top:4, left:4,right:3),
+                                                      
+                                                      // child: Icon(
+                                                      //   TablerIcons.txt,
+                                                      // ),
+                                                      child: Text(
+                                                        ' list ',
+                                                        style: GoogleFonts.lexend(
+                                                          color: defaultPalette.tertiary, 
+                                                          fontSize: 12,
+                                                          letterSpacing: -0.5,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      )
+                                                      ),
+                                                    const SizedBox(height:2),
+                                                    //row
+                                                    toolBarButton(TablerIcons.dots, 'row',
+                                                    fontSize: 12,
+                                                    iconSize: 13,
+                                                    tooltip: 'add a horizontal list.',
+                                                    hoverColor: defaultPalette.extras[1],
+                                                    onTap: (){
+                                                      setState(() {
+                                                        String newId = 'LI-${ const Uuid().v4()}';
+                                                          var newDecoration = newSuperDecoration();
+                                                          var newIndexPath = IndexPath(
+                                                                parent: spreadSheetList[currentPageIndex].indexPath,
+                                                                index: spreadSheetList[currentPageIndex].length);
+                                                        print(newIndexPath.toString());
+                                                        spreadSheetList[currentPageIndex].add(
+                                                          SheetList(
+                                                            id:newId, 
+                                                            parentId: spreadSheetList[currentPageIndex].id, 
+                                                            direction: Axis.horizontal,
+                                                            indexPath: newIndexPath, 
+                                                            sheetList: [], 
+                                                            listDecoration: newDecoration.id),
+                                                        );
+                                                        // _reassignSheetListIndexPath((spreadSheetList[currentPageIndex]));
+                                                      });
+                                                    }, 
+                                                    ),
+                                                    //column
+                                                    toolBarButton(TablerIcons.dots_vertical, 'col',
+                                                    fontSize: 12,
+                                                    iconSize: 13,
+                                                    tooltip: 'add a vertical list.',
+                                                    hoverColor: defaultPalette.extras[1],
+                                                    onTap: (){
+                                                      setState(() {
+                                                        String newId = 'LI-${ const Uuid().v4()}';
+                                                          var newDecoration = newSuperDecoration();
+                                                          var newIndexPath = IndexPath(
+                                                                parent: spreadSheetList[currentPageIndex].indexPath,
+                                                                index: spreadSheetList[currentPageIndex].length);
+                                                        print(newIndexPath.toString());
+                                                        spreadSheetList[currentPageIndex].add(
+                                                          SheetList(
+                                                            id:newId, 
+                                                            parentId: spreadSheetList[currentPageIndex].id, 
+                                                            direction: Axis.horizontal,
+                                                            indexPath: newIndexPath, 
+                                                            sheetList: [], 
+                                                            listDecoration: newDecoration.id),
+                                                        );
+                                                        // _reassignSheetListIndexPath((spreadSheetList[currentPageIndex]));
+                                                      });
+                                                    }, 
+                                                    ),
+                                                    
+                                                    Padding(
+                                                      padding:EdgeInsets.only(top:4, left:4,right:3),
+                                                     
+                                                      child: Text(
+                                                        ' table ',
+                                                        style: GoogleFonts.lexend(
+                                                          color: defaultPalette.tertiary, 
+                                                          fontSize: 12,
+                                                          letterSpacing: -0.5,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      )
+                                                      ),
+                                                    const SizedBox(height:2),
+                                                    //table
+                                                    toolBarButton(TablerIcons.table, 'table',
+                                                    fontSize: 12,
+                                                    iconSize: 13,
+                                                    tooltip: 'add a table.',
+                                                    hoverColor: defaultPalette.extras[3],
+                                                    onTap: () {
+                                                        setState(() {
+                                                          final tid   = 'TB-${Uuid().v4()}';
+                                                          final deco  = newSuperDecoration(placeholder: false);
+                                                          final ipath = IndexPath(
+                                                            parent: spreadSheetList[currentPageIndex].indexPath,
+                                                            index:  spreadSheetList[currentPageIndex].length,
+                                                          );
+                                                    
+                                                          spreadSheetList[currentPageIndex].add(
+                                                            buildDefaultTable(
+                                                              tableId:   tid,
+                                                              parentId: spreadSheetList[currentPageIndex].id,
+                                                              decoration: deco,
+                                                              indexPath:  ipath,
+                                                              rows:       5, // or your desired defaults
+                                                              cols:       8,
+                                                            ),
+                                                          );
+                                                        });
+                                                    
+                                                      },
+                                                    ),
+                                                    //itemTable
+                                                    toolBarButton(TablerIcons.logs, 'itemTable',
+                                                    fontSize: 12,
+                                                    iconSize: 13,
+                                                    tooltip: 'add an item table with fields corresponding to the current bill type.\nFields include Item Description, Quantity, Rate, Unit, etc.',
+                                                    hoverColor: defaultPalette.extras[3],
+                                                    onTap: () {
+                                                        setState(() {
+                                                          String newId = 'TB-${ const Uuid().v4()}';
+                                                          var newDecoration = newSuperDecoration(placeholder: false);
+                                                          var newIndexPath = IndexPath(
+                                                                parent: spreadSheetList[currentPageIndex].indexPath,
+                                                                index: spreadSheetList[currentPageIndex].length);
+                                                          spreadSheetList[currentPageIndex].add(
+                                                            buildInvoiceTable(
+                                                              type: SheetType.values[lm!.type],
+                                                              tableId: newId, 
+                                                              parentId: spreadSheetList[currentPageIndex].id, 
+                                                              decoration: newDecoration,
+                                                              indexPath:  newIndexPath)
+                                                          );
+                                                        });
+                                                        assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
+                                                      },
+                                                    ),
+                                                    Padding(
+                                                      padding:EdgeInsets.only(top:4, left:4,right:3),
+                                                     
+                                                      child: Text(
+                                                        ' misc ',
+                                                        style: GoogleFonts.lexend(
+                                                          color: defaultPalette.tertiary, 
+                                                          fontSize: 12,
+                                                          letterSpacing: -0.5,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      )
+                                                      ),
+                                                    const SizedBox(height:2),
+                                                    //SizedItem
+                                                    toolBarButton(TablerIcons.space, 'sizedItem',
+                                                    fontSize: 12,
+                                                    iconSize: 13,
+                                                    tooltip: 'add a sized item for spacing.',
+                                                    hoverColor: defaultPalette.extras[8],
+                                                    onTap: () {
+                                                        setState(() {
+                                                          String newId = 'SZ-${ const Uuid().v4()}';
+                                                          var newDecoration = newSuperDecoration();
+                                                          var newIndexPath = IndexPath(
+                                                                parent: spreadSheetList[currentPageIndex].indexPath,
+                                                                index: spreadSheetList[currentPageIndex].length);
+                                                          spreadSheetList[currentPageIndex].add(
+                                                            SheetSizedItem(
+                                                              id: newId, 
+                                                              parentId: spreadSheetList[currentPageIndex].id, 
+                                                              indexPath: newIndexPath, 
+                                                              width: 20, 
+                                                              height: 20, 
+                                                              hide: false, 
+                                                              sizedItemDecoration:newDecoration.id)
+                                                          );
+                                                        });
+                                                        assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            }
                                           ),
                                         ),
-                                        ),
-                                      SizedBox(height:2),
-                                      toolBarButton(TablerIcons.cursor_text, 'text',
-                                      fontSize: 12,
-                                      iconSize: 15,
-                                      tooltip:'add a text field',
-                                      onTap: () {
-                                        var newId = 'TX-${Uuid().v4()}';
-                                        _addTextField(
-                                          id: newId,
-                                          textDecoration: newSuperDecoration(),
-                                          indexPath: IndexPath(
-                                            parent: spreadSheetList[currentPageIndex].indexPath,
-                                            index: spreadSheetList[currentPageIndex].length),
-                                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
-                                          );
-                                      },
-                                      ),
-                                      //num
-                                      toolBarButton(TablerIcons.numbers, 'num',
-                                      fontSize: 12,
-                                      iconSize: 13,
-                                      tooltip: 'add a number field. \nThis will allow the input of a single real number.',
-                                      onTap: () {
-                                        var newId = 'TX-${Uuid().v4()}';
-                                        _addTextField(
-                                          id: newId,
-                                          textDecoration: newSuperDecoration(),
-                                          type: SheetTextType.number,
-                                          indexPath: IndexPath(
-                                            parent: spreadSheetList[currentPageIndex].indexPath,
-                                            index: spreadSheetList[currentPageIndex].length),
-                                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
-                                          );
-                                      },
-                                      ),
-                                      //int
-                                      toolBarButton(TablerIcons.number_123, 'int',
-                                      fontSize: 12,
-                                      iconSize: 15,
-                                      tooltip: 'add an integer field. \nThis will allow the input of a single integer.',
-                                      onTap: () {
-                                        print( '________addText pressed LD_________');
-                                        var newId = 'TX-${Uuid().v4()}';
-                                        _addTextField(
-                                          id: newId,
-                                          textDecoration: newSuperDecoration(),
-                                          type: SheetTextType.integer,
-                                          indexPath: IndexPath(
-                                            parent: spreadSheetList[currentPageIndex].indexPath,
-                                            index: spreadSheetList[currentPageIndex].length),
-                                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
-                                          );
-                                      },
-                                      ),
-                                      //bool
-                                      toolBarButton(TablerIcons.circuit_switch_open, 'bool',
-                                      fontSize: 12,
-                                      iconSize: 13,
-                                      tooltip: 'add a boolean field. \nThis allows binary true or false input.',
-                                      onTap: () {
-                                        var newId = 'TX-${Uuid().v4()}';
-                                        _addTextField(
-                                          id: newId,
-                                          textDecoration: newSuperDecoration(),
-                                          type: SheetTextType.bool,
-                                          indexPath: IndexPath(
-                                            parent: spreadSheetList[currentPageIndex].indexPath,
-                                            index: spreadSheetList[currentPageIndex].length),
-                                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
-                                          );
-                                      },
-                                      ),
-                                      //date
-                                      toolBarButton(TablerIcons.calendar_event, 'date',
-                                      fontSize: 12,
-                                      iconSize: 13,
-                                      tooltip: 'add a date field. \nThis field comes with a date-picker. \nThis allows text input and tries to extract the date.',
-                                      onTap: () {
-                                        print( '________addText pressed LD_________');
-                                        var newId = 'TX-${Uuid().v4()}';
-                                        _addTextField(
-                                          id: newId,
-                                          textDecoration: newSuperDecoration(),
-                                          type: SheetTextType.date,
-                                          indexPath: IndexPath(
-                                            parent: spreadSheetList[currentPageIndex].indexPath,
-                                            index: spreadSheetList[currentPageIndex].length),
-                                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
-                                          );
-                                      },
-                                      ),
-                                      //time
-                                      toolBarButton(TablerIcons.clock_hour_4, 'time',
-                                      fontSize: 12,
-                                      iconSize: 13,
-                                      tooltip: 'add a time field. \nThis field comes with a time-picker. \nThis allows text input and tries to extract the time.',
-                                      onTap: () {
-                                        var newId = 'TX-${Uuid().v4()}';
-                                        _addTextField(
-                                          id: newId,
-                                          textDecoration: newSuperDecoration(),
-                                          type: SheetTextType.time,
-                                          indexPath: IndexPath(
-                                            parent: spreadSheetList[currentPageIndex].indexPath,
-                                            index: spreadSheetList[currentPageIndex].length),
-                                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
-                                          );
-                                      },
-                                      ),
-                                      //phone
-                                      toolBarButton(TablerIcons.phone, 'phone',
-                                      fontSize: 12,
-                                      iconSize: 13,
-                                      tooltip: 'add a telephone field. \nThis allows non-alphabet input. \nThis comes with a country code browser.',
-                                      onTap: () {
-                                        var newId = 'TX-${Uuid().v4()}';
-                                        _addTextField(
-                                          id: newId,
-                                          textDecoration: newSuperDecoration(),
-                                          type: SheetTextType.phone,
-                                          indexPath: IndexPath(
-                                            parent: spreadSheetList[currentPageIndex].indexPath,
-                                            index: spreadSheetList[currentPageIndex].length),
-                                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2], id: newId)],
-                                          );
-                                      },
-                                      ),
-                                      
-                                      Padding(
-                                        padding: EdgeInsets.only(top:4, left:4,right:3),
-                                        
-                                        // child: Icon(
-                                        //   TablerIcons.txt,
-                                        // ),
-                                        child: Text(
-                                          ' list ',
-                                          style: GoogleFonts.lexend(
-                                            color: defaultPalette.tertiary, 
-                                            fontSize: 12,
-                                            letterSpacing: -0.5,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        )
-                                        ),
-                                      const SizedBox(height:2),
-                                      //row
-                                      toolBarButton(TablerIcons.dots, 'row',
-                                      fontSize: 12,
-                                      iconSize: 13,
-                                      tooltip: 'add a horizontal list.',
-                                      hoverColor: defaultPalette.extras[1],
-                                      onTap: (){
-                                        setState(() {
-                                          String newId = 'LI-${ const Uuid().v4()}';
-                                            var newDecoration = newSuperDecoration();
-                                            var newIndexPath = IndexPath(
-                                                  parent: spreadSheetList[currentPageIndex].indexPath,
-                                                  index: spreadSheetList[currentPageIndex].length);
-                                          print(newIndexPath.toString());
-                                          spreadSheetList[currentPageIndex].add(
-                                            SheetList(
-                                              id:newId, 
-                                              parentId: spreadSheetList[currentPageIndex].id, 
-                                              direction: Axis.horizontal,
-                                              indexPath: newIndexPath, 
-                                              sheetList: [], 
-                                              listDecoration: newDecoration.id),
-                                          );
-                                          // _reassignSheetListIndexPath((spreadSheetList[currentPageIndex]));
-                                        });
-                                      }, 
-                                      ),
-                                      //column
-                                      toolBarButton(TablerIcons.dots_vertical, 'col',
-                                      fontSize: 12,
-                                      iconSize: 13,
-                                      tooltip: 'add a vertical list.',
-                                      hoverColor: defaultPalette.extras[1],
-                                      onTap: (){
-                                        setState(() {
-                                          String newId = 'LI-${ const Uuid().v4()}';
-                                            var newDecoration = newSuperDecoration();
-                                            var newIndexPath = IndexPath(
-                                                  parent: spreadSheetList[currentPageIndex].indexPath,
-                                                  index: spreadSheetList[currentPageIndex].length);
-                                          print(newIndexPath.toString());
-                                          spreadSheetList[currentPageIndex].add(
-                                            SheetList(
-                                              id:newId, 
-                                              parentId: spreadSheetList[currentPageIndex].id, 
-                                              direction: Axis.horizontal,
-                                              indexPath: newIndexPath, 
-                                              sheetList: [], 
-                                              listDecoration: newDecoration.id),
-                                          );
-                                          // _reassignSheetListIndexPath((spreadSheetList[currentPageIndex]));
-                                        });
-                                      }, 
-                                      ),
-                                      
-                                      Padding(
-                                        padding:EdgeInsets.only(top:4, left:4,right:3),
-                                       
-                                        child: Text(
-                                          ' table ',
-                                          style: GoogleFonts.lexend(
-                                            color: defaultPalette.tertiary, 
-                                            fontSize: 12,
-                                            letterSpacing: -0.5,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        )
-                                        ),
-                                      const SizedBox(height:2),
-                                      //table
-                                      toolBarButton(TablerIcons.table, 'table',
-                                      fontSize: 12,
-                                      iconSize: 13,
-                                      tooltip: 'add a table.',
-                                      hoverColor: defaultPalette.extras[3],
-                                      onTap: () {
-                                          setState(() {
-                                            final tid   = 'TB-${Uuid().v4()}';
-                                            final deco  = newSuperDecoration(placeholder: false);
-                                            final ipath = IndexPath(
-                                              parent: spreadSheetList[currentPageIndex].indexPath,
-                                              index:  spreadSheetList[currentPageIndex].length,
-                                            );
-
-                                            spreadSheetList[currentPageIndex].add(
-                                              buildDefaultTable(
-                                                tableId:   tid,
-                                                parentId: spreadSheetList[currentPageIndex].id,
-                                                decoration: deco,
-                                                indexPath:  ipath,
-                                                rows:       5, // or your desired defaults
-                                                cols:       8,
-                                              ),
-                                            );
-                                          });
-
-                                        },
-                                      ),
-                                      //itemTable
-                                      toolBarButton(TablerIcons.logs, 'itemTable',
-                                      fontSize: 12,
-                                      iconSize: 13,
-                                      tooltip: 'add an item table with fields corresponding to the current bill type.\nFields include Item Description, Quantity, Rate, Unit, etc.',
-                                      hoverColor: defaultPalette.extras[3],
-                                      onTap: () {
-                                          setState(() {
-                                            String newId = 'TB-${ const Uuid().v4()}';
-                                            var newDecoration = newSuperDecoration(placeholder: false);
-                                            var newIndexPath = IndexPath(
-                                                  parent: spreadSheetList[currentPageIndex].indexPath,
-                                                  index: spreadSheetList[currentPageIndex].length);
-                                            spreadSheetList[currentPageIndex].add(
-                                              buildInvoiceTable(
-                                                type: SheetType.values[lm!.type],
-                                                tableId: newId, 
-                                                parentId: spreadSheetList[currentPageIndex].id, 
-                                                decoration: newDecoration,
-                                                indexPath:  newIndexPath)
-                                            );
-                                          });
-                                          assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
-                                        },
-                                      ),
-                                      Padding(
-                                        padding:EdgeInsets.only(top:4, left:4,right:3),
-                                       
-                                        child: Text(
-                                          ' misc ',
-                                          style: GoogleFonts.lexend(
-                                            color: defaultPalette.tertiary, 
-                                            fontSize: 12,
-                                            letterSpacing: -0.5,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        )
-                                        ),
-                                      const SizedBox(height:2),
-                                      //SizedItem
-                                      toolBarButton(TablerIcons.space, 'sizedItem',
-                                      fontSize: 12,
-                                      iconSize: 13,
-                                      tooltip: 'add a sized item for spacing.',
-                                      hoverColor: defaultPalette.extras[8],
-                                      onTap: () {
-                                          setState(() {
-                                            String newId = 'SZ-${ const Uuid().v4()}';
-                                            var newDecoration = newSuperDecoration();
-                                            var newIndexPath = IndexPath(
-                                                  parent: spreadSheetList[currentPageIndex].indexPath,
-                                                  index: spreadSheetList[currentPageIndex].length);
-                                            spreadSheetList[currentPageIndex].add(
-                                              SheetSizedItem(
-                                                id: newId, 
-                                                parentId: spreadSheetList[currentPageIndex].id, 
-                                                indexPath: newIndexPath, 
-                                                width: 20, 
-                                                height: 20, 
-                                                hide: false, 
-                                                sizedItemDecoration:newDecoration.id)
-                                            );
-                                          });
-                                          assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
-                                        },
                                       ),
                                      
-                                      const Expanded(child: SizedBox()),
+                                      // const Expanded(child: SizedBox()),
                                       toolBarButton(TablerIcons.device_floppy, 'save',
                                       fontSize: 12,
                                       iconSize: 13,
@@ -5926,7 +5958,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               ),
             ),
           ));
-    } 
+    } catch (e,st){
+      return ErrorApp(error: e, stackTrace: st);
+    }
     //
   }
 
@@ -6086,7 +6120,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         return ReorderableDragStartListener(
           key: ValueKey(sheetList[index].id),
           index: index,
-          child: buildSheetTableWidget(sheetList[index] as SheetTable)
+          child: buildSheetTableWidget(sheetList[index] as SheetTable, sheetList, index)
           );
       } else {
         return ReorderableDragStartListener(
@@ -7370,6 +7404,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
   List<ContextMenuEntry> buildSizedItemContextMenuEntries(int index, SheetSizedItem sheetSizedItem,SheetList sheetList){
     var entries = <ContextMenuEntry>[];
     var style = GoogleFonts.lexend(
+      fontSize:13,
       color: defaultPalette.extras[0],
       fontWeight: FontWeight.w400,
       letterSpacing: -0.5,
@@ -7827,6 +7862,129 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 },
               ),
             ]),
+        //tablee
+        MenuItem.submenu(
+          unfocusedColor: defaultPalette.secondary,
+          hoverColor: defaultPalette.primary,
+          label: 'Table',
+          icon: TablerIcons.table,
+          style:  style,
+          items: [
+              //add text before the selected one
+              MenuItem(unfocusedColor: defaultPalette.secondary,
+                    hoverColor: defaultPalette.primary,
+                label: 'Before',
+                icon: TablerIcons
+                    .row_insert_top,
+                style:  style,
+                onSelected: () {
+                  setState(() {
+                  final tid   = 'TB-${Uuid().v4()}';
+                  final deco  = newSuperDecoration(placeholder: false);
+                  final ipath = IndexPath(
+                    parent: sheetList.indexPath,
+                    index:  index,
+                  );
+
+                  sheetList.insert( index, buildDefaultTable(
+                    tableId:   tid,
+                    parentId: spreadSheetList[currentPageIndex].id,
+                    decoration: deco,
+                    indexPath:  ipath,
+                    rows:       2, // or your desired defaults
+                    cols:       2,
+                    expand: false,
+                  ),);
+                  _reassignSheetListIndexPath(sheetList);
+                  });
+                },
+              ),
+              //add text after the selected one
+              MenuItem(unfocusedColor: defaultPalette.secondary,
+                    hoverColor: defaultPalette.primary,
+                label: 'After',
+                icon: TablerIcons
+                    .row_insert_bottom,
+                style:  style,
+                onSelected: () {
+                  setState(() {
+                    final tid   = 'TB-${Uuid().v4()}';
+                  final deco  = newSuperDecoration(placeholder: false);
+                  final ipath = IndexPath(
+                    parent: sheetList.indexPath,
+                    index:  index,
+                  );
+                  var newItem = buildDefaultTable(
+                    tableId:   tid,
+                    parentId: spreadSheetList[currentPageIndex].id,
+                    decoration: deco,
+                    indexPath:  ipath,
+                    rows:       2, // or your desired defaults
+                    cols:       2,
+                    expand: false,
+                  );
+                  
+                  if (index<sheetList.length) {
+                    
+                    sheetList.insert(
+                        index+1,
+                        newItem);
+                  } else {
+                    sheetList.add(
+                        newItem);
+                  }
+                  _reassignSheetListIndexPath(sheetList);  
+                  });
+                },
+              ),
+              //add a new row with a new textfield inside at the current index
+              MenuItem(unfocusedColor: defaultPalette.secondary,
+                    hoverColor: defaultPalette.primary,
+                label: 'In a New List',
+                icon: TablerIcons
+                    .code_plus,
+                style:  style,
+                onSelected: () {
+                  setState(() {
+                    var newId ='LI-${ const Uuid().v4()}';
+                    var newList = SheetList(
+                    direction: Axis.vertical,
+                    id: newId,
+                    parentId: sheetList.id,
+                    listDecoration: newSuperDecoration().id,
+                    sheetList: [],
+                    indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                    );
+                    final tid   = 'TB-${Uuid().v4()}';
+                  final deco  = newSuperDecoration(placeholder: false);
+                  final ipath = IndexPath(
+                    parent: newList.indexPath,
+                    index:  0,
+                  );
+                    var newItem = buildDefaultTable(
+                    tableId:   tid,
+                    parentId: spreadSheetList[currentPageIndex].id,
+                    decoration: deco,
+                    indexPath:  ipath,
+                    rows:       2, // or your desired defaults
+                    cols:       2,
+                    expand: false,
+                  );
+                    newList.sheetList.add(newItem);
+                    
+                    sheetList.insert(
+                    index,
+                    newList
+                    );
+                    print('plused');
+                    print(sheetList.id);
+                    _reassignSheetListIndexPath(sheetList);
+                  });
+                },
+              ),
+            ]),
         
       ]),
       //Wrap ITEMS
@@ -8161,6 +8319,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       icon: TablerIcons.new_section,
       style:  style,
       items: [
+        //text
         MenuItem.submenu(
           unfocusedColor: defaultPalette.secondary,
                     hoverColor: defaultPalette.primary,
@@ -8267,6 +8426,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                 },
               ),
             ]),
+        //list
         MenuItem.submenu(
           unfocusedColor: defaultPalette.secondary,
                     hoverColor: defaultPalette.primary,
@@ -8429,7 +8589,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               ),
               
             ])    
-        ,MenuItem.submenu(
+        ,//space
+        MenuItem.submenu(
           unfocusedColor: defaultPalette.secondary,
                     hoverColor: defaultPalette.primary,
             label: 'Space',
@@ -8518,6 +8679,129 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         index:0
                       ), sizedItemDecoration: newSuperDecoration().id
                     );
+                    newList.sheetList.add(newItem);
+                    
+                    sheetList.insert(
+                    index,
+                    newList
+                    );
+                    print('plused');
+                    print(sheetList.id);
+                    _reassignSheetListIndexPath(sheetList);
+                  });
+                },
+              ),
+            ]),
+        //tablee
+        MenuItem.submenu(
+          unfocusedColor: defaultPalette.secondary,
+          hoverColor: defaultPalette.primary,
+          label: 'Table',
+          icon: TablerIcons.table,
+          style:  style,
+          items: [
+              //add text before the selected one
+              MenuItem(unfocusedColor: defaultPalette.secondary,
+                    hoverColor: defaultPalette.primary,
+                label: 'Before',
+                icon: TablerIcons
+                    .row_insert_top,
+                style:  style,
+                onSelected: () {
+                  setState(() {
+                  final tid   = 'TB-${Uuid().v4()}';
+                  final deco  = newSuperDecoration(placeholder: false);
+                  final ipath = IndexPath(
+                    parent: sheetList.indexPath,
+                    index:  index,
+                  );
+
+                  sheetList.insert( index, buildDefaultTable(
+                    tableId:   tid,
+                    parentId: spreadSheetList[currentPageIndex].id,
+                    decoration: deco,
+                    indexPath:  ipath,
+                    rows:       2, // or your desired defaults
+                    cols:       2,
+                    expand: false,
+                  ),);
+                  _reassignSheetListIndexPath(sheetList);
+                  });
+                },
+              ),
+              //add text after the selected one
+              MenuItem(unfocusedColor: defaultPalette.secondary,
+                    hoverColor: defaultPalette.primary,
+                label: 'After',
+                icon: TablerIcons
+                    .row_insert_bottom,
+                style:  style,
+                onSelected: () {
+                  setState(() {
+                    final tid   = 'TB-${Uuid().v4()}';
+                  final deco  = newSuperDecoration(placeholder: false);
+                  final ipath = IndexPath(
+                    parent: sheetList.indexPath,
+                    index:  index,
+                  );
+                  var newItem = buildDefaultTable(
+                    tableId:   tid,
+                    parentId: spreadSheetList[currentPageIndex].id,
+                    decoration: deco,
+                    indexPath:  ipath,
+                    rows:       2, // or your desired defaults
+                    cols:       2,
+                    expand: false,
+                  );
+                  
+                  if (index<sheetList.length) {
+                    
+                    sheetList.insert(
+                        index+1,
+                        newItem);
+                  } else {
+                    sheetList.add(
+                        newItem);
+                  }
+                  _reassignSheetListIndexPath(sheetList);  
+                  });
+                },
+              ),
+              //add a new row with a new textfield inside at the current index
+              MenuItem(unfocusedColor: defaultPalette.secondary,
+                    hoverColor: defaultPalette.primary,
+                label: 'In a New List',
+                icon: TablerIcons
+                    .code_plus,
+                style:  style,
+                onSelected: () {
+                  setState(() {
+                    var newId ='LI-${ const Uuid().v4()}';
+                    var newList = SheetList(
+                    direction: Axis.vertical,
+                    id: newId,
+                    parentId: sheetList.id,
+                    listDecoration: newSuperDecoration().id,
+                    sheetList: [],
+                    indexPath: IndexPath(
+                      parent: sheetList.indexPath,
+                      index: sheetList.length),
+                    );
+                    final tid   = 'TB-${Uuid().v4()}';
+                  final deco  = newSuperDecoration(placeholder: false);
+                  final ipath = IndexPath(
+                    parent: newList.indexPath,
+                    index:  0,
+                  );
+                    var newItem = buildDefaultTable(
+                    tableId:   tid,
+                    parentId: spreadSheetList[currentPageIndex].id,
+                    decoration: deco,
+                    indexPath:  ipath,
+                    rows:       2, // or your desired defaults
+                    cols:       2,
+                    expand: false,
+                  );
                     newList.sheetList.add(newItem);
                     
                     sheetList.insert(
@@ -8770,7 +9054,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     });
   }
   
-  Widget buildSheetTableWidget(SheetTable sheetTable){
+  Widget buildSheetTableWidget(SheetTable sheetTable, SheetList sheetList, int index){
     var tableHeight = 0.0;
     var tableWidth = 0.0;
     sheetTable.rowData.forEach((element) => tableHeight += element.size+2,);
@@ -8898,19 +9182,847 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
             panelIndex.itemIndexPath = sheetTable.cellData[0][0].sheetItem.indexPath;
             _findItem();
             });
+            var style = GoogleFonts.lexend(
+              color: defaultPalette.extras[0],
+              fontWeight: FontWeight.w400,
+              fontSize:13,
+              letterSpacing: -0.5,
+            );
           print('secondaryyyTapppppp');
           
           final entries = <ContextMenuEntry>[
+            MenuHeader(text: 'ops', style: style, disableUppercase: true),
+            //ADD ITEMS
+            MenuItem.submenu(
+              unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                label: 'Add',
+                icon: TablerIcons.new_section,
+                style:  style,
+                items: [
+              //addd textt
+              MenuItem.submenu(
+                unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                  label: 'Text',
+                  icon: TablerIcons
+                      .text_recognition,
+                  style:  style,
+                  items: [
+                    //add text before the selected one
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'Before',
+                      icon: TablerIcons
+                          .row_insert_top,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                          var newId = 'TX-${Uuid().v4()}';
+                        var newItem = _addTextField( 
+                          id: newId,
+                          shouldReturn:  true,
+                          textDecoration: newSuperDecoration(),
+                          indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length),
+                            inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
+                          );
+                        sheetList.insert( index, newItem);
+                        _reassignSheetListIndexPath(sheetList);
+                        });
+                      },
+                    ),
+                    //add text after the selected one
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'After',
+                      icon: TablerIcons
+                          .row_insert_bottom,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                          var newId = 'TX-${Uuid().v4()}';
+                        var newItem = _addTextField( 
+                          id: newId,
+                          shouldReturn:  true,
+                          textDecoration: newSuperDecoration(),
+                          indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newId,)],
+                          );
+                        
+                        if (index<sheetList.length) {
+                          
+                          sheetList.insert(
+                              index+1,
+                              newItem);
+                        } else {
+                          sheetList.add(
+                              newItem);
+                        }
+                        _reassignSheetListIndexPath(sheetList);  
+                        });
+                      },
+                    ),
+                    //add a new row with a new textfield inside at the current index
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'In a New List',
+                      icon: TablerIcons
+                          .code_plus,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                          var newId ='LI-${ const Uuid().v4()}';
+                          var newList = SheetList(
+                          direction: Axis.vertical,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration().id,
+                          sheetList: [],
+                          indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length),
+                          );
+                          var newItemId = 'TX-${Uuid().v4()}';
+                          var newItem = _addTextField( 
+                            id: newItemId,
+                            shouldReturn:  true,
+                            textDecoration: newSuperDecoration(),
+                            indexPath: IndexPath(
+                            parent: newList.indexPath,
+                            index: newList.length),inputBlocks: [InputBlock(indexPath: IndexPath(index: -69), blockIndex: [-2],id: newItemId,)],
+                            );
+                          newList.sheetList.add(newItem);
+                          
+                          sheetList.insert(
+                          index,
+                          newList
+                          );
+                          print('plused');
+                          print(sheetList.id);
+                          _reassignSheetListIndexPath(sheetList);
+                        });
+                      },
+                    ),
+                  ]),
+              //add listtt
+              MenuItem.submenu(
+                unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                  label: 'List',
+                  icon: TablerIcons
+                      .brackets_contain_start,
+                  style:  style,
+                  items: [
+                    //add row before the selected one
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'Row Before',
+                      icon: TablerIcons
+                          .row_insert_top,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                        var newId ='LI-${ const Uuid()
+                                  .v4()}';
+                        sheetList.insert(
+                        index,
+                        SheetList(
+                        direction:
+                          Axis.horizontal,
+                        id: newId,
+                        parentId: sheetList.id,
+                        listDecoration: newSuperDecoration().id,
+                        sheetList: [
+                        ],
+                        indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length),
+                        ));
+                        _reassignSheetListIndexPath(sheetList);
+                        });
+                      },
+                    ),
+                    //add row after the selected one
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'Row After',
+                      icon: TablerIcons
+                          .row_insert_bottom,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                        var newId ='LI-${ const Uuid()
+                                  .v4()}';
+                        
+
+                        if (index<sheetList.length) {
+                          
+                          sheetList.insert(
+                          index+1,
+                          SheetList(
+                          direction:
+                            Axis.horizontal,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration().id,
+                          sheetList: [],
+                          indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length),
+                        )); 
+                        } else {
+                          sheetList.add(
+                            SheetList(
+                            direction:
+                              Axis.vertical,
+                            id: newId,
+                            parentId: sheetList.id,
+                            listDecoration: newSuperDecoration().id,
+                            sheetList: [
+                            ],
+                            indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length),
+                            ));
+                            }
+                        _reassignSheetListIndexPath(sheetList);  
+                        });
+                      },
+                    ),
+                    
+                    //add column before the selected one
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'Column Before',
+                      icon: TablerIcons
+                          .row_insert_top,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                        var newId ='LI-${ const Uuid()
+                                  .v4()}';
+                        sheetList.insert(
+                        index,
+                        SheetList(
+                        direction:
+                          Axis.vertical,
+                        id: newId,
+                        parentId: sheetList.id,
+                        listDecoration:  newSuperDecoration().id,
+                        sheetList: [
+                        ],
+                        indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length),
+                        ));
+                        _reassignSheetListIndexPath(sheetList);
+
+                        });
+                      },
+                    ),
+                    //add column after the selected one
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'Column After',
+                      icon: TablerIcons
+                          .row_insert_bottom,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                        var newId ='LI-${ const Uuid().v4()}';
+                        
+
+                        if (index<sheetList.length) {
+                          
+                          sheetList.insert(
+                          index+1,
+                          SheetList(
+                          direction:
+                            Axis.vertical,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration().id,
+                          sheetList: [],
+                          indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length),
+                          ));    
+                        } else {
+                          sheetList.add(
+                            SheetList(
+                            direction:
+                              Axis.vertical,
+                            id: newId,
+                            parentId: sheetList.id,
+                            listDecoration: newSuperDecoration().id,
+                            sheetList: [
+                            ],indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length),
+                            ));
+                            }
+                        _reassignSheetListIndexPath(sheetList);  
+                        });
+                      },
+                    ),
+                    
+                  ])    
+              ,//addspaceee
+              MenuItem.submenu(
+                unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                  label: 'Space',
+                  icon: TablerIcons
+                      .space,
+                  style:  style,
+                  items: [
+                    //add text before the selected one
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'Before',
+                      icon: TablerIcons
+                          .row_insert_top,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                          var newId = 'SZ-${Uuid().v4()}';
+                        var newItem = SheetSizedItem(
+                          id:newId, parentId:sheetList.id,
+                          width:20, height:20, hide:false, indexPath:IndexPath(
+                            parent: sheetList.indexPath,
+                            index:index
+                          ), sizedItemDecoration: newSuperDecoration().id
+                        );
+                        sheetList.insert( index, newItem);
+                        _reassignSheetListIndexPath(sheetList);
+                        });
+                      },
+                    ),
+                    //add text after the selected one
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'After',
+                      icon: TablerIcons
+                          .row_insert_bottom,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                          var newId = 'SZ-${Uuid().v4()}';
+                        var newItem = SheetSizedItem(
+                          id:newId, parentId:sheetList.id,
+                          width:20, height:20, hide:false, indexPath:IndexPath(
+                            parent: sheetList.indexPath,
+                            index:index
+                          ), sizedItemDecoration: newSuperDecoration().id
+                        );
+                        
+                        if (index<sheetList.length) {
+                          
+                          sheetList.insert(
+                              index+1,
+                              newItem);
+                        } else {
+                          sheetList.add(
+                              newItem);
+                        }
+                        _reassignSheetListIndexPath(sheetList);  
+                        });
+                      },
+                    ),
+                    //add a new row with a new textfield inside at the current index
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'In a New List',
+                      icon: TablerIcons
+                          .code_plus,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                          var newId ='LI-${ const Uuid().v4()}';
+                          var newList = SheetList(
+                          direction: Axis.vertical,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration().id,
+                          sheetList: [],
+                          indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length),
+                          );
+                          var newItemId = 'SZ-${Uuid().v4()}';
+                          var newItem = SheetSizedItem(
+                            id:newItemId, parentId:newId,
+                            width:20, height:20, hide:false, indexPath:IndexPath(
+                              parent: newList.indexPath,
+                              index:0
+                            ), sizedItemDecoration: newSuperDecoration().id
+                          );
+                          newList.sheetList.add(newItem);
+                          
+                          sheetList.insert(
+                          index,
+                          newList
+                          );
+                          print('plused');
+                          print(sheetList.id);
+                          _reassignSheetListIndexPath(sheetList);
+                        });
+                      },
+                    ),
+                  ]),
+              //tablee
+              MenuItem.submenu(
+                unfocusedColor: defaultPalette.secondary,
+                hoverColor: defaultPalette.primary,
+                label: 'Table',
+                icon: TablerIcons.table,
+                style:  style,
+                items: [
+                    //add text before the selected one
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'Before',
+                      icon: TablerIcons
+                          .row_insert_top,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                        final tid   = 'TB-${Uuid().v4()}';
+                        final deco  = newSuperDecoration(placeholder: false);
+                        final ipath = IndexPath(
+                          parent: sheetList.indexPath,
+                          index:  index,
+                        );
+
+                        sheetList.insert( index, buildDefaultTable(
+                          tableId:   tid,
+                          parentId: spreadSheetList[currentPageIndex].id,
+                          decoration: deco,
+                          indexPath:  ipath,
+                          rows:       2, // or your desired defaults
+                          cols:       2,
+                          expand: false,
+                        ),);
+                        _reassignSheetListIndexPath(sheetList);
+                        });
+                      },
+                    ),
+                    //add text after the selected one
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'After',
+                      icon: TablerIcons
+                          .row_insert_bottom,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                          final tid   = 'TB-${Uuid().v4()}';
+                        final deco  = newSuperDecoration(placeholder: false);
+                        final ipath = IndexPath(
+                          parent: sheetList.indexPath,
+                          index:  index,
+                        );
+                        var newItem = buildDefaultTable(
+                          tableId:   tid,
+                          parentId: spreadSheetList[currentPageIndex].id,
+                          decoration: deco,
+                          indexPath:  ipath,
+                          rows:       2, // or your desired defaults
+                          cols:       2,
+                          expand: false,
+                        );
+                        
+                        if (index<sheetList.length) {
+                          
+                          sheetList.insert(
+                              index+1,
+                              newItem);
+                        } else {
+                          sheetList.add(
+                              newItem);
+                        }
+                        _reassignSheetListIndexPath(sheetList);  
+                        });
+                      },
+                    ),
+                    //add a new row with a new textfield inside at the current index
+                    MenuItem(unfocusedColor: defaultPalette.secondary,
+                          hoverColor: defaultPalette.primary,
+                      label: 'In a New List',
+                      icon: TablerIcons
+                          .code_plus,
+                      style:  style,
+                      onSelected: () {
+                        setState(() {
+                          var newId ='LI-${ const Uuid().v4()}';
+                          var newList = SheetList(
+                          direction: Axis.vertical,
+                          id: newId,
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration().id,
+                          sheetList: [],
+                          indexPath: IndexPath(
+                            parent: sheetList.indexPath,
+                            index: sheetList.length),
+                          );
+                          final tid   = 'TB-${Uuid().v4()}';
+                        final deco  = newSuperDecoration(placeholder: false);
+                        final ipath = IndexPath(
+                          parent: newList.indexPath,
+                          index:  0,
+                        );
+                          var newItem = buildDefaultTable(
+                          tableId:   tid,
+                          parentId: spreadSheetList[currentPageIndex].id,
+                          decoration: deco,
+                          indexPath:  ipath,
+                          rows:       2, // or your desired defaults
+                          cols:       2,
+                          expand: false,
+                        );
+                          newList.sheetList.add(newItem);
+                          
+                          sheetList.insert(
+                          index,
+                          newList
+                          );
+                          print('plused');
+                          print(sheetList.id);
+                          _reassignSheetListIndexPath(sheetList);
+                        });
+                      },
+                    ),
+                  ]),
+              
+              MenuItem(
+                unfocusedColor: defaultPalette.secondary,
+                hoverColor: defaultPalette.primary,
+                label: 'Row',
+                icon: TablerIcons.row_insert_bottom,
+                style:  style,
+                onSelected: () {
+                  setState(() {
+                    // ─── Adding a new ROW ────────────────────────────────────
+                    final newRowIndex = sheetTable.rowData.length;
+                    final rowIndexPath = IndexPath(
+                      parent: sheetTable.indexPath,
+                      index: newRowIndex,
+                    );
+
+                    // Prepare the InputBlock list for the new row
+                    final rowInputBlocks = <InputBlock>[];
+
+                    // For each existing column, make a cell and link its InputBlock
+                    sheetTable.cellData.add(
+                      List.generate(sheetTable.columnData.length, (colIndex) {
+                        final newId = 'TX-${Uuid().v4()}';
+                        var itemIndexPath =IndexPath(
+                                parent: rowIndexPath,
+                                index: colIndex);
+                        final inputBlock = InputBlock(
+                          indexPath: itemIndexPath,
+                          blockIndex: [-2],
+                          id: newId,
+                        );
+
+                        var sheetTableCell = SheetTableCell(
+                          id: '${numberToColumnLabel(colIndex + 1)}${newRowIndex + 1}',
+                          parentId: sheetTable.id,
+                          indexPath: rowIndexPath,
+                          sheetItem: _addTextField(
+                            id: newId,
+                            parentId: sheetTable.id,
+                            textDecoration:
+                                sheetTable.sheetTableDecoration,
+                            shouldReturn: true,
+                            isCell: true,
+                            hide: false,
+                            inputBlocks: [inputBlock],
+                            indexPath: itemIndexPath,
+                            name:
+                                '${numberToColumnLabel(colIndex + 1)}${newRowIndex + 1}',
+                          ),
+                        );
+                        var ib = inputBlock.copyWith(
+                          function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                        );
+                        // 1) Link into this new row
+                        rowInputBlocks.add(ib);
+
+                        // 2) Also link into the existing column
+                        final column = sheetTable.columnData[colIndex];
+                          column.columnInputBlocks.add(ib);
+                        // }
+
+
+                        return sheetTableCell;
+                      }),
+                    );
+
+                    // Finally register the new row itself
+                    sheetTable.rowData.add(
+                      SheetTableRow(
+                        id: 'RW-${Uuid().v4()}',
+                        parentId: sheetTable.id,
+                        rowDecoration:
+                            sheetTable.sheetTableDecoration.id,
+                        indexPath: rowIndexPath,
+                        rowInputBlocks: rowInputBlocks,
+                      ),
+                    );
+                    //when you clear blocks it will also clear the useConst data, every other field can be relinked but useConst would be lost
+                    final Map<String, bool> useConstById = {};
+                    // Rows
+                    for (final row in sheetTable.rowData) {
+                      for (final ib in row.rowInputBlocks) {
+                        useConstById[ib.id] = ib.useConst;
+                        // print('useConst: ${useConstById[ib.id]}, row: $row, cell: ${ib.id}');
+                          
+                      }
+                    }
+                    // print('========');
+                          
+
+                    // Columns
+                    for (final col in sheetTable.columnData) {
+                      for (final ib in col.columnInputBlocks) {
+                        useConstById[ib.id] = ib.useConst;
+                      }
+                    }
+                    // for (final row in sheetTable.rowData) row.rowInputBlocks.clear();
+                    for (final col in sheetTable.columnData) col.columnInputBlocks.clear();
+
+                      for (int r = 0; r < sheetTable.cellData.length; r++) {
+                        for (int c = 0; c < sheetTable.cellData[r].length; c++) {
+                          final cell = sheetTable.cellData[r][c];
+                          // print('At: '+cell.id+' '+sheetTable.rowData[r].rowInputBlocks.toString()+' '+sheetTable.columnData[c].columnInputBlocks.toString());
+                          
+                          if (cell.sheetItem is! SheetText) continue;
+                          // print('useConst: ${useConstById[cell.sheetItem.id]}, row: $r, cell: ${cell.id}');
+                          // sheetTable.rowData[r].rowInputBlocks.add(
+                          //   InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id, useConst: useConstById[cell.sheetItem.id] ?? true,
+                          //   function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)
+                          //   ));
+                          sheetTable.columnData[c].columnInputBlocks.add(
+                            InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id, useConst: useConstById[cell.sheetItem.id] ?? true,
+                            function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)));
+                          // print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
+                          
+
+                        }
+                      }
+
+                  });
+                },
+              ),
+              MenuItem(
+                unfocusedColor: defaultPalette.secondary,
+                hoverColor: defaultPalette.primary,
+                label: 'Column',
+                icon: TablerIcons.column_insert_right,
+                style:  style,
+                onSelected: () {
+                  setState(() {
+                   // ─── Adding a new COLUMN ─────────────────────────────────
+                    final newColIndex = sheetTable.columnData.length;
+                    final colIndexPath = IndexPath(
+                      parent: sheetTable.indexPath,
+                      index: newColIndex,
+                    );
+
+                    // Prepare the InputBlock list for the new column
+                    final colInputBlocks = <InputBlock>[];
+
+                    // 1) Create the new column
+                    sheetTable.columnData.add(
+                      SheetTableColumn(
+                        id: 'CL-${Uuid().v4()}',
+                        parentId: sheetTable.id,
+                        size: 50,
+                        columnDecoration:
+                            sheetTable.sheetTableDecoration.id,
+                        indexPath: colIndexPath,
+                        columnInputBlocks: colInputBlocks,
+                      ),
+                    );
+
+                    // 2) For each existing row, add a cell and link into both the column and that row
+                    for (var rowIndex = 0;
+                        rowIndex < sheetTable.rowData.length;
+                        rowIndex++) {
+                      final rowIndexPath = IndexPath(
+                        parent: sheetTable.indexPath,
+                        index: rowIndex,
+                      );
+                      final newId = 'TX-${Uuid().v4()}';
+                      var itemIndexPath =IndexPath(
+                                parent: rowIndexPath,
+                                index:  sheetTable.cellData[rowIndex].length);
+                      final inputBlock = InputBlock(
+                        indexPath: itemIndexPath,
+                        blockIndex: [-2],
+                        id: newId,
+                      );
+                      var sheetTableCell =SheetTableCell(
+                          id:
+                              '${numberToColumnLabel(newColIndex + 1)}${rowIndex + 1}',
+                          parentId: sheetTable.id,
+                          indexPath: rowIndexPath,
+                          sheetItem: _addTextField(
+                            id: newId,
+                            parentId: sheetTable.id,
+                            textDecoration:
+                                sheetTable.sheetTableDecoration,
+                            shouldReturn: true,
+                            isCell: true,
+                            hide: false,
+                            inputBlocks: [inputBlock],
+                            name:
+                                '${numberToColumnLabel(newColIndex + 1)}${rowIndex + 1}',
+                            indexPath:itemIndexPath,
+                          ),
+                        );
+                      // inputBlock.function = InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name);
+                        var ib = inputBlock.copyWith(
+                          function: InputBlockFunction(inputBlocks: (sheetTableCell.sheetItem as SheetText).inputBlocks, label: (sheetTableCell.sheetItem as SheetText).name)
+                        ); 
+                      // link into the new column
+                      colInputBlocks.add(ib);
+
+                      // link into the existing row
+                      sheetTable.rowData[rowIndex]
+                          .rowInputBlocks
+                          .add(ib);
+
+                      sheetTable.cellData[rowIndex].add(
+                        sheetTableCell
+                      );
+                    }
+
+                    //when you clear blocks it will also clear the useConst data, every other field can be relinked but useConst would be lost
+                    final Map<String, bool> useConstById = {};
+                    // Rows
+                    for (final row in sheetTable.rowData) {
+                      for (final ib in row.rowInputBlocks) {
+                        useConstById[ib.id] = ib.useConst;
+                        // print('useConst: ${useConstById[ib.id]}, row: $row, cell: ${ib.id}');
+                          
+                      }
+                    }
+                    // print('========');
+                          
+
+                    // Columns
+                    for (final col in sheetTable.columnData) {
+                      for (final ib in col.columnInputBlocks) {
+                        useConstById[ib.id] = ib.useConst;
+                      }
+                    }
+                    // for (final row in sheetTable.rowData) row.rowInputBlocks.clear();
+                    for (final col in sheetTable.columnData) col.columnInputBlocks.clear();
+
+                      for (int r = 0; r < sheetTable.cellData.length; r++) {
+                        for (int c = 0; c < sheetTable.cellData[r].length; c++) {
+                          final cell = sheetTable.cellData[r][c];
+                          // print('At: '+cell.id+' '+sheetTable.rowData[r].rowInputBlocks.toString()+' '+sheetTable.columnData[c].columnInputBlocks.toString());
+                          
+                          if (cell.sheetItem is! SheetText) continue;
+                          // print('useConst: ${useConstById[cell.sheetItem.id]}, row: $r, cell: ${cell.id}');
+                          // sheetTable.rowData[r].rowInputBlocks.add(
+                          //   InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id, useConst: useConstById[cell.sheetItem.id] ?? true,
+                          //   function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)
+                          //   ));
+                          sheetTable.columnData[c].columnInputBlocks.add(
+                            InputBlock(indexPath: cell.sheetItem.indexPath, blockIndex: [-2], id: cell.sheetItem.id, useConst: useConstById[cell.sheetItem.id] ?? true,
+                            function: InputBlockFunction(inputBlocks: (cell.sheetItem as SheetText).inputBlocks, label: (cell.sheetItem as SheetText).name)));
+                          // print('At: '+cell.id+' '+sheetTableItem.rowData[r].rowInputBlocks.toString()+' '+sheetTableItem.columnData[c].columnInputBlocks.toString());
+                          
+
+                        }
+                      }
+            
+                  });
+                },
+              ),
+            ]),
+            //Wrap ITEMS
+            MenuItem.submenu(
+              unfocusedColor: defaultPalette.secondary,
+              hoverColor: defaultPalette.primary,
+              label: 'Wrap',
+              icon: TablerIcons.brackets_contain,
+              style:  style,
+              items: [
+                MenuItem(unfocusedColor: defaultPalette.secondary,
+                        hoverColor: defaultPalette.primary,
+                  label: 'In a Row',
+                  icon: TablerIcons.layout_rows ,
+                  style:  style,
+                  onSelected: () {
+                    setState(() {
+
+                        var sheetItem = sheetList.removeAt(index);
+                        var newIndexPath=IndexPath(parent: sheetList.indexPath,index:index);
+                        sheetList.insert(index, SheetList(
+                          direction: Axis.horizontal,
+                          id: 'LI-${Uuid().v4()}',
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration().id,
+                          sheetList: [
+                            (sheetItem as SheetTable)
+                            ..indexPath.parent =  newIndexPath
+                            ..indexPath.index =0
+                            ..expand =false
+                          ],
+                          indexPath: newIndexPath
+                        ));
+                        
+                        _reassignSheetListIndexPath(sheetList);    
+                        panelIndex.setParent(sheetItem); 
+                        _findSheetTableItem(sheetTable);
+                    });
+                  },
+                ),
+                MenuItem(unfocusedColor: defaultPalette.secondary,
+                        hoverColor: defaultPalette.primary,
+                  label: 'In a Column',
+                  icon: TablerIcons
+                      .layout_columns,
+                  style:  style,
+                  onSelected: () {
+                    setState(() {
+
+                        var sheetItem = sheetList.removeAt(index);
+                        var newIndexPath=IndexPath(parent: sheetList.indexPath,index:index);
+                        sheetList.insert(index, SheetList(
+                          direction: Axis.vertical,
+                          id: 'LI-${Uuid().v4()}',
+                          parentId: sheetList.id,
+                          listDecoration: newSuperDecoration().id,
+                          sheetList: [
+                            (sheetItem as SheetTable)..indexPath.parent =  newIndexPath..indexPath.index =0..expand =false
+                          ],
+                          indexPath: newIndexPath
+                        ));
+                        
+                        _reassignSheetListIndexPath(sheetList);    
+                        panelIndex.setParent(sheetItem); 
+                        _findSheetTableItem(sheetTable);
+                    });
+                  },
+                ),
+                    
+              ]),
+  
             MenuItem(
               label: 'delete',
               icon: TablerIcons.trash,
-              hoverColor: defaultPalette.primary.withOpacity(0.1),
-              unfocusedColor: defaultPalette.primary.withOpacity(0.1),
-              style: GoogleFonts.lexend(
-                color: defaultPalette.extras[0],
-                letterSpacing: -1,
-                fontSize: 12
-              ),
+              unfocusedColor: defaultPalette.secondary,
+              hoverColor: defaultPalette.primary,
+              style: style,
               onSelected: () {
                 var listItem = getItemAtPath(sheetTable.indexPath.parent!);
                 setState(() {
@@ -9678,10 +10790,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
       else if (item is SheetTable) {
         var tableHeight = 0.0;
-        item.rowData.forEach((element) => tableHeight += element.size,);
+        item.rowData.forEach((element) => tableHeight += element.size+2,);
         calculatedHeight = tableHeight
       +18 //height of A B C row
-      +20;
+      +30+(item.name=='unlabeled'?0:18)
+      +8+8;//padding on top and bottom
       }
 
       else if (item is SheetSizedItem) {
@@ -9784,10 +10897,15 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           }
         } else if (item is SheetList) {
           width += findSheetListBuildWidth(item) + 20;
-        } else if (item is SheetTable) {
-          width += item.columnData.fold(0.0, (sum, col) => sum + col.size);
         } else if (item is SheetSizedItem) {
           width += item.width+8;
+        } else if (item is SheetTable) {
+        var tableWidth = 0.0;
+        item.rowData.forEach((element) => tableWidth += element.size+16,);
+          width += tableWidth
+        // +18 //height of A B C row
+        // +30+(item.name=='unlabeled'?0:18)
+        +8+8;//padding on top and bottom
         }
       }
     } else {
@@ -9826,9 +10944,16 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           }
         } else if (item is SheetList) {
           final nestedWidth = findSheetListBuildWidth(item);
-          width =  width.clamp((nestedWidth +0), double.infinity) ;
+          width =  width.clamp((nestedWidth +0), double.infinity);
         } else if (item is SheetSizedItem) {
           width  = item.height+12;
+        } else if (item is SheetTable) {
+          var tableHeight = 0.0;
+          item.rowData.forEach((element) => tableHeight += element.size+2,);
+            width = tableHeight
+            +18 //height of A B C row
+            +30+(item.name=='unlabeled'?0:18)
+            +8+8;//padding on top and bottom
         }
       }
     }
@@ -18670,6 +19795,162 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             height:8
                                           ),
                                       
+                                      //SheetTable 'label'
+                                      Row(
+                                        children: [
+                                          Expanded(child: titleTile('label', TablerIcons.signature, fontSize:15)),
+                                          Expanded(
+                                            child: SizedBox(
+                                              height: 20,
+                                              child: TextField(
+                                                // focusNode: fontFocusNodes[6],
+                                                controller: tableTextControllers[10],
+                                                onSubmitted: (value) {
+                                                  RequiredText itemSheetLabel = labelList.firstWhere(
+                                                    (rt) => rt.name == 'itemSheet',
+                                                    orElse: () => RequiredText(name: '', sheetTextType: 0, indexPath:IndexPath(index: -567), isOptional:true),
+                                                  );
+                                                  if (itemSheetLabel.indexPath.index != -567 && value == itemSheetLabel.name) {
+                                                    if (itemSheetLabel.indexPath.index == -951) {
+                                                      // Not assigned yet, assign this table to it
+                                                      setState(() {
+                                                        itemSheetLabel.indexPath = sheetTableItem.indexPath;
+                                                        sheetTableItem.name = value;
+                                                      });
+                                                    } else {
+                                                      final existingItem = getItemAtPath(itemSheetLabel.indexPath);
+
+                                                      if (existingItem is! SheetTable) {
+                                                        // Reassign because previous assignment was not a SheetTable
+                                                        setState(() {
+                                                          itemSheetLabel.indexPath = sheetTableItem.indexPath;
+                                                          sheetTableItem.name = value;
+                                                        });
+                                                      }
+                                                      // Else: already assigned to another SheetTable, so do nothing
+                                                    }
+                                                  } else {
+                                                    // Normal rename case
+                                                    setState(() {
+                                                      sheetTableItem.name = value;
+                                                    });
+                                                  }
+
+                                                  
+                                                    // print('its '+requiredText.name);
+                                                    if (itemSheetLabel.indexPath.index != -567) {
+                                                      print('imhere');
+                                                      final existingItem = getItemAtPath(itemSheetLabel.indexPath);
+                                                      
+                                                      if (existingItem is! SheetTable || existingItem.name != 'itemSheet') {
+                                                        // Reassign because previous assignment was not a SheetTable
+                                                        setState(() {
+                                                          itemSheetLabel.indexPath = IndexPath(index: -951);
+                                                        });
+                                                        print(labelList);
+                                                      }
+                                                    }
+                                                    //  print('its '+requiredText.indexPath.toString());
+                                                    
+                                                  
+                                                },
+
+                                                textAlignVertical: TextAlignVertical.top,
+                                                textAlign: TextAlign.end,
+                                                cursorColor: defaultPalette.tertiary,
+                                                decoration: InputDecoration(
+                                                  contentPadding: const EdgeInsets.only(left: 2),
+                                                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                                  hoverColor: defaultPalette.transparent,
+                                                  filled: true,
+                                                  fillColor: defaultPalette.transparent,
+                                                  border: InputBorder.none,
+                                                  enabledBorder: OutlineInputBorder(
+                                                    borderSide: BorderSide.none,
+                                                  ),
+                                                  disabledBorder: OutlineInputBorder(
+                                                    borderSide: BorderSide.none,
+                                                  ),
+                                                  focusedBorder: OutlineInputBorder(
+                                                    borderSide: BorderSide.none,
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                ),
+                                                style: GoogleFonts.lexend(
+                                                    letterSpacing: -1,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 14,
+                                                    color: defaultPalette.black),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width:2)  
+                                        ],
+                                      ), 
+                                      if(getItemAtPath(sheetTableItem.indexPath.parent!).id == spreadSheetList[currentPageIndex].id)
+                                      ...[
+                                      const SizedBox(
+                                            height:4
+                                          ),
+                                      //'fit overflow'
+                                      Container(
+                                        margin: EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10), 
+                                        color:defaultPalette.secondary,
+                                        border: Border.all(
+                                          width:0.2
+                                        ),),
+                                        child: AnimatedToggleSwitch<bool>.dual(
+                                          current: sheetTableItem.expand,
+                                          first: true,
+                                          second: false,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              sheetTableItem.expand = value;    
+                                            });
+                                          },
+                                          animationCurve: Curves.easeInOutExpo,
+                                          animationDuration: Durations.medium4,
+                                          borderWidth:
+                                              2, // backgroundColor is set independently of the current selection
+                                          styleBuilder: (value) => ToggleStyle(
+                                              borderRadius: BorderRadius.circular(10),
+                                              indicatorBorderRadius: BorderRadius.circular(15),
+                                              borderColor: defaultPalette.secondary,
+                                              backgroundColor: defaultPalette.secondary,
+                                              indicatorBorder:
+                                                  Border.all(
+                                                    width: 1.2,
+                                                    color: defaultPalette.extras[0]),
+                                              indicatorColor: defaultPalette
+                                                  .primary), // indicatorColor changes and animates its value with the selection
+                                          iconBuilder: (value) {
+                                            return Icon(
+                                                value == false
+                                                    ? TablerIcons.wind
+                                                    : TablerIcons.ripple,
+                                                size: 15,
+                                                color: defaultPalette.extras[0]);
+                                          },
+                                          textBuilder: (value) {
+                                            return Text(
+                                              value == false ? 'overflow' : 'fit',
+                                              style: GoogleFonts.lexend(
+                                                    letterSpacing: -1,
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 14,
+                                                    color: defaultPalette.black),
+                                            );
+                                          },
+                                          height: 30,
+                                          spacing: (width) - 100,
+                                        ),
+                                      ),],
+                                      
+                                      const SizedBox(
+                                            height:4
+                                          ),
                                       //decoration in table properties
                                       Row(
                                         children: [
@@ -18834,162 +20115,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       
                                       // Row(mainAxisAlignment:MainAxisAlignment.spaceBetween, children:tablePropertyTile(0, 'pinnedRows', TablerIcons.layout_sidebar)),
                                       const SizedBox(
-                                            height:6
-                                          ),
-                                      //SheetTable 'label'
-                                      Row(
-                                        children: [
-                                          Expanded(child: titleTile('label', TablerIcons.signature, fontSize:15)),
-                                          Expanded(
-                                            child: SizedBox(
-                                              height: 20,
-                                              child: TextField(
-                                                // focusNode: fontFocusNodes[6],
-                                                controller: tableTextControllers[10],
-                                                onSubmitted: (value) {
-                                                  RequiredText itemSheetLabel = labelList.firstWhere(
-                                                    (rt) => rt.name == 'itemSheet',
-                                                    orElse: () => RequiredText(name: '', sheetTextType: 0, indexPath:IndexPath(index: -567), isOptional:true),
-                                                  );
-                                                  if (itemSheetLabel.indexPath.index != -567 && value == itemSheetLabel.name) {
-                                                    if (itemSheetLabel.indexPath.index == -951) {
-                                                      // Not assigned yet, assign this table to it
-                                                      setState(() {
-                                                        itemSheetLabel.indexPath = sheetTableItem.indexPath;
-                                                        sheetTableItem.name = value;
-                                                      });
-                                                    } else {
-                                                      final existingItem = getItemAtPath(itemSheetLabel.indexPath);
-
-                                                      if (existingItem is! SheetTable) {
-                                                        // Reassign because previous assignment was not a SheetTable
-                                                        setState(() {
-                                                          itemSheetLabel.indexPath = sheetTableItem.indexPath;
-                                                          sheetTableItem.name = value;
-                                                        });
-                                                      }
-                                                      // Else: already assigned to another SheetTable, so do nothing
-                                                    }
-                                                  } else {
-                                                    // Normal rename case
-                                                    setState(() {
-                                                      sheetTableItem.name = value;
-                                                    });
-                                                  }
-
-                                                  
-                                                    // print('its '+requiredText.name);
-                                                    if (itemSheetLabel.indexPath.index != -567) {
-                                                      print('imhere');
-                                                      final existingItem = getItemAtPath(itemSheetLabel.indexPath);
-                                                      
-                                                      if (existingItem is! SheetTable || existingItem.name != 'itemSheet') {
-                                                        // Reassign because previous assignment was not a SheetTable
-                                                        setState(() {
-                                                          itemSheetLabel.indexPath = IndexPath(index: -951);
-                                                        });
-                                                        print(labelList);
-                                                      }
-                                                    }
-                                                    //  print('its '+requiredText.indexPath.toString());
-                                                    
-                                                  
-                                                },
-
-                                                textAlignVertical: TextAlignVertical.top,
-                                                textAlign: TextAlign.end,
-                                                cursorColor: defaultPalette.tertiary,
-                                                decoration: InputDecoration(
-                                                  contentPadding: const EdgeInsets.only(left: 2),
-                                                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                                                  hoverColor: defaultPalette.transparent,
-                                                  filled: true,
-                                                  fillColor: defaultPalette.transparent,
-                                                  border: InputBorder.none,
-                                                  enabledBorder: OutlineInputBorder(
-                                                    borderSide: BorderSide.none,
-                                                  ),
-                                                  disabledBorder: OutlineInputBorder(
-                                                    borderSide: BorderSide.none,
-                                                  ),
-                                                  focusedBorder: OutlineInputBorder(
-                                                    borderSide: BorderSide.none,
-                                                    borderRadius: BorderRadius.circular(12),
-                                                  ),
-                                                ),
-                                                style: GoogleFonts.lexend(
-                                                    letterSpacing: -1,
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 14,
-                                                    color: defaultPalette.black),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width:2)  
-                                        ],
-                                      ), 
-                                      const SizedBox(
                                             height:4
                                           ),
-                                      //'fit overflow'
-                                      Container(
-                                        margin: EdgeInsets.all(2),
-                                        decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10), 
-                                        color:defaultPalette.secondary,
-                                        border: Border.all(
-                                          width:0.2
-                                        ),),
-                                        child: AnimatedToggleSwitch<bool>.dual(
-                                          current: sheetTableItem.expand,
-                                          first: true,
-                                          second: false,
-                                          onChanged: (value) {
-                                            setState(() {
-                                              sheetTableItem.expand = value;    
-                                            });
-                                          },
-                                          animationCurve: Curves.easeInOutExpo,
-                                          animationDuration: Durations.medium4,
-                                          borderWidth:
-                                              2, // backgroundColor is set independently of the current selection
-                                          styleBuilder: (value) => ToggleStyle(
-                                              borderRadius: BorderRadius.circular(10),
-                                              indicatorBorderRadius: BorderRadius.circular(15),
-                                              borderColor: defaultPalette.secondary,
-                                              backgroundColor: defaultPalette.secondary,
-                                              indicatorBorder:
-                                                  Border.all(
-                                                    width: 1.2,
-                                                    color: defaultPalette.extras[0]),
-                                              indicatorColor: defaultPalette
-                                                  .primary), // indicatorColor changes and animates its value with the selection
-                                          iconBuilder: (value) {
-                                            return Icon(
-                                                value == false
-                                                    ? TablerIcons.wind
-                                                    : TablerIcons.ripple,
-                                                size: 15,
-                                                color: defaultPalette.extras[0]);
-                                          },
-                                          textBuilder: (value) {
-                                            return Text(
-                                              value == false ? 'overflow' : 'fit',
-                                              style: GoogleFonts.lexend(
-                                                    letterSpacing: -1,
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 14,
-                                                    color: defaultPalette.black),
-                                            );
-                                          },
-                                          height: 30,
-                                          spacing: (width) - 100,
-                                        ),
-                                      ),
-                                      
-                                      const SizedBox(
-                                            height:4
-                                          )
                                       
                                       ],
                                       ),
@@ -20062,18 +21189,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                       ),
                                       //PAGE NUMBER AND DELETE AND NEXT-PREV
                                       Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
+                                        crossAxisAlignment: CrossAxisAlignment.center,
                                         // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                         children: [
                                           if (((sWidth * wH2DividerPosition) -
-                                                  145) >
-                                              66)
+                                                  145) > 66)
                                             Container(
                                                 height: 90,
-                                                width:
-                                                    (sWidth * wH2DividerPosition) -
-                                                        150,
+                                                width: (sWidth * wH2DividerPosition) - 150,
                                                 alignment: Alignment.center,
                                                 child: CountingAnimation(
                                                     value: (currentPageIndex + 1)
@@ -20112,10 +21235,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                                         145 <
                                                     66)
                                                   CountingAnimation(
-                                                      value: documentPropertiesList[
-                                                              currentPageIndex]
-                                                          .pageNumberController
-                                                          .text,
+                                                      value: (currentPageIndex + 1)
+                                                        .toString(),
                                                       scrollCount: 3,
                                                       textStyle:
                                                           GoogleFonts.pressStart2p(
@@ -21305,8 +22426,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         id: 'yo',
                         useConst: false,
                         function: UidGeneratorFunction(
-                          template: '{rand~6}',
-                          idKey: idKey
+                          template: '{rand~8}',
+                          idKey: idKey,
+                          dateTime: DateTime.now()
                           )
                         )
                     );
@@ -21470,6 +22592,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           ],
         ),
       );
+    }
+    if (itemDecorationPath.isEmpty) {
+      itemDecorationPath.add('yo');
     }
     var inx = itemDecorationPath.last;
     if (sheetDecorationMap[inx] == null || sheetDecorationMap[inx]?.id =='yo' || sheetDecorationMap[inx]?.id =='') {
@@ -29121,6 +30246,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     required IndexPath indexPath,
     int rows = 5,
     int cols = 8,
+    bool expand = true,
   }) {
     // 1) prepare the row and column “skeletons”
     final rowData = List.generate(rows, (r) {
@@ -29201,6 +30327,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       sheetTableDecoration:  decoration,
       sheetTablebgDecoration:newSuperDecoration(placeholder: false),
       indexPath:             indexPath,
+      expand:                expand,
     );
   }
 

@@ -51,7 +51,6 @@ dependencies:
   # fleather: ^1.15.0+1
   # keyboard_actions: ^4.2.0
   flutter_quill: ^9.4.0
-  animated_custom_dropdown: ^3.1.1  
   flutter_tabler_icons: ^1.31.0
   hive: ^2.2.3
   hive_flutter: ^1.1.0
@@ -64,7 +63,7 @@ dependencies:
   animated_toggle_switch: ^0.8.4
   smooth_scroll_multiplatform: ^1.0.8
   file_picker: ^8.0.7
-  mobkit_dashed_border: ^0.0.8 
+  # mobkit_dashed_border: ^0.0.8 
   scrollbar_ultima: ^1.0.4
   cool_background_animation: ^0.0.6 
   two_dimensional_scrollables: ^0.3.4
@@ -86,7 +85,14 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^2.0.0
   flutter_oss_licenses: ^3.0.4
+#   msix: ^3.16.12
 
+# msix_config:
+#   display_name: BillBlaze
+#   publisher_display_name: Jepixo
+#   identity_name: jepixo.tools.billblaze
+#   msix_version: 1.0.0.0
+#   capabilities: internetClient, location, microphone, webcam
 
 
 
@@ -100,6 +106,7 @@ flutter:
     - assets/static.html
     - assets/
     - assets/layouts/
+    - assets/nuget/
   fonts:
     - family: Billabong
       fonts:

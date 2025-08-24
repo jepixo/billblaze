@@ -251,13 +251,14 @@ class UidGeneratorFunctionAdapter extends TypeAdapter<UidGeneratorFunction> {
           .toList(),
       idKey: fields[4] as String,
       func: fields[5] as String,
+      dateTime: fields[6] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UidGeneratorFunction obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(2)
       ..write(obj.template)
       ..writeByte(3)
@@ -266,6 +267,8 @@ class UidGeneratorFunctionAdapter extends TypeAdapter<UidGeneratorFunction> {
       ..write(obj.idKey)
       ..writeByte(5)
       ..write(obj.func)
+      ..writeByte(6)
+      ..write(obj.dateTime)
       ..writeByte(0)
       ..write(obj.returnType)
       ..writeByte(1)

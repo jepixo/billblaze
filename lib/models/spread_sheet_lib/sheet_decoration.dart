@@ -7,7 +7,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive/hive.dart';
-import 'package:mobkit_dashed_border/mobkit_dashed_border.dart';
 
 import 'package:billblaze/components/color_picker.dart';
 
@@ -216,7 +215,6 @@ class ItemDecoration extends SheetDecoration {
     return {
       'color': decoration.color?.value,
       'border': decoration.border != null
-          ? (decoration.border! is Border)
               ? {
                   'left':
                       _borderSideToJson((decoration.border! as Border).left),
@@ -225,23 +223,6 @@ class ItemDecoration extends SheetDecoration {
                   'top': _borderSideToJson((decoration.border! as Border).top),
                   'bottom':
                       _borderSideToJson((decoration.border! as Border).bottom),
-                }
-              : {
-                  'left': _borderSideToJson(
-                      (decoration.border! as DashedBorder).left),
-                  'right': _borderSideToJson(
-                      (decoration.border! as DashedBorder).right),
-                  'top': _borderSideToJson(
-                      (decoration.border! as DashedBorder).top),
-                  'bottom': _borderSideToJson(
-                      (decoration.border! as DashedBorder).bottom),
-                  'dashLength': (decoration.border! as DashedBorder).dashLength,
-                  'spaceLength':
-                      (decoration.border! as DashedBorder).spaceLength ?? 0,
-                  'isOnlyCorners':
-                      (decoration.border! as DashedBorder).isOnlyCorner,
-                  'strokeCap':
-                      (decoration.border! as DashedBorder).strokeCap.index
                 }
           : null,
       'borderRadius': decoration.borderRadius != null
@@ -290,20 +271,7 @@ class ItemDecoration extends SheetDecoration {
     return BoxDecoration(
       color: json['color'] != null ? Color(json['color']) : null,
       border: json['border'] != null
-          ? json['border']['dashLength'] != null
-              ? DashedBorder(
-                  left: _borderSideFromJson(json['border']['left']),
-                  right: _borderSideFromJson(json['border']['right']),
-                  top: _borderSideFromJson(json['border']['top']),
-                  bottom: _borderSideFromJson(json['border']['bottom']),
-                  dashLength: json['border']['dashLength'],
-                  spaceLength: json['border']['spaceLength'] ?? 0,
-                  isOnlyCorner: json['border']['isOnlyCorners'] ?? false,
-                  strokeCap: json['border']['strokeCap'] != null
-                      ? StrokeCap.values[json['border']['strokeCap']]
-                      : StrokeCap.butt, // Default value
-                )
-              : Border(
+          ? Border(
                   left: _borderSideFromJson(json['border']['left']),
                   right: _borderSideFromJson(json['border']['right']),
                   top: _borderSideFromJson(json['border']['top']),

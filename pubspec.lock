@@ -41,14 +41,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.3.4"
-  animated_custom_dropdown:
-    dependency: "direct main"
-    description:
-      name: animated_custom_dropdown
-      sha256: "5a72dc209041bb53f6c7164bc2e366552d5197cdb032b1c9b2c36e3013024486"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.1"
   animated_text_kit:
     dependency: "direct main"
     description:
@@ -1293,14 +1285,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
-  mobkit_dashed_border:
-    dependency: "direct main"
-    description:
-      name: mobkit_dashed_border
-      sha256: d1bce2af4c19c6702b5981d8b4d1e09654fff6939f1e328b689fe37ab3499283
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.8"
   nested:
     dependency: transitive
     description:

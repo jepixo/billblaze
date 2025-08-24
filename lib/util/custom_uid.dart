@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 class UidGenerator {
   static int _seq = 0;
 
-  static String generate(String template, {String? idKey}) {
+  static String generate(String template, {String? idKey, DateTime? dateTime}) {
     _seq++;
 
     return template.replaceAllMapped(RegExp(r"\{(.*?)\}"), (match) {
@@ -17,11 +17,11 @@ class UidGenerator {
       switch (parts[0]) {
         case "date":
           final format = parts.length > 1 ? parts[1] : "yyyy-MM-dd";
-          return DateFormat(format).format(DateTime.now());
+          return DateFormat(format).format(dateTime??DateTime.now());
 
         case "time":
           final format = parts.length > 1 ? parts[1] : "HH:mm:ss";
-          return DateFormat(format).format(DateTime.now());
+          return DateFormat(format).format(dateTime??DateTime.now());
 
         case "millis":
           return DateTime.now().millisecondsSinceEpoch.toString();
