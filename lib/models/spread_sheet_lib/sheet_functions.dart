@@ -177,7 +177,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
       case 'sum':
         newText = _sum(values).toString();
         break;
-      case 'product':
+      case 'multiply':
         newText = _product(values).toString();
         print(newText);
         break;
@@ -572,7 +572,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
     'max': TablerIcons.arrow_up, 
     'range': TablerIcons.arrows_horizontal,
     'range ratio': TablerIcons.grid_goldenratio,
-    'product': TablerIcons.x,
+    'multiply': TablerIcons.x,
     'standard deviation': TablerIcons.chart_sankey,
     'variance': TablerIcons.chart_arcs,
     'mean absolute deviation': TablerIcons.wave_saw_tool, // Mean Absolute Deviation
@@ -593,7 +593,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
   'Basic Statistics': [
     'sum',
     'count',
-    'product',
+    'multiply',
     'average',
     'median',
     'mode',
@@ -924,6 +924,22 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
         final sumY = valuesY.fold<double>(0, (a, b) => a + b);
         newText = (sumX-sumY).toString();
         break;
+      case 'division':
+        final sumX = valuesX.fold<double>(0, (a, b) => a + b);
+        final sumY = valuesY.fold<double>(0, (a, b) => a + b);
+        newText = sumY == 0 ? 'NaN' : (sumX / sumY).toString();
+        break;
+
+      case 'logyx':
+        final sumX = valuesX.fold<double>(0, (a, b) => a + b);
+        final sumY = valuesY.fold<double>(0, (a, b) => a + b);
+        if (sumX <= 0 || sumY <= 1) {
+          newText = 'NaN'; // log not defined for X<=0 or base<=1
+        } else {
+          final result = log(sumX) / log(sumY); // change of base formula
+          newText = result.toStringAsFixed(4);
+        }
+        break;
       case 'percentage':
         final sumX = valuesX.fold<double>(0, (a, b) => a + b);
         final sumY = valuesY.fold<double>(0, (a, b) => a + b);
@@ -1179,11 +1195,13 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
     'proportionality':TablerIcons.protocol,
     'change percentage': TablerIcons.switch_3,
     'weighted percentage': TablerIcons.scale_outline,
+    'division': TablerIcons.divide,
+    'logyx': TablerIcons.square_root,
   };
 
   static const Map<String, List<String>> functionCategories = {
-    'Comparison': ['difference', 'percentage', 'ratio', 'growth rate'],
-    'Transformations': ['exponent', 'log ratio'],
+    'Comparison': ['difference', 'percentage', 'ratio', 'growth rate','division'],
+    'Transformations': ['exponent', 'log ratio', 'logyx'],
     'Aggregates': ['weighted average'],
   };
 

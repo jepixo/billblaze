@@ -32,6 +32,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
@@ -71,6 +72,13 @@ Future<void> main() async {
   // for (var file in files) {
   //   await file.delete();
   // }
+  
+  // Create BillBlaze folder inside it
+  final billBlazeDir = Directory('${directory.path}/BillBlaze');
+
+  if (!(await billBlazeDir.exists())) {
+    await billBlazeDir.create(recursive: true);
+  }
 
 
   Hive.init('${directory.path}/hive');
@@ -173,44 +181,35 @@ class _MainAppState extends State<MainApp> {
           selectionColor:
               defaultPalette.tertiary.withOpacity(0.5), // Text highlight color
           selectionHandleColor:
-              Colors.blue, // Handle color when dragging selection
+              Colors.green, // Handle color when dragging selection
         ),
       ),
       // home: RootRouter(),
       home: isLoading
       ? Scaffold(
-          backgroundColor: defaultPalette.extras[3],
+          backgroundColor: defaultPalette.extras[0],
           body: SizedBox(
             width: sWidth,
             height: sHeight,
             child: Stack(
               children: [
                 
-                Positioned.fill(
-                child: LoadingAnimationWidget.newtonCradle(
-                  color: Colors.white,
-                  size: 150,
-                ),
-              ),
                 Positioned.fill(child: GestureDetector(
                   onTap: ()async{
-                  await Hive.deleteBoxFromDisk('decorations');
-                  await Hive.deleteBoxFromDisk('layouts');
-                  await Hive.openBox<SheetDecoration>('decorations');
-                  await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
-                  setState(() {
-                    isLoading = false;
-                  });
+                  // await Hive.deleteBoxFromDisk('decorations');
+                  // await Hive.deleteBoxFromDisk('layouts');
+                  // await Hive.openBox<SheetDecoration>('decorations');
+                  // await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
+                  // setState(() {
+                  //   isLoading = false;
+                  // });
                 },
                   child: Center(
-                    child: Text(
-                    log,
-                    style: GoogleFonts.lexend(
-                      color: defaultPalette.extras[0],
-                      letterSpacing: -1,
-                      fontSize: mapValueDimensionBasedLockOnDesync(15, 45, sWidth, sHeight),
-                    ),
-                  ),
+                    child: SvgPicture.asset(
+                      'assets/logos/Asset6.svg',
+                      // allowDrawingOutsideViewBox: true,
+                      // theme: SvgTheme(currentColor: defaultPalette.primary),
+                    )
                   ),
                 )),
                 if (Platform.isWindows)
@@ -386,12 +385,17 @@ class _MainAppState extends State<MainApp> {
               } else if (stream.hasError) {
                 return const Center(child: Text('Gone Wrong'));
               } else if (stream.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: LoadingAnimationWidget.newtonCradle(
-                    color: Colors.white,
-                    size: 150,
-                  ),
-                );
+                return const LoginSignUp();
+                // return  Container(
+                //   color: defaultPalette.extras[0],
+                //   child: Center(
+                //       child: SvgPicture.asset(
+                //         'assets/logos/Asset6.svg',
+                //         // allowDrawingOutsideViewBox: true,
+                //         // theme: SvgTheme(currentColor: defaultPalette.primary),
+                //       )
+                //     ),
+                // );
               } else {
                 return const LoginSignUp();
                 // return Container();

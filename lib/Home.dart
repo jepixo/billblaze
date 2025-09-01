@@ -33,6 +33,7 @@ import 'package:flutter_context_menu/flutter_context_menu.dart' as cm;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:flutter_svgl/flutter_svgl.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart'
     as gap;
@@ -60,6 +61,7 @@ import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:loading_indicator/loading_indicator.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
@@ -98,7 +100,9 @@ final aiPromptProvider = StateProvider<String>((ref) {
 final aiModelPathProvider = StateProvider<String>((ref) {
   return "assets/models/LFM2-1.2B-Q4_K_M.gguf";
 });
-
+final folderPathProvider = StateProvider<String>((ref) {
+  return 'D:\\';
+});
 class Home extends ConsumerStatefulWidget {
   const Home({super.key});
 
@@ -147,20 +151,18 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   late AnimationController sliderController;
   late AnimationController titleFontFadeController;
   TextEditingController chatTextController = TextEditingController();
+  TextEditingController folderPathController = TextEditingController();
   PieMenuController opsFormatPieController = PieMenuController();
   FocusNode chatFocusNode = FocusNode();
+  FocusNode folderPathFocusNode = FocusNode();
   FocusNode keyboardFocusNode = FocusNode();
   Orientation? _lastOrientation;
   Map<double, double> monthRevenueMap = {};
   Map<double, double> dayRevenueMap = {};
   String result = 'Loading AI';
   InAppWebViewController? _controller;
-  List<FocusNode> fontFocusNodes = List.generate(
-    4,
-    (index) => FocusNode(),
-  );
+  List<FocusNode> fontFocusNodes = List.generate( 4, (index) => FocusNode(),);
   // bool isHomeTab = true;
-
   Key titleMainKey = GlobalKey();
   var monthNames = [
     'Jan',
@@ -224,6 +226,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     isLoading = true;
+    
     tempLayoutModel = LayoutModel(
       name: 'New Layout',
       id: Uuid().v4(),
@@ -282,7 +285,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       squiggleFadeAnimationController.forward();
       sliderFadeAnimationController.forward();
     }
-    
     // titleFontFadeController.forward();
     dateTextControllers = [
       TextEditingController()..text = monthNames[selectedMonth - 1],
@@ -297,6 +299,27 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       } on Exception catch (e) {
         // TODO
       }finally{
+        final directory = await getApplicationSupportDirectory();
+        final billBlazeDir = Directory('${directory.path}\\BillBlaze');
+
+        if (!(await billBlazeDir.exists())) {
+          await billBlazeDir.create(recursive: true);
+        }
+
+        final user = ref.read(authPr).currentUser;
+        if (user != null) {
+          final userDir = Directory('${billBlazeDir.path}\\${user.uid}');
+          if (!(await userDir.exists())) {
+            await userDir.create(recursive: true);
+          }
+          final mainDir = Directory('${userDir.path}\\main');
+          if (!(await mainDir.exists())) {
+            await mainDir.create(recursive: true);
+          }
+          print('User folder: ${userDir.path}');
+          ref.read(folderPathProvider.notifier).state = mainDir.path.replaceAll('/', '\\');
+          folderPathController.text = ref.read(folderPathProvider).replaceAll('${directory.path}\\BillBlaze\\${ref.read(authPr).currentUser!.uid}', '...');
+        }
       setState(() {
         isLoading = false;
       });}
@@ -511,7 +534,7 @@ void _getCurrentTime() {
   TypewriterAnimatedText typewriterText(bool isHomeTab, double sWidth, double sHeight, String text){
     return TypewriterAnimatedText(text,
       textStyle: GoogleFonts.lexend(
-          fontSize: (isHomeTab) ? mapValueDimensionBasedLockOnDesync( 14, 30, sWidth, sHeight) : 20,
+          fontSize: (isHomeTab) ? mapValueDimensionBasedLockOnDesync( 12, 30, sWidth, sHeight) : 20,
           color: defaultPalette.extras[0].withOpacity(0.4),
           height: 1.7),
       speed: Duration(milliseconds: 100));
@@ -538,27 +561,27 @@ void _getCurrentTime() {
         appinioMinTabChanged = _dataPoints[0].first.x;
         appinioMaxTabChanged = _dataPoints[0].last.x;
       });
-      for (int i = 0; i < 2; i++) {
-        recentsCardController
-            .swipeDefault()
-            .then((n) => recentsCardController.swipeLeft().then((n) {
-                  if (recentsCardController.cardIndex! <= 9) {
-                    // print(recentsCardController.cardIndex);
-                    recentsCardController.setCardIndex(9);
-                  }
-                  setState(() {
-                    _cardPosition = 0;
-                  });
-                  recentsCardController.swipeDefault().then((n) => setState(() {
-                        _cardPosition = 0;
-                        ref
-                            .read(cCardIndexProvider.notifier)
-                            .update((s) => s = 0);
-                      }));
-                  // print(recentsCardController.cardIndex);
-                }));
-      }
-      //Handling Squiggle
+      // for (int i = 0; i < 2; i++) {
+      //   recentsCardController
+      //       .swipeDefault()
+      //       .then((n) => recentsCardController.swipeLeft().then((n) {
+      //             if (recentsCardController.cardIndex! <= 9) {
+      //               // print(recentsCardController.cardIndex);
+      //               recentsCardController.setCardIndex(9);
+      //             }
+      //             setState(() {
+      //               _cardPosition = 0;
+      //             });
+      //             recentsCardController.swipeDefault().then((n) => setState(() {
+      //                   _cardPosition = 0;
+      //                   ref
+      //                       .read(cCardIndexProvider.notifier)
+      //                       .update((s) => s = 0);
+      //                 }));
+      //             // print(recentsCardController.cardIndex);
+      //           }));
+      // }
+      // //Handling Squiggle
 
       // _updateGraphLineSpeed(20);
       setState(() {
@@ -588,22 +611,22 @@ void _getCurrentTime() {
             });
           });
         });
-        recentsCardController.unswipe().then((n) {
-          recentsCardController.unswipe().then((n) {
-            recentsCardController.setCardIndex(0);
-            ref
-                .read(cCardIndexProvider.notifier)
-                .update((s) => s = recentsCardController.cardIndex!);
-            _cardPosition = 0;
-          });
-        });
-        recentsCardController.setCardIndex(0);
-        setState(() {
-          ref
-              .read(cCardIndexProvider.notifier)
-              .update((s) => s = recentsCardController.cardIndex!);
-          _cardPosition = 0;
-        });
+        // recentsCardController.unswipe().then((n) {
+        //   recentsCardController.unswipe().then((n) {
+        //     recentsCardController.setCardIndex(0);
+        //     ref
+        //         .read(cCardIndexProvider.notifier)
+        //         .update((s) => s = recentsCardController.cardIndex!);
+        //     _cardPosition = 0;
+        //   });
+        // });
+        // recentsCardController.setCardIndex(0);
+        // setState(() {
+        //   ref
+        //       .read(cCardIndexProvider.notifier)
+        //       .update((s) => s = recentsCardController.cardIndex!);
+        //   _cardPosition = 0;
+        // });
       }
     }
     // print('e ${recentsCardController.cardIndex}');
@@ -653,6 +676,7 @@ void _getCurrentTime() {
     bool isBillTab = homeScreenTabIndex == 2;
     bool isProfileTab = homeScreenTabIndex == 3;
     final User? user = ref.watch(authPr).currentUser;
+    
     // RefHolder.ref = ref;
 
     // print(mapValue(value: sHeight, inMin: 480, inMax: 1186, outMin: 0.18, outMax: 0.1));
@@ -663,12 +687,6 @@ void _getCurrentTime() {
           body: Center(
             child: Stack(
               children: [
-                Positioned.fill(
-                child: LoadingAnimationWidget.newtonCradle(
-                  color: Colors.white,
-                  size: 150,
-                ),
-              ),
               Positioned.fill(
                 child: GestureDetector(
                   onTap: ()async{
@@ -679,14 +697,9 @@ void _getCurrentTime() {
                   });
                 },
                   child: Center(
-                    child: Text(
-                    'log',
-                    style: GoogleFonts.lexend(
-                      color: defaultPalette.extras[0],
-                      letterSpacing: -1,
-                      fontSize: mapValueDimensionBasedLockOnDesync(15, 45, sWidth, sHeight),
-                    ),
-                  ),
+                    child: SvgPicture.asset(
+                      'assets/logos/Asset7.svg',
+                    )
                   ),
                 )
               ),
@@ -870,105 +883,114 @@ void _getCurrentTime() {
                         // color: isHomeTab?defaultPalette.white: defaultPalette.secondary,
                         height: 35,
                       ),
-                      //
-                      //BILLBLAZE MAIN TITLE
+                      if(!isHomeTab)
                       AnimatedPositioned(
                         duration: defaultDuration,
                         top: (isHomeTab) ? topPadPosDistance : 10,
                         left: (isHomeTab) ? 110 : 60,
-                        child: Hero(
-                          tag: 'login',
-                          child: AnimatedTextKit(
-                            key: ValueKey(
-                                (isHomeTab) ? sHeight * sWidth : (isHomeTab)),
-                            animatedTexts: [
-                              if(!isHomeTab)
-                              TypewriterAnimatedText("Bill\nBlaze.".toUpperCase(),
-                                  textStyle: GoogleFonts.pressStart2p(
-                                      fontSize:
-                                          (isHomeTab) ? titleFontSize/1.5 : 12,
-                                      color: (isHomeTab)
-                                          ? Colors.black
-                                          : Color(0xFF000000).withOpacity(0.8),
-                                      letterSpacing:(isHomeTab) ? -2:-1,
-                                      height: (isHomeTab) ? 1.2:1.3),
-                                  speed: Duration(milliseconds: 100)),
-                              TypewriterAnimatedText("Bill\nBlaze.",
-                                  textStyle: GoogleFonts.abrilFatface(
-                                      fontSize:
-                                          (isHomeTab) ? titleFontSize : 20,
-                                      color: defaultPalette.extras[0],
-                                      height: 0.9),
-                                  speed: Duration(milliseconds: 100)),
-                              TypewriterAnimatedText("Bill\nBlaze.",
-                                  textStyle: GoogleFonts.zcoolKuaiLe(
-                                      fontSize:
-                                          (isHomeTab) ? titleFontSize : 20,
-                                      color: (isHomeTab)
-                                          ? Colors.black
-                                          : Color(0xFF000000).withOpacity(0.8),
-                                      height: 0.9),
-                                  speed: Duration(milliseconds: 100)),
-                              TypewriterAnimatedText("Bill\nBlaze.",
-                                  textStyle: GoogleFonts.moiraiOne(
-                                      fontSize:
-                                          (isHomeTab) ? titleFontSize : 20,
-                                      color: (isHomeTab)
-                                          ? Colors.black
-                                          : Color(0xFF000000).withOpacity(0.8),
-                                      height: 1),
-                                  speed: Duration(milliseconds: 100)),
-                              TypewriterAnimatedText("Bill\nBlaze.",
-                                  textStyle: GoogleFonts.silkscreen(
-                                      fontSize:
-                                          (isHomeTab) ? titleFontSize : 20,
-                                      color: (isHomeTab)
-                                          ? Colors.black
-                                          : Color(0xFF000000).withOpacity(0.8),
-                                      height: 0.9),
-                                  speed: Duration(milliseconds: 100)),
-                              TypewriterAnimatedText("Bill\nBlaze",
-                                  textStyle:
-                                      GoogleFonts.libreBarcode39ExtendedText(
-                                          fontSize:
-                                              (isHomeTab)
-                                                  ? titleFontSize / 1.1
-                                                  : 20,
-                                          letterSpacing: (isHomeTab)
-                                              ? -titleFontSize / 4
-                                              : 0,
-                                          height: 1),
-                                  speed: Duration(milliseconds: 100)),
-                              TypewriterAnimatedText("Bill\nBlaze.",
-                                  textStyle: GoogleFonts.redactedScript(
-                                      fontSize:
-                                          (isHomeTab) ? titleFontSize : 20,
-                                      color: (isHomeTab)
-                                          ? Colors.black
-                                          : Color(0xFF000000).withOpacity(0.8),
-                                      height: 0.9),
-                                  speed: Duration(milliseconds: 100)),
-                              
-                              // TypewriterAnimatedText("Bill\nBlaze.",
-                              //     textStyle: GoogleFonts.nabla(
-                              //         fontSize: isHomeTab
-                              //             ? titleFontSize
-                              //             : titleFontSize / 3,
-                              //         color: isHomeTab
-                              //             ? Colors.black
-                              //             : Color(0xFF000000).withOpacity(0.8),
-                              //         height: 0.9),
-                              //     speed: Duration(milliseconds: 100)),
-                            ],
-                            // totalRepeatCount: 1,
-                            repeatForever: true,
-                            pause: const Duration(milliseconds: 20000),
-                            displayFullTextOnTap: true,
-                            stopPauseOnTap: true,
-                          ),
+                        child: SvgPicture.asset(
+                          'assets/logos/Asset12.svg',
+                          width: 35,
+                          height: 25,
                         ),
                       ),
-                      //greetings and tips
+                      //
+                      //BILLBLAZE MAIN TITLE
+                      if(isHomeTab)
+                      AnimatedPositioned(
+                        duration: defaultDuration,
+                        top: (isHomeTab) ? topPadPosDistance : 12,
+                        left: (isHomeTab) ? 110 : 130,
+                        child: AnimatedTextKit(
+                          key: ValueKey(
+                              (isHomeTab) ? sHeight * sWidth : (isHomeTab)),
+                          animatedTexts: [
+                            if(!isHomeTab)
+                            TypewriterAnimatedText("Bill\nBlaze.".toUpperCase(),
+                                textStyle: GoogleFonts.pressStart2p(
+                                    fontSize:
+                                        (isHomeTab) ? titleFontSize/1.5 : 12,
+                                    color: (isHomeTab)
+                                        ? Colors.black
+                                        : Color(0xFF000000).withOpacity(0.8),
+                                    letterSpacing:(isHomeTab) ? -2:-1,
+                                    height: (isHomeTab) ? 1.2:1.3),
+                                speed: Duration(milliseconds: 100)),
+                            TypewriterAnimatedText("Bill\nBlaze.",
+                                textStyle: GoogleFonts.abrilFatface(
+                                    fontSize:
+                                        (isHomeTab) ? titleFontSize : 20,
+                                    color: defaultPalette.extras[0],
+                                    height: 0.9),
+                                speed: Duration(milliseconds: 100)),
+                            TypewriterAnimatedText("Bill\nBlaze.",
+                                textStyle: GoogleFonts.zcoolKuaiLe(
+                                    fontSize:
+                                        (isHomeTab) ? titleFontSize : 20,
+                                    color: (isHomeTab)
+                                        ? Colors.black
+                                        : Color(0xFF000000).withOpacity(0.8),
+                                    height: 0.9),
+                                speed: Duration(milliseconds: 100)),
+                            TypewriterAnimatedText("Bill\nBlaze.",
+                                textStyle: GoogleFonts.moiraiOne(
+                                    fontSize:
+                                        (isHomeTab) ? titleFontSize : 20,
+                                    color: (isHomeTab)
+                                        ? Colors.black
+                                        : Color(0xFF000000).withOpacity(0.8),
+                                    height: 1),
+                                speed: Duration(milliseconds: 100)),
+                            TypewriterAnimatedText("Bill\nBlaze.",
+                                textStyle: GoogleFonts.silkscreen(
+                                    fontSize:
+                                        (isHomeTab) ? titleFontSize : 20,
+                                    color: (isHomeTab)
+                                        ? Colors.black
+                                        : Color(0xFF000000).withOpacity(0.8),
+                                    height: 0.9),
+                                speed: Duration(milliseconds: 100)),
+                            TypewriterAnimatedText("Bill\nBlaze",
+                                textStyle:
+                                    GoogleFonts.libreBarcode39ExtendedText(
+                                        fontSize:
+                                            (isHomeTab)
+                                                ? titleFontSize / 1.1
+                                                : 20,
+                                        letterSpacing: (isHomeTab)
+                                            ? -titleFontSize / 4
+                                            : 0,
+                                        height: 1),
+                                speed: Duration(milliseconds: 100)),
+                            TypewriterAnimatedText("Bill\nBlaze.",
+                                textStyle: GoogleFonts.redactedScript(
+                                    fontSize:
+                                        (isHomeTab) ? titleFontSize : 20,
+                                    color: (isHomeTab)
+                                        ? Colors.black
+                                        : Color(0xFF000000).withOpacity(0.8),
+                                    height: 0.9),
+                                speed: Duration(milliseconds: 100)),
+                            
+                            // TypewriterAnimatedText("Bill\nBlaze.",
+                            //     textStyle: GoogleFonts.nabla(
+                            //         fontSize: isHomeTab
+                            //             ? titleFontSize
+                            //             : titleFontSize / 3,
+                            //         color: isHomeTab
+                            //             ? Colors.black
+                            //             : Color(0xFF000000).withOpacity(0.8),
+                            //         height: 0.9),
+                            //     speed: Duration(milliseconds: 100)),
+                          ],
+                          // totalRepeatCount: 1,
+                          repeatForever: true,
+                          pause: const Duration(milliseconds: 20000),
+                          displayFullTextOnTap: true,
+                          stopPauseOnTap: true,
+                        ),
+                      ),
+                      //greetings and tips 
                       AnimatedPositioned(
                         duration: defaultDuration,
                         top: topPadPosDistance +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false),
@@ -983,8 +1005,8 @@ void _getCurrentTime() {
                         // + mapValueDimensionBasedLockOnDesync(100, 180, sWidth, sHeight)
                         // //some padding
                         // + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
-                        left: mapValueDimensionBasedLockOnDesync(70, 95, sWidth, sHeight),
-                        width: mapValueDimensionBased(450, 1310, sWidth, sHeight,useWidth: true),
+                        left: mapValueDimensionBasedLockOnDesync(60, 75, sWidth, sHeight),
+                        width: mapValueDimensionBased(453, 1325, sWidth, sHeight,useWidth: true),
                         child: IgnorePointer(
                           ignoring: !isHomeTab,
                           child: AnimatedOpacity(
@@ -997,15 +1019,15 @@ void _getCurrentTime() {
                                   onClick: () async {
                                     
                                   },
-                                  buttonHeight: mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight),
-                                  buttonWidth: mapValueDimensionBased(450, 1310, sWidth, sHeight,useWidth: true)-mapValueDimensionBasedLockOnDesync(55, 105, sWidth, sHeight),
+                                  buttonHeight: mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
+                                  buttonWidth: mapValueDimensionBased(450, 1325, sWidth, sHeight,useWidth: true)-mapValueDimensionBasedLockOnDesync(55, 105, sWidth, sHeight),
                                   borderRadius: BorderRadius.circular(
-                                    mapValueDimensionBasedLockOnDesync( 15, 20, sWidth, sHeight)),
+                                    mapValueDimensionBasedLockOnDesync( 13, 20, sWidth, sHeight)),
                                   animationDuration:
                                     const Duration(milliseconds: 200),
                                   animationCurve: Curves.ease,
-                                  subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                  depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                  subfac: mapValueDimensionBasedLockOnDesync( 3, 4, sWidth, sHeight),
+                                  depth: mapValueDimensionBasedLockOnDesync( 3, 4, sWidth, sHeight),
                                   topDecoration: BoxDecoration(
                                   color: defaultPalette.primary,
                                   border: Border.all(),
@@ -1013,17 +1035,18 @@ void _getCurrentTime() {
                                   topLayerChild:Row(
                                     children: [
                                       Icon(TablerIcons.cursor_text,
-                                      size: mapValueDimensionBasedLockOnDesync( 25, 35, sWidth, sHeight),
+                                      size: mapValueDimensionBasedLockOnDesync( 20, 35, sWidth, sHeight),
                                       ),
                                       Expanded(
                                         child: Container(
+                                        alignment: Alignment(-1, 0),
                                         padding: EdgeInsets.all(4).copyWith(left:10),
-                                        margin: EdgeInsets.symmetric(vertical:6),
+                                        margin: EdgeInsets.symmetric(vertical:mapValueDimensionBasedLockOnDesync( 4,6, sWidth, sHeight)),
                                         decoration: BoxDecoration(
                                           color: defaultPalette.secondary,
                                           border: Border.all(width: 0.5),
                                           borderRadius: BorderRadius.circular(
-                                          mapValueDimensionBasedLockOnDesync( 12, 20, sWidth, sHeight)),
+                                          mapValueDimensionBasedLockOnDesync( 8, 20, sWidth, sHeight)),
                                         ),
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1074,7 +1097,7 @@ void _getCurrentTime() {
                                         overflow:TextOverflow.ellipsis,
                                         style: GoogleFonts.lexend(
                                           color: defaultPalette.extras[0],
-                                          fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
+                                          fontSize: mapValueDimensionBasedLockOnDesync(14, 35, sWidth, sHeight),
                                           letterSpacing: -1,
                                           fontWeight: FontWeight.w400,
                                           height: 0.5
@@ -1095,15 +1118,15 @@ void _getCurrentTime() {
                                   onClick: () async {
                                     
                                   },
-                                  buttonHeight: mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight),
-                                  buttonWidth: mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight),
+                                  buttonHeight: mapValueDimensionBasedLockOnDesync(45, 80, sWidth, sHeight),
+                                  buttonWidth: mapValueDimensionBasedLockOnDesync(45, 80, sWidth, sHeight),
                                   borderRadius: BorderRadius.circular(
                                     mapValueDimensionBasedLockOnDesync( 30, 80, sWidth, sHeight)),
                                   animationDuration:
                                     const Duration(milliseconds: 200),
                                   animationCurve: Curves.ease,
-                                  subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                  depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                  subfac: mapValueDimensionBasedLockOnDesync( 3, 4, sWidth, sHeight),
+                                  depth: mapValueDimensionBasedLockOnDesync( 3, 4, sWidth, sHeight),
                                   topDecoration: BoxDecoration(
                                   color: defaultPalette.primary,
                                   border: Border.all(),
@@ -1132,14 +1155,13 @@ void _getCurrentTime() {
                         top: topPadPosDistance 
                         +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
                         //height of greetings
-                        +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
+                        +  mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight)
                         //some padding
-                        + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight) +5,
-
+                        + mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight) +5,
                         // bottom: mapValueDimensionBasedLockOnDesync(18, 28, sWidth, sHeight),
-                        left: mapValueDimensionBasedLockOnDesync(70, 100, sWidth, sHeight)+5,
+                        left: mapValueDimensionBasedLockOnDesync(65, 80, sWidth, sHeight)+5,
                         height: sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
-                        width: mapValueDimensionBased(450, 1300, sWidth, sHeight,useWidth: true),
+                        width: mapValueDimensionBased(453, 1315, sWidth, sHeight,useWidth: true),
                         child:IgnorePointer(
                           ignoring: !isHomeTab,
                           child: AnimatedOpacity(
@@ -1157,13 +1179,13 @@ void _getCurrentTime() {
                         top: topPadPosDistance 
                         +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
                         //height of greetings
-                        +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
+                        +  mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight)
                         //some padding
-                        + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
+                        + mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
                         // bottom: mapValueDimensionBasedLockOnDesync(18+5, 28+5, sWidth, sHeight),
-                        left: mapValueDimensionBasedLockOnDesync(70, 100, sWidth, sHeight),
+                        left: mapValueDimensionBasedLockOnDesync(65, 80, sWidth, sHeight),
                         height: sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
-                        width: mapValueDimensionBased(450, 1300, sWidth, sHeight,useWidth: true),
+                        width: mapValueDimensionBased(453, 1315, sWidth, sHeight,useWidth: true),
                         child:IgnorePointer(
                           ignoring: !isHomeTab,
                           child: AnimatedOpacity(
@@ -1182,13 +1204,13 @@ void _getCurrentTime() {
                         top: topPadPosDistance 
                         +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
                         //height of greetings
-                        +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
+                        +  mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight)
                         //some padding
-                        + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
+                        + mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
                         // bottom: mapValueDimensionBasedLockOnDesync(18+5, 28+5, sWidth, sHeight),
-                        left: mapValueDimensionBasedLockOnDesync(70, 100, sWidth, sHeight),
+                        left: mapValueDimensionBasedLockOnDesync(65, 80, sWidth, sHeight),
                         height: sHeight / 4,
-                        width: mapValueDimensionBased(450, 1300, sWidth, sHeight,useWidth: true),
+                        width: mapValueDimensionBased(453, 1315, sWidth, sHeight,useWidth: true),
                         child: IgnorePointer(
                           ignoring: !isHomeTab,
                           child: AnimatedOpacity(
@@ -1211,13 +1233,13 @@ void _getCurrentTime() {
                         top: topPadPosDistance 
                           +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
                           //height of greetings
-                          +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
+                          +  mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight)
                           //some padding
-                          + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
+                          + mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
                         // bottom: mapValueDimensionBasedLockOnDesync(18+5, 28+5, sWidth, sHeight),
-                        left: mapValueDimensionBasedLockOnDesync(70, 100, sWidth, sHeight),
+                        left: mapValueDimensionBasedLockOnDesync(65, 80, sWidth, sHeight),
                         height: sHeight / 4,
-                        width: mapValueDimensionBased(450, 1300, sWidth, sHeight,useWidth: true),
+                        width: mapValueDimensionBased(453, 1315, sWidth, sHeight,useWidth: true),
                         child: IgnorePointer(
                           ignoring: !isHomeTab,
                           child: AnimatedOpacity(
@@ -1477,15 +1499,15 @@ void _getCurrentTime() {
                         top: topPadPosDistance 
                         +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
                         //height of greetings
-                        +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
+                        +  mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight)
                         //some padding
-                        + mapValueDimensionBasedLockOnDesync(10, 30, sWidth, sHeight)
+                        + mapValueDimensionBasedLockOnDesync(5, 25, sWidth, sHeight)
                         //height of graph
                         + sHeight / 4,
                         // bottom: mapValueDimensionBasedLockOnDesync(18, 28, sWidth, sHeight)+sHeight / 4,
-                        left: mapValueDimensionBasedLockOnDesync(102, 142, sWidth, sHeight),
+                        left: mapValueDimensionBasedLockOnDesync(97, 122, sWidth, sHeight),
                         height: 20,
-                        width: mapValueDimensionBased(380, 1200, sWidth, sHeight,useWidth: true),
+                        width: mapValueDimensionBased(380, 1215, sWidth, sHeight,useWidth: true),
                         child: AnimatedOpacity(
                           // animate: true,
                           // manualTrigger: true,
@@ -1526,30 +1548,239 @@ void _getCurrentTime() {
                           ),
                         )),
                       //
+                      //Folder Selector BGGBLACKK and open in explorer
+                      AnimatedPositioned(
+                        duration: defaultDuration,
+                        top: topPadPosDistance 
+                        +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
+                        //height of greetings
+                        +  mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight)
+                        //some padding
+                        + mapValueDimensionBasedLockOnDesync(10, 30, sWidth, sHeight)
+                        //height of graphh
+                        + sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
+                        //some padding
+                        + mapValueDimensionBasedLockOnDesync(17, 23, sWidth, sHeight),
+                        left: mapValueDimensionBasedLockOnDesync(67, 80, sWidth, sHeight),
+                        height: mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
+                        width: mapValueDimensionBased(453, 1320, sWidth, sHeight,useWidth: true),
+                        child: IgnorePointer(
+                          ignoring: !isHomeTab,
+                          child: AnimatedOpacity(
+                            opacity: isHomeTab ? 1 : 0,
+                            duration: Durations.medium1,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color:defaultPalette.extras[0],
+                                borderRadius:BorderRadius.circular(mapValueDimensionBasedLockOnDesync(18, 30, sWidth, sHeight))
+                              ),
+                              child: Row(
+                                children:[
+                                  SizedBox(width: mapValueDimensionBased(300, 860, sWidth, sHeight,useWidth: true),),
+                                  Expanded(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      SizedBox(width: mapValueDimensionBasedLockOnDesync(4, 6, sWidth, sHeight)),
+                                      Expanded(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Text('bills dir',
+                                          textAlign: TextAlign.end,
+                                          maxLines:1,
+                                          overflow:TextOverflow.ellipsis,
+                                          style: GoogleFonts.lexend(
+                                            color: defaultPalette.primary,
+                                            fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
+                                            letterSpacing: -1,
+                                            fontWeight: FontWeight.w400,
+                                            height: 0.5
+                                          ),),
+                                        ),
+                                      ),
+                                      ClipRRect(
+                                        borderRadius:BorderRadius.circular(9999),
+                                        child: Material(
+                                          color: defaultPalette.transparent,
+                                          child: InkWell(
+                                            hoverColor: defaultPalette.primary.withOpacity(0.2),
+                                            splashColor: defaultPalette.primary.withOpacity(0.2),
+                                            highlightColor: defaultPalette.primary.withOpacity(0.2),
+                                            onTap:()async{
+                                              final path = ref.read(folderPathProvider);
+                                              print(path);
+                                              if (path == null || path.isEmpty) return;
+                                              final dir = Directory(path.replaceAll('/', '\\'));
+                                              if (await dir.exists()) {
+                                                if (Platform.isWindows) {
+                                                await Process.run('explorer', [dir.path]);
+                                                }
+                                              }
+                                            },
+                                            child: Padding(
+                                              padding:EdgeInsets.all(mapValueDimensionBasedLockOnDesync(4, 10, sWidth, sHeight)),
+                                              child:Icon(TablerIcons.folder_share,
+                                            size: mapValueDimensionBasedLockOnDesync( 22, 45, sWidth, sHeight),
+                                            color:defaultPalette.primary
+                                            ),)
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: mapValueDimensionBasedLockOnDesync(4, 6, sWidth, sHeight))
+                                    ],
+                                  ),
+                                  )
+                                ]
+                              ),
+                            )
+                      ))),
+                      //Folder Selector 
+                      AnimatedPositioned(
+                        duration: defaultDuration,
+                        top: topPadPosDistance 
+                        +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
+                        //height of greetings
+                        +  mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight)
+                        //some padding
+                        + mapValueDimensionBasedLockOnDesync(10, 30, sWidth, sHeight)
+                        //height of graphh
+                        + sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
+                        //some padding
+                        + mapValueDimensionBasedLockOnDesync(13, 18, sWidth, sHeight),
+                        left: mapValueDimensionBasedLockOnDesync(65, 80, sWidth, sHeight),
+                        height: mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
+                        width: mapValueDimensionBased(300, 860, sWidth, sHeight,useWidth: true),
+                        child: IgnorePointer(
+                          ignoring: !isHomeTab,
+                          child: AnimatedOpacity(
+                            opacity: isHomeTab ? 1 : 0,
+                            duration: Durations.medium1,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color:defaultPalette.primary,
+                                borderRadius:BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 13, 20, sWidth, sHeight)),
+                                border: Border.all()
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child:  Container(
+                                      height: mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
+                                      margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(4, 6, sWidth, sHeight)),
+                                      alignment: Alignment(-1, 0),
+                                      decoration: BoxDecoration(
+                                          color: defaultPalette.secondary,
+                                          borderRadius:BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 11, 18, sWidth, sHeight)),
+                                          border: Border.all(width: 0.5)),
+                                      child: TextFormField(
+                                        onTapOutside: (event) => folderPathFocusNode.unfocus(),
+                                        onTap: () {
+                                          FocusManager.instance.primaryFocus?.unfocus();
+                                          keyboardFocusNode.unfocus();
+                                          folderPathFocusNode.requestFocus();
+                                          folderPathFocusNode.requestFocus();
+                                          Future.delayed(Durations.short2).then((value) => folderPathFocusNode.requestFocus(),);
+                                        },
+                                        focusNode: folderPathFocusNode,
+                                        controller:
+                                            folderPathController,
+                                        cursorColor:
+                                            defaultPalette.tertiary,
+                                        selectionControls:
+                                            NoMenuTextSelectionControls(),
+                                        textAlign: TextAlign.start,
+                                        textAlignVertical:
+                                            TextAlignVertical(
+                                                y: -1),
+                                        maxLines: 1,
+                                        minLines: 1,
+                                        decoration: InputDecoration(
+                                          contentPadding:
+                                              const EdgeInsets.only(
+                                                  left: 15,
+                                                  top: 5,
+                                                  bottom: 5),
+                                          labelStyle:
+                                              GoogleFonts.lexend(
+                                                  color:
+                                                      defaultPalette
+                                                          .black),
+                                          fillColor: defaultPalette
+                                              .transparent,
+                                          border: InputBorder.none,
+                                          enabledBorder:
+                                              OutlineInputBorder(
+                                                  borderSide:
+                                                      BorderSide
+                                                          .none),
+                                          focusedBorder:
+                                              OutlineInputBorder(
+                                                  borderSide:
+                                                      BorderSide
+                                                          .none),
+                                        ),
+                                        style: GoogleFonts.lexend(
+                                            fontSize:
+                                                mapValueDimensionBasedLockOnDesync(
+                                                    15,
+                                                    25,
+                                                    sWidth,
+                                                    sHeight),
+                                            color: defaultPalette
+                                                .extras[0],
+                                            fontWeight:
+                                                FontWeight.w400,
+                                            letterSpacing: -1),
+                                        onFieldSubmitted:
+                                            (value) async {
+                                              final directory = await getApplicationSupportDirectory();
+                                              final dir = Directory(value.replaceAll('...','${directory.path}\\BillBlaze\\${ref.read(authPr).currentUser!.uid}'));
+                                              print(dir.path);
+                                              if (await dir.exists()) {
+                                                ref.read(folderPathProvider.notifier).state = dir.path;
+                                                folderPathController.text = dir.path.replaceAll('${directory.path}\\BillBlaze\\${ref.read(authPr).currentUser!.uid}', '...');
+                                              } else {
+                                                try {
+                                                  await dir.create();
+                                                  ref.read(folderPathProvider.notifier).state = dir.path;
+                                                  folderPathController.text = dir.path.replaceAll('${directory.path}\\BillBlaze\\${ref.read(authPr).currentUser!.uid}', '...');
+                                                } catch (e) {
+                                                  
+                                                }
+                                              }
+                                            },
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(TablerIcons.folder_filled,
+                                  size: mapValueDimensionBasedLockOnDesync( 25, 45, sWidth, sHeight),
+                                  ),
+                                  SizedBox(width: mapValueDimensionBasedLockOnDesync(6, 8, sWidth, sHeight))
+                                ],
+                              ),
+                            )
+                      ))),
+                      //
                       //STATCARDSSS
                       AnimatedPositioned(
                         duration: defaultDuration,
-                        // bottom: mapValueDimensionBasedLockOnDesync(18, 28, sWidth, sHeight)
-                        // //height pf graph
-                        // +sHeight / 4
-                        // //height of balloon slider
-                        // + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
-                        // //some padding
-                        // + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
                         top: topPadPosDistance 
                         +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
                         //height of greetings
                         +  mapValueDimensionBasedLockOnDesync(50, 80, sWidth, sHeight)
                         //some padding
-                        + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
+                        + mapValueDimensionBasedLockOnDesync(10, 30, sWidth, sHeight)
                         //height of graphh
                         + sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
+                        //height of folderPath
+                        +  mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight)
                         //some padding
-                        + mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
+                        + mapValueDimensionBasedLockOnDesync(10, 30, sWidth, sHeight)
                         ,
-                        left: mapValueDimensionBasedLockOnDesync(65, 95, sWidth, sHeight),
-                        height: mapValueDimensionBasedLockOnDesync(130, 370, sWidth, sHeight),
-                        width: mapValueDimensionBased(460, 1310, sWidth, sHeight,useWidth: true),
+                        left: mapValueDimensionBasedLockOnDesync(60, 75, sWidth, sHeight),
+                        height: mapValueDimensionBasedLockOnDesync(90, 290, sWidth, sHeight),
+                        width: mapValueDimensionBased(460, 1330, sWidth, sHeight,useWidth: true),
                         child: IgnorePointer(
                           ignoring: !isHomeTab,
                           child: AnimatedOpacity(
@@ -1585,8 +1816,7 @@ void _getCurrentTime() {
                                       });
                                     },
                                     cardBuilder: (BuildContext context, int index) {
-                                      int currentCardIndex =
-                                          ref.watch(revIndexProvider);
+                                      int currentCardIndex = ref.watch(revIndexProvider);
                                       return Stack(
                                         children: [
                                           Positioned.fill(
@@ -1667,7 +1897,7 @@ void _getCurrentTime() {
                                                         ),
                                                       ),
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),),
                                                     Row(
                                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                       children: [
@@ -1685,7 +1915,7 @@ void _getCurrentTime() {
                                                 
                                                       ],
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),)
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),)
                                                   ],
                                                 ),
                                               )
@@ -1744,7 +1974,7 @@ void _getCurrentTime() {
                                                         ),
                                                       ),
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),),
                                                     Padding(
                                                       padding: const EdgeInsets.symmetric(horizontal: 8),
                                                       child: Row(
@@ -1776,7 +2006,7 @@ void _getCurrentTime() {
                                                         ],
                                                       ),
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),)
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),)
                                                   ],
                                                 ),
                                               )
@@ -1905,7 +2135,7 @@ void _getCurrentTime() {
                                                         ),
                                                       ),
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),),
                                                     Row(
                                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                       children: [
@@ -1921,7 +2151,7 @@ void _getCurrentTime() {
                                                 
                                                       ],
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),)
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),)
                                                   ],
                                                 ),
                                               )
@@ -1980,7 +2210,7 @@ void _getCurrentTime() {
                                                         ),
                                                       ),
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),),
                                                     Row(
                                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                       children: [
@@ -2004,7 +2234,7 @@ void _getCurrentTime() {
                                                 
                                                       ],
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),)
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),)
                                                   ],
                                                 ),
                                               )
@@ -2134,7 +2364,7 @@ void _getCurrentTime() {
                                                         ),
                                                       ),
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),),
                                                     Row(
                                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                       children: [
@@ -2150,7 +2380,7 @@ void _getCurrentTime() {
                                                 
                                                       ],
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),)
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),)
                                                   ],
                                                 ),
                                               )
@@ -2209,7 +2439,7 @@ void _getCurrentTime() {
                                                         ),
                                                       ),
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),),
                                                     Padding(
                                                       padding: const EdgeInsets.symmetric(horizontal: 8),
                                                       child: Row(
@@ -2241,7 +2471,7 @@ void _getCurrentTime() {
                                                         ],
                                                       ),
                                                     ),
-                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),)
+                                                    SizedBox(height: mapValueDimensionBasedLockOnDesync(4, 15, sWidth, sHeight),)
                                                   ],
                                                 ),
                                               )
@@ -2276,909 +2506,914 @@ void _getCurrentTime() {
                         width: sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
                         child: IgnorePointer(
                           ignoring: !isHomeTab,
-                          child: AppinioSwiper(
-                            backgroundCardCount: 1,
-                            // initialIndex: ref.read(cCardIndexProvider),
-                            backgroundCardOffset: Offset(5, 5),
-                            duration: Duration(milliseconds: 150),
-                            backgroundCardScale: 1,
-                            loop: isHomeTab,
-                            cardCount: 2,
-                            allowUnSwipe: true,
-                            controller: recentsCardController,
-                            onCardPositionChanged: (position) {
-                              setState(() {
-                                _cardPosition = position.offset.dx.abs() + position.offset.dy.abs();
-                              });
-                            },
-                            onSwipeEnd: (a, b, direction) {
-                              // print(direction.toString());
-                              setState(() {
-                                ref
-                                    .read(cCardIndexProvider.notifier)
-                                    .update((s) => s = b);
-                                // _currentCardIndex = b;
-                                _cardPosition = 0;
-                              });
-                            },
-                            cardBuilder: (BuildContext context, int index) {
-                              int currentCardIndex =
-                                  ref.watch(cCardIndexProvider);
-                              return Stack(
-                                children: [
-                                  Positioned.fill(
-                                    child: AnimatedContainer(
-                                      duration: defaultDuration,
-                                      margin: EdgeInsets.all(15),
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        border: Border.all(width: 1),
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned.fill(
-                                    child: AnimatedOpacity(
-                                      opacity: currentCardIndex == index
-                                          ? 0
-                                          : index >= (currentCardIndex + 2) % 10
-                                              ? 1
-                                              : (1 -
-                                                  (_cardPosition / 200)
-                                                      .clamp(0.0, 1.0)),
-                                      duration: Duration(milliseconds: 300),
+                          child: AnimatedOpacity(
+                            duration: Durations.medium2,
+                            opacity: isHomeTab? 1:0,
+                            child: AppinioSwiper(
+                              backgroundCardCount: 1,
+                              // initialIndex: ref.read(cCardIndexProvider),
+                              backgroundCardOffset: Offset(5, 5),
+                              duration: Duration(milliseconds: 150),
+                              backgroundCardScale: 1,
+                              loop: isHomeTab,
+                              cardCount: 2,
+                              allowUnSwipe: true,
+                              controller: recentsCardController,
+                              onCardPositionChanged: (position) {
+                                setState(() {
+                                  _cardPosition = position.offset.dx.abs() + position.offset.dy.abs();
+                                });
+                              },
+                              onSwipeEnd: (a, b, direction) {
+                                // print(direction.toString());
+                                setState(() {
+                                  ref
+                                      .read(cCardIndexProvider.notifier)
+                                      .update((s) => s = b);
+                                  // _currentCardIndex = b;
+                                  _cardPosition = 0;
+                                });
+                              },
+                              cardBuilder: (BuildContext context, int index) {
+                                int currentCardIndex =
+                                    ref.watch(cCardIndexProvider);
+                                return Stack(
+                                  children: [
+                                    Positioned.fill(
                                       child: AnimatedContainer(
-                                        duration: Duration(milliseconds: 300),
+                                        duration: defaultDuration,
                                         margin: EdgeInsets.all(15),
                                         alignment: Alignment.center,
                                         decoration: BoxDecoration(
-                                          color: index ==
-                                                  (currentCardIndex + 1) % 10
-                                              ? defaultPalette.extras[0]
-                                              : index ==
-                                                      (currentCardIndex + 2) % 10
-                                                  ? defaultPalette.extras[0]
-                                                  : defaultPalette.extras[0],
-                                          border: Border.all(width: 2),
+                                          color: Colors.white,
+                                          border: Border.all(width: 1),
                                           borderRadius: BorderRadius.circular(30),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  if(index==0)
-                                  //AI CHAT INTERFACE
-                                  Positioned.fill(
-                                      left: 15+mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
-                                      right: 15+mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
-                                      top: 15+10,
-                                      bottom: 15+5,
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(0),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          //The name of the model and switch button
-                                          SizedBox(
-                                          child: Row(
-                                            children: [
-                                              SizedBox(width: 30,),
-                                              Expanded(
-                                                child: Text(
-                                                  ref.watch(aiModelPathProvider).split('/').last.replaceAll('.gguf', '').toUpperCase(),
-                                                  maxLines: 1,
-                                                  overflow:TextOverflow.ellipsis,
-                                                  textAlign: TextAlign.center,
-                                                  style: GoogleFonts.pressStart2p(
-                                                    fontSize: mapValueDimensionBasedLockOnDesync(
-                                                            15,
-                                                            20,
-                                                            sWidth,
-                                                            sHeight),
-                                                    color: defaultPalette
-                                                        .extras[0],
-                                                    fontWeight:
-                                                        FontWeight.w500,
+                                    Positioned.fill(
+                                      child: AnimatedOpacity(
+                                        opacity: currentCardIndex == index
+                                            ? 0
+                                            : index >= (currentCardIndex + 2) % 10
+                                                ? 1
+                                                : (1 -
+                                                    (_cardPosition / 200)
+                                                        .clamp(0.0, 1.0)),
+                                        duration: Duration(milliseconds: 300),
+                                        child: AnimatedContainer(
+                                          duration: Duration(milliseconds: 300),
+                                          margin: EdgeInsets.all(15),
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color: index ==
+                                                    (currentCardIndex + 1) % 10
+                                                ? defaultPalette.extras[0]
+                                                : index ==
+                                                        (currentCardIndex + 2) % 10
+                                                    ? defaultPalette.extras[0]
+                                                    : defaultPalette.extras[0],
+                                            border: Border.all(width: 2),
+                                            borderRadius: BorderRadius.circular(30),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    if(index==0)
+                                    //AI CHAT INTERFACE
+                                    Positioned.fill(
+                                        left: 15+mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
+                                        right: 15+mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
+                                        top: 15+10,
+                                        bottom: 15+5,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(0),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            //The name of the model and switch button
+                                            SizedBox(
+                                            child: Row(
+                                              children: [
+                                                SizedBox(width: 30,),
+                                                Expanded(
+                                                  child: Text(
+                                                    ref.watch(aiModelPathProvider).split('/').last.replaceAll('.gguf', '').toUpperCase(),
+                                                    maxLines: 1,
+                                                    overflow:TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.pressStart2p(
+                                                      fontSize: mapValueDimensionBasedLockOnDesync(
+                                                              15,
+                                                              20,
+                                                              sWidth,
+                                                              sHeight),
+                                                      color: defaultPalette
+                                                          .extras[0],
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
                                                   ),
                                                 ),
+                                                SizedBox(width: 15,),
+                                                ElevatedLayerButton(
+                                                  onClick: () async {
+                                                    final result = await FilePicker.platform.pickFiles(
+                                                      type: FileType.custom,
+                                                      allowedExtensions: ['gguf'], // only allow .gguf
+                                                      allowMultiple: false,
+                                                    );
+                                        
+                                                    if (result != null && result.files.isNotEmpty) {
+                                                        ref.read(aiModelPathProvider.notifier).state = result.files.single.path?.replaceAll('\\', '/')??ref.read(aiModelPathProvider.notifier).state;
+                                                      
+                                                    }
+                                                  },
+                                                  buttonHeight:
+                                                      mapValueDimensionBasedLockOnDesync(
+                                                          30, 35, sWidth, sHeight),
+                                                  buttonWidth:mapValueDimensionBasedLockOnDesync(
+                                                          30, 35, sWidth, sHeight),
+                                                  borderRadius: BorderRadius.circular(
+                                                      mapValueDimensionBasedLockOnDesync(
+                                                          16, 30, sWidth, sHeight)),
+                                                  animationDuration:
+                                                      const Duration(milliseconds: 200),
+                                                  animationCurve: Curves.ease,
+                                                  subfac: mapValueDimensionBasedLockOnDesync(
+                                                      2, 4, sWidth, sHeight),
+                                                  depth: mapValueDimensionBasedLockOnDesync(
+                                                      2, 4, sWidth, sHeight),
+                                                  topDecoration: BoxDecoration(
+                                                    color: defaultPalette.extras[4],
+                                                    border: Border.all(),
+                                                  ),
+                                                  topLayerChild: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Icon(TablerIcons.replace,size:12,color: defaultPalette.primary,)
+                                                    ],
+                                                  ),
+                                                  baseDecoration: BoxDecoration(
+                                                    color: defaultPalette.extras[0],
+                                                    // border: Border.all(),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 15,),
+                                              ],
+                                            ),
+                                            ),
+                                            SizedBox(height: 8,),
+                                            //Chat interfacee
+                                            Expanded(
+                                              child: ClipRRect(
+                                                borderRadius:BorderRadius.circular(35),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color:defaultPalette.secondary,
+                                                    borderRadius:BorderRadius.circular(35),
+                                                    border: Border.all()
+                                                  ),
+                                                  child: SingleChildScrollView(
+                                                      padding: EdgeInsets.all(10),
+                                                      child: Column(
+                                                        children: [
+                                                        SizedBox(height: 8,),
+                                                        //USER PROMPT CHAT BUBBLE
+                                                        if(ref.watch(aiPromptProvider).isNotEmpty)
+                                                        Row(
+                                                          mainAxisAlignment: MainAxisAlignment.end,
+                                                          children: [
+                                                            SizedBox(width:22),
+                                                            Expanded(
+                                                              child: Stack(
+                                                                alignment: Alignment.topRight,
+                                                                children: [
+                                                                  Container(
+                                                                    margin: EdgeInsets.only(left:2,top: 2),
+                                                                    padding:EdgeInsets.all(8).copyWith(bottom:8,) ,
+                                                                    decoration:BoxDecoration(
+                                                                      color:defaultPalette.extras[0],
+                                                                      borderRadius:BorderRadius.circular(20),
+                                                                      border: Border.all()
+                                                                    ),
+                                                                    child:Text(
+                                                                    ref.watch(aiPromptProvider),
+                                                                    style: GoogleFonts.lexend(
+                                                                        fontSize:
+                                                                            mapValueDimensionBasedLockOnDesync(
+                                                                                15,
+                                                                                20,
+                                                                                sWidth,
+                                                                                sHeight),
+                                                                        color: defaultPalette
+                                                                            .extras[0],
+                                                                        fontWeight:
+                                                                            FontWeight.w500,
+                                                                        letterSpacing: -0.8),
+                                                                  ),),
+                                                                  Container(
+                                                                    margin:EdgeInsets.only(right: 2),
+                                                                    padding:EdgeInsets.all(8),
+                                                                    decoration:BoxDecoration(
+                                                                      color:defaultPalette.primary,
+                                                                      borderRadius:BorderRadius.circular(20),
+                                                                      border: Border.all()
+                                                                    ),
+                                                                    child:Text(
+                                                                    ref.watch(aiPromptProvider),
+                                                                    style: GoogleFonts.lexend(
+                                                                        fontSize:
+                                                                            mapValueDimensionBasedLockOnDesync(
+                                                                                15,
+                                                                                20,
+                                                                                sWidth,
+                                                                                sHeight),
+                                                                        color: defaultPalette
+                                                                            .extras[0],
+                                                                        fontWeight:
+                                                                            FontWeight.w500,
+                                                                        letterSpacing: -0.8),
+                                                                  ),)
+                                                                ],
+                                                              ),
+                                                            )
+                                                          ],
+                                                        ),
+                                                        SizedBox(height: 12,),
+                                                        //AI RESPONSE CHAT BUBBLE
+                                                        Row(
+                                                          mainAxisAlignment: MainAxisAlignment.end,
+                                                          children: [
+                                                            Expanded(
+                                                              child: Stack(
+                                                                children: [
+                                                                  Container(
+                                                                    margin:EdgeInsets.only(right:22,left: 2,top: 2),
+                                                                    padding:EdgeInsets.all(10) ,
+                                                                    decoration:BoxDecoration(
+                                                                      color:defaultPalette.extras[0],
+                                                                      borderRadius:BorderRadius.circular(20),
+                                                                      border: Border.all()
+                                                                    ),
+                                                                    child:Text(
+                                                                    ref.watch(aiTokenProvider).trimLeft(),
+                                                                    style: GoogleFonts.lexend(
+                                                                        fontSize:
+                                                                            mapValueDimensionBasedLockOnDesync(
+                                                                                15,
+                                                                                20,
+                                                                                sWidth,
+                                                                                sHeight),
+                                                                        color: defaultPalette
+                                                                            .extras[0],
+                                                                        fontWeight:
+                                                                            FontWeight.w500,
+                                                                        letterSpacing: -0.8),
+                                                                  ),),
+                                                                  Container(
+                                                                    margin:EdgeInsets.only(right:24),
+                                                                    padding:EdgeInsets.all(10),
+                                                                    decoration:BoxDecoration(
+                                                                      color:defaultPalette.tertiary,
+                                                                      borderRadius:BorderRadius.circular(20),
+                                                                      border: Border.all()
+                                                                    ),
+                                                                    child:Text(
+                                                                    ref.watch(aiTokenProvider).trimLeft(),
+                                                                    style: GoogleFonts.lexend(
+                                                                        fontSize:
+                                                                            mapValueDimensionBasedLockOnDesync(
+                                                                                15,
+                                                                                20,
+                                                                                sWidth,
+                                                                                sHeight),
+                                                                        color: defaultPalette
+                                                                            .primary,
+                                                                        fontWeight:
+                                                                            FontWeight.w500,
+                                                                        letterSpacing: -0.8),
+                                                                  ),)
+                                                                ],
+                                                              ),
+                                                            )
+                                                          ],
+                                                        ),
+                                                        ],
+                                                      )),
+                                                ),
                                               ),
-                                              SizedBox(width: 15,),
-                                              ElevatedLayerButton(
+                                            ),
+                                            SizedBox(height:5),
+                                            
+                                            SizedBox(height:5),
+                                            //SEND PROMPT BUTTON
+                                            Row(
+                                              children: [
+                                                ElevatedLayerButton(
                                                 onClick: () async {
-                                                  final result = await FilePicker.platform.pickFiles(
-                                                    type: FileType.custom,
-                                                    allowedExtensions: ['gguf'], // only allow .gguf
-                                                    allowMultiple: false,
-                                                  );
-                                      
-                                                  if (result != null && result.files.isNotEmpty) {
-                                                      ref.read(aiModelPathProvider.notifier).state = result.files.single.path?.replaceAll('\\', '/')??ref.read(aiModelPathProvider.notifier).state;
-                                                    
+                                                  ref.read(aiPromptProvider.notifier).state = chatTextController.text;
+                                                  if (!isLlmProcessing) {
+                                                    setState(() {
+                                                      isLlmProcessing = true;
+                                                    });
+                                                    final receivePort =
+                                                        ReceivePort();
+                                                
+                                                    final prompt =
+                                                        ChatHistory()
+                                                          ..addMessage(
+                                                              role:
+                                                                  Role.system,
+                                                              content:
+                                                            """"" You are a concise, analytical assistant.
+                                                                  Always focus directly on asnwering the user's prompt, 
+                                                                  keep responses short and precise. 
+                                                                  Only generate the answer and stop.
+                                                                  Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. If you can't answer something just say so but don't remain silent to a question.
+                                                                  Do not generate questions or mention unrelated topics. Keep your responses strictly bound to the BillBlaze data and decorate linguistically for the user. 
+                                                                  Here's the BillBlaze Data: $typeStats, Selected year: $selectedYear, Selected Month: $selectedMonth, YearStats: $monthRevenueMap, MonthStats: $dayRevenueMap Current Date: ${DateFormat('dd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
+                                                                  Total Revenue: $totalRevenue, Total Profit: $totalProfit, Total bills: $totalBills.
+                                                              Payable means our total revenue.
+                                                              Count means number of bills made by the user.
+                                                            """)
+                                                          ..addMessage(
+                                                              role: Role.user,
+                                                              content:
+                                                                  chatTextController
+                                                                      .text)
+                                                          ..addMessage(
+                                                              role: Role
+                                                                  .assistant,
+                                                              content: "");
+                                                
+                                                    final modelPath = ref.read(aiModelPathProvider);
+                                                    // final modelPath =
+                                                    //     "C:/Users/ANTEC/Downloads/Compressed/Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf";
+                                                
+                                                    // ✅ Pass only data, not Flutter state
+                                                    await Isolate.spawn(
+                                                        runLlamaModel, {
+                                                      'sendPort': receivePort
+                                                          .sendPort,
+                                                      'prompt':
+                                                          prompt.exportFormat(
+                                                              ChatFormat
+                                                                  .chatml,
+                                                              leaveLastAssistantOpen:
+                                                                  true),
+                                                      'modelPath': modelPath,
+                                                    });
+                                                    ref
+                                                        .read(aiTokenProvider
+                                                            .notifier)
+                                                        .state = '';
+                                                
+                                                    final buffer =
+                                                        StringBuffer();
+                                                    await for (final token
+                                                        in receivePort) {
+                                                      if (token == null)
+                                                        break;
+                                                      buffer.write(token);
+                                                      ref
+                                                          .read(
+                                                              aiTokenProvider
+                                                                  .notifier)
+                                                          .state += (token);
+                                                      ref.read(aiTokenProvider.notifier).state = ref.read(
+                                                              aiTokenProvider.notifier).state
+                                                              .replaceAll('<|im_start|> assistant\n', '')
+                                                              .replaceAll('<|im_start|>assistant\n', '')
+                                                              .replaceAll('<|im_end|>', '')
+                                                              ;
+                                                    }
+                                                    print( "✅ Final Response: ${buffer.toString()}");
+                                                    setState(() {
+                                                      isLlmProcessing = false;
+                                                    });
                                                   }
                                                 },
+                                                
                                                 buttonHeight:
-                                                    mapValueDimensionBasedLockOnDesync(
-                                                        30, 35, sWidth, sHeight),
-                                                buttonWidth:mapValueDimensionBasedLockOnDesync(
-                                                        30, 35, sWidth, sHeight),
+                                                  mapValueDimensionBasedLockOnDesync( 45, 50, sWidth, sHeight),
+                                                buttonWidth:mapValueDimensionBasedLockOnDesync( 45, 50, sWidth, sHeight),
                                                 borderRadius: BorderRadius.circular(
-                                                    mapValueDimensionBasedLockOnDesync(
-                                                        16, 30, sWidth, sHeight)),
+                                                  mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
                                                 animationDuration:
-                                                    const Duration(milliseconds: 200),
+                                                  const Duration(milliseconds: 200),
                                                 animationCurve: Curves.ease,
-                                                subfac: mapValueDimensionBasedLockOnDesync(
-                                                    2, 4, sWidth, sHeight),
-                                                depth: mapValueDimensionBasedLockOnDesync(
-                                                    2, 4, sWidth, sHeight),
+                                                subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
                                                 topDecoration: BoxDecoration(
-                                                  color: defaultPalette.extras[4],
-                                                  border: Border.all(),
+                                                color: defaultPalette.extras[3],
+                                                border: Border.all(),
                                                 ),
-                                                topLayerChild: Column(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Icon(TablerIcons.replace,size:12,color: defaultPalette.primary,)
-                                                  ],
-                                                ),
+                                                topLayerChild:Container(
+                                                    
+                                                child: isLlmProcessing
+                                                    ? Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8.0),
+                                                        child: LoadingIndicator(
+                                                            colors: [
+                                                              defaultPalette
+                                                                  .primary
+                                                            ],
+                                                            indicatorType:
+                                                                Indicator.values[
+                                                                  // 0 + math.Random().nextInt((Indicator.values.length - 1) - 0 +1)
+                                                                  31
+                                                                  ]),
+                                                      )
+                                                    : Transform.rotate(
+                                                        angle: -pi / 2,
+                                                        child: Icon(
+                                                            TablerIcons.send_2,
+                                                            color: defaultPalette.primary))),
+                                                                                                
                                                 baseDecoration: BoxDecoration(
-                                                  color: defaultPalette.extras[0],
-                                                  // border: Border.all(),
-                                                ),
-                                              ),
-                                              SizedBox(width: 15,),
-                                            ],
-                                          ),
-                                          ),
-                                          SizedBox(height: 8,),
-                                          //Chat interfacee
-                                          Expanded(
-                                            child: ClipRRect(
-                                              borderRadius:BorderRadius.circular(35),
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color:defaultPalette.secondary,
-                                                  borderRadius:BorderRadius.circular(35),
-                                                  border: Border.all()
-                                                ),
-                                                child: SingleChildScrollView(
-                                                    padding: EdgeInsets.all(10),
-                                                    child: Column(
-                                                      children: [
-                                                      SizedBox(height: 8,),
-                                                      //USER PROMPT CHAT BUBBLE
-                                                      if(ref.watch(aiPromptProvider).isNotEmpty)
-                                                      Row(
-                                                        mainAxisAlignment: MainAxisAlignment.end,
-                                                        children: [
-                                                          SizedBox(width:22),
-                                                          Expanded(
-                                                            child: Stack(
-                                                              alignment: Alignment.topRight,
-                                                              children: [
-                                                                Container(
-                                                                  margin: EdgeInsets.only(left:2,top: 2),
-                                                                  padding:EdgeInsets.all(8).copyWith(bottom:8,) ,
-                                                                  decoration:BoxDecoration(
-                                                                    color:defaultPalette.extras[0],
-                                                                    borderRadius:BorderRadius.circular(20),
-                                                                    border: Border.all()
-                                                                  ),
-                                                                  child:Text(
-                                                                  ref.watch(aiPromptProvider),
-                                                                  style: GoogleFonts.lexend(
-                                                                      fontSize:
-                                                                          mapValueDimensionBasedLockOnDesync(
-                                                                              15,
-                                                                              20,
-                                                                              sWidth,
-                                                                              sHeight),
-                                                                      color: defaultPalette
-                                                                          .extras[0],
-                                                                      fontWeight:
-                                                                          FontWeight.w500,
-                                                                      letterSpacing: -0.8),
-                                                                ),),
-                                                                Container(
-                                                                  margin:EdgeInsets.only(right: 2),
-                                                                  padding:EdgeInsets.all(8),
-                                                                  decoration:BoxDecoration(
-                                                                    color:defaultPalette.primary,
-                                                                    borderRadius:BorderRadius.circular(20),
-                                                                    border: Border.all()
-                                                                  ),
-                                                                  child:Text(
-                                                                  ref.watch(aiPromptProvider),
-                                                                  style: GoogleFonts.lexend(
-                                                                      fontSize:
-                                                                          mapValueDimensionBasedLockOnDesync(
-                                                                              15,
-                                                                              20,
-                                                                              sWidth,
-                                                                              sHeight),
-                                                                      color: defaultPalette
-                                                                          .extras[0],
-                                                                      fontWeight:
-                                                                          FontWeight.w500,
-                                                                      letterSpacing: -0.8),
-                                                                ),)
-                                                              ],
-                                                            ),
-                                                          )
-                                                        ],
-                                                      ),
-                                                      SizedBox(height: 12,),
-                                                      //AI RESPONSE CHAT BUBBLE
-                                                      Row(
-                                                        mainAxisAlignment: MainAxisAlignment.end,
-                                                        children: [
-                                                          Expanded(
-                                                            child: Stack(
-                                                              children: [
-                                                                Container(
-                                                                  margin:EdgeInsets.only(right:22,left: 2,top: 2),
-                                                                  padding:EdgeInsets.all(10) ,
-                                                                  decoration:BoxDecoration(
-                                                                    color:defaultPalette.extras[0],
-                                                                    borderRadius:BorderRadius.circular(20),
-                                                                    border: Border.all()
-                                                                  ),
-                                                                  child:Text(
-                                                                  ref.watch(aiTokenProvider).trimLeft(),
-                                                                  style: GoogleFonts.lexend(
-                                                                      fontSize:
-                                                                          mapValueDimensionBasedLockOnDesync(
-                                                                              15,
-                                                                              20,
-                                                                              sWidth,
-                                                                              sHeight),
-                                                                      color: defaultPalette
-                                                                          .extras[0],
-                                                                      fontWeight:
-                                                                          FontWeight.w500,
-                                                                      letterSpacing: -0.8),
-                                                                ),),
-                                                                Container(
-                                                                  margin:EdgeInsets.only(right:24),
-                                                                  padding:EdgeInsets.all(10),
-                                                                  decoration:BoxDecoration(
-                                                                    color:defaultPalette.tertiary,
-                                                                    borderRadius:BorderRadius.circular(20),
-                                                                    border: Border.all()
-                                                                  ),
-                                                                  child:Text(
-                                                                  ref.watch(aiTokenProvider).trimLeft(),
-                                                                  style: GoogleFonts.lexend(
-                                                                      fontSize:
-                                                                          mapValueDimensionBasedLockOnDesync(
-                                                                              15,
-                                                                              20,
-                                                                              sWidth,
-                                                                              sHeight),
-                                                                      color: defaultPalette
-                                                                          .primary,
-                                                                      fontWeight:
-                                                                          FontWeight.w500,
-                                                                      letterSpacing: -0.8),
-                                                                ),)
-                                                              ],
-                                                            ),
-                                                          )
-                                                        ],
-                                                      ),
-                                                      ],
-                                                    )),
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(height:5),
-                                          
-                                          SizedBox(height:5),
-                                          //SEND PROMPT BUTTON
-                                          Row(
-                                            children: [
-                                              ElevatedLayerButton(
-                                              onClick: () async {
-                                                ref.read(aiPromptProvider.notifier).state = chatTextController.text;
-                                                if (!isLlmProcessing) {
-                                                  setState(() {
-                                                    isLlmProcessing = true;
-                                                  });
-                                                  final receivePort =
-                                                      ReceivePort();
-                                              
-                                                  final prompt =
-                                                      ChatHistory()
-                                                        ..addMessage(
-                                                            role:
-                                                                Role.system,
-                                                            content:
-                                                          """"" You are a concise, analytical assistant.
-                                                                Always focus directly on asnwering the user's prompt, 
-                                                                keep responses short and precise. 
-                                                                Only generate the answer and stop.
-                                                                Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. If you can't answer something just say so but don't remain silent to a question.
-                                                                Do not generate questions or mention unrelated topics. Keep your responses strictly bound to the BillBlaze data and decorate linguistically for the user. 
-                                                                Here's the BillBlaze Data: $typeStats, Selected year: $selectedYear, Selected Month: $selectedMonth, YearStats: $monthRevenueMap, MonthStats: $dayRevenueMap Current Date: ${DateFormat('dd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
-                                                            Payable means our total revenue.
-                                                            Count means number of bills made by the user.
-                                                          """)
-                                                        ..addMessage(
-                                                            role: Role.user,
-                                                            content:
-                                                                chatTextController
-                                                                    .text)
-                                                        ..addMessage(
-                                                            role: Role
-                                                                .assistant,
-                                                            content: "");
-                                              
-                                                  final modelPath = ref.read(aiModelPathProvider);
-                                                  // final modelPath =
-                                                  //     "C:/Users/ANTEC/Downloads/Compressed/Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf";
-                                              
-                                                  // ✅ Pass only data, not Flutter state
-                                                  await Isolate.spawn(
-                                                      runLlamaModel, {
-                                                    'sendPort': receivePort
-                                                        .sendPort,
-                                                    'prompt':
-                                                        prompt.exportFormat(
-                                                            ChatFormat
-                                                                .chatml,
-                                                            leaveLastAssistantOpen:
-                                                                true),
-                                                    'modelPath': modelPath,
-                                                  });
-                                                  ref
-                                                      .read(aiTokenProvider
-                                                          .notifier)
-                                                      .state = '';
-                                              
-                                                  final buffer =
-                                                      StringBuffer();
-                                                  await for (final token
-                                                      in receivePort) {
-                                                    if (token == null)
-                                                      break;
-                                                    buffer.write(token);
-                                                    ref
-                                                        .read(
-                                                            aiTokenProvider
-                                                                .notifier)
-                                                        .state += (token);
-                                                    ref.read(aiTokenProvider.notifier).state = ref.read(
-                                                            aiTokenProvider.notifier).state
-                                                            .replaceAll('<|im_start|> assistant\n', '')
-                                                            .replaceAll('<|im_start|>assistant\n', '')
-                                                            .replaceAll('<|im_end|>', '')
-                                                            ;
-                                                  }
-                                                  print( "✅ Final Response: ${buffer.toString()}");
-                                                  setState(() {
-                                                    isLlmProcessing = false;
-                                                  });
-                                                }
-                                              },
-                                              
-                                              buttonHeight:
-                                                mapValueDimensionBasedLockOnDesync( 45, 50, sWidth, sHeight),
-                                              buttonWidth:mapValueDimensionBasedLockOnDesync( 45, 50, sWidth, sHeight),
-                                              borderRadius: BorderRadius.circular(
-                                                mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
-                                              animationDuration:
-                                                const Duration(milliseconds: 200),
-                                              animationCurve: Curves.ease,
-                                              subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                              depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                              topDecoration: BoxDecoration(
-                                              color: defaultPalette.extras[3],
-                                              border: Border.all(),
-                                              ),
-                                              topLayerChild:Container(
-                                                  
-                                              child: isLlmProcessing
-                                                  ? Padding(
-                                                      padding:
-                                                          const EdgeInsets
-                                                              .all(8.0),
-                                                      child: LoadingIndicator(
-                                                          colors: [
-                                                            defaultPalette
-                                                                .primary
-                                                          ],
-                                                          indicatorType:
-                                                              Indicator.values[
-                                                                // 0 + math.Random().nextInt((Indicator.values.length - 1) - 0 +1)
-                                                                31
-                                                                ]),
-                                                    )
-                                                  : Transform.rotate(
-                                                      angle: -pi / 2,
-                                                      child: Icon(
-                                                          TablerIcons.send_2,
-                                                          color: defaultPalette.primary))),
-                                                                                              
-                                              baseDecoration: BoxDecoration(
-                                              color: defaultPalette.extras[0],
-                                              // border: Border.all(),
-                                                ),
-                                              ),
-                                              SizedBox(width: 5),
-                                              Expanded(
-                                                child: Container(
-                                                  // padding: EdgeInsets.only(left:15, top:5, bottom:5),
-                                                  decoration: BoxDecoration(
-                                                      color: defaultPalette
-                                                          .secondary,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              20),
-                                                      border:
-                                                          Border.all(width: 2)),
-                                                  child: TextFormField(
-                                                    onTapOutside: (event) =>
-                                                        chatFocusNode.unfocus(),
-                                                    onTap: () {
-                                                      FocusManager.instance.primaryFocus?.unfocus();
-                                                      keyboardFocusNode.unfocus();
-                                                      chatFocusNode.requestFocus();
-                                                      chatFocusNode.requestFocus();
-                                                      Future.delayed(Durations.short2).then((value) => chatFocusNode.requestFocus(),);
-                                                    },
-                                                    focusNode: chatFocusNode,
-                                                    controller:
-                                                        chatTextController,
-                                                    cursorColor:
-                                                        defaultPalette.tertiary,
-                                                    keyboardType:
-                                                        TextInputType.multiline,
-                                                    textInputAction:
-                                                        TextInputAction.newline,
-                                                    selectionControls:
-                                                        NoMenuTextSelectionControls(),
-                                                    textAlign: TextAlign.start,
-                                                    textAlignVertical:
-                                                        TextAlignVertical(
-                                                            y: -1),
-                                                    maxLines: 2,
-                                                    minLines: 1,
-                                                    decoration: InputDecoration(
-                                                      contentPadding:
-                                                          const EdgeInsets.only(
-                                                              left: 15,
-                                                              top: 5,
-                                                              bottom: 5),
-                                                      labelStyle:
-                                                          GoogleFonts.lexend(
-                                                              color:
-                                                                  defaultPalette
-                                                                      .black),
-                                                      fillColor: defaultPalette
-                                                          .transparent,
-                                                      border: InputBorder.none,
-                                                      enabledBorder:
-                                                          OutlineInputBorder(
-                                                              borderSide:
-                                                                  BorderSide
-                                                                      .none),
-                                                      focusedBorder:
-                                                          OutlineInputBorder(
-                                                              borderSide:
-                                                                  BorderSide
-                                                                      .none),
-                                                    ),
-                                                    style: GoogleFonts.lexend(
-                                                        fontSize:
-                                                            mapValueDimensionBasedLockOnDesync(
-                                                                15,
-                                                                20,
-                                                                sWidth,
-                                                                sHeight),
-                                                        color: defaultPalette
-                                                            .extras[0],
-                                                        fontWeight:
-                                                            FontWeight.w400,
-                                                        letterSpacing: -1),
-                                                    onFieldSubmitted:
-                                                        (value) {},
+                                                color: defaultPalette.extras[0],
+                                                // border: Border.all(),
                                                   ),
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                            SizedBox(height:5),
-                                            Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal:12.0),
-                                            child: Text(
-                                            'LLMs can make mistakes, or hallucinate. Fact check important stuff.',
-                                            maxLines: 1,
-                                            overflow:TextOverflow.ellipsis,
-                                            style: GoogleFonts.lexend(
-                                              fontSize: mapValueDimensionBasedLockOnDesync( 6, 12, sWidth, sHeight),
-                                                color: defaultPalette.extras[0],
-                                                fontWeight: FontWeight.w500,),
+                                                SizedBox(width: 5),
+                                                Expanded(
+                                                  child: Container(
+                                                    // padding: EdgeInsets.only(left:15, top:5, bottom:5),
+                                                    decoration: BoxDecoration(
+                                                        color: defaultPalette
+                                                            .secondary,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                20),
+                                                        border:
+                                                            Border.all(width: 2)),
+                                                    child: TextFormField(
+                                                      onTapOutside: (event) =>
+                                                          chatFocusNode.unfocus(),
+                                                      onTap: () {
+                                                        FocusManager.instance.primaryFocus?.unfocus();
+                                                        keyboardFocusNode.unfocus();
+                                                        chatFocusNode.requestFocus();
+                                                        chatFocusNode.requestFocus();
+                                                        Future.delayed(Durations.short2).then((value) => chatFocusNode.requestFocus(),);
+                                                      },
+                                                      focusNode: chatFocusNode,
+                                                      controller:
+                                                          chatTextController,
+                                                      cursorColor:
+                                                          defaultPalette.tertiary,
+                                                      keyboardType:
+                                                          TextInputType.multiline,
+                                                      textInputAction:
+                                                          TextInputAction.newline,
+                                                      selectionControls:
+                                                          NoMenuTextSelectionControls(),
+                                                      textAlign: TextAlign.start,
+                                                      textAlignVertical:
+                                                          TextAlignVertical(
+                                                              y: -1),
+                                                      maxLines: 2,
+                                                      minLines: 1,
+                                                      decoration: InputDecoration(
+                                                        contentPadding:
+                                                            const EdgeInsets.only(
+                                                                left: 15,
+                                                                top: 5,
+                                                                bottom: 5),
+                                                        labelStyle:
+                                                            GoogleFonts.lexend(
+                                                                color:
+                                                                    defaultPalette
+                                                                        .black),
+                                                        fillColor: defaultPalette
+                                                            .transparent,
+                                                        border: InputBorder.none,
+                                                        enabledBorder:
+                                                            OutlineInputBorder(
+                                                                borderSide:
+                                                                    BorderSide
+                                                                        .none),
+                                                        focusedBorder:
+                                                            OutlineInputBorder(
+                                                                borderSide:
+                                                                    BorderSide
+                                                                        .none),
+                                                      ),
+                                                      style: GoogleFonts.lexend(
+                                                          fontSize:
+                                                              mapValueDimensionBasedLockOnDesync(
+                                                                  15,
+                                                                  20,
+                                                                  sWidth,
+                                                                  sHeight),
+                                                          color: defaultPalette
+                                                              .extras[0],
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                          letterSpacing: -1),
+                                                      onFieldSubmitted:
+                                                          (value) {},
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    )),
-                                  //RECENTSS CARDD
-                                  if(index==1)
-                                  Positioned.fill(
-                                    child: //the layout tiles
-                                    Padding(
-                                      padding: const EdgeInsets.all(12.0),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(40),
-                                        child: Column(
-                                          children: [
-                                            //RECENTSS TITLE
-                                            Row(
-                                            children: [
-                                              Expanded(
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(15+8.0).copyWith(bottom: 0),
-                                                  child: Text('RECENT'.toUpperCase(),
-                                                      textAlign: TextAlign.left,
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                    style: GoogleFonts.pressStart2p(
-                                                        color: defaultPalette.extras[0],
-                                                        fontSize: mapValueDimensionBasedLockOnDesync(25, 45, sWidth, sHeight),
-                                                        letterSpacing: -2,
-                                                        fontWeight: FontWeight.w600,
-                                                        height: 1.2)),
-                                                ),
-                                              ),
-                                               SizedBox(
-                                                width: 5,
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(
-                                            height: 0,
-                                          ),
-                                            Expanded(
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: Color(0xffc0c0c0).withOpacity(0.5),
-                                                  // color:defaultPalette.primary,
-                                                  borderRadius: BorderRadius.circular(30),
-                                                ),
-                                                margin: EdgeInsets.all(15+mapValueDimensionBasedLockOnDesync(1, 10, sWidth, sHeight)),
-                                                child: ScrollConfiguration(
-                                                  behavior:
-                                                      ScrollBehavior().copyWith(scrollbars: false),
-                                                  child: DynMouseScroll(
-                                                      durationMS: 500,
-                                                      scrollSpeed: 1,
-                                                      builder: (context, controller, physics) {
-                                                        return ScrollbarUltima(
-                                                          alwaysShowThumb: true,
-                                                          controller: controller,
-                                                          scrollbarPosition:
-                                                              ScrollbarPosition.right,
-                                                          backgroundColor: defaultPalette.primary,
-                                                          isDraggable: true,
-                                                          maxDynamicThumbLength: 90,
-                                                          minDynamicThumbLength: 50,
-                                                          thumbBuilder:
-                                                              (context, animation, widgetStates) {
-                                                            return Container(
-                                                              margin: EdgeInsets.only(
-                                                                  right: 3, top: 8, bottom: 8),
-                                                              decoration: BoxDecoration(
-                                                                  color: defaultPalette.primary,
-                                                                  border: Border.all(),
-                                                                  borderRadius:
-                                                                      BorderRadius.circular(15)),
-                                                              width: 6,
-                                                            );
-                                                          },
-                                                          child: ClipRRect(
-                                                            borderRadius: BorderRadius.circular(30),
-                                                            child: ListView.builder(
-                                                              padding: EdgeInsets.only(right: 0,top: 0),
-                                                              controller: controller,
-                                                              physics: physics,
-                                                              itemCount:Boxes.getLayouts()
-                                                                              .values
-                                                                              .toList()
-                                                                              .length +
-                                                                          1,
-                                                              itemBuilder:
-                                                                  (BuildContext context, int i) {
-                                                                // Get all layouts into a list
-                                                                final layouts = Boxes.getLayouts().values.toList();
-                                      
-                                                                // Sort the list by modifiedDate descending (latest first)
-                                                                layouts.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
-                                      
-                                                                // Now use the sorted list
-                                                                if (i == layouts.length) {
-                                                                  return const SizedBox(height: 5);
-                                                                }
-                                      
-                                                                final layoutModel = layouts[i];
-                                                                
-                                                                return Material(
-                                                                    color:
-                                                                        defaultPalette.transparent,
-                                                                    child: InkWell(
-                                                                      hoverColor: defaultPalette
-                                                                          .extras[0]
-                                                                          .withOpacity(0.4),
-                                                                      highlightColor: defaultPalette
-                                                                          .extras[0]
-                                                                          .withOpacity(0.4),
-                                                                      splashColor: defaultPalette
-                                                                          .extras[0]
-                                                                          .withOpacity(0.4),
-                                                                      onTap: () {
-                                                                        Navigator.push(context,
-                                                                            MaterialPageRoute(
-                                                                          builder: (context) {
-                                                                            return PopScope(
-                                                                              canPop: false,
-                                                                              child: LayoutDesigner(
-                                                                                id: layoutModel.id,
-                                                                                onPop: (pdf) {
-                                                                                  setState(() {
-                                                                                    filteredLayoutBox = Boxes.getLayouts().values.toList();
-                                                                                  });
-                                                                                },
-                                                                              ),
-                                                                            );
-                                                                          },
-                                                                        ));
-                                                                        filteredLayoutBox = Boxes.getLayouts().values.toList();
-                                                                      },
-                                                                      child: Container(
-                                                                        height: mapValueDimensionBasedLockOnDesync(75, 170, sWidth, sHeight),
-                                                                        width: 30,
-                                                                        margin: EdgeInsets.only(
-                                                                            bottom: 10, 
-                                                                            right: 8, 
-                                                                            top: mapValueDimensionBasedLockOnDesync(0+(i==0?8:1), 15, sWidth, sHeight),
-                                                                            left:mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
-                                                                        color: defaultPalette
-                                                                            .transparent,
-                                                                        child: Row(
-                                                                          children: [
-                                                                            
-                                                                            //layoutname and created modified
-                                                                            Expanded(
-                                                                              child: Column(
-                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                                              children: [
-                                                                                //layoutname
-                                                                                  Expanded(
-                                                                                    child: Padding(
-                                                                                      padding: const EdgeInsets.only(left: 8.0, top: 5),
-                                                                                      child: Tooltip(
-                                                                                        message:
-                                                                                        layoutModel.name,
-                                                                                        textStyle: GoogleFonts.lexend(
-                                                                                          fontSize: mapValueDimensionBasedLockOnDesync(15,20, sWidth, sHeight),
-                                                                                          color:defaultPalette.primary,
-                                                                                          fontWeight: FontWeight.w600,
-                                                                                          letterSpacing:-0.2,
-                                                                                        ),
-                                                                                        decoration: BoxDecoration(
-                                                                                            color: defaultPalette.extras[0].withOpacity( 0.8),
-                                                                                            borderRadius: BorderRadius.circular( 50)),
-                                                                                        child: Text(
-                                                                                          layoutModel.name,
-                                                                                          maxLines: 1,
-                                                                                          overflow: TextOverflow.ellipsis,
-                                                                                          textAlign: TextAlign.end,
-                                                                                          style: GoogleFonts.lexend(
-                                                                                            fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
-                                                                                            color: defaultPalette.extras[0],
-                                                                                            fontWeight: FontWeight.w600,
-                                                                                            letterSpacing: -0.2,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                  ),
-                                                                                //created modified and pages
-                                                                                Container(
-                                                                                  decoration: BoxDecoration(
-                                                                                    // color:  defaultPalette.primary,
-                                                                                    borderRadius: BorderRadius.circular(12),
-                                                                                    // border: Border.all()
-                                                                                  ),
-                                                                                  padding: EdgeInsets.all( 3  ).copyWith(left: 8),
-                                                                                  child: Column(
-                                                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                    mainAxisAlignment: MainAxisAlignment.start,
-                                                                                    children: [
-                                                                                      SingleChildScrollView(
-                                                                                        scrollDirection: Axis.horizontal,
-                                                                                        child: RichText(
-                                                                                          textAlign: TextAlign.start,
-                                                                                          maxLines: 1,
-                                                                                          // overflow: TextOverflow.ellipsis,
-                                                                                          text: TextSpan(
-                                                                                            style: GoogleFonts.lexend(
-                                                                                              fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
-                                                                                              fontWeight: FontWeight.w300,
-                                                                                              letterSpacing: -0.2,
-                                                                                            ),
-                                                                                            children: [
-                                                                                              TextSpan(
-                                                                                                text: 'Created: ',
-                                                                                                style: GoogleFonts.lexend(
-                                                                                                    color: defaultPalette.extras[0]),
-                                                                                              ),
-                                                                                              TextSpan(
-                                                                                                text: DateFormat("MMM d, y 'at' h:mm a")
-                                                                                                    .format(layoutModel.createdAt),
-                                                                                                style:
-                                                                                                    TextStyle(color: defaultPalette.extras[0]),
-                                                                                              ),
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                      SingleChildScrollView(
-                                                                                        scrollDirection: Axis.horizontal,
-                                                                                        child: RichText(
-                                                                                          textAlign: TextAlign.start,
-                                                                                          maxLines: 1,
-                                                                                          overflow: TextOverflow.ellipsis,
-                                                                                          text: TextSpan(
-                                                                                            style: GoogleFonts.lexend(
-                                                                                              fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
-                                                                                              fontWeight: FontWeight.w300,
-                                                                                              letterSpacing: -0.2,
-                                                                                            ),
-                                                                                            children: [
-                                                                                              TextSpan(
-                                                                                                text: 'Modified: ',
-                                                                                                style: GoogleFonts.lexend(
-                                                                                                  color: defaultPalette.extras[0],
-                                                                                                  fontWeight: FontWeight.w400,
-                                                                                                ),
-                                                                                              ),
-                                                                                              TextSpan(
-                                                                                                text: DateFormat("MMM d, y 'at' h:mm a")
-                                                                                                    .format(layoutModel.modifiedAt),
-                                                                                                style:
-                                                                                                    TextStyle(color: defaultPalette.extras[0]),
-                                                                                              ),
-                                                                                            ],
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                      RichText(
-                                                                                        textAlign: TextAlign.start,
-                                                                                        maxLines: 1,
-                                                                                        overflow: TextOverflow.ellipsis,
-                                                                                        text: TextSpan(
-                                                                                          style: GoogleFonts.lexend(
-                                                                                            fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
-                                                                                            fontWeight: FontWeight.w300,
-                                                                                            letterSpacing: -0.2,
-                                                                                          ),
-                                                                                          children: [
-                                                                                            TextSpan(
-                                                                                              text:
-                                                                                                  '${SheetType.values[layoutModel.type].name} · ',
-                                                                                              style: GoogleFonts.lexend(
-                                                                                                fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
-                                                                                                color: defaultPalette.extras[0],
-                                                                                                fontWeight: FontWeight.w600,
-                                                                                                letterSpacing: -0.2,
-                                                                                              ),
-                                                                                            ),
-                                                                                            TextSpan(
-                                                                                              text:
-                                                                                                  'Pages: ${layoutModel.spreadSheetList.isEmpty ? '1' : layoutModel.spreadSheetList.length.toString()}',
-                                                                                              style: GoogleFonts.lexend(
-                                                                                                fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
-                                                                                                color: defaultPalette.extras[0],
-                                                                                                fontWeight: FontWeight.w400,
-                                                                                                letterSpacing: -0.2,
-                                                                                              ),
-                                                                                            ),
-                                                                                          ],
-                                                                                        ),
-                                                                                      ),
-                                                                                      
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                            ),
-                                                                            SizedBox(width: 5),
-                                                                            //mini layout pdf pages swiper
-                                                                            SizedBox(
-                                                                              height: mapValueDimensionBasedLockOnDesync(75, 170, sWidth, sHeight),
-                                                                              width: mapValueDimensionBasedLockOnDesync(58, 125, sWidth, sHeight),
-                                                                              child: AppinioSwiper(
-                                                                                cardCount: (layoutModel.spreadSheetList.length.isNaN || layoutModel.docPropsList.isEmpty)
-                                                                                    ? 1
-                                                                                    : layoutModel.docPropsList.length,
-                                                                                backgroundCardCount: 5,
-                                                                                backgroundCardOffset: Offset( 0.8, 0.8),
-                                                                                duration: Duration( milliseconds: 220),
-                                                                                backgroundCardScale: 1,
-                                                                                loop: true,
-                                                                                allowUnSwipe: true,
-                                                                                allowUnlimitedUnSwipe: true,
-                                                                                initialIndex: 0,
-                                                                                cardBuilder: (context, indx) {
-                                                                                  // print(layoutModel.pdf?.length);
-                                                                                  return Stack(
-                                                                                    children: [
-                                                                                      //The main bgCOLOR OF THE CARD
-                                                                                      Positioned.fill(
-                                                                                        child: AnimatedContainer(
-                                                                                          duration: Durations.short3,
-                                                                                          alignment: Alignment.center,
-                                                                                          margin: EdgeInsets.only(
-                                                                                              left: 8,
-                                                                                              top: 8,
-                                                                                              bottom: 2),
-                                                                                          decoration: BoxDecoration(
-                                                                                            color: defaultPalette.primary,
-                                                                                            border: Border.all(
-                                                                                                width: 1.2,
-                                                                                                color: defaultPalette.extras[0],
-                                                                                                strokeAlign: BorderSide.strokeAlignOutside),
-                                                                                            borderRadius: BorderRadius.circular(10),
-                                                                                            image:( layoutModel.pdf == null || layoutModel.pdf!.isEmpty)
-                                                                                              ? null
-                                                                                              : DecorationImage(
-                                                                                                  image: MemoryImage(
-                                                                                                    layoutModel.pdf![indx],
-                                                                                                  ),
-                                                                                                  fit: BoxFit.fitWidth),
-                                                                                          ),
-                                                                                          // foregroundDecoration: BoxDecoration(
-                                                                                          //   border: Border.all(width: 2, color:defaultPalette.extras[0]),
-                                                                                          //   borderRadius: BorderRadius.circular(10),
-                                                                                          // ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ],
-                                                                                  );
-                                                                                },
-                                                                              ),
-                                                                            ),
-                                                                            SizedBox(
-                                                                              width: 10,
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  );
-                                                                
-                                                              },
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }),
-                                                ),
+                                              SizedBox(height:5),
+                                              Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal:12.0),
+                                              child: Text(
+                                              'LLMs can make mistakes, or hallucinate. Fact check important stuff.',
+                                              maxLines: 1,
+                                              overflow:TextOverflow.ellipsis,
+                                              style: GoogleFonts.lexend(
+                                                fontSize: mapValueDimensionBasedLockOnDesync( 6, 12, sWidth, sHeight),
+                                                  color: defaultPalette.extras[0],
+                                                  fontWeight: FontWeight.w500,),
                                               ),
                                             ),
                                           ],
                                         ),
+                                      )),
+                                    //RECENTSS CARDD
+                                    if(index==1)
+                                    Positioned.fill(
+                                      child: //the layout tiles
+                                      Padding(
+                                        padding: const EdgeInsets.all(12.0),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(40),
+                                          child: Column(
+                                            children: [
+                                              //RECENTSS TITLE
+                                              Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.all(15+8.0).copyWith(bottom: 0),
+                                                    child: Text('RECENT'.toUpperCase(),
+                                                        textAlign: TextAlign.left,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      style: GoogleFonts.pressStart2p(
+                                                          color: defaultPalette.extras[0],
+                                                          fontSize: mapValueDimensionBasedLockOnDesync(25, 45, sWidth, sHeight),
+                                                          letterSpacing: -2,
+                                                          fontWeight: FontWeight.w600,
+                                                          height: 1.2)),
+                                                  ),
+                                                ),
+                                                 SizedBox(
+                                                  width: 5,
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(
+                                              height: 0,
+                                            ),
+                                              Expanded(
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Color(0xffc0c0c0).withOpacity(0.5),
+                                                    // color:defaultPalette.primary,
+                                                    borderRadius: BorderRadius.circular(30),
+                                                  ),
+                                                  margin: EdgeInsets.all(15+mapValueDimensionBasedLockOnDesync(1, 10, sWidth, sHeight)),
+                                                  child: ScrollConfiguration(
+                                                    behavior:
+                                                        ScrollBehavior().copyWith(scrollbars: false),
+                                                    child: DynMouseScroll(
+                                                        durationMS: 500,
+                                                        scrollSpeed: 1,
+                                                        builder: (context, controller, physics) {
+                                                          return ScrollbarUltima(
+                                                            alwaysShowThumb: true,
+                                                            controller: controller,
+                                                            scrollbarPosition:
+                                                                ScrollbarPosition.right,
+                                                            backgroundColor: defaultPalette.primary,
+                                                            isDraggable: true,
+                                                            maxDynamicThumbLength: 90,
+                                                            minDynamicThumbLength: 50,
+                                                            thumbBuilder:
+                                                                (context, animation, widgetStates) {
+                                                              return Container(
+                                                                margin: EdgeInsets.only(
+                                                                    right: 3, top: 8, bottom: 8),
+                                                                decoration: BoxDecoration(
+                                                                    color: defaultPalette.primary,
+                                                                    border: Border.all(),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(15)),
+                                                                width: 6,
+                                                              );
+                                                            },
+                                                            child: ClipRRect(
+                                                              borderRadius: BorderRadius.circular(30),
+                                                              child: ListView.builder(
+                                                                padding: EdgeInsets.only(right: 0,top: 0),
+                                                                controller: controller,
+                                                                physics: physics,
+                                                                itemCount:Boxes.getLayouts()
+                                                                                .values
+                                                                                .toList()
+                                                                                .length +
+                                                                            1,
+                                                                itemBuilder:
+                                                                    (BuildContext context, int i) {
+                                                                  // Get all layouts into a list
+                                                                  final layouts = Boxes.getLayouts().values.toList();
+                                        
+                                                                  // Sort the list by modifiedDate descending (latest first)
+                                                                  layouts.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
+                                        
+                                                                  // Now use the sorted list
+                                                                  if (i == layouts.length) {
+                                                                    return const SizedBox(height: 5);
+                                                                  }
+                                        
+                                                                  final layoutModel = layouts[i];
+                                                                  
+                                                                  return Material(
+                                                                      color:
+                                                                          defaultPalette.transparent,
+                                                                      child: InkWell(
+                                                                        hoverColor: defaultPalette
+                                                                            .extras[0]
+                                                                            .withOpacity(0.4),
+                                                                        highlightColor: defaultPalette
+                                                                            .extras[0]
+                                                                            .withOpacity(0.4),
+                                                                        splashColor: defaultPalette
+                                                                            .extras[0]
+                                                                            .withOpacity(0.4),
+                                                                        onTap: () {
+                                                                          Navigator.push(context,
+                                                                              MaterialPageRoute(
+                                                                            builder: (context) {
+                                                                              return PopScope(
+                                                                                canPop: false,
+                                                                                child: LayoutDesigner(
+                                                                                  id: layoutModel.id,
+                                                                                  onPop: (pdf) {
+                                                                                    setState(() {
+                                                                                      filteredLayoutBox = Boxes.getLayouts().values.toList();
+                                                                                    });
+                                                                                  },
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                          ));
+                                                                          filteredLayoutBox = Boxes.getLayouts().values.toList();
+                                                                        },
+                                                                        child: Container(
+                                                                          height: mapValueDimensionBasedLockOnDesync(75, 170, sWidth, sHeight),
+                                                                          width: 30,
+                                                                          margin: EdgeInsets.only(
+                                                                              bottom: 10, 
+                                                                              right: 8, 
+                                                                              top: mapValueDimensionBasedLockOnDesync(0+(i==0?8:1), 15, sWidth, sHeight),
+                                                                              left:mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                                                          color: defaultPalette
+                                                                              .transparent,
+                                                                          child: Row(
+                                                                            children: [
+                                                                              
+                                                                              //layoutname and created modified
+                                                                              Expanded(
+                                                                                child: Column(
+                                                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                children: [
+                                                                                  //layoutname
+                                                                                    Expanded(
+                                                                                      child: Padding(
+                                                                                        padding: const EdgeInsets.only(left: 8.0, top: 5),
+                                                                                        child: Tooltip(
+                                                                                          message:
+                                                                                          layoutModel.name,
+                                                                                          textStyle: GoogleFonts.lexend(
+                                                                                            fontSize: mapValueDimensionBasedLockOnDesync(15,20, sWidth, sHeight),
+                                                                                            color:defaultPalette.primary,
+                                                                                            fontWeight: FontWeight.w600,
+                                                                                            letterSpacing:-0.2,
+                                                                                          ),
+                                                                                          decoration: BoxDecoration(
+                                                                                              color: defaultPalette.extras[0].withOpacity( 0.8),
+                                                                                              borderRadius: BorderRadius.circular( 50)),
+                                                                                          child: Text(
+                                                                                            layoutModel.name,
+                                                                                            maxLines: 1,
+                                                                                            overflow: TextOverflow.ellipsis,
+                                                                                            textAlign: TextAlign.end,
+                                                                                            style: GoogleFonts.lexend(
+                                                                                              fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
+                                                                                              color: defaultPalette.extras[0],
+                                                                                              fontWeight: FontWeight.w600,
+                                                                                              letterSpacing: -0.2,
+                                                                                            ),
+                                                                                          ),
+                                                                                        ),
+                                                                                      ),
+                                                                                    ),
+                                                                                  //created modified and pages
+                                                                                  Container(
+                                                                                    decoration: BoxDecoration(
+                                                                                      // color:  defaultPalette.primary,
+                                                                                      borderRadius: BorderRadius.circular(12),
+                                                                                      // border: Border.all()
+                                                                                    ),
+                                                                                    padding: EdgeInsets.all( 3  ).copyWith(left: 8),
+                                                                                    child: Column(
+                                                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                      mainAxisAlignment: MainAxisAlignment.start,
+                                                                                      children: [
+                                                                                        SingleChildScrollView(
+                                                                                          scrollDirection: Axis.horizontal,
+                                                                                          child: RichText(
+                                                                                            textAlign: TextAlign.start,
+                                                                                            maxLines: 1,
+                                                                                            // overflow: TextOverflow.ellipsis,
+                                                                                            text: TextSpan(
+                                                                                              style: GoogleFonts.lexend(
+                                                                                                fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                                fontWeight: FontWeight.w300,
+                                                                                                letterSpacing: -0.2,
+                                                                                              ),
+                                                                                              children: [
+                                                                                                TextSpan(
+                                                                                                  text: 'Created: ',
+                                                                                                  style: GoogleFonts.lexend(
+                                                                                                      color: defaultPalette.extras[0]),
+                                                                                                ),
+                                                                                                TextSpan(
+                                                                                                  text: DateFormat("MMM d, y 'at' h:mm a")
+                                                                                                      .format(layoutModel.createdAt),
+                                                                                                  style:
+                                                                                                      TextStyle(color: defaultPalette.extras[0]),
+                                                                                                ),
+                                                                                              ],
+                                                                                            ),
+                                                                                          ),
+                                                                                        ),
+                                                                                        SingleChildScrollView(
+                                                                                          scrollDirection: Axis.horizontal,
+                                                                                          child: RichText(
+                                                                                            textAlign: TextAlign.start,
+                                                                                            maxLines: 1,
+                                                                                            overflow: TextOverflow.ellipsis,
+                                                                                            text: TextSpan(
+                                                                                              style: GoogleFonts.lexend(
+                                                                                                fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                                fontWeight: FontWeight.w300,
+                                                                                                letterSpacing: -0.2,
+                                                                                              ),
+                                                                                              children: [
+                                                                                                TextSpan(
+                                                                                                  text: 'Modified: ',
+                                                                                                  style: GoogleFonts.lexend(
+                                                                                                    color: defaultPalette.extras[0],
+                                                                                                    fontWeight: FontWeight.w400,
+                                                                                                  ),
+                                                                                                ),
+                                                                                                TextSpan(
+                                                                                                  text: DateFormat("MMM d, y 'at' h:mm a")
+                                                                                                      .format(layoutModel.modifiedAt),
+                                                                                                  style:
+                                                                                                      TextStyle(color: defaultPalette.extras[0]),
+                                                                                                ),
+                                                                                              ],
+                                                                                            ),
+                                                                                          ),
+                                                                                        ),
+                                                                                        RichText(
+                                                                                          textAlign: TextAlign.start,
+                                                                                          maxLines: 1,
+                                                                                          overflow: TextOverflow.ellipsis,
+                                                                                          text: TextSpan(
+                                                                                            style: GoogleFonts.lexend(
+                                                                                              fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                              fontWeight: FontWeight.w300,
+                                                                                              letterSpacing: -0.2,
+                                                                                            ),
+                                                                                            children: [
+                                                                                              TextSpan(
+                                                                                                text:
+                                                                                                    '${SheetType.values[layoutModel.type].name} · ',
+                                                                                                style: GoogleFonts.lexend(
+                                                                                                  fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                                  color: defaultPalette.extras[0],
+                                                                                                  fontWeight: FontWeight.w600,
+                                                                                                  letterSpacing: -0.2,
+                                                                                                ),
+                                                                                              ),
+                                                                                              TextSpan(
+                                                                                                text:
+                                                                                                    'Pages: ${layoutModel.spreadSheetList.isEmpty ? '1' : layoutModel.spreadSheetList.length.toString()}',
+                                                                                                style: GoogleFonts.lexend(
+                                                                                                  fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                                  color: defaultPalette.extras[0],
+                                                                                                  fontWeight: FontWeight.w400,
+                                                                                                  letterSpacing: -0.2,
+                                                                                                ),
+                                                                                              ),
+                                                                                            ],
+                                                                                          ),
+                                                                                        ),
+                                                                                        
+                                                                                      ],
+                                                                                    ),
+                                                                                  ),
+                                                                                ],
+                                                                              ),
+                                                                              ),
+                                                                              SizedBox(width: 5),
+                                                                              //mini layout pdf pages swiper
+                                                                              SizedBox(
+                                                                                height: mapValueDimensionBasedLockOnDesync(75, 170, sWidth, sHeight),
+                                                                                width: mapValueDimensionBasedLockOnDesync(58, 125, sWidth, sHeight),
+                                                                                child: AppinioSwiper(
+                                                                                  cardCount: (layoutModel.spreadSheetList.length.isNaN || layoutModel.docPropsList.isEmpty)
+                                                                                      ? 1
+                                                                                      : layoutModel.docPropsList.length,
+                                                                                  backgroundCardCount: 5,
+                                                                                  backgroundCardOffset: Offset( 0.8, 0.8),
+                                                                                  duration: Duration( milliseconds: 220),
+                                                                                  backgroundCardScale: 1,
+                                                                                  loop: true,
+                                                                                  allowUnSwipe: true,
+                                                                                  allowUnlimitedUnSwipe: true,
+                                                                                  initialIndex: 0,
+                                                                                  cardBuilder: (context, indx) {
+                                                                                    // print(layoutModel.pdf?.length);
+                                                                                    return Stack(
+                                                                                      children: [
+                                                                                        //The main bgCOLOR OF THE CARD
+                                                                                        Positioned.fill(
+                                                                                          child: AnimatedContainer(
+                                                                                            duration: Durations.short3,
+                                                                                            alignment: Alignment.center,
+                                                                                            margin: EdgeInsets.only(
+                                                                                                left: 8,
+                                                                                                top: 8,
+                                                                                                bottom: 2),
+                                                                                            decoration: BoxDecoration(
+                                                                                              color: defaultPalette.primary,
+                                                                                              border: Border.all(
+                                                                                                  width: 1.2,
+                                                                                                  color: defaultPalette.extras[0],
+                                                                                                  strokeAlign: BorderSide.strokeAlignOutside),
+                                                                                              borderRadius: BorderRadius.circular(10),
+                                                                                              image:( layoutModel.pdf == null || layoutModel.pdf!.isEmpty)
+                                                                                                ? null
+                                                                                                : DecorationImage(
+                                                                                                    image: MemoryImage(
+                                                                                                      layoutModel.pdf![indx],
+                                                                                                    ),
+                                                                                                    fit: BoxFit.fitWidth),
+                                                                                            ),
+                                                                                            // foregroundDecoration: BoxDecoration(
+                                                                                            //   border: Border.all(width: 2, color:defaultPalette.extras[0]),
+                                                                                            //   borderRadius: BorderRadius.circular(10),
+                                                                                            // ),
+                                                                                          ),
+                                                                                        ),
+                                                                                      ],
+                                                                                    );
+                                                                                  },
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(
+                                                                                width: 10,
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  
+                                                                },
+                                                              ),
+                                                            ),
+                                                          );
+                                                        }),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                                
-                                  )
-                                ],
-                              );
-                            },
+                                                  
+                                    )
+                                  ],
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
