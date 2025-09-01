@@ -203,8 +203,7 @@ class LayoutDesigner extends ConsumerStatefulWidget {
   ConsumerState<LayoutDesigner> createState() => _LayoutDesignerState();
 }
 
-class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
-    with TickerProviderStateMixin {
+class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProviderStateMixin {
   bool isLoading = true;
   String selectedFontCategory = 'san-serif';
   late List<RequiredText> labelList;
@@ -218,7 +217,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     'GrandHotel',
     'GreatVibes',
     'Lobster',
-    'OpenSans',
+    'OpenSans'
     'OstrichSans',
     'Oswald',
     'Pacifico',
@@ -469,6 +468,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     _renderPagePreviewOnProperties();
     assignIndexPathsAndDisambiguate(labelList,spreadSheetList);
     pdfPreviewTransformationController.value.scale(0.1);
+    await relinkIndexPathsInInputBlocks();
     // IF EXPORT BILL BUTTON IS CLICKED v
     Future.delayed(Durations.extralong4).then((c) async {if (widget.exportPdf) {
       final overlay =  OverlayEntry(builder: (context) => Scaffold(
@@ -609,7 +609,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         sheetListBox.sheetList.add(sheetListtoBox(sheetlist[i] as SheetList));
       } else if (sheetlist[i] is SheetTable) {
         sheetListBox.sheetList.add((sheetlist[i] as SheetTable).toSheetTableBox());
-      } else {sheetlist[i].toBox();}
+      } else {
+        print('SizedItem: ${item.id}');
+        sheetListBox.sheetList.add(sheetlist[i].toBox());}
     }
     return sheetListBox;
   }
@@ -681,7 +683,9 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
         sheetList.sheetList.add(boxToSheetList(item, sheetList.indexPath));
       } else if (item is SheetTableBox) {
         sheetList.sheetList.add((item).toSheetTable(_findItem,textFieldTapDown,getReplaceTextFunctionForType));
-      } else {sheetList.sheetList.add(item.unBox());}
+      } else if (item is SheetSizedItem) {
+        print('SizedItem: ${item.id}');
+        sheetList.sheetList.add(item);}
     }
     return sheetList;
   }
@@ -2209,6 +2213,47 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       onLayout: (format) => pdf.save(),
     );
   }
+  
+  Future<void> _genBbc() async {
+    final layoutsBox = Boxes.getLayouts();
+    final layout = layoutsBox.get(widget.key); // or whichever key you want to export
+
+    if (layout == null) {
+      print("No layout found for key: ${widget.key}");
+      return;
+    }
+
+    // Convert to JSON string
+    final content = layout.toJson() == null
+        ? '{}'
+        : (layout.toJson() is String
+            ? layout.toJson()
+            : jsonEncode(layout.toJson()));
+
+    // 🔽 Show native "Save As" dialog
+    final FileSaveLocation? path = await getSaveLocation(
+      suggestedName: '${layoutName.text}.bbc',
+      acceptedTypeGroups: [
+        const XTypeGroup(
+          label: 'BBC Layout files',
+          extensions: <String>['bbc'],
+        )
+      ],
+    );
+
+    if (path != null) {
+      final file = XFile.fromData(
+        utf8.encode(content), // XFile needs bytes
+        mimeType: 'application/octet-stream',
+      );
+
+      await file.saveTo(path.path);
+      print("BBC file saved at: ${path.path}");
+      ref.read(folderPathProvider.notifier).state = path.path;
+    } else {
+      print("User canceled save dialog");
+    }
+  }
 
   void updateBox() {
     var lmBox = Boxes.getLayouts();
@@ -2332,6 +2377,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
       // prnt(selectedIndexPaths);
       // var tmpinx = int.tryParse(item.textDecoration.id.substring(item.textDecoration.id.indexOf('/') + 1))??-111;
       if (item.textDecoration.id == 'yo' || sheetDecorationMap[item.textDecoration.id] == null) { // so we are reassigning the decoration variables to null if id is 'yo'.
+        item.textDecoration.id = 'yo';
         textDecorationNameController.text = '[Unassigned]';
         decorationIndex = -1;
         updateSheetDecorationvariables(sheetDecorationMap[item.textDecoration.id] as SuperDecoration?);
@@ -3438,6 +3484,28 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                             saveLayout();
                                             
                                           });
+                                            
+                                              final layoutsBox = Boxes.getLayouts();
+                                              final layout = layoutsBox.get(key);
+                                              if (layout == null) throw Exception('No layout for key: $key');
+                                              
+                                              final payload = layout.toJson(); // Map? String? maybe null
+                                              final content = payload == null
+                                                  ? '{}'
+                                                  : (payload is String ? payload : jsonEncode(payload));
+                                              
+                                              // safer than hardcoding E:\
+                                              final dir = ref.read(folderPathProvider);
+                                              final safeName = layoutName.text;
+                                              final filePath = '${dir}\\$safeName.bbc';
+                                            try {  
+                                              final file = File(filePath);
+                                              await file.create(recursive: true);
+                                              await file.writeAsString(content, encoding: utf8, flush: true);
+                                            } on Exception catch (e) {
+                                              _genBbc();
+                                            }
+                                          
                                           await relinkIndexPathsInInputBlocks();
                                         },
                                       ),
@@ -6122,7 +6190,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
           index: index,
           child: buildSheetTableWidget(sheetList[index] as SheetTable, sheetList, index)
           );
-      } else {
+      } else if(sheetList[index] is SheetSizedItem){
         return ReorderableDragStartListener(
           key: ValueKey(sheetList[index].id),
           index: index,
@@ -6173,9 +6241,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                       d.globalPosition.dy))
               .show(context);
             },
-            child: sheetList[index].buildWidget(panelIndex,selectedIndexPaths)),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom:25.0),
+              child: sheetList[index].buildWidget(panelIndex,selectedIndexPaths),
+            )),
         );
       }
+      return Container(height:60, color:defaultPalette.extras[1]);
       },
       
       );
@@ -10799,6 +10871,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
 
       else if (item is SheetSizedItem) {
         calculatedHeight  = item.height+12;
+        // print('Calculated Height: $calculatedHeight');
       }
 
       // print(item.id+': $calculatedHeight');
@@ -10817,6 +10890,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
     else {
       for (int i = 0; i < sheetList.length; i++) {
         double itemHeight = calculateItemHeight(sheetList[i]);
+        // print('Item Height: $itemHeight');
         if (itemHeight > height) {
           height = itemHeight+12;
         }
@@ -18073,7 +18147,14 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                                               const SizedBox(
                                                 height:4
                                               ),
-                                              titleTile(' inputBlocks', TablerIcons.subtask,fontSize: 15,iconSize: 20, color: defaultPalette.primary),  
+                                              Row(
+                                                children: [
+                                                  Expanded(child: titleTile(' inputBlocks', TablerIcons.subtask,fontSize: 15,iconSize: 20, color: defaultPalette.primary)),
+                                                  //reset button
+                                                  MouseRegion(cursor:SystemMouseCursors.click,child:GestureDetector(onTap:()=>setState(()=>item.inputBlocks..clear()..add(InputBlock(indexPath: item.indexPath,blockIndex:[-2],id: item.id,useConst: true,function: InputBlockFunction(inputBlocks: item.inputBlocks, label: item.name)))), child:Icon(TablerIcons.refresh, size:14, color:defaultPalette.primary))),
+                                                  SizedBox(width:3),
+                                                ],
+                                              ),  
                                               const SizedBox(
                                                 height:10,
                                               ),
@@ -22656,8 +22737,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
                         ),
                       ),
                       Tooltip(
-                        key: ValueKey(panelIndex.id),
+                        key: ValueKey(panelIndex.id+panelIndex.parentId),
                         message: 'add New SuperDecoration.',
+                        waitDuration: Duration.zero,
+                        showDuration: Duration(days: 1),
                         child: MouseRegion(
                           cursor:SystemMouseCursors.click,
                           child: GestureDetector(
@@ -24143,6 +24226,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner>
               child: Column(
                 children: [
                   Tooltip(
+                    key: ValueKey(panelIndex.id+panelIndex.parentId),
                     message: 'addNewItemDecoration',
                     child: MouseRegion(
                       cursor:SystemMouseCursors.click,

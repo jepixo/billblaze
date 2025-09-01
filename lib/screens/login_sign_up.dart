@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:billblaze/colors.dart';
@@ -97,7 +98,21 @@ class _LoginSignUpState extends State<LoginSignUp> {
                             .ceilToDouble() /
                         500)),
                 ),
-                 
+            
+            AnimatedPositioned(
+              duration: Durations.medium2,
+              top: 10,
+              left: 10,
+              child: Opacity(
+                opacity: 1,
+                child: SvgPicture.asset(
+                  'assets/logos/Asset14.svg',
+                  width: 35,
+                  height:25,
+                ),
+              ),
+            ),
+                           
             //BILLBLAZE MAIN TITLE
             AnimatedPositioned(
               duration: Durations.medium3,
