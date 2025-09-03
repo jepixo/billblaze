@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 Future<List<String>> getLayoutFileNames() async {
   final manifestContent = await rootBundle.loadString('AssetManifest.json');
@@ -15,8 +16,8 @@ Future<List<String>> getLayoutFileNames() async {
 
   return files;
 }
-Future<void> syncLayoutsWithAssets() async {
-  final layoutsBox = Boxes.getLayouts();
+Future<void> syncLayoutsWithAssets(WidgetRef ref) async {
+  final layoutsBox = Boxes.getLayouts(ref);
   print('Hello from assets.');
 
   // 1️⃣ get asset layout names

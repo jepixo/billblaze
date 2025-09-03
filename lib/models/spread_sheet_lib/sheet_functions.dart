@@ -3,7 +3,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:billblaze/util/custom_uid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -16,6 +15,7 @@ import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/components/elevated_button.dart';
@@ -25,8 +25,8 @@ import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/screens/layout_designer.dart' as ly;
+import 'package:billblaze/util/custom_uid.dart';
 import 'package:billblaze/util/numeric_input_formatter.dart';
-import 'package:uuid/uuid.dart';
 
 part 'sheet_functions.g.dart';
 
@@ -105,7 +105,7 @@ class SheetFunction {
   }
 
   static SheetFunction fromMap(Map<String, dynamic> map) {
-    print('SheetFunction type: '+map['type']);
+ print('SheetFunction type: '+map['type']);
     switch (map['type']) {
       case 'column':
         return ColumnFunction.fromMap(map);
@@ -179,7 +179,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
         break;
       case 'multiply':
         newText = _product(values).toString();
-        print(newText);
+     print(newText);
         break;
       case 'count':
         newText = count.toString();
@@ -222,7 +222,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
         newText = _mad(values).toString();
         break;
       case 'skewness':
-        print('skew: '+_skewness(values).toString());
+     print('skew: '+_skewness(values).toString());
         newText = _skewness(values).toString();
         break;
       case 'kurtosis':
@@ -542,7 +542,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
       };
 
   factory UniStatFunction.fromMap(Map<String, dynamic> map){ 
-    print('in UniStatFunctionFromMap: '+map['resultJson'].toString());
+ print('in UniStatFunctionFromMap: '+map['resultJson'].toString());
     return UniStatFunction(
         inputBlocks:  (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
@@ -727,7 +727,7 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
       };
 
   factory ColumnFunction.fromMap(Map<String, dynamic> map) {
-    print('in ColumnFunctionFromMap: '+map['resultJson'].toString());
+  print('in ColumnFunctionFromMap: '+map['resultJson'].toString());
     return ColumnFunction(
       inputBlocks: 
         (map['inputBlocks'] as List)
@@ -817,6 +817,22 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
   }
   
 
+
+  ColumnFunction copyWith({
+    List<InputBlock>? inputBlocks,
+    String? func,
+    String? axisLabel,
+    List<Map<String, dynamic>>? resultJson,
+    bool? lockMode,
+  }) {
+    return ColumnFunction(
+      inputBlocks: inputBlocks ?? this.inputBlocks,
+      func: func ?? this.func,
+      axisLabel: axisLabel ?? this.axisLabel,
+      resultJson: resultJson ?? this.resultJson,
+      lockMode: lockMode ?? this.lockMode,
+    );
+  }
 }
 
 @HiveType(typeId: 20)
@@ -859,7 +875,7 @@ class InputBlockFunction extends SheetFunction {
       };
 
   factory InputBlockFunction.fromMap(Map<String, dynamic> map) {
-    print('in InputBlockFunctionFromMap: '+map['label']);
+ print('in InputBlockFunctionFromMap: '+map['label']);
     return InputBlockFunction(
         inputBlocks: (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
@@ -1217,7 +1233,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
       };
 
   factory BiStatFunction.fromMap(Map<String, dynamic> map) {
-    print('in BiStatFunctionFromMap: '+map['resultJson'].toString());
+ print('in BiStatFunctionFromMap: '+map['resultJson'].toString());
     return BiStatFunction(
         inputBlocksX: (map['inputBlocksX'] as List)
             .map((e) => InputBlock.fromMap(e))
@@ -4168,6 +4184,22 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
   }
   
 
+
+  UidGeneratorFunction copyWith({
+    String? template,
+    List<Map<String, dynamic>>? resultJson,
+    String? idKey,
+    String? func,
+    DateTime? dateTime,
+  }) {
+    return UidGeneratorFunction(
+      template: template ?? this.template,
+      resultJson: resultJson ?? this.resultJson,
+      idKey: idKey ?? this.idKey,
+      func: func ?? this.func,
+      dateTime: dateTime ?? this.dateTime,
+    );
+  }
 }
 
 ///
@@ -4289,7 +4321,7 @@ List<Widget> sliderPropertyTile(TextEditingController s, Function setStateCallba
               letterSpacing: -1),
           onFieldSubmitted: (value) {
             setStateCallback(() {
-              print(value);
+           print(value);
             var parsedValue = (double.tryParse(value)??0.0);
             onChange(parsedValue);
               

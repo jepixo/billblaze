@@ -64,7 +64,7 @@ class SheetTableColumnBox extends SheetItem {
         'columnInputBlocks': columnInputBlocks.map((e) => e.toMap()).toList(),
       };
 
-      print(map);
+   print(map);
     return map;
     } 
   factory SheetTableColumnBox.fromMap(Map<String, dynamic> map) => SheetTableColumnBox(

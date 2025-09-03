@@ -66,7 +66,6 @@ dependencies:
   # mobkit_dashed_border: ^0.0.8 
   scrollbar_ultima: ^1.0.4
   cool_background_animation: ^0.0.6 
-  two_dimensional_scrollables: ^0.3.4
   mesh_gradient: ^1.3.8
   flutter_animate: ^4.5.2
   country_code_picker_plus: ^0.1.0+1

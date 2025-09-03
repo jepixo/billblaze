@@ -96,7 +96,7 @@ void rnLlamaModel(Map args) async {
 //   /// [modelPath] your .gguf file.
 //   static Future<void> init({required String modelPath,int nGpuLayers = 99,int nCtx = 2048,}) async {
 //     // 1) point at the native DLL:
-//   print("llama init...");
+//print("llama init...");
 //     // 2) prepare the load command:
 //     final load = LlamaLoad(
 //       path: modelPath,
@@ -143,11 +143,11 @@ void rnLlamaModel(Map args) async {
 //     if (_llama.status != LlamaStatus.ready) {
 //       throw Exception('Model not ready; call init() first.');
 //     }
-//     print("runpromptt...");
+//  print("runpromptt...");
 //     // listen to tokens:
 //     final sub = _llama.stream.listen(onToken, onError: (e) {
 //       // optionally handle stream error
-//       print('Llama token stream error: $e');
+//    print('Llama token stream error: $e');
 //     });
 
 //     // send it:
@@ -159,7 +159,7 @@ void rnLlamaModel(Map args) async {
 //       if (evt.success) {
 //         onDone();
 //       } else {
-//         print('Llama completion failed: promptId=${evt.promptId}');
+//      print('Llama completion failed: promptId=${evt.promptId}');
 //         onDone();
 //       }
 //       sub.cancel();

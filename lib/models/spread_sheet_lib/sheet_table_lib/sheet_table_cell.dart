@@ -158,7 +158,7 @@ class SheetTableCellBox extends SheetItem {
         'rowSpan': rowSpan,
         'colSpan': colSpan,
       };
-      print(map);
+   print(map);
     return map;
     } 
 
@@ -221,7 +221,7 @@ class SheetTableCellBox extends SheetItem {
       // print('Decoded Delta: $delta');
     } catch (e) {
       // Handle error if any occurs
-      print('Error converting to Delta: $e');
+   print('Error converting to Delta: $e');
       delta = Delta(); // Default to an empty Delta in case of error
     }
 

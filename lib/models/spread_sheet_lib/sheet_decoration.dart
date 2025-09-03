@@ -74,7 +74,7 @@ class SuperDecorationBox extends SheetDecoration {
         'name': name,
         'itemDecorationList': itemDecorationList,
       };
-      print(map);
+   print(map);
     return map;
     } 
 
@@ -115,7 +115,7 @@ class ItemDecorationBox extends SheetDecoration {
       'id': super.id,
       'name': super.name,
     };
-    print(map);
+ print(map);
     return map;
   }
 

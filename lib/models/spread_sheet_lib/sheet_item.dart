@@ -35,7 +35,7 @@ class SheetItem extends HiveObject {
       'parentId': parentId,
       'indexPath': indexPath.toJson(),
     };
-    print(map);
+ print(map);
     return map;
   }
 
@@ -47,7 +47,7 @@ class SheetItem extends HiveObject {
     } else if (id.startsWith('TB-')) {
       return SheetTableBox.fromMap(map);
     } else if (id.startsWith('LI-')) {
-      print('in SheetItemFromMap: '+id);
+   print('in SheetItemFromMap: '+id);
       return SheetListBox.fromMap(map);
     } else if(id.startsWith('SZ')){
       return SheetSizedItem.fromMap(map);

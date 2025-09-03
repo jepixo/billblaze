@@ -39,7 +39,7 @@ class IndexPath {
 
   // ✅ DESERIALIZATION: Rebuild tree from list
   factory IndexPath.fromJson(Map<String, dynamic> json) {
-    print('in InputBlockFromMap: '+json['path'].toString());
+ print('in InputBlockFromMap: '+json['path'].toString());
     final List<dynamic> path = json['path'];
     IndexPath? result;
     for (final value in path) {

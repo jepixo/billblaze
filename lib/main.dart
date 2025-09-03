@@ -109,7 +109,8 @@ Future<void> main() async {
   // await Hive.deleteBoxFromDisk('layouts');
   // await Hive.deleteBoxFromDisk('fetchedLayoutBox');
   await Hive.openBox<LayoutModel>('layouts');
-  await Hive.openBox<SheetDecoration>('decorations');
+  await Hive.openBox<String>('folderPaths');
+  // await Hive.openBox<SheetDecoration>('decorations');
   
   // await Hive.box<LayoutModel>('decorations').clear();
   debugPaintSizeEnabled = false; // Disable size debug outlines.
@@ -142,14 +143,14 @@ Future<void> main() async {
   }
 }
 
-class MainApp extends StatefulWidget {
+class MainApp extends ConsumerStatefulWidget {
   const MainApp({super.key});
 
   @override
   _MainAppState createState() => _MainAppState();
 }
 
-class _MainAppState extends State<MainApp> {
+class _MainAppState extends ConsumerState<MainApp> {
   bool isLoading = true;
   String log = 'loading';
   @override
@@ -158,7 +159,7 @@ class _MainAppState extends State<MainApp> {
     isLoading = true;
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async{
       try {
-        await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
+        await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
       } on Exception catch (e) {
         log = e.toString();
       } finally{

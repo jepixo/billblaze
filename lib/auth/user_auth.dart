@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:billblaze/home.dart';
 import 'package:billblaze/models/layout_model.dart';
+import 'package:billblaze/providers/box_provider.dart';
 import 'package:billblaze/providers/env_provider.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:platform/platform.dart';
 import 'package:billblaze/providers/auth_provider.dart';
 import 'package:billblaze/providers/firebase_providers.dart';
@@ -76,7 +80,7 @@ class AuthRepository {
     try {
       final creds = await _googleSignIn.signInOnline();
       if (creds == null) {
-        print('Could not sign in');
+     print('Could not sign in');
         return;
       }
       //  ref.read(authCredentialsProvider.notifier).update((state) => creds,);
@@ -88,12 +92,41 @@ class AuthRepository {
       );
 
       // Sign in with Firebase using the Google credentials
-      final userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
       await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
-      print('Signed in successfully: ${userCredential.user}');
+      ref.read(folderPathProvider.notifier).state = Boxes.getFolderPaths().get(userCredential.user!.email??'default');
+      final directory = await getApplicationSupportDirectory();
+      final billBlazeDir = Directory('${directory.path}\\BillBlaze');
+      if (!(await billBlazeDir.exists())) {
+        await billBlazeDir.create(recursive: true);
+      }
+      
+      if (userCredential.user != null) {
+        final userDir = Directory('${billBlazeDir.path}\\${userCredential.user!.uid}');
+        if (!(await userDir.exists())) {
+          await userDir.create(recursive: true);
+        }
+        final mainDir = Directory('${userDir.path}\\main');
+        if (!(await mainDir.exists())) {
+          await mainDir.create(recursive: true);
+        }
+        // print('User folder: ${userDir.path}');
+        var path = Boxes.getFolderPaths().get(userCredential.user!.email??'default');
+        print('GAYYYYYYYYYYYYYYYYYYYYYYY'+path.toString());
+        if (path == null) {
+          
+          Boxes.getFolderPaths().put(userCredential.user!.email??'default', mainDir.path);
+          ref.read(folderPathProvider.notifier).state = mainDir.path.replaceAll('/', '\\');
+        } else {
+          if (ref.read(folderPathProvider)!=path) {
+            ref.read(folderPathProvider.notifier).state = path;
+            print('HEYYYYYYYYYYYYYYYYYYYYYYY'+ref.read(folderPathProvider).toString());
+          }
+        }
+      }
+   print('Signed in successfully: ${userCredential.user}');
     } catch (e) {
-      print('Error signing in with Google: $e');
+   print('Error signing in with Google: $e');
       // Handle error here
     }
   } //
@@ -112,16 +145,16 @@ class AuthRepository {
       );
 
       if (userCredential.user != null) {
-        print('Email/password sign-in success: ${userCredential.user!.email}');
+     print('Email/password sign-in success: ${userCredential.user!.email}');
         return AuthResult.success;
       } else {
         return AuthResult.failed;
       }
     } on FirebaseAuthException catch (e) {
-      print('FirebaseAuthException in emailPasswordSignIn: ${e.code} ${e.message}');
+   print('FirebaseAuthException in emailPasswordSignIn: ${e.code} ${e.message}');
       return AuthResult.failed;
     } catch (e, st) {
-      print('Unexpected error in emailPasswordSignIn: $e\n$st');
+   print('Unexpected error in emailPasswordSignIn: $e\n$st');
       return AuthResult.failed;
     }
   }
@@ -129,12 +162,14 @@ class AuthRepository {
   Future<void> googleLogOut(WidgetRef ref) async {
   try {
     final googleSignIn = ref.read(googleSignInProvider);
+    
     await googleSignIn.signOut(); // Sign out from Google
     await ref.read(authPr).signOut(); // Sign out from FirebaseAuth
-    print('Signed out successfully');
+    ref.read(folderPathProvider.notifier).state = null;
+ print('Signed out successfully');
   } catch (e, st) {
-    print('Error signing out: $e');
-    print(st);
+ print('Error signing out: $e');
+ print(st);
   }
 }
 

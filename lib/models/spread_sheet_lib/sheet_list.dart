@@ -90,7 +90,7 @@ class SheetListBox extends SheetItem {
         'mainAxisSize': mainAxisSize,
         'size': size,
       };
-      print('SheetListBox: '+ map.toString());
+   print('SheetListBox: '+ map.toString());
     return map;
     } 
 
@@ -100,7 +100,7 @@ class SheetListBox extends SheetItem {
 
   /// ♻️ Convert back from a map
   factory SheetListBox.fromMap(Map<String, dynamic> map) {
-    print('in SheetListFromMap: '+map['id'].toString());
+ print('in SheetListFromMap: '+map['id'].toString());
     // print('in SheetListFromMap: '+map['indexPath'].toString());
     // print('in SheetListFromMap: '+map['sheetList'].toString());
     return SheetListBox(
@@ -148,7 +148,7 @@ class SheetList extends SheetItem {
       });
 
   SheetListBox toSheetListBox() {
-    print(size.toString());
+ print(size.toString());
     return SheetListBox(
         sheetList: boxSheetList(sheetList),
         direction: direction == Axis.vertical ? true : false,

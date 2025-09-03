@@ -51,7 +51,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
   bool isEmailValid(String email) {
     if (email.isEmpty) return true;
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    print(emailRegex.hasMatch(email));
+ print(emailRegex.hasMatch(email));
     return emailRegex.hasMatch(email);
   }
   @override
@@ -108,7 +108,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                 child: SvgPicture.asset(
                   'assets/logos/Asset14.svg',
                   width: 35,
-                  height:25,
+                  height:15,
                 ),
               ),
             ),
@@ -478,11 +478,11 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                   onWebViewCreated: (controller) async {
                                     _controller = controller;
                                     
-                                    print("WebView created");
+                                 print("WebView created");
                                   },
                                   onLoadStop: (controller, url) async {
                                     
-                                    print("Loaded: $url");
+                                 print("Loaded: $url");
                                     await controller.evaluateJavascript(source: "document.documentElement.style.zoom = '100%';");
                                     
                                   },
@@ -499,7 +499,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 70,)
+                            SizedBox(height: 77,)
                           ],
                         ),
                       ),

@@ -52,14 +52,14 @@ class InputBlock {
         'useConst': useConst,
         'lockMode': lockMode,
       };
-      print(map);
+   print(map);
     return map;
     }
 
   factory InputBlock.fromMap(Map<String, dynamic> map) {
-    print('in InputBlockFromMap: '+map['id']);
-    print('in InputBlockFromMap: '+map['blockIndex'].toString());
-    print('in InputBlockFromMap: '+map['function'].toString());
+ print('in InputBlockFromMap: '+map['id']);
+ print('in InputBlockFromMap: '+map['blockIndex'].toString());
+ print('in InputBlockFromMap: '+map['function'].toString());
     return InputBlock(
       indexPath: map['indexPath'] != null
           ? IndexPath.fromJson(map['indexPath'])

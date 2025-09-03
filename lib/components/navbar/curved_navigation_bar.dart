@@ -174,7 +174,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                           ),
                           topLayerChild: Transform.rotate(
                             angle: -pi/2,
-                            child:Icon((_icon as Icon).icon,color: widget.buttonIconColor,size: (_icon as Icon).size,)
+                            child:Icon(((_icon as Tooltip).child as Icon).icon,color: widget.buttonIconColor,size: ((_icon as Tooltip).child as Icon).size,)
                               
                           ),
                           baseDecoration: BoxDecoration(

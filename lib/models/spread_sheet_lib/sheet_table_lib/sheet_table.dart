@@ -86,12 +86,12 @@ class SheetTableBox extends SheetItem {
         'name': name,
         'expand': expand,
       };
-      print('SheetTableBox: '+map.toString());
+   print('SheetTableBox: '+map.toString());
     return map;
     } 
 
   factory SheetTableBox.fromMap(Map<String, dynamic> map) {
-    print('in SheetTableFromMap: '+map['id']);
+ print('in SheetTableFromMap: '+map['id']);
     return SheetTableBox(
         id: map['id'],
         parentId: map['parentId'],
