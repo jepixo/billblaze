@@ -124,7 +124,7 @@ List<RequiredText> getLabelList(SheetType type, List<RequiredText>? labelList) {
         RequiredText(name: 'paymentTerms', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
         RequiredText(name: 'itemSheet', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: false),
         RequiredText(name: 'profits', sheetTextType: SheetTextType.number.index, indexPath: IndexPath(index: -951), isOptional: true),
-        RequiredText(name: 'isPaid', sheetTextType: SheetTextType.bool.index, indexPath: IndexPath(index: -951), isOptional: false),
+        RequiredText(name: 'isPaid', sheetTextType: SheetTextType.bool.index, indexPath: IndexPath(index: -951), isOptional: true),
         // simpler and cleaner, excludes tax fields
       ];
       break;

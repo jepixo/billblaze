@@ -230,7 +230,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 style: GoogleFonts.lexend(
                                   color: defaultPalette.extras[0],
                                   letterSpacing: -1,
-                                  fontSize: mapValueDimensionBasedLockOnDesync(15, 45, sWidth, sHeight),
+                                  fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
                                 ),
                                 cursorColor: defaultPalette.tertiary,
                                 validator: (value) {
@@ -244,12 +244,12 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 },
                                 decoration: InputDecoration(
                                   contentPadding: EdgeInsets.only(left: 10),
-                                  hintText: '',
+                                  hintText: 'Email',
                                   focusColor: defaultPalette.extras[0],
                                   hintStyle: GoogleFonts.lexend(
-                                    color: defaultPalette.extras[0],
+                                    color: defaultPalette.extras[0].withOpacity(0.3),
                                     letterSpacing: -1,
-                                    fontSize: 15,
+                                    fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
                                   ),
                                   prefixIcon: Icon(
                                     TablerIcons.mail,
@@ -289,7 +289,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 style: GoogleFonts.redactedScript(
                                 color: defaultPalette.extras[0],
                                 letterSpacing:-1,
-                                fontSize: mapValueDimensionBasedLockOnDesync(15, 45, sWidth, sHeight) ,
+                                fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight) ,
                                 ),
                                 onChanged: (value) {},
                                 
@@ -297,12 +297,12 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 controller: passwordFieldController,
                                 decoration: InputDecoration(
                                   contentPadding: EdgeInsets.all(0).copyWith(left: 10,),
-                                  hintText: '',
+                                  hintText: 'Popcorn',
                                   focusColor: defaultPalette.extras[0],
                                   hintStyle: GoogleFonts.lexend(
-                                    color: defaultPalette.extras[0],
+                                    color: defaultPalette.extras[0].withOpacity(0.3),
                                     letterSpacing:-1,
-                                    fontSize: 15),
+                                    fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight)),
                                   prefixIcon: Icon(TablerIcons.password, size:mapValueDimensionBasedLockOnDesync(25, 35, sWidth, sHeight),
                                       color: defaultPalette.extras[0]),
                                   focusedBorder:  OutlineInputBorder(

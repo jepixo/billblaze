@@ -7,6 +7,7 @@ import 'dart:math' as math;
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:billblaze/auth/user_auth.dart';
 import 'package:billblaze/components/balloon_slider/widget.dart';
+import 'package:billblaze/components/widgets/graph_window.dart';
 import 'package:billblaze/components/widgets/search_bar.dart';
 import 'package:billblaze/main.dart';
 import 'package:billblaze/models/bill/bill_type.dart';
@@ -81,6 +82,9 @@ final qtyIndexProvider = StateProvider<int>((ref) {
 final profitsIndexProvider = StateProvider<int>((ref) {
   return 0;
 });
+final unpaidIndexProvider = StateProvider<int>((ref) {
+  return 0;
+});
 final homeScreenTabIndexProvider = StateProvider<int>((ref) {
   return 0;
 });
@@ -140,6 +144,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   DateTime dateTimeNow = DateTime.now();
   bool isLayoutTileView = false;
   bool isTemplateView = false;
+  int showUnpaid = 0;
   bool isLlmProcessing = false;
   TextEditingController layoutSearchController = TextEditingController();
   FocusNode layoutSearchFocusNode = FocusNode();
@@ -148,11 +153,15 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   double _revCardPosition = 0;
   double _qtyCardPosition = 0;
   double _profitsCardPosition = 0;
+  double _unpaidCardPosition = 0; 
   double totalRevenue = 0;
+  double totalUnpaidRevenue = 0;
   double totalProfit = 0;
   int totalBills =0;
+  int totalUnpaid = 0;
   late AppinioSwiperController recentsCardController;
   late AppinioSwiperController revCardController;
+  late AppinioSwiperController unpaidCardController;
   late AppinioSwiperController qtyCardController;
   late AppinioSwiperController profitsCardController;
   late AnimationController squiggleFadeAnimationController;
@@ -271,6 +280,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     revCardController = AppinioSwiperController();
     qtyCardController = AppinioSwiperController();
     profitsCardController = AppinioSwiperController();
+    unpaidCardController = AppinioSwiperController();
     sliderController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 80),
@@ -499,7 +509,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   _timer = Timer.periodic(
     Duration(milliseconds: _graphLineSpeedTween.value)*3,
     (_) {
-      setState(() {
+      if(ref.read(homeScreenTabIndexProvider) ==0) {
+        setState(() {
         // X moves forward forever
         _xValue += 1;
         
@@ -562,7 +573,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
 
       });
-      _getCurrentTime();
+      }
+      // _getCurrentTime();
     },
   
   );
@@ -1351,51 +1363,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         dotData: FlDotData(show: false),
                                         // isStepLineChart: true,
                                       ),
-                                      // LineChartBarData(
-                                      //     spots: _dataPoints[2],
-                                      //     isCurved: false,
-                                      //     curveSmoothness: 0,
-                                      //     barWidth: 1,
-                                      //     color: Colors.redAccent,
-                                      //     belowBarData: BarAreaData(show: false),
-                                      //     dotData: FlDotData(show: false),
-                                      //     isStepLineChart: true),
-                                      // LineChartBarData(
-                                      //   spots: _dataPoints[3],
-                                      //   isCurved: false,
-                                      //   curveSmoothness: 0,
-                                      //   barWidth: 1,
-                                      //   color: Colors.black,
-                                      //   belowBarData: BarAreaData(show: false),
-                                      //   dotData: FlDotData(show: false),
-                                      // ),
-                                      // LineChartBarData(
-                                      //   spots: _dataPoints[4],
-                                      //   isCurved: false,
-                                      //   curveSmoothness: 0,
-                                      //   barWidth: 1,
-                                      //   color: Colors.black,
-                                      //   belowBarData: BarAreaData(show: false),
-                                      //   dotData: FlDotData(show: false),
-                                      // ),
-                                      // LineChartBarData(
-                                      //     spots: _dataPoints[5],
-                                      //     isCurved: false,
-                                      //     curveSmoothness: 0,
-                                      //     barWidth: 1,
-                                      //     color: Colors.purple,
-                                      //     belowBarData: BarAreaData(show: false),
-                                      //     dotData: FlDotData(show: false),
-                                      //     isStepLineChart: true),
-                                      // LineChartBarData(
-                                      //   spots: _dataPoints[6],
-                                      //   isCurved: false,
-                                      //   curveSmoothness: 0,
-                                      //   barWidth: 1,
-                                      //   color: Colors.indigo,
-                                      //   belowBarData: BarAreaData(show: false),
-                                      //   dotData: FlDotData(show: false),
-                                      // ),
+                                      
                                       LineChartBarData(
                                           spots: _dataPoints[2],
                                           isCurved: false,
@@ -1442,7 +1410,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         dotData: FlDotData(show: false),
                                       ),
                                     ],
-                                    
+                                  
                                     backgroundColor:defaultPalette.transparent,
                                     titlesData: FlTitlesData(
                                       show: false,
@@ -1484,7 +1452,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         show: true,),
                                     borderData: FlBorderData(show: false),
                                     lineTouchData: LineTouchData(
-                                      
+                                     
                                     getTouchedSpotIndicator:
                                       (LineChartBarData barData,
                                           List<int> spotIndexes) {
@@ -1523,7 +1491,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           final spot = barSpot; // touched point
                                           final yVal = spot.y;
                                           final xVal = spot.x.toInt();
-                                
+                               
                                           String label;
                                           if (barSpot.barIndex == 0) {
                                             // monthly line (mod 12)
@@ -1532,11 +1500,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           } else {
                                             final dayIndex = (xVal % 31) + 1;
                                             final date = DateTime(selectedYear, selectedMonth , dayIndex);
-                                
+                               
                                             final weekday = DateFormat('EEE').format(date); // e.g. Tuesday
                                             final dayFormatted = DateFormat('d').format(date); // 10
                                             final monthFormatted = DateFormat('MMM').format(date); // Mar
-                                
+                               
                                             label = '$weekday, $dayFormatted $monthFormatted : ${_currencyFormatter.format(yVal)}';
                                           }
                                           if (barSpot.barIndex ==0 || barSpot.barIndex ==1)
@@ -1554,17 +1522,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     minX: isHomeTab
                                         ? _dataPoints[0].first.x
                                         : appinioMinTabChanged,
-                                
+                               
                                     maxX: isHomeTab
                                         ? (_dataPoints[0].last.x <= 50
                                             ? 50
                                             : _dataPoints[0].last.x +
                                                 ((_dataPoints[0].last.x - _dataPoints[0].first.x) * 0.2))
                                         : appinioMaxTabChanged,
-                                
+                               
                                     minY: _globalMinY == double.infinity ? 0 : _globalMinY - _globalMaxY/2,
                                     maxY: _globalMaxY == double.negativeInfinity ? 1000 : _globalMaxY*1.3,
-                                
+                               
                                   ),
                                   duration: Duration(milliseconds: 150),
                                   curve: Curves.linear,
@@ -1889,8 +1857,250 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               duration: Durations.medium1,
                               child: Row(
                                 children: [
+                                  //unPaid Bills
+                                  Expanded(
+                                    flex: 15,
+                                    child: AppinioSwiper(
+                                      backgroundCardCount: 1,
+                                      // initialIndex: ref.read(cCardIndexProvider),
+                                      backgroundCardOffset: Offset(4, 4),
+                                      duration: Duration(milliseconds: 150),
+                                      backgroundCardScale: 1,
+                                      loop: isHomeTab,
+                                      cardCount: 6,
+                                      allowUnSwipe: true,
+                                      controller: unpaidCardController,
+                                      onCardPositionChanged: (position) {
+                                        setState(() {
+                                          _unpaidCardPosition = position.offset.dx.abs() + position.offset.dy.abs();
+                                        });
+                                      },
+                                      onSwipeEnd: (a, b, direction) {
+                                        // print(direction.toString());
+                                        setState(() {
+                                          ref
+                                              .read(unpaidIndexProvider.notifier)
+                                              .update((s) => s = b);
+                                          // _currentCardIndex = b;
+                                          _unpaidCardPosition = 0;
+                                        });
+                                      },
+                                      cardBuilder: (BuildContext context, int index) {
+                                        int currentCardIndex = ref.watch(unpaidIndexProvider);
+                                        return Stack(
+                                          children: [
+                                            Positioned.fill(
+                                              child: AnimatedContainer(
+                                                duration: defaultDuration,
+                                                margin: EdgeInsets.all(5),
+                                                alignment: Alignment.center,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  border: Border.all(width: 1),
+                                                  borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(18, 30, sWidth, sHeight)),
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned.fill(
+                                              child: AnimatedOpacity(
+                                                opacity: currentCardIndex == index
+                                                    ? 0
+                                                    : (1 - (_unpaidCardPosition / 200).clamp(0.0, 1.0)),
+                                                duration: Duration(milliseconds: 300),
+                                                child: AnimatedContainer(
+                                                  duration: Duration(milliseconds: 300),
+                                                  margin: EdgeInsets.all(5),
+                                                  alignment: Alignment.center,
+                                                  decoration: BoxDecoration(
+                                                    color: index == (currentCardIndex + 1) % 10
+                                                        ? defaultPalette.extras[0]
+                                                        : index == (currentCardIndex + 2) % 10
+                                                            ? defaultPalette.extras[0]
+                                                            : defaultPalette.extras[0],
+                                                    border: Border.all(width: 2),
+                                                    borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(18, 30, sWidth, sHeight)),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            if(index==0)...[
+                                              Positioned.fill(
+                                                child:Container(
+                                                  margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                                  decoration: BoxDecoration(
+                                                  ),
+                                                  // padding: EdgeInsets.all(0).copyWith(left: 20, right:15,top: mapValueDimensionBasedLockOnDesync(15, 25, sWidth, sHeight)),
+                                                  child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Expanded(
+                                                        child: Container(
+                                                          margin: EdgeInsets.all(5).copyWith(bottom:0),
+                                                          decoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                            borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(16, 30, sWidth, sHeight)),
+                                                            border: Border.all()
+                                                          ),
+                                                          child: Row(
+                                                            children: [
+                                                              SizedBox(width: mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),),
+                                                              Expanded(
+                                                                child: FittedBox(
+                                                                  fit: BoxFit.scaleDown,
+                                                                  alignment: Alignment.centerRight,
+                                                                  child: Text(totalUnpaid.toString(),
+                                                                  textAlign: TextAlign.end,
+                                                                  maxLines:1,
+                                                                  overflow:TextOverflow.ellipsis,
+                                                                  style: GoogleFonts.lexend(
+                                                                    color: defaultPalette.primary,
+                                                                    fontSize: mapValueDimensionBasedLockOnDesync(45, 85, sWidth, sHeight),
+                                                                    letterSpacing: -1,
+                                                                    fontWeight: FontWeight.w700,
+                                                                    height: 0.5
+                                                                  ),),
+                                                                ),
+                                                              ),
+                                                              SizedBox(width: mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),)
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                        children: [
+                                                          Expanded(
+                                                            child: Text('totalUnpaid',
+                                                              maxLines:1,
+                                                              overflow:TextOverflow.ellipsis,
+                                                              textAlign: TextAlign.center,
+                                                              style: GoogleFonts.lexend(
+                                                                color: defaultPalette.extras[4],
+                                                                fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
+                                                                letterSpacing: -1,
+                                                                fontWeight: FontWeight.w500,
+                                                                height: 0.6
+                                                              ),
+                                                            ),
+                                                          ),
+                                                  
+                                                        ],
+                                                      ),
+                                                      SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),)
+                                                    ],
+                                                  ),
+                                                )
+                                              )
+              
+                                            ],
+                                            if(index!=0)...[
+                                              Positioned.fill(
+                                                child:Container(
+                                                  margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                                  decoration: BoxDecoration(
+                                                  ),
+                                                  // padding: EdgeInsets.all(0).copyWith(left: 20, right:15,top: mapValueDimensionBasedLockOnDesync(15, 25, sWidth, sHeight)),
+                                                  child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Expanded(
+                                                        child: Container(
+                                                          margin: EdgeInsets.all(5).copyWith(bottom:0),
+                                                          decoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                            borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(16, 30, sWidth, sHeight)),
+                                                            border: Border.all()
+                                                          ),
+                                                          child: Row(
+                                                            children: [
+                                                              SizedBox(width: mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),),
+                                                              Expanded(
+                                                                child: FittedBox(
+                                                                  fit: BoxFit.scaleDown,
+                                                                  alignment: Alignment.centerRight,
+                                                                  child: Text(((
+                                                                    index==1
+                                                                    ? typeStats[SheetType.taxInvoice]
+                                                                    : index==2
+                                                                      ? typeStats[SheetType.creditNote]
+                                                                      : index==3
+                                                                        ? typeStats[SheetType.debitNote]
+                                                                        : index==4
+                                                                        ? typeStats[SheetType.billOfSupply]
+                                                                        : typeStats[SheetType.proformaInvoice]
+                                                                    )?['unpaid']??0).round().toString(),
+                                                                  textAlign: TextAlign.end,
+                                                                  style: GoogleFonts.lexend(
+                                                                    color: defaultPalette.primary,
+                                                                    fontSize: mapValueDimensionBasedLockOnDesync(45, 85, sWidth, sHeight),
+                                                                    letterSpacing: -1,
+                                                                    fontWeight: FontWeight.w700,
+                                                                    height: 0.5
+                                                                  ),),
+                                                                ),
+                                                              ),
+                                                              SizedBox(width: mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),)
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                      Padding(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                          children: [
+                                                            Expanded(
+                                                              child: FittedBox(
+                                                                fit: BoxFit.scaleDown,
+                                                                alignment: Alignment.centerRight,
+                                                                child: Text(
+                                                                  index==1
+                                                                  ? 'unpaid TxInv'
+                                                                  : index==2
+                                                                    ? 'unpaid CrdNotes'
+                                                                    : index==3
+                                                                      ? 'unpaid DbtNotes'
+                                                                      : index==4
+                                                                      ? 'unpaid BOS'
+                                                                      : 'unpaid ProInv',
+                                                                  textAlign:TextAlign.center,
+                                                                  maxLines: 1,overflow: TextOverflow.ellipsis,
+                                                                  style: GoogleFonts.lexend(
+                                                                    color: defaultPalette.extras[4],
+                                                                    fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
+                                                                    letterSpacing: -1,
+                                                                    fontWeight: FontWeight.w500,
+                                                                    height: 0.6
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                                                                        
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),)
+                                                    ],
+                                                  ),
+                                                )
+                                              )
+              
+                                            ],
+                                            
+                                          ],
+                                        );
+                                      
+                                      },
+                                    ),
+                                  ),
+                                  SizedBox(width:mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                   //REVENUEE OF BILLS AND ALLAT CARDS
                                   Expanded(
+                                    flex: 20,
                                     child: AppinioSwiper(
                                       backgroundCardCount: 1,
                                       // initialIndex: ref.read(cCardIndexProvider),
@@ -2124,6 +2334,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   SizedBox(width:mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                   //QUANITYYY OF BILLS AND ALLAT CARDS
                                   Expanded(
+                                    flex: 20,
                                     child: AppinioSwiper(
                                       backgroundCardCount: 1,
                                       // initialIndex: ref.read(cCardIndexProvider),
@@ -2352,6 +2563,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   SizedBox(width:mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
                                   //PROFITSS OF BILLS AND ALLAT CARDSS
                                   Expanded(
+                                    flex: 20,
                                     child: AppinioSwiper(
                                       backgroundCardCount: 1,
                                       // initialIndex: ref.read(cCardIndexProvider),
@@ -2917,81 +3129,86 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       setState(() {
                                                         isLlmProcessing = true;
                                                       });
-                                                      final receivePort =
-                                                          ReceivePort();
-                                                  
-                                                      final prompt =
-                                                          ChatHistory()
-                                                            ..addMessage(
-                                                                role:
-                                                                    Role.system,
-                                                                content:
-                                                              """"" You are a concise, analytical assistant.
+                                                      try{
+                                                        final receivePort =
+                                                            ReceivePort();
+                                                        final errorPort = ReceivePort();                                                 
+                                                        final prompt =
+                                                            ChatHistory()
+                                                              ..addMessage(
+                                                                  role:
+                                                                      Role.system,
+                                                                  content:
+                                                                """"" You are a concise, analytical assistant.
                                                                     Always focus directly on asnwering the user's prompt, 
                                                                     keep responses short and precise. 
                                                                     Only generate the answer and stop.
                                                                     Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. If you can't answer something just say so but don't remain silent to a question.
                                                                     Do not generate questions or mention unrelated topics. Keep your responses strictly bound to the BillBlaze data and decorate linguistically for the user. 
                                                                     Here's the BillBlaze Data: $typeStats, Selected year: $selectedYear, Selected Month: $selectedMonth, YearStats: $monthRevenueMap, MonthStats: $dayRevenueMap Current Date: ${DateFormat('dd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
-                                                                    Total Revenue: $totalRevenue, Total Profit: $totalProfit, Total bills: $totalBills.
-                                                                Payable means our total revenue.
-                                                                Count means number of bills made by the user.
-                                                              """)
-                                                            ..addMessage(
-                                                                role: Role.user,
-                                                                content:
-                                                                    chatTextController
-                                                                        .text)
-                                                            ..addMessage(
-                                                                role: Role
-                                                                    .assistant,
-                                                                content: "");
-                                                  
-                                                      final modelPath = ref.read(aiModelPathProvider);
-                                                      // final modelPath =
-                                                      //     "C:/Users/ANTEC/Downloads/Compressed/Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf";
-                                                  
-                                                      // ✅ Pass only data, not Flutter state
-                                                      await Isolate.spawn(
-                                                          runLlamaModel, {
-                                                        'sendPort': receivePort
-                                                            .sendPort,
-                                                        'prompt':
-                                                            prompt.exportFormat(
-                                                                ChatFormat
-                                                                    .chatml,
-                                                                leaveLastAssistantOpen:
-                                                                    true),
-                                                        'modelPath': modelPath,
-                                                      });
-                                                      ref
-                                                          .read(aiTokenProvider
-                                                              .notifier)
-                                                          .state = '';
-                                                  
-                                                      final buffer =
-                                                          StringBuffer();
-                                                      await for (final token
-                                                          in receivePort) {
-                                                        if (token == null)
-                                                          break;
-                                                        buffer.write(token);
-                                                        ref
-                                                            .read(
-                                                                aiTokenProvider
-                                                                    .notifier)
-                                                            .state += (token);
-                                                        ref.read(aiTokenProvider.notifier).state = ref.read(
-                                                                aiTokenProvider.notifier).state
-                                                                .replaceAll('<|im_start|> assistant\n', '')
-                                                                .replaceAll('<|im_start|>assistant\n', '')
-                                                                .replaceAll('<|im_end|>', '')
-                                                                ;
-                                                      }
-                                                  print( "✅ Final Response: ${buffer.toString()}");
+                                                                      Total Revenue: $totalRevenue, Total Profit: $totalProfit, Total bills: $totalBills.
+                                                                  Payable means our total revenue.
+                                                                  Count means number of bills made by the user.
+                                                                """)
+                                                              ..addMessage(
+                                                                  role: Role.user,
+                                                                  content:
+                                                                      chatTextController
+                                                                          .text)
+                                                              ..addMessage(
+                                                                  role: Role
+                                                                      .assistant,
+                                                                  content: "");
+                                                                                                          
+                                                        final modelPath = ref.read(aiModelPathProvider);
+                                                        // final modelPath =
+                                                        //     "C:/Users/ANTEC/Downloads/Compressed/Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf";
+                                                                                                          
+                                                        // ✅ Pass only data, not Flutter state
+                                                        await Isolate.spawn(
+                                                            runLlamaModel, {
+                                                          'sendPort': receivePort
+                                                              .sendPort,
+                                                          'prompt':
+                                                              prompt.exportFormat(
+                                                                  ChatFormat
+                                                                      .chatml,
+                                                                  leaveLastAssistantOpen:
+                                                                      true),
+                                                          'modelPath': modelPath,
+                                                        },
+                                                        onError: errorPort.sendPort,
+                                                        );
+                                                        ref.read(aiTokenProvider
+                                                                .notifier).state = '';
+                                                        errorPort.listen((err) {
+                                                          // err is [error, stackTrace]
+                                                          ref.read(aiTokenProvider.notifier).state = "Error: ${err[0]}";
+                                                          setState(() {
+                                                            isLlmProcessing = false;
+                                                          });
+                                                          return;
+                                                        });                                                  
+                                                        final buffer =
+                                                            StringBuffer();
+                                                        await for (final token
+                                                            in receivePort) {
+                                                          if (token == null)
+                                                            break;
+                                                          buffer.write(token);
+                                                          ref.read(aiTokenProvider.notifier).state += (token);
+                                                          ref.read(aiTokenProvider.notifier).state = ref.read(
+                                                                  aiTokenProvider.notifier).state
+                                                                  .replaceAll('<|im_start|> assistant\n', '')
+                                                                  .replaceAll('<|im_start|>assistant\n', '')
+                                                                  .replaceAll('<|im_end|>', '')
+                                                                  ;
+                                                        }
+                                                        print( "✅ Final Response: ${buffer.toString()}");
+                                                      } finally{
                                                       setState(() {
                                                         isLlmProcessing = false;
-                                                      });
+                                                      });}
                                                     }
                                                   },
                                                   
@@ -4458,21 +4675,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     top: 0,
                   ),
                   //layGraph
-                  child: LineChart(LineChartData(
-                      lineBarsData: [LineChartBarData()],
-                      titlesData: FlTitlesData(show: false),
-                      gridData: FlGridData(
-                          show: true,
-                          horizontalInterval: 7.8,
-                          verticalInterval: 30),
-                      borderData: FlBorderData(show: false),
-                      minY: 0,
-                      maxY: 50,
-                      maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
-                              500 +
-                          250,
-                      minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
-                          500)),
+                  child: GraphWindow(sWidth: sWidth, sHeight: sHeight, s: 0),
                 ),
               ),
 
@@ -4539,11 +4742,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 //         b: false)
                 //     : sHeight,
                 bottom: isLayoutTab?mapValueDimensionBased(
-                              25,
-                              50 - (mapValueDimensionBased( 0, 1, sWidth, sHeight, useWidth: true)),
-                              sWidth,
-                              sHeight,
-                              b: false):sHeight,
+                  25,
+                  50 - (mapValueDimensionBased( 0, 1, sWidth, sHeight, useWidth: true)),
+                  sWidth,
+                  sHeight,
+                  b: false):sHeight,
                 left: (sWidth / 20).clamp(90, double.infinity),
                 child: AnimatedContainer(
                   duration: Durations.extralong1,
@@ -5065,16 +5268,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               BorderRadius.circular(mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight)),
                                           child: Row(
                                             crossAxisAlignment: CrossAxisAlignment.end,
-                                            children: [//teh horizontal layout scroll
-                                              
+                                            children: [
+                                              //teh horizontal layout scroll
                                               Expanded(
                                                   child: Container(
                                                     decoration: BoxDecoration(
                                                       // color: defaultPalette
                                                       //     .primary,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              7),
+                                                      borderRadius: BorderRadius.circular( 7),
                                                     ),
                                                     child: Row(
                                                       children: [
@@ -5120,7 +5321,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                         Container(
                                                                           width:mapValueDimensionBasedLockOnDesync(35, 140, sWidth, sHeight),
                                                                           margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(4, 8, sWidth, sHeight)),
-                                                                          padding: EdgeInsets.all(0).copyWith(left: mapValueDimensionBasedLockOnDesync(3, 8, sWidth, sHeight)),
+                                                                          padding: EdgeInsets.all(0).copyWith(left: mapValueDimensionBasedLockOnDesync(1, 8, sWidth, sHeight)),
                                                                           alignment: Alignment(0, -0.8),
                                                                           decoration: BoxDecoration(
                                                                             color: defaultPalette.extras[0], 
@@ -8178,35 +8379,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     top: 0,
                   ),
                   //BillGraph
-                  child: LineChart(LineChartData(
-                      lineBarsData: [LineChartBarData()],
-                      titlesData: FlTitlesData(show: false),
-                      gridData: FlGridData(
-                          // getDrawingVerticalLine: (value) => FlLine(
-                          //                         color: defaultPalette.tertiary,
-                          //                         dashArray: [5, 5],
-                          //                         strokeWidth: 1),
-                          // getDrawingHorizontalLine: (value) =>
-                          //     FlLine(
-                          //         color: defaultPalette.tertiary,
-                          //         dashArray: [5, 5,],
-                          //         strokeWidth: 1),
-                          show: true,
-                          horizontalInterval: 7.8,
-                          verticalInterval: 30),
-                      borderData: FlBorderData(show: false),
-                      minY: 0,
-                      maxY: 50,
-                      maxX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
-                              500 +
-                          250,
-                      minX: dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
-                          500)),
+                  child: GraphWindow(sWidth: sWidth, sHeight: sHeight, s: 1),
                 ),
               ),
 
-              //   ),
-              // ),
               //
               // //BillsListBGBLACKK
               AnimatedPositioned(
@@ -8350,49 +8526,138 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               SizedBox(
                                 width: 3,
                               ),
-                              AnimatedToggleSwitch<bool>.dual(
-                                current: isLayoutTileView,
-                                first: true,
-                                second: false,
-                                onChanged: (value) {
-                                  setState(() {
-                                    isLayoutTileView = value;
-                                  });
-                                },
-                                animationCurve: Curves.easeInOutExpo,
-                                animationDuration: Durations.medium4,
-                                borderWidth:
-                                    2, // backgroundColor is set independently of the current selection
-                                styleBuilder: (value) => ToggleStyle(
-                                    borderRadius: BorderRadius.circular(
-                                        mapValueDimensionBased(
-                                            50, 999, sWidth, sHeight)),
-                                    indicatorBorderRadius:
-                                        BorderRadius.circular(
+                              Column(
+                                children: [
+                                  AnimatedToggleSwitch<bool>.dual(
+                                    current: isLayoutTileView,
+                                    first: true,
+                                    second: false,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        isLayoutTileView = value;
+                                      });
+                                    },
+                                    animationCurve: Curves.easeInOutExpo,
+                                    animationDuration: Durations.medium4,
+                                    borderWidth:
+                                        2, // backgroundColor is set independently of the current selection
+                                    styleBuilder: (value) => ToggleStyle(
+                                        borderRadius: BorderRadius.circular(
                                             mapValueDimensionBased(
-                                                5, 32, sWidth, sHeight)),
-                                    borderColor: defaultPalette.secondary,
-                                    backgroundColor: defaultPalette.secondary,
-                                    indicatorColor: defaultPalette.extras[
-                                        0]), // indicatorColor changes and animates its value with the selection
-                                iconBuilder: (value) {
-                                  return Icon(
-                                      value
-                                          ? TablerIcons.grip_horizontal
-                                          : TablerIcons.grip_vertical,
-                                      size: 12,
-                                      color: defaultPalette.primary);
-                                },
-                                textBuilder: (value) {
-                                  return Text(
-                                    value ? 'list' : 'page',
-                                    style: GoogleFonts.bungee(fontSize: 12),
-                                  );
-                                },
-                                height: mapValueDimensionBased(
-                                    22, 32, sWidth, sHeight),
-                                spacing: mapValueDimensionBased(
-                                    10, 30, sWidth, sHeight),
+                                                50, 999, sWidth, sHeight)),
+                                        indicatorBorderRadius:
+                                            BorderRadius.circular(
+                                                mapValueDimensionBased(
+                                                    5, 32, sWidth, sHeight)),
+                                        borderColor: defaultPalette.secondary,
+                                        backgroundColor: defaultPalette.secondary,
+                                        indicatorColor: defaultPalette.extras[
+                                            0]), // indicatorColor changes and animates its value with the selection
+                                    iconBuilder: (value) {
+                                      return Icon(
+                                          value
+                                              ? TablerIcons.grip_horizontal
+                                              : TablerIcons.grip_vertical,
+                                          size: 12,
+                                          color: defaultPalette.primary);
+                                    },
+                                    textBuilder: (value) {
+                                      return Text(
+                                        value ? 'list' : 'page',
+                                        style: GoogleFonts.bungee(fontSize: 11),
+                                      );
+                                    },
+                                    height: mapValueDimensionBased(
+                                        20, 30, sWidth, sHeight),
+                                    spacing: mapValueDimensionBased(
+                                        10, 30, sWidth, sHeight),
+                                  ),
+                                  SizedBox(
+                                    height: 3,
+                                  ),
+                                  AnimatedToggleSwitch<int>.rolling(
+                                    current: showUnpaid,
+                                    values: [0,1,2,3],
+                                    // first: true, second: false,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        showUnpaid = value;
+                                      });
+                                    },
+                                    animationCurve: Curves.easeInOutExpo,
+                                    animationDuration: Durations.medium4,
+                                    borderWidth: 2, // backgroundColor is set independently of the current selection
+                                    styleBuilder: (value) => ToggleStyle(
+                                        borderRadius: BorderRadius.circular(
+                                            mapValueDimensionBased(
+                                                50, 999, sWidth, sHeight)),
+                                        indicatorBorderRadius:
+                                            BorderRadius.circular(
+                                                mapValueDimensionBased(
+                                                    5, 32, sWidth, sHeight)),
+                                        borderColor: defaultPalette.secondary,
+                                        backgroundColor: defaultPalette.secondary,
+                                        indicatorColor: defaultPalette.extras[0]), // indicatorColor changes and animates its value with the selection
+                                    iconBuilder: (value,c) {
+                                      return Tooltip(
+                                        message: value ==0
+                                          ? 'Show All Bills.'
+                                          : value ==1
+                                            ?'Show Unpaid Bills.'
+                                            : value ==2
+                                              ?'Show Owed Bills.'
+                                              :'Show Settled Bills.',
+                                        textStyle: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased( 15, 20, sWidth, sHeight),
+                                          color: defaultPalette.primary,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: -0.2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: (value ==3?defaultPalette.tertiary:defaultPalette.extras[value ==0?0: value ==1 ? 4 : 3 ]).withOpacity(0.9),
+                                          borderRadius:
+                                                BorderRadius.circular(
+                                                    50)),
+                                        child: Icon(
+                                          value ==0
+                                              ? TablerIcons.file_stack
+                                              : value ==1
+                                                ?TablerIcons.alert_circle
+                                                : value ==2
+                                                  ? TablerIcons.user_dollar
+                                                  : TablerIcons.checks,
+                                          size: 12,
+                                          color:c? defaultPalette.primary
+                                          :value ==3
+                                            ?defaultPalette.tertiary
+                                            :defaultPalette.extras[
+                                            value ==0
+                                              ? 0
+                                              : value ==1
+                                                ? 4
+                                                : 3
+                                            ]),
+                                      );
+                                    },
+                                    // textBuilder: (value) {
+                                    //   return Text(
+                                    //     value ? 'unpaid' : 'all',
+                                    //     style: GoogleFonts.bungee(fontSize: 10),
+                                    //   );
+                                    // },
+                                    inactiveOpacity: 1,
+                                    iconOpacity: 1,
+                                    height: mapValueDimensionBased(
+                                        20, 30, sWidth, sHeight),
+                                    minTouchTargetSize: mapValueDimensionBased(
+                                        20, 50, sWidth, sHeight),
+                                    // spacing: mapValueDimensionBased(
+                                    //     0, 0, sWidth, sHeight),
+                                    indicatorSize: Size(mapValueDimensionBased(
+                                        25, 31, sWidth, sHeight), mapValueDimensionBased(
+                                        20, 30, sWidth, sHeight)),
+                                  ),
+                                ],
                               ),
                               SizedBox(
                                 width: 5,
@@ -8465,19 +8730,39 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               if (layoutModel.id.startsWith('LY-')|| (layoutModel.deleted??false)) {
                                                 return SizedBox.shrink();
                                               }
+                                              final isPaidLabel = layoutModel.labelList.firstWhere(
+                                                (lbl) => lbl.name == 'isPaid',
+                                                orElse: () => RequiredText(name: 'isPaid', sheetTextType: SheetTextType.bool.index, indexPath: IndexPath(index: -951), isOptional: true),
+                                              );
+                                              bool isPaid = false;
+
+                                              if (isPaidLabel.indexPath.index != -951){ 
+                                              final isPaidItem = getItemAtPath(isPaidLabel.indexPath, layoutModel.spreadSheetList);
+                                              isPaid =bool.tryParse(isPaidItem is! SheetTextBox? 'false': buildCombinedTextFromBlocks((isPaidItem).inputBlocks, layoutModel.spreadSheetList))?? false;
+                                              }
+
+                                              switch (showUnpaid) {
+                                                case 1:
+                                                  if(isPaid || layoutModel.type == SheetType.creditNote.index){return SizedBox.shrink();}
+                                                  break;
+                                                case 2:
+                                                 if(isPaid || layoutModel.type != SheetType.creditNote.index){return SizedBox.shrink();}
+                                                  break;
+                                                case 3:
+                                                 if(!isPaid){return SizedBox.shrink();}
+                                                  break;
+                                                default:
+                                              }
+
                                               if (!isLayoutTileView) {
                                                 return Material(
                                                   color: defaultPalette.transparent,
                                                   child: InkWell(
                                                     hoverColor: defaultPalette
-                                                        .extras[0]
+                                                        .extras[isPaid?0: layoutModel.type == SheetType.creditNote.index?3:4]
                                                         .withOpacity(0.4),
-                                                    highlightColor:
-                                                        defaultPalette.extras[0]
-                                                            .withOpacity(0.4),
-                                                    splashColor: defaultPalette
-                                                        .extras[0]
-                                                        .withOpacity(0.4),
+                                                    highlightColor: defaultPalette.extras[isPaid?0: layoutModel.type == SheetType.creditNote.index?3:4].withOpacity(0.4),
+                                                    splashColor: defaultPalette.extras[isPaid?0: layoutModel.type == SheetType.creditNote.index?3:4].withOpacity(0.4),
                                                     onTap: () {
                                                       Navigator.push(context,
                                                           MaterialPageRoute(
@@ -8485,8 +8770,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                           //unsubscribeStream();
                                                           return PopScope(
                                                             canPop: false,
-                                                            child:
-                                                                LayoutDesigner(
+                                                            child: LayoutDesigner(
                                                               id: Boxes .getLayouts(ref).keyAt(i),
                                                               // layoutModel: layoutModel,
                                                               onPop: (pdf) {
@@ -8496,18 +8780,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                           );
                                                         },
                                                       ));
-                                                      filteredLayoutBox =
-                                                          Boxes.getLayouts(ref)
-                                                              .values
-                                                              .toList();
+                                                      filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
                                                     },
                                                     child: Container(
                                                       height: 110,
                                                       width: 30,
-                                                      margin: EdgeInsets.only(
-                                                          bottom: 0, right: 8),
-                                                      color: defaultPalette
-                                                          .transparent,
+                                                      margin: EdgeInsets.only( bottom: 0, right: 8),
+                                                      color: defaultPalette.transparent,
                                                       child: Row(
                                                         children: [
                                                           //mini layout pdf pages swiper
@@ -8603,38 +8882,20 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           
                                                           SizedBox(width: 5),
                                                           Column(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .end,
+                                                            mainAxisAlignment: MainAxisAlignment.end,
                                                             children: [
                                                               //Export as pdf of the bill button
                                                               Tooltip(
-                                                                message:
-                                                                    '  Export ${layoutModel.name} as pdf.  ',
-                                                                textStyle:
-                                                                    GoogleFonts
-                                                                        .lexend(
-                                                                  fontSize:
-                                                                      mapValueDimensionBased(
-                                                                          15,
-                                                                          20,
-                                                                          sWidth,
-                                                                          sHeight),
-                                                                  color: defaultPalette
-                                                                      .primary,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                  letterSpacing:
-                                                                      -0.2,
+                                                                message: '  Export ${layoutModel.name} as pdf.  ',
+                                                                textStyle: GoogleFonts.lexend(
+                                                                  fontSize: mapValueDimensionBased( 15, 20, sWidth, sHeight),
+                                                                  color: defaultPalette.primary,
+                                                                  fontWeight: FontWeight.w600,
+                                                                  letterSpacing: -0.2,
                                                                 ),
                                                                 decoration: BoxDecoration(
-                                                                    color: defaultPalette
-                                                                        .extras[
-                                                                            0]
-                                                                        .withOpacity(
-                                                                            0.8),
-                                                                    borderRadius:
+                                                                  color: defaultPalette.extras[ 0].withOpacity(0.8),
+                                                                  borderRadius:
                                                                         BorderRadius.circular(
                                                                             50)),
                                                                 child:
@@ -8923,13 +9184,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       .transparent,
                                                   child: InkWell(
                                                     hoverColor: defaultPalette
-                                                        .extras[0]
+                                                        .extras[isPaid?0: layoutModel.type == SheetType.creditNote.index?3:4]
                                                         .withOpacity(0.4),
                                                     highlightColor:
-                                                        defaultPalette.extras[0]
+                                                        defaultPalette.extras[isPaid?0: layoutModel.type == SheetType.creditNote.index?3:4]
                                                             .withOpacity(0.4),
                                                     splashColor: defaultPalette
-                                                        .extras[0]
+                                                        .extras[isPaid?0: layoutModel.type == SheetType.creditNote.index?3:4]
                                                         .withOpacity(0.4),
                                                     onTap: () {
                                                       Navigator.push(context,
@@ -9260,10 +9521,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       dayRevenueMap = {};
                       if (isDragging) {
                         dateTextControllers = [
-                          TextEditingController()
-                            ..text = monthNames[selectedMonth - 1],
-                          TextEditingController()
-                            ..text = selectedYear.toString(),
+                          TextEditingController()..text = monthNames[selectedMonth - 1],
+                          TextEditingController()..text = selectedYear.toString(),
                         ];
                       }
                       final allLayouts = box.values.toList();
@@ -9286,7 +9545,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       }).toList();
 
                       totalRevenue = 0;
-
+                      totalUnpaidRevenue = 0;
                       // 👇 Month-wise totalPayable collector with 'YYYY-MM' as key
 
                       for (final layout in layouts) {
@@ -9294,28 +9553,36 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           final totalPayableLabel = layout.labelList.firstWhere(
                             (lbl) => lbl.name == 'totalPayable',
                           );
+                          final isPaidLabel = layout.labelList.firstWhere(
+                            (lbl) => lbl.name == 'isPaid',
+                            orElse:()=> RequiredText(name: 'isPaid', sheetTextType: SheetTextType.bool.index, indexPath: IndexPath(index: -951), isOptional: true),
+                          );
+                          // if (isPaidLabel.indexPath.index == -951) continue;
 
-                          if (totalPayableLabel != null &&
-                              totalPayableLabel.indexPath.index != -951) {
+                          final isPaidItem = getItemAtPath(isPaidLabel.indexPath, layout.spreadSheetList);
+                          // print(item);
+                          // if (isPaidItem is! SheetTextBox) continue;
+                          // print(item.inputBlocks);
+                          
+                          final isPaid =isPaidItem is! SheetTextBox? 'false': buildCombinedTextFromBlocks((isPaidItem).inputBlocks, layout.spreadSheetList);
+
+                          if (totalPayableLabel != null && totalPayableLabel.indexPath.index != -951 ) {
                             final item = getItemAtPath(
-                                totalPayableLabel.indexPath,
-                                layout.spreadSheetList);
+                              totalPayableLabel.indexPath,
+                              layout.spreadSheetList);
                             if (item is SheetTextBox) {
-                              final rawText = buildCombinedTextFromBlocks(
-                                  item.inputBlocks, layout.spreadSheetList);
-                              double value = double.tryParse(rawText.replaceAll(
-                                      RegExp(r'[^0-9.]'), '')) ??
-                                  0;
+                              final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
+                              double value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ??0;
 
                               // If it's a credit note, negate the value
                               if (layout.type == SheetType.creditNote.index) {
                                 value *= -1;
                               }
-                              if (layout.type ==
-                                  SheetType.proformaInvoice.index) {
+                              if (layout.type == SheetType.proformaInvoice.index ) {
                                 value *= 0;
                               }
 
+                              if(isPaid == 'true'){
                               totalRevenue += value;
 
                               if (layout.createdAt.year == selectedYear) {
@@ -9332,6 +9599,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 dayRevenueMap.update(
                                     day, (existing) => existing + value,
                                     ifAbsent: () => value);
+                              }} else{
+                                totalUnpaidRevenue +=value;
                               }
                             }
                           }
@@ -9347,8 +9616,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             monthRevenueMap[month.toDouble()] ?? 0)),
                       );
 
-                      final daysInMonth =
-                          DateUtils.getDaysInMonth(selectedYear, selectedMonth);
+                      final daysInMonth = DateUtils.getDaysInMonth(selectedYear, selectedMonth);
                       dayRevenueMap = Map.fromEntries(
                         List.generate(daysInMonth, (i) => i + 1).map((day) =>
                             MapEntry(day.toDouble(),
@@ -9358,34 +9626,34 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       // print(monthRevenueMap);
                       return AnimatedContainer(
                       duration: Durations.extralong1,
-                  curve: Curves.decelerate,
-                  transform: Matrix4.identity()
-                    // Translate
-                    ..translate(
-                      isBillTab ? 0.0 : -300.0,
-                      isBillTab ? 0.0 : -160.0,
-                    )
-                    // Rotate (in radians)
-                    ..rotateZ(isBillTab ? 0 : 0.7)
+                      curve: Curves.decelerate,
+                      transform: Matrix4.identity()
+                      // Translate
+                      ..translate(
+                        isBillTab ? 0.0 : -300.0,
+                        isBillTab ? 0.0 : -160.0,
+                      )
+                      // Rotate (in radians)
+                      ..rotateZ(isBillTab ? 0 : 0.7)
+                      
+                      // Skew-like effect
+                      ..setEntry(0, 1, isBillTab ? 0 : 1)
+                      ..setEntry(1, 0, isBillTab ? 0 : -0.4)
+                      ..rotateX(isBillTab ? 0 : 0.8)
+                      // Scale
+                      ..scale(isBillTab ? 1.0 : 1.3, isBillTab ? 1.0 : 0.6),
                     
-                  // Skew-like effect
-                    ..setEntry(0, 1, isBillTab ? 0 : 1)
-                    ..setEntry(1, 0, isBillTab ? 0 : -0.4)
-                    ..rotateX(isBillTab ? 0 : 0.8)
-                    // Scale
-                    ..scale(isBillTab ? 1.0 : 1.3, isBillTab ? 1.0 : 0.6),
-                    
-                    width:isBillTab ? sWidth / 1.73 - 100:450,
-                    height: sHeight / 1.8-10,
-                    padding: EdgeInsets.all(5).copyWith(right: 10),
-                    decoration: BoxDecoration(
-                        color: defaultPalette.primary,
-                        border: Border.all(),
-                        borderRadius: BorderRadius.circular(20)),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                      width:isBillTab ? sWidth / 1.73 - 100:450,
+                      height: sHeight / 1.8-10,
+                      padding: EdgeInsets.all(5).copyWith(right: 10),
+                      decoration: BoxDecoration(
+                          color: defaultPalette.primary,
+                          border: Border.all(),
+                          borderRadius: BorderRadius.circular(20)),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                         // title Revenue
                         SizedBox(
                           height: 25,
@@ -10184,19 +10452,26 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       }).toList();
                       typeStats = {};
                       totalProfit = 0;
+                      totalUnpaid = 0;
                       totalBills = layouts .where((l) => SheetType.values[ l.type] !=SheetType.none).length;
                       for (final layout in layouts) {
                         final type = SheetType.values[layout.type];
                         double totalPayable = 0;
                         double profit = 0;
+                        
+                        double totalUnpaidRevenue = 0.0;
+                        bool isPaid = false;
+                        if (type == SheetType.proformaInvoice) {
+                          continue;
+                        }
 
                         try {
                           for (final label in layout.labelList) {
+                            
                             // print(label.indexPath);
                             if (label.indexPath.index == -951) continue;
 
-                            final item = getItemAtPath(
-                                label.indexPath, layout.spreadSheetList);
+                            final item = getItemAtPath(label.indexPath, layout.spreadSheetList);
                             // print(item);
                             if (item is! SheetTextBox) continue;
                             // print(item.inputBlocks);
@@ -10205,14 +10480,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             final cleaned = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.-]'), '')) ?? 0.0;
                             // print('ghghh'+cleaned.toString());
                             if (label.name == 'totalPayable') {
-                              totalPayable = cleaned;
-                              if (type == SheetType.creditNote) {
-                                totalPayable = -totalPayable;
-                              }
+                              totalPayable = (type == SheetType.creditNote) ? -cleaned : cleaned;
                             } else if (label.name == 'profits') {
                               profit = cleaned;
-                              totalProfit += profit;
+                             
+                            } else if (label.name == 'isPaid') {
+                              isPaid = rawText.trim().toLowerCase() == 'true';
                             }
+                            
                           }
                         } catch (_) {
                           // silently skip errors
@@ -10221,31 +10496,36 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         // Update or initialize the stat object
                         typeStats[type] = {
                           'count': (typeStats[type]?['count'] ?? 0) + 1,
-                          'payable': (typeStats[type]?['payable'] ?? 0.0) +
-                              totalPayable,
-                          'profit':
-                              (typeStats[type]?['profit'] ?? 0.0) + profit,
+                          'payable': (typeStats[type]?['payable'] ?? 0.0) + (isPaid?totalPayable:0),
+                          'profit': (typeStats[type]?['profit'] ?? 0.0) + (isPaid?profit:0),
+                          'unpaid':  (typeStats[type]?['unpaid'] ?? 0) +(isPaid?0:1),
+                          'unpaidRevenue': (typeStats[type]?['unpaidRevenue'] ?? 0.0) +(isPaid?0:totalPayable)
                         };
+                        if (!isPaid) {
+                          totalUnpaid +=1;
+                        } else {
+                          totalProfit += profit;
+                        }
                       }
 
                       return AnimatedContainer(
                       duration: Durations.extralong1,
-                  curve: Curves.decelerate,
-                  transform: Matrix4.identity()
-                    // Translate
-                    ..translate(
-                      isBillTab ? 0.0 : -300.0,
-                      isBillTab ? 0.0 : -160.0,
-                    )
-                    // Rotate (in radians)
-                    ..rotateZ(isBillTab ? 0 : 0.7)
-                    
-                  // Skew-like effect
-                    ..setEntry(0, 1, isBillTab ? 0 : 1)
-                    ..setEntry(1, 0, isBillTab ? 0 : -0.4)
-                    ..rotateX(isBillTab ? 0 : 0.8)
-                    // Scale
-                    ..scale(isBillTab ? 1.0 : 1.3, isBillTab ? 1.0 : 0.6),
+                      curve: Curves.decelerate,
+                      transform: Matrix4.identity()
+                        // Translate
+                        ..translate(
+                          isBillTab ? 0.0 : -300.0,
+                          isBillTab ? 0.0 : -160.0,
+                        )
+                        // Rotate (in radians)
+                        ..rotateZ(isBillTab ? 0 : 0.7)
+                        
+                      // Skew-like effect
+                        ..setEntry(0, 1, isBillTab ? 0 : 1)
+                        ..setEntry(1, 0, isBillTab ? 0 : -0.4)
+                        ..rotateX(isBillTab ? 0 : 0.8)
+                        // Scale
+                        ..scale(isBillTab ? 1.0 : 1.3, isBillTab ? 1.0 : 0.6),
                         width:isBillTab ? ((sWidth / 1.73 - 100) / 2 -10).clamp(0, double.infinity):80,
                         height:( sHeight - (sHeight / 1.8) - 90).clamp(0, double.infinity), // 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
                         padding: EdgeInsets.all(5).copyWith(
@@ -10310,6 +10590,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           // ),
                                           child: Column(
                                             children: [
+                                              //Total Revenue
                                               Row(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment.end,
@@ -10352,10 +10633,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   ),
                                                   Expanded(
                                                     child: Text(
-                                                      NumberFormat
-                                                              .decimalPattern(
-                                                                  'en_IN')
-                                                          .format(totalRevenue),
+                                                      _currencyFormatter.format(totalRevenue),
                                                       maxLines: 1,
                                                       textAlign: TextAlign.end,
                                                       style: GoogleFonts.lexend(
@@ -10377,24 +10655,16 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   ),
                                                 ],
                                               ),
+                                              //Total Profit
                                               Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.end,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
+                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                crossAxisAlignment: CrossAxisAlignment.center,
                                                 children: [
-                                                  SizedBox(
-                                                    width: 2,
-                                                  ),
+                                                  SizedBox( width: 2,),
                                                   ...[
                                                     Icon(
                                                       TablerIcons.cash,
-                                                      size:
-                                                          mapValueDimensionBased(
-                                                              15,
-                                                              30,
-                                                              sWidth,
-                                                              sHeight),
+                                                      size: mapValueDimensionBased( 15, 30, sWidth, sHeight),
                                                     ),
                                                     SizedBox(
                                                       width: 5,
@@ -10404,38 +10674,21 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                     child: Text(
                                                       'Total Profit',
                                                       style: GoogleFonts.lexend(
-                                                          fontSize:
-                                                              mapValueDimensionBased(
-                                                                  10,
-                                                                  23,
-                                                                  sWidth,
-                                                                  sHeight),
-                                                          color: defaultPalette
-                                                              .extras[0],
-                                                          fontWeight:
-                                                              FontWeight.w500,
+                                                          fontSize: mapValueDimensionBased( 10, 23, sWidth, sHeight),
+                                                          color: defaultPalette.extras[0],
+                                                          fontWeight: FontWeight.w500,
                                                           letterSpacing: -1),
                                                     ),
                                                   ),
                                                   Expanded(
                                                     child: Text(
-                                                      NumberFormat
-                                                              .decimalPattern(
-                                                                  'en_IN')
-                                                          .format(totalProfit),
+                                                      _currencyFormatter.format(totalProfit),
                                                       maxLines: 1,
                                                       textAlign: TextAlign.end,
                                                       style: GoogleFonts.lexend(
-                                                          fontSize:
-                                                              mapValueDimensionBased(
-                                                                  10,
-                                                                  23,
-                                                                  sWidth,
-                                                                  sHeight),
-                                                          color: defaultPalette
-                                                              .extras[0],
-                                                          fontWeight:
-                                                              FontWeight.w500,
+                                                          fontSize: mapValueDimensionBased( 10, 23, sWidth, sHeight),
+                                                          color: defaultPalette.extras[0],
+                                                          fontWeight: FontWeight.w500,
                                                           letterSpacing: -1),
                                                     ),
                                                   ),
@@ -10444,6 +10697,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   ),
                                                 ],
                                               ),
+                                              //Total Bills
                                               Row(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment.end,
@@ -10514,9 +10768,109 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(
-                                                height: 8,
+                                              //Total Unpaid
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                crossAxisAlignment: CrossAxisAlignment.center,
+                                                children: [
+                                                  const SizedBox( width: 2,),
+                                                  ...[
+                                                    Icon(
+                                                      TablerIcons.exclamation_circle,
+                                                      size: mapValueDimensionBased( 15, 30, sWidth,sHeight),
+                                                      color: defaultPalette.extras[totalUnpaid==0?0:4],
+                                                    ),
+                                                    SizedBox( width: 5,),
+                                                  ],
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Total Unpaid',
+                                                      style: GoogleFonts.lexend(
+                                                          fontSize: mapValueDimensionBased( 10,23,sWidth, sHeight),
+                                                          color: defaultPalette
+                                                              .extras[0],
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          letterSpacing: -1),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Text(
+                                                      totalUnpaid.toString(),
+                                                      maxLines: 1,
+                                                      textAlign: TextAlign.end,
+                                                      style: GoogleFonts.lexend(
+                                                        fontSize: mapValueDimensionBased( 10, 23, sWidth, sHeight),
+                                                        color: defaultPalette.extras[totalUnpaid==0?0:4],
+                                                        fontWeight: FontWeight.w500,
+                                                        letterSpacing: -1),
+                                                    ),
+                                                  ),
+                                                  SizedBox( width: 5, ),
+                                                ],
                                               ),
+                                              //Total Unpaid Revenue
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.end,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  SizedBox(
+                                                    width: 2,
+                                                  ),
+                                                  ...[
+                                                    Icon(
+                                                      TablerIcons.moneybag,
+                                                      size: mapValueDimensionBased( 15,30, sWidth,sHeight),
+                                                      color: defaultPalette.extras[totalUnpaidRevenue ==0.0?0:4],
+                                                    ),
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                  ],
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Total Pending',
+                                                      style: GoogleFonts.lexend(
+                                                          fontSize:
+                                                              mapValueDimensionBased(
+                                                                  10,
+                                                                  23,
+                                                                  sWidth,
+                                                                  sHeight),
+                                                          color: defaultPalette
+                                                              .extras[0],
+                                                          fontWeight: FontWeight.w500,
+                                                          letterSpacing: -0.5),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Text(
+                                                      _currencyFormatter.format(totalUnpaidRevenue),
+                                                      maxLines: 1,
+                                                      textAlign: TextAlign.end,
+                                                      style: GoogleFonts.lexend(
+                                                          fontSize:
+                                                              mapValueDimensionBased(
+                                                                  10,
+                                                                  23,
+                                                                  sWidth,
+                                                                  sHeight),
+                                                          color: defaultPalette
+                                                              .extras[totalUnpaidRevenue ==0.0?0:4],
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          letterSpacing: -0.5),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    width: 5,
+                                                  ),
+                                                ],
+                                              ),
+                                              
+                                              SizedBox( height: 8, ),
                                               summaryTile(
                                                 'Tax Invoices',
                                                 typeStats[
@@ -10524,7 +10878,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                     {
                                                       'count': 0,
                                                       'payable': 0.0,
-                                                      'profit': 0.0
+                                                      'profit': 0.0,
+                                                      'unpaid': 0,
+                                                      'unpaidRevenue': 0.0,
                                                     },
                                                 TablerIcons.file_invoice,
                                                 sWidth,
@@ -10537,7 +10893,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                     {
                                                       'count': 0,
                                                       'payable': 0.0,
-                                                      'profit': 0.0
+                                                      'profit': 0.0,
+                                                      'unpaid': 0,
+                                                      'unpaidRevenue': 0.0,
                                                     },
                                                 TablerIcons.credit_card_pay,
                                                 sWidth,
@@ -10550,7 +10908,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                     {
                                                       'count': 0,
                                                       'payable': 0.0,
-                                                      'profit': 0.0
+                                                      'profit': 0.0,
+                                                      'unpaid': 0,
+                                                      'unpaidRevenue': 0.0,
                                                     },
                                                 TablerIcons.credit_card_refund,
                                                 sWidth,
@@ -10563,7 +10923,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                     {
                                                       'count': 0,
                                                       'payable': 0.0,
-                                                      'profit': 0.0
+                                                      'profit': 0.0,
+                                                      'unpaid': 0,
+                                                      'unpaidRevenue': 0.0,
                                                     },
                                                 TablerIcons.receipt_2,
                                                 sWidth,
@@ -10576,7 +10938,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                     {
                                                       'count': 0,
                                                       'payable': 0.0,
-                                                      'profit': 0.0
+                                                      'profit': 0.0,
+                                                      'unpaid': 0,
+                                                      'unpaidRevenue': 0.0,
                                                     },
                                                 TablerIcons.receipt_filled,
                                                 sWidth,
@@ -11404,36 +11768,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     top: 0,
                   ),
                   //ProfGraph
-                  child: Opacity(
-                    opacity: 0.35,
-                    child: LineChart(LineChartData(
-                        lineBarsData: [LineChartBarData()],
-                        titlesData: const FlTitlesData(show: false),
-                        gridData: FlGridData(
-                            getDrawingVerticalLine: (value) => FlLine(
-                                color:
-                                    defaultPalette.extras[0].withOpacity(0.6),
-                                dashArray: [2, 8],
-                                strokeWidth: 1),
-                            getDrawingHorizontalLine: (value) => FlLine(
-                                color:
-                                    defaultPalette.extras[0].withOpacity(0.6),
-                                dashArray: [2, 8],
-                                strokeWidth: 1),
-                            show: true,
-                            horizontalInterval: 10,
-                            verticalInterval: 30),
-                        borderData: FlBorderData(show: false),
-                        minY: 0,
-                        maxY: 50,
-                        maxX:
-                            dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
-                                    500 +
-                                250,
-                        minX:
-                            dateTimeNow.millisecondsSinceEpoch.ceilToDouble() /
-                                500)),
-                  ),
+                  child: GraphWindow(sWidth: sWidth, sHeight: sHeight, s: 2)
                 ),
               ),
               //Profile$€₹
@@ -11477,8 +11812,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 duration: Durations.medium2,
                 bottom: isProfileTab ? -90 : -150,
                 right: isProfileTab
-                    ? mapValueDimensionBased(40, 50, sWidth, sHeight,
-                        useWidth: true)
+                    ? mapValueDimensionBased(40, 50, sWidth, sHeight, useWidth: true)
                     : -sWidth / 2,
                 child: Stack(
                   children: [
@@ -12661,35 +12995,37 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               )
             ],
           ),
+          //revenue
           Row(
             children: [
               Expanded(
                 child: Text(
-                  'revenue  ',
+                  s == 'Credit Notes'
+                      ? 'settled '
+                      : 'revenue  ',
                   textAlign: textAlign,
                   style: GoogleFonts.lexend(
                       fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
                       color: defaultPalette.extras[0],
                       fontWeight: FontWeight.w500,
-                      letterSpacing: -1),
+                      letterSpacing: -0.8),
                 ),
               ),
               Expanded(
                 child: Text(
-                  NumberFormat.decimalPattern('en_IN')
-                          .format(stats['payable']) +
-                      '₹',
+                  _currencyFormatter.format(stats['payable']),
                   maxLines: 1,
                   textAlign: TextAlign.end,
                   style: GoogleFonts.lexend(
-                      fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
-                      color: defaultPalette.extras[0],
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: -1),
+                    fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                    color: defaultPalette.extras[0],
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -1),
                 ),
               ),
             ],
           ),
+          //profits
           Row(
             children: [
               Expanded(
@@ -12707,9 +13043,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 child: Text(
                   s == 'Credit Notes'
                       ? '~~~~~~~~'
-                      : NumberFormat.decimalPattern('en_IN')
-                              .format(stats['profit']) +
-                          '₹',
+                      : _currencyFormatter.format(stats['profit']),
                   maxLines: 1,
                   textAlign: TextAlign.end,
                   style: GoogleFonts.lexend(
@@ -12721,6 +13055,66 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               ),
             ],
           ),
+          //unpaid count
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'unpaid  ',
+                  textAlign: textAlign,
+                  style: GoogleFonts.lexend(
+                      fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                      color: defaultPalette.extras[stats['unpaid']==0?0:4],
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -1),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  (stats['unpaid']??0).round().toString(),
+                  maxLines: 1,
+                  textAlign: TextAlign.end,
+                  style: GoogleFonts.lexend(
+                      fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                      color: defaultPalette.extras[stats['unpaid']==0?0:4],
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.5),
+                ),
+              ),
+            ],
+          ),
+          
+          //pending
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                 s == 'Credit Notes'
+                      ? 'owed'
+                      :  'pending  ',
+                  textAlign: textAlign,
+                  style: GoogleFonts.lexend(
+                      fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                      color: defaultPalette.extras[stats['unpaidRevenue']==0.0?0:4],
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -1),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  _currencyFormatter.format(stats['unpaidRevenue']),
+                  maxLines: 1,
+                  textAlign: TextAlign.end,
+                  style: GoogleFonts.lexend(
+                      fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
+                      color: defaultPalette.extras[stats['unpaidRevenue']==0.0?0:4],
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.5),
+                ),
+              ),
+            ],
+          ),
+          
           SizedBox(
             height: 2,
           ),
