@@ -8,6 +8,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_ro
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
 
 part 'sheet_table.g.dart';
 
@@ -187,6 +188,11 @@ class SheetTable extends SheetItem {
     return lookupMap[label];
   }
 
+  @override
+  String newId() {
+    // TODO: implement newId
+    return 'TB-${Uuid().v4()}';
+  }
 
 }
 

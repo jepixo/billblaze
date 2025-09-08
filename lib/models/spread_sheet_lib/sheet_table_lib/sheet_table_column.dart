@@ -5,6 +5,7 @@ import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
 
 part 'sheet_table_column.g.dart';
 
@@ -133,5 +134,10 @@ class SheetTableColumn extends SheetItem {
       columnDecoration: columnDecoration,
       columnInputBlocks: columnInputBlocks,
     );
+  }
+  @override
+  String newId() {
+    // TODO: implement newId
+    return 'CL-${Uuid().v4()}';
   }
 }

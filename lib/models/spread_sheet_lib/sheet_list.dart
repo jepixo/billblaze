@@ -11,6 +11,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/box_provider.dart';
+import 'package:uuid/uuid.dart';
 
 part 'sheet_list.g.dart';
 
@@ -281,6 +282,11 @@ class SheetList extends SheetItem {
   String toString() {
     // TODO: implement toString
     return super.toString()+', len: '+sheetList.length.toString()+'.  ';
+  }
+  @override
+  String newId() {
+    // TODO: implement newId
+    return 'LI-${Uuid().v4()}';
   }
 }
 

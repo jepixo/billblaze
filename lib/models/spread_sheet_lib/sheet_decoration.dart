@@ -48,6 +48,16 @@ class SheetDecoration extends HiveObject {
         throw UnimplementedError('in sheetDecorationFromMap: ${map['type']}');
     }
   }
+
+  SheetDecoration copyWith({
+    String? id,
+    String? name,
+  }) {
+    return SheetDecoration(
+      id: id ?? this.id,
+      name: name ?? this.name,
+    );
+  }
 }
 
 @HiveType(typeId: 7)
@@ -390,7 +400,7 @@ class ItemDecoration extends SheetDecoration {
       color: Color(json['color'] ?? 0x00000000),
     );
   }
-
+  @override
   ItemDecoration copyWith({
     String? id,
     String? name,
