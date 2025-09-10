@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
@@ -16,7 +17,10 @@ class NumericInputFormatter extends TextInputFormatter {
     if (text.isEmpty) {
       return TextEditingValue(
         text: '0',
-        selection: TextSelection.collapsed(offset: 1),
+        selection:  newValue.selection.copyWith(
+          baseOffset: min(newValue.selection.baseOffset, 1),
+          extentOffset: min(newValue.selection.extentOffset, 1),
+        ),
       );
     }
 
@@ -36,7 +40,10 @@ class NumericInputFormatter extends TextInputFormatter {
       final stripped = text.startsWith('-') ? '-${text.substring(2)}' : text.substring(1);
       return TextEditingValue(
         text: stripped,
-        selection: TextSelection.collapsed(offset: stripped.length),
+        selection:  newValue.selection.copyWith(
+          baseOffset: min(newValue.selection.baseOffset, stripped.length),
+          extentOffset: min(newValue.selection.extentOffset, stripped.length),
+        ),
       );
     }
 
@@ -53,7 +60,10 @@ class NumericInputFormatter extends TextInputFormatter {
           : text;
       return TextEditingValue(
         text: clamped,
-        selection: TextSelection.collapsed(offset: clamped.length),
+        selection:  newValue.selection.copyWith(
+          baseOffset: min(newValue.selection.baseOffset, clamped.length),
+          extentOffset: min(newValue.selection.extentOffset, clamped.length),
+        ),
       );
     }
 
@@ -77,7 +87,10 @@ class NumericInputFormatter extends TextInputFormatter {
 
     return TextEditingValue(
       text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
+      selection:  newValue.selection.copyWith(
+        baseOffset: min(newValue.selection.baseOffset, formatted.length),
+        extentOffset: min(newValue.selection.extentOffset, formatted.length),
+      ),
     );
   }
 }

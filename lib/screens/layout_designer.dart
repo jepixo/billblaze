@@ -312,7 +312,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
     indexPath: IndexPath(index:-1)
     );
   SheetList sheetListItem = SheetList(id: 'yo',parentId: 'yo', listDecoration:'yo', sheetList: [],indexPath: IndexPath(index:-1));
-  late SheetTable sheetTableItem;
+  SheetTable sheetTableItem =SheetTable(id: 'yo',parentId: 'yo', sheetTableDecoration: SuperDecoration(id: 'yo'), indexPath:  IndexPath(index:-1));
   SheetSizedItem sizedItem = SheetSizedItem(id: 'yo',parentId: 'yo',sizedItemDecoration: 'yo', indexPath: IndexPath(index:-1),height: 20,width: 20,hide: true);
   var dragBackupValue;
   OverlayEntry? _overlay;
@@ -2434,8 +2434,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
       panelIndex.id = '';
       panelIndex.itemIndexPath = IndexPath(index:-1);
       selectedIndexPaths = {};
-   print(selectedIndexPaths);
-   print('findItem? Yeah not found.'+e.toString());
+      print(selectedIndexPaths);
+      print('findItem? Yeah not found.'+e.toString());
     });
     } finally{
     }
@@ -6264,7 +6264,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                 panelIndex.parentId = sheetList[index].parentId;
                 panelIndex.parentIndexPath = sheetList[index].indexPath.parent;
                 panelIndex.itemIndexPath = sheetList[index].indexPath;
-                _findSizedItem();
+                // _findSizedItem();
                 });
               print('secondaryyyTapppppp');
               
@@ -8022,7 +8022,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
               return sheetItem.copyWith(
                 id: sheetItem.newId(),
                 parentId: sheetList.id,
-                indexPath: ((sheetItem)..indexPath.parent=sheetList.indexPath.parent..indexPath.index = sheetList.length).indexPath,
+                indexPath: IndexPath(parent: sheetList.indexPath,index: sheetList.length),
                 );
             case SheetList:
               var sList = SheetList(
@@ -8105,7 +8105,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                 sheetTableDecoration:(sheetItem as SheetTable).sheetTableDecoration, 
                 sheetTablebgDecoration: (sheetItem as SheetTable).sheetTablebgDecoration,
                 indexPath: newIndexPath,
-                expand: (sheetItem).expand,
+                expand: false,
                 name: sheetItem.name,
                 pinnedColumns: sheetItem.pinnedColumns,
                 pinnedRows: sheetItem.pinnedRows,
@@ -8148,7 +8148,8 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
       } else {
         sheetItemClipBoard.sheetItem.indexPath.parent = sheetList.indexPath;
         sheetItemClipBoard.sheetItem.parentId = sheetList.id;
-        sheetList.insert(index,sheetItemClipBoard.sheetItem);
+        if(sheetItemClipBoard.sheetItem is SheetTable){sheetList.insert(index,(sheetItemClipBoard.sheetItem as SheetTable)..expand= false,);}
+        else {sheetList.insert(index,(sheetItemClipBoard.sheetItem));}
         sheetItemClipBoard.isCut = false;
       }
       _reassignSheetListIndexPath(sheetList);
@@ -9100,6 +9101,38 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
          
           _hideOverlay();
         },
+        onDoubleTap:(){
+          setState(() {
+            if (!(HardwareKeyboard.instance.isControlPressed||HardwareKeyboard.instance.isShiftPressed)) {
+              selectedIndexPaths ={};
+            }
+            for (var i = 0; i < sheetTable.cellData.length; i++) {
+              var cell = sheetTable.cellData[i][ind- 1];
+              
+              selectedIndexPaths.addAll({
+                cell.sheetItem.id: PanelIndex(
+                  id: cell.sheetItem.id, 
+                  parentId:cell.sheetItem.parentId,
+                  itemIndexPath: cell.sheetItem.indexPath, 
+                  parentIndexPath: cell.indexPath.parent)
+              });
+              panelIndex = PanelIndex(
+                  id: cell.sheetItem.id, 
+                  parentId:cell.sheetItem.parentId,
+                  itemIndexPath: cell.sheetItem.indexPath, 
+                  parentIndexPath: cell.indexPath.parent);
+               
+            }
+            var sMap = Map<String, PanelIndex>.from(selectedIndexPaths);
+            if (sheetTableItem != sheetTable) {
+              _findSheetTableItem(sheetTable);
+            }
+            if (item.indexPath != panelIndex.itemIndexPath){
+              _findItem();
+            }
+            selectedIndexPaths = sMap;
+          });
+        },
         child: Container(
           width: sheetTable.columnData[ind-1].size+14,
           height: 18,
@@ -9148,8 +9181,40 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                 });
               },
               onVerticalDragEnd: (_) {
-                
                 _hideOverlay();
+              },
+              onDoubleTap: (){
+                print(ind);
+                setState(() {
+                  if (!(HardwareKeyboard.instance.isControlPressed||HardwareKeyboard.instance.isShiftPressed)) {
+                    selectedIndexPaths ={};
+                  }
+                  for (var i = 0; i < sheetTable.cellData[ind- 1].length; i++) {
+                    var cell = sheetTable.cellData[ind- 1][i];
+                    
+                    selectedIndexPaths.addAll({
+                      cell.sheetItem.id: PanelIndex(
+                        id: cell.sheetItem.id, 
+                        parentId:cell.sheetItem.parentId,
+                        itemIndexPath: cell.sheetItem.indexPath, 
+                        parentIndexPath: cell.sheetItem.indexPath.parent)
+                    });
+                    panelIndex = PanelIndex(
+                        id: cell.sheetItem.id, 
+                        parentId:cell.sheetItem.parentId,
+                        itemIndexPath: cell.sheetItem.indexPath, 
+                        parentIndexPath: cell.sheetItem.indexPath.parent);
+                  }
+                  var sMap = Map<String, PanelIndex>.from(selectedIndexPaths);
+                  if (sheetTableItem != sheetTable) {
+                    _findSheetTableItem(sheetTable);
+                  }
+                  if (item.indexPath != panelIndex.itemIndexPath){
+                    _findItem();
+                  }
+                  selectedIndexPaths = sMap;
+                });
+                
               },
               child: Container(
               height:  sheetTable.rowData[ind - 1].size,
@@ -10075,6 +10140,32 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                   d.globalPosition.dx,
                   d.globalPosition.dy))
           .show(context);
+        },
+        onDoubleTap:(){
+          setState(() {
+            if (!(HardwareKeyboard.instance.isControlPressed||HardwareKeyboard.instance.isShiftPressed)) {
+              selectedIndexPaths ={};
+            }
+            for (var i = 0; i < sheetTable.cellData.length; i++) {
+              var row = sheetTable.cellData[i];
+              
+              for (var v = 0; v< row.length; v++) {
+                var cell = row[v];
+                selectedIndexPaths.addAll({
+                  cell.sheetItem.id: PanelIndex(
+                    id: cell.sheetItem.id, 
+                    parentId:cell.sheetItem.parentId,
+                    itemIndexPath: cell.sheetItem.indexPath, 
+                    parentIndexPath: cell.sheetItem.indexPath.parent)
+                });
+                panelIndex = PanelIndex(
+                    id: cell.sheetItem.id, 
+                    parentId:cell.sheetItem.parentId,
+                    itemIndexPath: cell.sheetItem.indexPath, 
+                    parentIndexPath: cell.sheetItem.indexPath.parent);
+              }
+            }
+          });
         },
         child: Container(
           margin: const EdgeInsets.all(4).copyWith(right:4),
@@ -11019,13 +11110,13 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
   Future<void> saveLayout() async {
     await _capturePng(pixelRatio: 0.5);
     var lmBox = Boxes.getLayouts(ref);
-    var lm = lmBox.get(key);
-    lm?.docPropsList = docPropToBox(documentPropertiesList);
-    lm?.spreadSheetList = spreadSheetToBox(spreadSheetList);
-    lm?.modifiedAt = DateTime.now();
-    lm?.pdf = _images;
-    lm?.labelList = labelList;
-    lm?.sheetDecorationMap = sheetDecorationMap.map((key, value){
+    var lym = lmBox.get(key);
+    lym?.docPropsList = docPropToBox(documentPropertiesList);
+    lym?.spreadSheetList = spreadSheetToBox(spreadSheetList);
+    lym?.modifiedAt = DateTime.now();
+    lym?.pdf = _images;
+    lym?.labelList = labelList;
+    lym?.sheetDecorationMap = sheetDecorationMap.map((key, value){
       if (value is SuperDecoration) {
         return MapEntry(key,value.toSuperDecorationBox());
         // print('Saved SuperDecoration with ID: ${decoration.id}');
@@ -11034,12 +11125,12 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
         // print('Saved ItemDecoration with ID: ${decoration.id}');
       }
     });
-    lm?.save();
+    lym?.save();
     print(lm?.pdf?.length);
     // saveDecorations(sheetDecorationMap);
     if (lm !=null) {
       final layout = lm;
-      layout.docPropsList = docPropToBox(documentPropertiesList);
+      layout!.docPropsList = docPropToBox(documentPropertiesList);
       layout.spreadSheetList = spreadSheetToBox(spreadSheetList);
       layout.modifiedAt = DateTime.now();
       layout.pdf = _images;
@@ -11052,11 +11143,11 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
       
       // Get folder path from provider
       final dir = ref.read(folderPathProvider);
-      String safeName = lm.name.trim();
+      String safeName = lm!.name.trim();
       if (!safeName.endsWith('.bbc')) {
         safeName='$safeName.bbc';
-        lm.name = safeName;
-        lm.save();
+        lm!.name = safeName;
+        lm!.save();
       }
       final filePath = '$dir\\$safeName';
       try {
@@ -18919,12 +19010,38 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                               sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].maxSize = parsedValue.clamp(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].minSize, double.infinity);
                               break;     
                             case 8:
-                              sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].rowSpan=(parsedValue.round()).clamp(1, (sheetTableItem.rowData.length-sheetTableVariables.rowLayerIndex));
-                              applySpans(sheetTableItem);
+                              for(var v=0; v<selectedIndexPaths.length; v++){
+                                
+                                var sTableItem = getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath.parent!);
+                                if (sTableItem is SheetTable) {
+                                  var tItem = (getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath));
+                                  if(tItem is SheetText){
+                                    var cell = sTableItem.getCellFromLabel(tItem.name);
+                                  print(cell.runtimeType);
+                                  if (cell is SheetTableCell) {
+                                    var (row, col) = parseCellId(tItem.name);
+                                    cell.rowSpan=(parsedValue.round()).clamp(1, (sTableItem.rowData.length-row));
+                                    applySpans(sTableItem);
+                                  }}
+                                }
+                              }
                               break;  
                             case 9:
-                              sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].colSpan=(parsedValue.round()).clamp(1, (sheetTableItem.columnData.length-sheetTableVariables.columnLayerIndex));
-                              applySpans(sheetTableItem);
+                              for(var v=0; v<selectedIndexPaths.length; v++){
+                                
+                                var sTableItem = getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath.parent!);
+                                if (sTableItem is SheetTable) {
+                                  var tItem = (getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath));
+                                  if(tItem is SheetText){
+                                    var cell = sTableItem.getCellFromLabel(tItem.name);
+                                  print(cell.runtimeType);
+                                  if (cell is SheetTableCell) {
+                                    var (row, col) = parseCellId(tItem.name);
+                                    cell.colSpan=(parsedValue.round()).clamp(1, (sTableItem.rowData.length-col));
+                                    applySpans(sTableItem);
+                                  }}
+                                }
+                              }
                               break;        
                           }
                           
@@ -18956,7 +19073,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                         // focusNode: fontFocusNodes[s],
                         controller: tableTextControllers[s],
                         inputFormatters: [
-                          NumericInputFormatter(allowNegative: true),
+                          // NumericInputFormatter(allowNegative: true),
                         ],
                         cursorColor: defaultPalette.tertiary,
                         selectionControls: NoMenuTextSelectionControls(),
@@ -18976,39 +19093,72 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                             letterSpacing: -1),
                         onFieldSubmitted: (value) {
                           setState(() {
-                            var parsedValue = double.parse(value);
-                          switch (s) {
-                            case 0:
-                              sheetTableItem.pinnedRows=(double.parse(value)+1).ceil();
-                              break;
-                            case 1:
-                              sheetTableItem.pinnedColumns=(double.parse(value)+1).ceil();
-                              break;
-                            case 2:
-                              sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].size = parsedValue.clamp(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].minSize, sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].maxSize);
-                              break;
-                            case 3:
-                              sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].minSize = parsedValue.clamp(0, sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].maxSize);
-                              break;  
-                            case 4:
-                              sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].maxSize = parsedValue.clamp(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].minSize, double.infinity);
-                              break;
-                            case 5:
-                              sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].size = parsedValue.clamp(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].minSize, sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].maxSize);
-                              break;
-                            case 6:
-                              sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].minSize = parsedValue.clamp(0, sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].maxSize);
-                              break;  
-                            case 7:
-                              sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].maxSize = parsedValue.clamp(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].minSize, double.infinity);
-                              break;  
-                            case 8:
-                              sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].rowSpan=(parsedValue).ceil().clamp(1, sheetTableItem.rowData.length);
-                              break;  
-                            case 9:
-                              sheetTableItem.cellData[sheetTableVariables.rowLayerIndex][sheetTableVariables.columnLayerIndex].colSpan=(parsedValue).ceil().clamp(1, sheetTableItem.columnData.length);
-                              break;      
-                          }
+                            try {
+                              var parsedValue = double.parse(value.isEmpty?'1':value);
+                              switch (s) {
+                                case 0:
+                                  sheetTableItem.pinnedRows=(double.parse(value)+1).ceil();
+                                  break;
+                                case 1:
+                                  sheetTableItem.pinnedColumns=(double.parse(value)+1).ceil();
+                                  break;
+                                case 2:
+                                  sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].size = parsedValue.clamp(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].minSize, sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].maxSize);
+                                  break;
+                                case 3:
+                                  sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].minSize = parsedValue.clamp(0, sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].maxSize);
+                                  break;  
+                                case 4:
+                                  sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].maxSize = parsedValue.clamp(sheetTableItem.rowData[sheetTableVariables.rowLayerIndex].minSize, double.infinity);
+                                  break;
+                                case 5:
+                                  sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].size = parsedValue.clamp(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].minSize, sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].maxSize);
+                                  break;
+                                case 6:
+                                  sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].minSize = parsedValue.clamp(0, sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].maxSize);
+                                  break;  
+                                case 7:
+                                  sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].maxSize = parsedValue.clamp(sheetTableItem.columnData[sheetTableVariables.columnLayerIndex].minSize, double.infinity);
+                                  break;  
+                                case 8:
+                                  for(var v=0; v<selectedIndexPaths.length; v++){
+                                    
+                                    var sTableItem = getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath.parent!);
+                                    if (sTableItem is SheetTable) {
+                                      var tItem = (getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath));
+                                      if(tItem is SheetText){
+                                        var cell = sTableItem.getCellFromLabel(tItem.name);
+                                      print(cell.runtimeType);
+                                      if (cell is SheetTableCell) {
+                                        var (row, col) = parseCellId(tItem.name);
+                                        cell.rowSpan=(parsedValue.round()).clamp(1, (sTableItem.rowData.length-row));
+                                        applySpans(sTableItem);
+                                      }}
+                                    }
+                                  }
+                                  break;  
+                                case 9:
+                                  for(var v=0; v<selectedIndexPaths.length; v++){
+                                    
+                                    var sTableItem = getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath.parent!);
+                                    if (sTableItem is SheetTable) {
+                                      var tItem = (getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath));
+                                      if(tItem is SheetText){
+                                        var cell = sTableItem.getCellFromLabel(tItem.name);
+                                      print(cell.runtimeType);
+                                      if (cell is SheetTableCell) {
+                                        var (row, col) = parseCellId(tItem.name);
+                                        cell.colSpan=(parsedValue.round()).clamp(1, (sTableItem.rowData.length-col));
+                                        applySpans(sTableItem);
+                                      }}
+                                    }
+                                  }
+                                  break;             
+                              }
+                              
+                              } on Exception catch (e) {
+                              
+                              }
                           });
                         },
                       ),
@@ -22941,8 +23091,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
               children: [
                 //grey Balloon button and circlebutton elevated &&&  DECOR Title and the preview box and text information
                 Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     //grey Balloon button and circlebutton elevated on upper half
@@ -23126,8 +23275,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                     Expanded(
                       flex: 2,
                       child: Column(
-                        mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           //Balloon Animation BG and TITLE saying "DECOR"
                           MouseRegion(
@@ -23252,10 +23400,169 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                                         ),
                                       ),
                                       SizedBox(height:2),
-                                      runtimeTypeBadge(
-                                        (decorationIndex == -1 ?sheetDecorationMap[inx]:sheetDecorationMap[itinx])?? SuperDecoration(id: ''),
-                                        onlyLibrary: false
-                                        ),
+                                      Row(
+                                        children:[
+                                          Expanded(
+                                            flex:38,
+                                            child: runtimeTypeBadge(
+                                              (decorationIndex == -1 ?sheetDecorationMap[inx]:sheetDecorationMap[itinx])?? SuperDecoration(id: ''),
+                                              onlyLibrary: false
+                                              ),
+                                          ),
+                                          Expanded(
+                                            flex:10,
+                                            child: SizedBox()
+                                          ),
+                                          MouseRegion(
+                                            cursor:SystemMouseCursors.click,
+                                            child: GestureDetector(
+                                              onTap:(){
+                                                setState(() {
+                                                  if (decorationIndex != -1) {
+                                                  var parentItemDecoration = sheetDecorationMap[itemDecorationPath.last] as SuperDecoration;
+                                                  var currentItemDecoration = sheetDecorationMap[parentItemDecoration.itemDecorationList[decorationIndex]];
+                                                  var newId = 'dITM-${Uuid().v4()}';
+                                                  var newDecoration = currentItemDecoration?.copyWith(id: newId,name: currentItemDecoration.name+'-copy');
+                                                  
+                                                  if ( newDecoration == null) {
+                                                    print('Error: Could not find current item decoration at index: $decorationIndex');
+                                                    return;
+                                                  } else {
+                                                    sheetDecorationMap.addAll({newId:newDecoration});
+                                                    parentItemDecoration.itemDecorationList.removeAt(decorationIndex);
+                                                    if (decorationIndex!=parentItemDecoration.itemDecorationList.length) {
+                                                      parentItemDecoration.itemDecorationList.insert(decorationIndex, newId);
+                                                    } else{
+                                                      parentItemDecoration.itemDecorationList.add(newId);
+                                                    }
+                                                    filteredDecorations =Map.fromEntries(
+                                                      sheetDecorationMap.entries.where(
+                                                        (entry) => entry.value.name.toLowerCase().contains(decorationSearchController.text.toLowerCase()),
+                                                      ),
+                                                    );
+                                                    var name = newDecoration.name;
+                                                    if (whichPropertyTabIsClicked==3) {
+                                                                                      
+                                                      listDecorationNameController.text = name;
+                                                      print(listDecorationPath);
+                                                    } else if (whichPropertyTabIsClicked==2) {
+                                                      textDecorationNameController.text = name;
+                                                      print(textDecorationPath);
+                                                    } else if (whichPropertyTabIsClicked==4){
+                                                      if (whichTableDecorationIsClicked==0) {
+                                                        tableDecorationNameController.text = name;
+                                                        print(tableDecorationPath);
+                                                      } else {
+                                                        tablebgDecorationNameController.text = name;
+                                                      }
+                                                    } else if (whichPropertyTabIsClicked==5) {
+                                                      sizedItemDecorationNameController.text = name;
+                                                      print(sizedItemDecorationPath);
+                                                    }
+                                                  }
+                                                } else{
+                                                  var parentItemDecoration = sheetDecorationMap[itemDecorationPath.first] as SuperDecoration;
+                                                  var newId = 'dSPR-${Uuid().v4()}';
+                                                  var newParentDecoration = parentItemDecoration.copyWith(id: newId,name: parentItemDecoration.name+'-copy');
+                                                  sheetDecorationMap.addAll({newId:newParentDecoration});
+                                                  var id = newParentDecoration.id;
+                                                  var name = newParentDecoration.name;
+                                                  if (whichPropertyTabIsClicked==3) {
+                                                    sheetListItem.listDecoration = newParentDecoration.id;
+                                                    if(listDecorationPath.last !=id) listDecorationPath..clear()..add(id);
+                                                    listDecorationNameController.text = name;
+                                                    print(listDecorationPath);
+                                                  } else if (whichPropertyTabIsClicked==2) {
+                                                    item.textDecoration = newParentDecoration;
+                                                    if(textDecorationPath.last !=id) textDecorationPath..clear()..add(id);
+                                                    textDecorationNameController.text = name;
+                                                    print(textDecorationPath);
+                                                  } else if (whichPropertyTabIsClicked==4){
+                                                    if (whichTableDecorationIsClicked==0) {
+                                                      sheetTableItem.sheetTableDecoration = newParentDecoration;
+                                                      if(tableDecorationPath.last !=id) tableDecorationPath..clear()..add(id);
+                                                      tableDecorationNameController.text = name;
+                                                      print(tableDecorationPath);
+                                                    } else {
+                                                      sheetTableItem.sheetTablebgDecoration = newParentDecoration;
+                                                      if(tablebgDecorationPath.last !=id) tablebgDecorationPath..clear()..add(id);
+                                                      tablebgDecorationNameController.text = name;
+                                                    }
+                                                  } else if (whichPropertyTabIsClicked==5) {
+                                                    sizedItem.sizedItemDecoration = newParentDecoration.id;
+                                                    if(sizedItemDecorationPath.last !=id) sizedItemDecorationPath..clear()..add(id);
+                                                    sizedItemDecorationNameController.text = name;
+                                                    print(sizedItemDecorationPath);
+                                                  }
+                                                }
+                                                });
+                                              },
+                                              child: Container(
+                                                padding:EdgeInsets.all(3),
+                                                decoration: BoxDecoration(
+                                                  color: defaultPalette.secondary,
+                                                  border: Border.all(width: 0.6),
+                                                  borderRadius: BorderRadius.circular(500),
+                                                ),
+                                                child:Icon(TablerIcons.star_filled,size:8)
+                                              ),
+                                            ),
+                                          ),
+                                          if (decorationIndex == -1) 
+                                          ...[SizedBox(width:3),
+                                          MouseRegion(
+                                            cursor:SystemMouseCursors.click,
+                                            child: GestureDetector(
+                                              onTap:(){
+                                                for(int v =0;v<selectedIndexPaths.length;v++){
+
+                                                  setState(() {
+                                                  {
+                                                  if (whichPropertyTabIsClicked==3) {
+                                                    var lItem = getItemAtPath(selectedIndexPaths.values.toList()[v].parentIndexPath!) as SheetList;
+                                                    lItem.listDecoration = 'yo';
+                                                    listDecorationPath..clear();
+                                                    print(listDecorationPath);
+                                                  } else if (whichPropertyTabIsClicked==2) {
+                                                    var tItem = getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath) as SheetText;
+                                                    
+                                                    tItem.textDecoration = SuperDecoration(id:'yo');
+                                                    textDecorationPath..clear();
+                                                    print(textDecorationPath);
+                                                  } else if (whichPropertyTabIsClicked==4){
+                                                     var sTableItem = getItemAtPath(selectedIndexPaths.values.toList()[v].parentIndexPath!) as SheetTable;
+                                                    if (whichTableDecorationIsClicked==0) {
+                                                      sTableItem.sheetTableDecoration = SuperDecoration(id:'yo');
+                                                      tableDecorationPath..clear();
+                                                      print(tableDecorationPath);
+                                                    } else {
+                                                      sTableItem.sheetTablebgDecoration = SuperDecoration(id:'yo');
+                                                      tablebgDecorationPath..clear();
+                                                    }
+                                                  } else if (whichPropertyTabIsClicked==5) {
+                                                    var sItem = getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath) as SheetSizedItem;
+                                                    sItem.sizedItemDecoration = 'yo';
+                                                    sizedItemDecorationPath..clear();
+                                                    print(sizedItemDecorationPath);
+                                                  }
+                                                }
+                                                });
+                                                }
+                                                
+                                              },
+                                              child: Container(
+                                                padding:EdgeInsets.all(2),
+                                                decoration: BoxDecoration(
+                                                  color: defaultPalette.secondary,
+                                                  border: Border.all(width: 0.6),
+                                                  borderRadius: BorderRadius.circular(500),
+                                                ),
+                                                child:Icon(TablerIcons.x,size:10)
+                                              ),
+                                            ),
+                                          ),],
+                                        ]
+                                      ),
                                       SizedBox(height:4),
                                       //Name of Decoration Editing Field.
                                       SizedBox(
@@ -23474,7 +23781,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                                       
                                                 var currentItemDecoration = sheetDecorationMap[parentItemDecoration.itemDecorationList[decorationIndex]];
                                                 var newId = 'dSPR-${Uuid().v4()}';
-                                                var newDecoration = currentItemDecoration?.copyWith(id: newId);
+                                                var newDecoration = currentItemDecoration?.copyWith(id: newId,name: currentItemDecoration.name+'-copy');
                                                 if ( newDecoration == null) {
                                                   print('Error: Could not find current item decoration at index: $decorationIndex');
                                                   return;
@@ -24655,6 +24962,25 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                
                 setState(() {
                   decorationIndex = e.key;
+                  var name = itemDecoration.name;
+                  if (whichPropertyTabIsClicked==3) {
+                                                    
+                    listDecorationNameController.text = name;
+                    print(listDecorationPath);
+                  } else if (whichPropertyTabIsClicked==2) {
+                    textDecorationNameController.text = name;
+                    print(textDecorationPath);
+                  } else if (whichPropertyTabIsClicked==4){
+                    if (whichTableDecorationIsClicked==0) {
+                      tableDecorationNameController.text = name;
+                      print(tableDecorationPath);
+                    } else {
+                      tablebgDecorationNameController.text = name;
+                    }
+                  } else if (whichPropertyTabIsClicked==5) {
+                    sizedItemDecorationNameController.text = name;
+                    print(sizedItemDecorationPath);
+                  }
                   print(decorationIndex);
                 });
               },
@@ -24969,7 +25295,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                   
                   return Container(
                     width: width,
-                    margin: EdgeInsets.only(bottom: index ==filteredDecorations.length-1?35: 4),
+                    margin: EdgeInsets.only(bottom: index ==filteredDecorations.length-1?mapValueDimensionBased(35,80,sWidth,sHeight,b:false): 4),
                     padding: !onlyLibrary?EdgeInsets.all(3):null,
                     decoration:!onlyLibrary? BoxDecoration(
                       color: defaultPalette.primary,
@@ -24986,28 +25312,50 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                           cursor:!onlyLibrary?MouseCursor.defer: SystemMouseCursors.click,
                           child: GestureDetector(
                             onTap:!onlyLibrary?null:()=>setState(() {
-                            decorationIndex = -1;
-                            isListDecorationLibraryToggled = false;
-                            isListDecorationPropertiesToggled = false;
+                              decorationIndex = -1;
+                              isListDecorationLibraryToggled = false;
+                              isListDecorationPropertiesToggled = false;
+                              var sMap = Map<String, PanelIndex>.from(selectedIndexPaths);
+                              for(int v =0;v<selectedIndexPaths.length;v++){
+                                 print('Decoration is null at index $v');
+                                {
+                                if (whichPropertyTabIsClicked==3) {
+                                  var lItem = getItemAtPath(selectedIndexPaths.values.toList()[v].parentIndexPath!) as SheetList;
+                                  lItem.listDecoration =  e.id;
+                                } else if (whichPropertyTabIsClicked==2) {
+                                  var tItem = getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath) as SheetText;
+                                  tItem.textDecoration =e as SuperDecoration;
+                                 
+                                } else if (whichPropertyTabIsClicked==4){
+                                    var sTableItem = getItemAtPath(selectedIndexPaths.values.toList()[v].parentIndexPath!) as SheetTable;
+                                  if (whichTableDecorationIsClicked==0) {
+                                    sTableItem.sheetTableDecoration =e as SuperDecoration;
+                                    print(tableDecorationPath);
+                                  } else {
+                                    sTableItem.sheetTablebgDecoration = e as SuperDecoration;
+                                  }
+                                } else if (whichPropertyTabIsClicked==5) {
+                                  var sItem = getItemAtPath(selectedIndexPaths.values.toList()[v].itemIndexPath) as SheetSizedItem;
+                                  sItem.sizedItemDecoration = e.id;
+                                 
+                                }
+                              }}
+                            
                             switch (whichPropertyTabIsClicked) {
                                 case 2:
-                                  item.textDecoration = sheetDecorationMap[e.id] as SuperDecoration;
                                   _findItem();
                                   break;
                                 case 3:
-                                  sheetListItem.listDecoration = e.id;
                                   _findSheetListItem();
                                   break;
                                 case 4:
-                                  if (whichTableDecorationIsClicked == 0){sheetTableItem.sheetTableDecoration = sheetDecorationMap[e.id] as SuperDecoration;}
-                                  else {sheetTableItem.sheetTablebgDecoration = sheetDecorationMap[e.id] as SuperDecoration;}
-                                  _findSheetTableItem(sheetTableItem);
+                                 _findSheetTableItem(sheetTableItem); break;
                                 case 5:
-                                  sizedItem.sizedItemDecoration = (sheetDecorationMap[e.id] as SuperDecoration).id;
                                   _findSizedItem();
                                   break;
                                 default:
                               }
+                            selectedIndexPaths=sMap;
                             }),
                             child: Container(
                               padding: EdgeInsets.all(!onlyLibrary?3:6),
@@ -27744,10 +28092,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                         // If any side has non-zero width, update zero-width sides to 1
                         if (hasNonZeroWidth) {
                           updatedBorder = Border(
-                            top: updatedBorder.top.width == 0 ? updatedBorder.top.copyWith(width: 1) : updatedBorder.top,
-                            bottom: updatedBorder.bottom.width == 0 ? updatedBorder.bottom.copyWith(width: 1) : updatedBorder.bottom,
-                            left: updatedBorder.left.width == 0 ? updatedBorder.left.copyWith(width: 1) : updatedBorder.left,
-                            right: updatedBorder.right.width == 0 ? updatedBorder.right.copyWith(width: 1) : updatedBorder.right,
+                            top: updatedBorder.top.width == 0 ? updatedBorder.top.copyWith(width: 0.0001) : updatedBorder.top,
+                            bottom: updatedBorder.bottom.width == 0 ? updatedBorder.bottom.copyWith(width: 0.0001) : updatedBorder.bottom,
+                            left: updatedBorder.left.width == 0 ? updatedBorder.left.copyWith(width: 0.0001) : updatedBorder.left,
+                            right: updatedBorder.right.width == 0 ? updatedBorder.right.copyWith(width: 0.0001) : updatedBorder.right,
                           );
                         }
 
@@ -28895,10 +29243,10 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
                         // If any side has non-zero width, update zero-width sides to 1
                         if (hasNonZeroWidth) {
                           updatedBorder = Border(
-                            top: updatedBorder.top.width == 0 ? updatedBorder.top.copyWith(width: 1) : updatedBorder.top,
-                            bottom: updatedBorder.bottom.width == 0 ? updatedBorder.bottom.copyWith(width: 1) : updatedBorder.bottom,
-                            left: updatedBorder.left.width == 0 ? updatedBorder.left.copyWith(width: 1) : updatedBorder.left,
-                            right: updatedBorder.right.width == 0 ? updatedBorder.right.copyWith(width: 1) : updatedBorder.right,
+                            top: updatedBorder.top.width == 0 ? updatedBorder.top.copyWith(width: 0.01) : updatedBorder.top,
+                            bottom: updatedBorder.bottom.width == 0 ? updatedBorder.bottom.copyWith(width: 0.01) : updatedBorder.bottom,
+                            left: updatedBorder.left.width == 0 ? updatedBorder.left.copyWith(width: 0.01) : updatedBorder.left,
+                            right: updatedBorder.right.width == 0 ? updatedBorder.right.copyWith(width: 0.01) : updatedBorder.right,
                           );
                         }
 
@@ -35406,7 +35754,7 @@ class _LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProv
   Future<void> _handleTimePickerTap({
   required BuildContext context,
   required SheetText sheetText,
-}) async {
+  }) async {
   final picked = await showTimePicker(
     context: context,
     initialTime: extractTimeFromDelta(sheetText.textEditorController.document) ?? TimeOfDay.now(),
