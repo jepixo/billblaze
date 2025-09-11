@@ -458,48 +458,13 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
   // ──────────────────────────────
   // STYLING PRESERVATION
   // ──────────────────────────────
-  Delta _applyStylingFromOldOps(List<Operation> oldOps, String newText) {
-    final newDelta = Delta();
-    int written = 0;
-
-    for (final op in oldOps) {
-      if (written >= newText.length) break;
-      final data = op.data;
-      final attrs = op.attributes;
-      if (data is String && data.isNotEmpty) {
-        final span = data.length;
-        final take = (newText.length - written).clamp(0, span);
-        final slice = newText.substring(written, written + take);
-        if (slice.isNotEmpty) {
-          newDelta.insert(slice, attrs);
-          written += take;
-        }
-      }
-    }
-
-    if (written < newText.length) {
-      newDelta.insert(newText.substring(written));
-    }
-
-    // preserve last \n attributes if any
-    Map<String, dynamic>? newlineAttrs;
-    for (final op in oldOps.reversed) {
-      if (op.data is String && (op.data as String).endsWith('\n')) {
-        newlineAttrs = op.attributes;
-        break;
-      }
-    }
-    newDelta.insert('\n', newlineAttrs);
-
-    return newDelta;
-  }
 
   QuillEditorConfigurations getConfigurations (
     Function getItemAtPath,
     Function buildCombinedQuillConfiguration,
     Function setState,
     Function customStyleBuilder,
-    {
+  {
     List<SheetListBox>? spreadSheet,
     Map<List<InputBlock>, int>? visited,
   }) {
@@ -1124,52 +1089,6 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
     return List.generate(length, (i) => (xs[i], ys[i]));
   }
 
-  Delta _applyStylingFromOldOps(List<Operation> oldOps, String newText) {
-    final newDelta = Delta();
-    int written = 0;
-
-    // Find last non-newline attrs
-    Map<String, dynamic>? lastCharAttrs;
-    for (final op in oldOps.reversed) {
-      final data = op.data;
-      if (data is String && data != '\n') {
-        lastCharAttrs = op.attributes;
-        break;
-      }
-    }
-
-    for (final op in oldOps) {
-      if (written >= newText.length) break;
-      final data = op.data;
-      final attrs = op.attributes;
-      if (data is String && data.isNotEmpty) {
-        final span = data.length;
-        final take = (newText.length - written).clamp(0, span);
-        final slice = newText.substring(written, written + take);
-        if (slice.isNotEmpty) {
-          newDelta.insert(slice, attrs);
-          written += take;
-        }
-      }
-    }
-
-    if (written < newText.length) {
-      newDelta.insert(newText.substring(written), lastCharAttrs);
-    }
-
-    // Preserve last newline attributes if any
-    Map<String, dynamic>? newlineAttrs;
-    for (final op in oldOps.reversed) {
-      if (op.data is String && (op.data as String).endsWith('\n')) {
-        newlineAttrs = op.attributes;
-        break;
-      }
-    }
-    newDelta.insert('\n', newlineAttrs);
-
-    return newDelta;
-  }
-  
   QuillEditorConfigurations getConfigurations (
     Function getItemAtPath,
     Function buildCombinedQuillConfiguration,
@@ -2321,43 +2240,6 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
   String toJson() => json.encode(toMap());
 
   factory UidGeneratorFunction.fromJson(String source) => UidGeneratorFunction.fromMap(json.decode(source) as Map<String, dynamic>);
-
-
-  Delta _applyStylingFromOldOps(List<Operation> oldOps, String newText) {
-    final newDelta = Delta();
-    int written = 0;
-
-    for (final op in oldOps) {
-      if (written >= newText.length) break;
-      final data = op.data;
-      final attrs = op.attributes;
-      if (data is String && data.isNotEmpty) {
-        final span = data.length;
-        final take = (newText.length - written).clamp(0, span);
-        final slice = newText.substring(written, written + take);
-        if (slice.isNotEmpty) {
-          newDelta.insert(slice, attrs);
-          written += take;
-        }
-      }
-    }
-
-    if (written < newText.length) {
-      newDelta.insert(newText.substring(written));
-    }
-
-    // preserve last \n attributes if any
-    Map<String, dynamic>? newlineAttrs;
-    for (final op in oldOps.reversed) {
-      if (op.data is String && (op.data as String).endsWith('\n')) {
-        newlineAttrs = op.attributes;
-        break;
-      }
-    }
-    newDelta.insert('\n', newlineAttrs);
-
-    return newDelta;
-  }
 
   QuillEditorConfigurations getConfigurations (
     Function getItemAtPath,
@@ -4344,6 +4226,51 @@ mixin QuillFormattingMixin on SheetFunction {
   List<Map<String, dynamic>> get resultJson;
   set resultJson(List<Map<String, dynamic>> v);
 
+  Delta _applyStylingFromOldOps(List<Operation> oldOps, String newText) {
+    final newDelta = Delta();
+    int written = 0;
+
+    Map<String, dynamic>? lastAttrs; // last *non-null* attributes we saw
+    Map<String, dynamic>? newlineAttrs;
+
+    for (final op in oldOps) {
+      if (written >= newText.length) break;
+
+      final data = op.data;
+      final attrs = op.attributes;
+
+      if (data is String && data.isNotEmpty) {
+        final span = data.length;
+        final take = (newText.length - written).clamp(0, span);
+        final slice = newText.substring(written, written + take);
+
+        if (slice.isNotEmpty) {
+          // if attrs is null, fall back to last known attrs
+          final effectiveAttrs = attrs ?? lastAttrs;
+          newDelta.insert(slice, effectiveAttrs);
+
+          if (attrs != null) lastAttrs = attrs; // only update if attrs is not null
+          written += take;
+        }
+      }
+
+      if (data is String && data.endsWith('\n')) {
+        newlineAttrs = attrs ?? newlineAttrs;
+      }
+    }
+
+    if (written < newText.length) {
+      // inherit styling from last seen attrs for extra characters
+      newDelta.insert(newText.substring(written), lastAttrs);
+    }
+
+    // preserve newline attributes
+    newDelta.insert('\n', newlineAttrs);
+
+    return newDelta;
+  }
+
+  
   void _toggleAttribute(Attribute attr, QuillController controller) {
     final selection = controller.selection;
     final attrs = controller.getSelectionStyle().attributes;
