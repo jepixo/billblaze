@@ -55,9 +55,9 @@ class UniStatFunctionAdapter extends TypeAdapter<UniStatFunction> {
     };
     return UniStatFunction(
       inputBlocks: (fields[2] as List).cast<InputBlock>(),
-      resultJson: (fields[3] as List)
-          .map((dynamic e) => (e as Map).cast<String, dynamic>())
-          .toList(),
+      resultJson: (fields[3] as List?)
+          ?.map((dynamic e) => (e as Map).cast<String, dynamic>())
+          ?.toList(),
       func: fields[4] as String,
       formatter: (fields[5] as Map?)?.cast<String, dynamic>(),
     );
@@ -106,9 +106,9 @@ class ColumnFunctionAdapter extends TypeAdapter<ColumnFunction> {
       inputBlocks: (fields[2] as List).cast<InputBlock>(),
       func: fields[3] as String,
       axisLabel: fields[4] as String,
-      resultJson: (fields[5] as List)
-          .map((dynamic e) => (e as Map).cast<String, dynamic>())
-          .toList(),
+      resultJson: (fields[5] as List?)
+          ?.map((dynamic e) => (e as Map).cast<String, dynamic>())
+          ?.toList(),
       lockMode: fields[6] as bool,
     );
   }
@@ -157,17 +157,21 @@ class InputBlockFunctionAdapter extends TypeAdapter<InputBlockFunction> {
     return InputBlockFunction(
       inputBlocks: (fields[2] as List).cast<InputBlock>(),
       label: fields[3] as String,
-    );
+    )..resultJson = (fields[4] as List?)
+        ?.map((dynamic e) => (e as Map).cast<String, dynamic>())
+        ?.toList();
   }
 
   @override
   void write(BinaryWriter writer, InputBlockFunction obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(2)
       ..write(obj.inputBlocks)
       ..writeByte(3)
       ..write(obj.label)
+      ..writeByte(4)
+      ..write(obj.resultJson)
       ..writeByte(0)
       ..write(obj.returnType)
       ..writeByte(1)
@@ -198,9 +202,9 @@ class BiStatFunctionAdapter extends TypeAdapter<BiStatFunction> {
     return BiStatFunction(
       inputBlocksX: (fields[2] as List).cast<InputBlock>(),
       inputBlocksY: (fields[3] as List).cast<InputBlock>(),
-      resultJson: (fields[4] as List)
-          .map((dynamic e) => (e as Map).cast<String, dynamic>())
-          .toList(),
+      resultJson: (fields[4] as List?)
+          ?.map((dynamic e) => (e as Map).cast<String, dynamic>())
+          ?.toList(),
       func: fields[5] as String,
     );
   }
@@ -246,9 +250,9 @@ class UidGeneratorFunctionAdapter extends TypeAdapter<UidGeneratorFunction> {
     };
     return UidGeneratorFunction(
       template: fields[2] as String,
-      resultJson: (fields[3] as List)
-          .map((dynamic e) => (e as Map).cast<String, dynamic>())
-          .toList(),
+      resultJson: (fields[3] as List?)
+          ?.map((dynamic e) => (e as Map).cast<String, dynamic>())
+          ?.toList(),
       idKey: fields[4] as String,
       func: fields[5] as String,
       dateTime: fields[6] as DateTime?,

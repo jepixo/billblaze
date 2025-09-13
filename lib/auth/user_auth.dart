@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:billblaze/home.dart';
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
-import 'package:billblaze/providers/env_provider.dart';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';

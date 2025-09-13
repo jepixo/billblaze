@@ -5,7 +5,6 @@ import 'dart:isolate';
 import 'dart:math';
 import 'dart:math' as math;
 import 'package:animated_toggle_switch/animated_toggle_switch.dart';
-import 'package:billblaze/auth/user_auth.dart';
 import 'package:billblaze/components/balloon_slider/widget.dart';
 import 'package:billblaze/components/widgets/graph_window.dart';
 import 'package:billblaze/components/widgets/search_bar.dart';
@@ -20,15 +19,12 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_functions.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/auth_provider.dart';
-import 'package:billblaze/providers/llama_provider.dart';
 import 'package:billblaze/providers/url_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
 import 'package:billblaze/repo/llama_repository.dart';
 import 'package:billblaze/components/widgets/username.dart';
-import 'package:billblaze/util/asset_manifest.dart';
 import 'package:billblaze/util/numeric_input_formatter.dart';
 import 'package:billblaze/util/static_noise.dart';
-import 'package:cool_background_animation/cool_background_animation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
@@ -38,11 +34,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_svgl/flutter_svgl.dart';
-import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart'
-    as gap;
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'package:googleapis_auth/auth_io.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:billblaze/colors.dart';
@@ -67,8 +59,6 @@ import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 import 'package:uuid/uuid.dart';
-import 'package:googleapis/drive/v3.dart' as drive;
-import 'package:googleapis/sheets/v4.dart' as sheets;
 
 final cCardIndexProvider = StateProvider<int>((ref) {
   return 0;
@@ -135,7 +125,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   ];
   Timer? _timer;
   double _xValue = 0.0;
-  double _xxValue = 0.0;
   late Animation<int> _graphLineSpeedTween;
   List<int> _graphSpeed = [60, 80];
   double appinioMinTabChanged = 0;
@@ -245,7 +234,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     isLoading = true;
-    
     tempLayoutModel = LayoutModel(
       name: 'New Layout',
       id: Uuid().v4(),
@@ -318,7 +306,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
         _updateGraphLineSpeed(100);
         // await syncLayoutsWithAssets();
-      } on Exception catch (e) {
+      } on Exception catch (_) {
         // TODO
       }finally{
         if (ref.read(folderPathProvider)==null) {
@@ -580,11 +568,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   );
 
 }
-  void _getCurrentTime() {
-    setState(() {
-      dateTimeNow = DateTime.now();
-    });
-  }
+  
   //
   //
   void _updateGraphLineSpeed(int newSpeed) {
@@ -754,15 +738,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     double sHeight = MediaQuery.of(context).size.height;
     Duration defaultDuration = Duration(milliseconds: 300);
     double topPadPosDistance = sHeight / 25;
-    double leftPadPosDistance = sWidth / 10;
-    double topPadGraphDistance = sHeight / 4.2;
     double titleFontSize = sHeight / 10;
     int homeScreenTabIndex = ref.watch(homeScreenTabIndexProvider);
-    String processMessage = ref.watch(processMessageProvider);
     bool isHomeTab = homeScreenTabIndex == 0;
     bool isLayoutTab = homeScreenTabIndex == 1;
     bool isBillTab = homeScreenTabIndex == 2;
-    bool isProfileTab = homeScreenTabIndex == 3;
+    // bool isProfileTab = homeScreenTabIndex == 3;
     final User? user = ref.watch(authPr).currentUser;
     
     
@@ -10446,8 +10427,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         if (layout.id.startsWith('LY-')) return false;
                         if (name.endsWith('-old')) return false;
                         if (layout.deleted?? false) return false;
-                        if (revisedNames.contains(name))
-                          return false; // exclude if revised version exists
+                        if (revisedNames.contains(name)) return false; // exclude if revised version exists
                         return true;
                       }).toList();
                       typeStats = {};
@@ -10456,21 +10436,65 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       totalBills = layouts .where((l) => SheetType.values[ l.type] !=SheetType.none).length;
                       for (final layout in layouts) {
                         final type = SheetType.values[layout.type];
+                        // print(layout.name);
                         double totalPayable = 0;
                         double profit = 0;
-                        
-                        double totalUnpaidRevenue = 0.0;
-                        bool isPaid = false;
+                        var isPaid = false;
                         if (type == SheetType.proformaInvoice) {
                           continue;
                         }
 
                         try {
-                          for (final label in layout.labelList) {
-                            
-                            // print(label.indexPath);
-                            if (label.indexPath.index == -951) continue;
+                          final totalPayableLabel = layout.labelList.firstWhere(
+                            (lbl) => lbl.name == 'totalPayable',
+                          );
+                          final isPaidLabel = layout.labelList.firstWhere(
+                            (lbl) => lbl.name == 'isPaid',
+                            orElse:()=> RequiredText(name: 'isPaid', sheetTextType: SheetTextType.bool.index, indexPath: IndexPath(index: -951), isOptional: true),
+                          );
+                          // if (isPaidLabel.indexPath.index == -951) continue;
 
+                          final isPaidItem = getItemAtPath(isPaidLabel.indexPath, layout.spreadSheetList);
+                          
+                          isPaid =bool.tryParse(isPaidItem is! SheetTextBox? 'false': buildCombinedTextFromBlocks((isPaidItem).inputBlocks, layout.spreadSheetList))??false;
+                          // print( isPaid);
+                          // print(totalPayableLabel.indexPath);
+                          if (totalPayableLabel != null && totalPayableLabel.indexPath.index != -951 ) {
+                            final item = getItemAtPath(
+                              totalPayableLabel.indexPath,
+                              layout.spreadSheetList);
+                            //  print(item);
+
+                            if (item is SheetTextBox) {
+                              try {
+                                final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
+                                double value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ??0;
+                                // print('rawText:'+rawText);
+                                // If it's a credit note, negate the value
+                                if (layout.type == SheetType.creditNote.index) {
+                                  value *= -1;
+                                }
+                                if (layout.type == SheetType.proformaInvoice.index ) {
+                                  value *= 0;
+                                }
+                                
+                                // if(isPaid){
+                                  totalPayable =value;
+                                  // print(totalPayable);
+                                  // print(label.indexPath);
+                                
+                                // } 
+                              } on Exception catch (e,st) {
+                                print(st);
+                              }
+                            }
+                          }
+
+                          
+                          for (final label in layout.labelList) {
+                           
+                            if (label.indexPath.index == -951) continue;
+                            if (label.name != 'profits') continue;
                             final item = getItemAtPath(label.indexPath, layout.spreadSheetList);
                             // print(item);
                             if (item is! SheetTextBox) continue;
@@ -10478,15 +10502,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
                             final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
                             final cleaned = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.-]'), '')) ?? 0.0;
-                            // print('ghghh'+cleaned.toString());
-                            if (label.name == 'totalPayable') {
-                              totalPayable = (type == SheetType.creditNote) ? -cleaned : cleaned;
-                            } else if (label.name == 'profits') {
+                            
+                           if (label.name == 'profits') {
                               profit = cleaned;
-                             
-                            } else if (label.name == 'isPaid') {
-                              isPaid = rawText.trim().toLowerCase() == 'true';
-                            }
+                            } 
                             
                           }
                         } catch (_) {
@@ -10501,6 +10520,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           'unpaid':  (typeStats[type]?['unpaid'] ?? 0) +(isPaid?0:1),
                           'unpaidRevenue': (typeStats[type]?['unpaidRevenue'] ?? 0.0) +(isPaid?0:totalPayable)
                         };
+                        // print('typeStats:'+typeStats[type].toString() +'and isPaid:' +(isPaid?0:totalPayable).toString());
                         if (!isPaid) {
                           totalUnpaid +=1;
                         } else {
@@ -13200,7 +13220,7 @@ String buildCombinedTextFromBlocks(
   if (visited[inputBlocks]! > 50) {
     return '';
   }
-  // print('build');
+  // print(inputBlocks);
   for (int blockIdx = 0; blockIdx < inputBlocks.length; blockIdx++) {
     final block = inputBlocks[blockIdx];
     // print(block);
@@ -13239,9 +13259,10 @@ String buildCombinedTextFromBlocks(
         final raw = block.function!.result(
             getItemAtPath, buildCombinedTextFromBlocks,
             spreadSheet: spreadSheetList);
-
+        // print(block.function.toString()+raw.toString());
         // 1) If it’s a styled Quill Document, pull in its ops
         if (raw is Document) {
+          // print(block.function.toString()+raw.toPlainText());
           final ops = raw.toDelta().toList();
           final isLast = blockIdx == inputBlocks.length - 1;
 
@@ -13260,6 +13281,7 @@ String buildCombinedTextFromBlocks(
         }
         // 2) Otherwise if it’s just a number or string, insert as before
         else if (raw is num || raw is String) {
+          print(raw);
           final text = '$raw${blockIdx == inputBlocks.length - 1 ? '\n' : ''}';
           mergedDelta.push(Operation.insert(text));
         }
