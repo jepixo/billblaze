@@ -360,7 +360,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     //     })
     //     .toList();
     
-    if (widget.layoutModel ==null) {
+    if (widget.layoutModel ==null && widget.id!=null) {
       final box = Boxes.getLayouts(ref);
       key = widget.id ?? '-1';
       final rawMap = box.get(widget.id)?.sheetDecorationMap?.map((key, box) {
@@ -429,6 +429,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
         sheetListItem = spreadSheetList[currentPageIndex];
       }
     } else{
+      print('Yolo There!');
       lm = widget.layoutModel!;
       final rawMap = lm!.sheetDecorationMap?.map((key, box) {
         if (box is ItemDecorationBox) {
@@ -485,11 +486,17 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     Future.delayed(Durations.extralong4).then((c) async {if (widget.exportPdf) {
       final overlay =  OverlayEntry(builder: (context) => Scaffold(
         backgroundColor: defaultPalette.extras[1],
-        body: Center(
-          child: LoadingAnimationWidget.newtonCradle(
-            color: Colors.white,
-            size: 150,
-          ),
+        body: Stack(
+          children: [
+            Center(
+              child: LoadingAnimationWidget.newtonCradle(
+                color: Colors.white,
+                size: 150,
+              ),
+            ),
+            if (Platform.isWindows)
+              ...windowsTopBar(),
+          ],
         ),),);
         Overlay.of(context).insert(
           overlay
@@ -3235,11 +3242,17 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     if (isLoading) {
       return Scaffold(
         backgroundColor: defaultPalette.tertiary,
-    body: Center(
-      child: LoadingAnimationWidget.newtonCradle(
-        color: Colors.white,
-        size: 150,
-      ),
+    body: Stack(
+      children: [
+        Center(
+          child: LoadingAnimationWidget.newtonCradle(
+            color: Colors.white,
+            size: 150,
+          ),
+        ),
+        if (Platform.isWindows)
+          ...windowsTopBar(),
+      ],
     ),);
     }
     try {
@@ -5990,7 +6003,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             children: [
                               AnimatedPositioned(
                                 right: 0,
-                                top: -2,
+                                top: 5,
                                 duration: Durations.short4,
                                 child: SingleChildScrollView(
                                   scrollDirection: Axis.horizontal,
@@ -6012,16 +6025,17 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           // isTapped: false,
                                           // toggleOnTap: true,
                                           depth: 2,
+                                          subfac: 2,
                                           onClick: () {
                                             Future.delayed(Duration.zero)
                                                 .then((y) {
                                               appWindow.minimize();
                                             });
                                           },
-                                          buttonHeight: 30,
-                                          buttonWidth: 30,
+                                          buttonHeight:25,
+                                          buttonWidth:25,
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(7),
                                           animationDuration:
                                               const Duration(milliseconds: 10),
                                           animationCurve: Curves.ease,
@@ -6030,63 +6044,67 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             border: Border.all(),
                                           ),
                                           topLayerChild: const Icon(
-                                            TablerIcons.rectangle,
+                                            TablerIcons.rectangle_filled,
                                             size: 15,
-                                            // color: Colors.blue,
+                                            color: Colors.blue,
                                           ),
                                           baseDecoration: BoxDecoration(
                                             color: defaultPalette.extras[0],
                                             border: Border.all(),
                                           ),
                                         ),
+                                        SizedBox(width:3),
                                         //
                                         //maximize button
                                         ElevatedLayerButton(
                                           // isTapped: false,
                                           // toggleOnTap: true,
                                           depth: 2,
+                                          subfac: 2,
                                           onClick: () {
                                             Future.delayed(Durations.short1)
                                                 .then((y) {
                                               appWindow.maximizeOrRestore();
                                             });
                                           },
-                                          buttonHeight: 30,
-                                          buttonWidth: 30,
+                                          buttonHeight:25,
+                                          buttonWidth:25,
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(7),
                                           animationDuration:
                                               const Duration(milliseconds: 1),
                                           animationCurve: Curves.ease,
                                           topDecoration: BoxDecoration(
-                                            color: Colors.white,
+                                            color: defaultPalette.primary,
                                             border: Border.all(),
                                           ),
-                                          topLayerChild: const Icon(
-                                            TablerIcons.triangle,
+                                          topLayerChild: Icon(
+                                            TablerIcons.triangle_filled,
                                             size: 14,
-                                            // color: Colors.amber,
+                                            color: defaultPalette.tertiary,
                                           ),
                                           baseDecoration: BoxDecoration(
                                             color: defaultPalette.extras[0],
                                             border: Border.all(),
                                           ),
                                         ),
+                                        SizedBox(width:3),
                                         //close button
                                         ElevatedLayerButton(
                                           // isTapped: false,
                                           // toggleOnTap: true,
                                           depth: 2,
+                                          subfac: 2,
                                           onClick: () {
                                             Future.delayed(Duration.zero)
                                                 .then((y) {
                                               appWindow.close();
                                             });
                                           },
-                                          buttonHeight: 30,
-                                          buttonWidth: 30,
+                                          buttonHeight:25,
+                                          buttonWidth:25,
                                           borderRadius:
-                                              BorderRadius.circular(5),
+                                              BorderRadius.circular(7),
                                           animationDuration:
                                               const Duration(milliseconds: 1),
                                           animationCurve: Curves.ease,
@@ -6094,10 +6112,10 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             color: Colors.white,
                                             border: Border.all(),
                                           ),
-                                          topLayerChild: const Icon(
-                                            TablerIcons.circle,
+                                          topLayerChild: Icon(
+                                            TablerIcons.circle_filled,
                                             size: 15,
-                                            // color: Colors.red,
+                                            color: defaultPalette.extras[4],
                                           ),
                                           baseDecoration: BoxDecoration(
                                             color: defaultPalette.extras[0],
@@ -6115,7 +6133,8 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         }),
                       ),
                     ),
-            
+                  // if (Platform.isWindows)
+                  //  ...windowsTopBar(),
                   //
                   //BILLBLAZE MAIN TITLE //Desktop WEB
                   AnimatedPositioned(
@@ -6174,11 +6193,17 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       onClick: () async {
                         final overlay =  OverlayEntry(builder: (context) => Scaffold(
                             backgroundColor: defaultPalette.extras[4],
-                        body: Center(
-                          child: LoadingAnimationWidget.newtonCradle(
-                            color: Colors.white,
-                            size: 150,
-                          ),
+                        body: Stack(
+                          children: [
+                            Center(
+                              child: LoadingAnimationWidget.newtonCradle(
+                                color: Colors.white,
+                                size: 150,
+                              ),
+                            ),
+                            if (Platform.isWindows)
+                              ...windowsTopBar(),
+                          ],
                         ),),);
                         Overlay.of(context).insert(
                           overlay
@@ -6191,6 +6216,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         widget.onPop(await pdf.save());
                         
                         if (widget.layoutModel != null && pendingFilePath!=null) {
+                          pendingFilePath=null;
                           await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
                           await Hive.openBox<String>('folderPaths');
                           Navigator.pushReplacement(context,

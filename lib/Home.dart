@@ -775,151 +775,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               ),
               
               if (Platform.isWindows)
-                Positioned.fill(
-                top:0,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onPanStart: (details) {
-                    appWindow.startDragging();
-                  },
-                  onDoubleTap: () {
-                    appWindow.maximizeOrRestore();
-                  },
-                  child: SizedBox(
-                    height: 50,
-                    child: Consumer(builder: (context, ref, c) {
-                      return Stack(
-                        children: [
-                          AnimatedPositioned(
-                            right: 0,
-                            top:  0,
-                            duration: Durations.short4,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: AnimatedContainer(
-                                duration: Durations.short4,
-                                padding:
-                                    const EdgeInsets.only(right: 9, bottom: 0),
-                                margin: const EdgeInsets.only(top: 8),
-                                decoration: const BoxDecoration(
-                                    color: Colors.transparent,
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(12),
-                                      bottomLeft: Radius.circular(12),
-                                    )),
-                                child: Row(
-                                  children: [
-                                    //minimize button
-                                    ElevatedLayerButton(
-                                      // isTapped: false,
-                                      // toggleOnTap: true,
-                                      depth: 2.5, subfac: 2.5,
-                                      onClick: () {
-                                        Future.delayed(Duration.zero).then((y) {
-                                          appWindow.minimize();
-                                        });
-                                      },
-                                      buttonHeight: 28,
-                                      buttonWidth: 28,
-                                      borderRadius: BorderRadius.circular(8),
-                                      animationDuration:
-                                          const Duration(milliseconds: 10),
-                                      animationCurve: Curves.ease,
-                                      topDecoration: BoxDecoration(
-                                        color: Colors.white,
-                                        border: Border.all(),
-                                      ),
-                                      topLayerChild: const Icon(
-                                        TablerIcons.rectangle_filled,
-                                        size: 14,
-                                        color: Colors.blue,
-                                      ),
-                                      baseDecoration: BoxDecoration(
-                                        color: defaultPalette.extras[0],
-                                        border: Border.all(),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 5,
-                                    ),
-                                    //
-                                    //maximize button
-                                    ElevatedLayerButton(
-                                      // isTapped: false,
-                                      // toggleOnTap: true,
-                                      depth: 2.5, subfac: 2.5,
-                                      onClick: () {
-                                        Future.delayed(Durations.short1)
-                                            .then((y) {
-                                          appWindow.maximizeOrRestore();
-                                        });
-                                      },
-                                      buttonHeight: 28,
-                                      buttonWidth: 28,
-                                      borderRadius: BorderRadius.circular(8),
-                                      animationDuration:
-                                          const Duration(milliseconds: 1),
-                                      animationCurve: Curves.ease,
-                                      topDecoration: BoxDecoration(
-                                        color: Colors.white,
-                                        border: Border.all(),
-                                      ),
-                                      topLayerChild: const Icon(
-                                        TablerIcons.triangle_filled,
-                                        size: 14,
-                                        color: Colors.green,
-                                      ),
-                                      baseDecoration: BoxDecoration(
-                                        color: defaultPalette.extras[0],
-                                        border: Border.all(),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 5,
-                                    ),
-                                    //close button
-                                    ElevatedLayerButton(
-                                      // isTapped: false,
-                                      // toggleOnTap: true,
-                                      depth: 2.5, subfac: 2.5,
-                                      onClick: () {
-                                        Future.delayed(Duration.zero).then((y) {
-                                          appWindow.close();
-                                        });
-                                      },
-                                      buttonHeight: 28,
-                                      buttonWidth: 28,
-                                      borderRadius: BorderRadius.circular(8),
-                                      animationDuration:
-                                          const Duration(milliseconds: 1),
-                                      animationCurve: Curves.ease,
-                                      topDecoration: BoxDecoration(
-                                        color: Colors.white,
-                                        border: Border.all(),
-                                      ),
-                                      topLayerChild:Icon(
-                                        TablerIcons.circle_filled,
-                                        size: 15,
-                                        color: defaultPalette.extras[4],
-                                      ),
-                                      baseDecoration: BoxDecoration(
-                                        color: defaultPalette.extras[0],
-                                        border: Border.all(),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                //
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
-                  ),
-                ),
-              ),
-            
+                ...windowsTopBar(),
               ]
             ),
           ),);
@@ -13351,4 +13207,165 @@ String buildCombinedTextFromBlocks(
 
   final doc = Document.fromDelta(mergedDelta);
   return doc.toPlainText().trimRight();
+}
+
+List<Widget> windowsTopBar(){
+  // Windows top bar
+  if (Platform.isWindows){
+  return [
+    GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onPanStart: (details) {
+        appWindow.startDragging();
+      },
+      onDoubleTap: () {
+        appWindow.maximizeOrRestore();
+      },
+      child: SizedBox(
+        height: 50,
+        child: Consumer(builder: (context, ref, c) {
+          return Stack(
+            children: [
+              AnimatedPositioned(
+                right: 0,
+                top:  0,
+                duration: Durations.short4,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: AnimatedContainer(
+                    duration: Durations.short4,
+                    padding:
+                        const EdgeInsets.only(right: 9, bottom: 0),
+                    margin: const EdgeInsets.only(top: 8),
+                    decoration: const BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          bottomLeft: Radius.circular(12),
+                        )),
+                    child: Row(
+                      children: [
+                        //minimize button
+                        ElevatedLayerButton(
+                          // isTapped: false,
+                          // toggleOnTap: true,
+                          depth: 2.5, subfac: 2.5,
+                          onClick: () {
+                            Future.delayed(Duration.zero).then((y) {
+                              appWindow.minimize();
+                            });
+                          },
+                          buttonHeight: 28,
+                          buttonWidth: 28,
+                          borderRadius: BorderRadius.circular(8),
+                          animationDuration:
+                              const Duration(milliseconds: 10),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(),
+                          ),
+                          topLayerChild: const Icon(
+                            TablerIcons.rectangle_filled,
+                            size: 14,
+                            color: Colors.blue,
+                          ),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 5,
+                        ),
+                        //
+                        //maximize button
+                        ElevatedLayerButton(
+                          // isTapped: false,
+                          // toggleOnTap: true,
+                          depth: 2.5, subfac: 2.5,
+                          onClick: () {
+                            Future.delayed(Durations.short1)
+                                .then((y) {
+                              appWindow.maximizeOrRestore();
+                            });
+                          },
+                          buttonHeight: 28,
+                          buttonWidth: 28,
+                          borderRadius: BorderRadius.circular(8),
+                          animationDuration:
+                              const Duration(milliseconds: 1),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(),
+                          ),
+                          topLayerChild: const Icon(
+                            TablerIcons.triangle_filled,
+                            size: 14,
+                            color: Colors.green,
+                          ),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 5,
+                        ),
+                        //close button
+                        ElevatedLayerButton(
+                          // isTapped: false,
+                          // toggleOnTap: true,
+                          depth: 2.5, subfac: 2.5,
+                          onClick: () {
+                            Future.delayed(Duration.zero).then((y) {
+                              appWindow.close();
+                            });
+                          },
+                          buttonHeight: 28,
+                          buttonWidth: 28,
+                          borderRadius: BorderRadius.circular(8),
+                          animationDuration:
+                              const Duration(milliseconds: 1),
+                          animationCurve: Curves.ease,
+                          topDecoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(),
+                          ),
+                          topLayerChild:Icon(
+                            TablerIcons.circle_filled,
+                            size: 15,
+                            color: defaultPalette.extras[4],
+                          ),
+                          baseDecoration: BoxDecoration(
+                            color: defaultPalette.extras[0],
+                            border: Border.all(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    //
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    ),
+    AnimatedPositioned(
+      duration: Durations.medium2,
+      top:  12,
+      left: 12,
+      child: SvgPicture.asset(
+        'assets/logos/Asset12.svg',
+        width: 35,
+        height: 25,
+        colorFilter: ColorFilter.mode(defaultPalette.primary, BlendMode.srcIn),
+      ),
+    ),
+    ];
+  } else return[ SizedBox.shrink()];
+              
 }

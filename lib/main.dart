@@ -118,30 +118,14 @@ Future<void> main(List<String> args) async {
   // Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
   Llama.libraryPath = 'llama.dll';
   InAppWebViewPlatform.instance = WindowsInAppWebViewPlatform();
-  // if (args.isEmpty && kDebugMode) {
-  //   args = ['C:\\Users\\ANTEC\\AppData\\Roaming\\com.jepixo\\billblaze\\BillBlaze\\1Idn8T7QbydncSOmqLv7yHYKztF2\\main\\Bill-0.bbc'];
-  // }
+  if (args.isEmpty && kDebugMode) {
+    args = ['C:\\Users\\ANTEC\\AppData\\Roaming\\com.jepixo\\billblaze\\BillBlaze\\1Idn8T7QbydncSOmqLv7yHYKztF2\\main\\Bill-0.bbc'];
+  }
   if (args.isNotEmpty) {
     pendingFilePath = args.first;
     print('Pending file path: $pendingFilePath');
-    final file = File( pendingFilePath!);
-    final content = await file.readAsString();
-    final layout = LayoutModel.fromJson(content);
-
-    runApp( ProviderScope(child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      locale: const Locale('en', 'GB'),
-      theme: ThemeData(
-        textSelectionTheme: TextSelectionThemeData(
-          cursorColor: defaultPalette.extras[0], // Cursor color
-          selectionColor:
-              defaultPalette.tertiary.withValues(alpha: 0.5), // Text highlight color
-          selectionHandleColor:
-              Colors.green, // Handle color when dragging selection
-        ),
-      ),home: LayoutDesigner(layoutModel: layout, onPop: (_) {}))));
-    return;
-  }
+    runApp(const ProviderScope(child: MainApp()));
+  } else {
   // await LlamaRepository.init(
   await Hive.openBox<LayoutModel>('layouts');
   await Hive.openBox<String>('folderPaths');
@@ -153,6 +137,8 @@ Future<void> main(List<String> args) async {
   
 
   runApp(const ProviderScope(child: MainApp()));
+  
+  }
   // redirectPrintToFile();
   }catch (e, st) {
     // If any exception happens, show a fallback UI with the error
@@ -181,20 +167,31 @@ class MainApp extends ConsumerStatefulWidget {
 class MainAppState extends ConsumerState<MainApp> {
   bool isLoading = true;
   String log = 'loading';
+  LayoutModel? layout;
   @override
   void initState() {
     super.initState();
     isLoading = true;
     
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async{
-      try {
-        await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
-      } on Exception catch (e) {
-        log = e.toString();
-      } finally{
-      setState((){
-        isLoading = false;
-      });}
+      if (pendingFilePath == null) {
+        try {
+          await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
+        } on Exception catch (e) {
+          log = e.toString();
+        } finally{
+        setState((){
+          isLoading = false;
+        });}
+      } else {
+        
+        final file = File( pendingFilePath!);
+        final content = await file.readAsString();
+        setState((){
+          layout = LayoutModel.fromJson(content);
+          isLoading = false;
+        });
+      }
     },);
   }
 
@@ -202,6 +199,201 @@ class MainAppState extends ConsumerState<MainApp> {
   Widget build(BuildContext context) {
     double sWidth = MediaQuery.of(context).size.width;
     double sHeight = MediaQuery.of(context).size.height;
+    if(pendingFilePath != null) {
+      print('Hello There!');
+      return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      locale: const Locale('en', 'GB'),
+      theme: ThemeData(
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: defaultPalette.extras[0], // Cursor color
+          selectionColor:
+              defaultPalette.tertiary.withValues(alpha: 0.5), // Text highlight color
+          selectionHandleColor:
+              Colors.green, // Handle color when dragging selection
+        ),
+      ),home:  isLoading
+      ? Scaffold(
+          backgroundColor: defaultPalette.extras[0],
+          body: SizedBox(
+            width: sWidth,
+            height: sHeight,
+            child: Stack(
+              children: [
+                
+                Positioned.fill(child: GestureDetector(
+                  onTap: ()async{
+                  // await Hive.deleteBoxFromDisk('decorations');
+                  // await Hive.deleteBoxFromDisk('layouts');
+                  // await Hive.openBox<SheetDecoration>('decorations');
+                  // await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
+                  // setState(() {
+                  //   isLoading = false;
+                  // });
+                },
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'assets/logos/Asset6.svg',
+                      // allowDrawingOutsideViewBox: true,
+                      // theme: SvgTheme(currentColor: defaultPalette.primary),
+                    )
+                  ),
+                )),
+                if (Platform.isWindows)
+                Positioned(
+                  top:0,
+                  width: sWidth,
+                  height: 50,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onPanStart: (details) {
+                      appWindow.startDragging();
+                    },
+                    onDoubleTap: () {
+                      appWindow.maximizeOrRestore();
+                    },
+                    child: SizedBox(
+                      height: 50,
+                      child: Consumer(builder: (context, ref, c) {
+                        return Stack(
+                          children: [
+                            AnimatedPositioned(
+                              right: 0,
+                              top:  0,
+                              duration: Durations.short4,
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: AnimatedContainer(
+                                  duration: Durations.short4,
+                                  padding:
+                                      const EdgeInsets.only(right: 9, bottom: 0),
+                                  margin: const EdgeInsets.only(top: 8),
+                                  decoration: const BoxDecoration(
+                                      color: Colors.transparent,
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(12),
+                                        bottomLeft: Radius.circular(12),
+                                      )),
+                                  child: Row(
+                                    children: [
+                                      //minimize button
+                                      ElevatedLayerButton(
+                                        // isTapped: false,
+                                        // toggleOnTap: true,
+                                        depth: 2.5, subfac: 2.5,
+                                        onClick: () {
+                                          Future.delayed(Duration.zero).then((y) {
+                                            appWindow.minimize();
+                                          });
+                                        },
+                                        buttonHeight: 28,
+                                        buttonWidth: 28,
+                                        borderRadius: BorderRadius.circular(8),
+                                        animationDuration:
+                                            const Duration(milliseconds: 10),
+                                        animationCurve: Curves.ease,
+                                        topDecoration: BoxDecoration(
+                                          color: Colors.white,
+                                          border: Border.all(),
+                                        ),
+                                        topLayerChild: const Icon(
+                                          TablerIcons.rectangle_filled,
+                                          size: 14,
+                                          color: Colors.blue,
+                                        ),
+                                        baseDecoration: BoxDecoration(
+                                          color: defaultPalette.extras[0],
+                                          border: Border.all(),
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        width: 5,
+                                      ),
+                                      //
+                                      //maximize button
+                                      ElevatedLayerButton(
+                                        // isTapped: false,
+                                        // toggleOnTap: true,
+                                        depth: 2.5, subfac: 2.5,
+                                        onClick: () {
+                                          Future.delayed(Durations.short1)
+                                              .then((y) {
+                                            appWindow.maximizeOrRestore();
+                                          });
+                                        },
+                                        buttonHeight: 28,
+                                        buttonWidth: 28,
+                                        borderRadius: BorderRadius.circular(8),
+                                        animationDuration:
+                                            const Duration(milliseconds: 1),
+                                        animationCurve: Curves.ease,
+                                        topDecoration: BoxDecoration(
+                                          color: Colors.white,
+                                          border: Border.all(),
+                                        ),
+                                        topLayerChild: const Icon(
+                                          TablerIcons.triangle_filled,
+                                          size: 14,
+                                          color: Colors.green,
+                                        ),
+                                        baseDecoration: BoxDecoration(
+                                          color: defaultPalette.extras[0],
+                                          border: Border.all(),
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        width: 5,
+                                      ),
+                                      //close button
+                                      ElevatedLayerButton(
+                                        // isTapped: false,
+                                        // toggleOnTap: true,
+                                        depth: 2.5, subfac: 2.5,
+                                        onClick: () {
+                                          Future.delayed(Duration.zero).then((y) {
+                                            appWindow.close();
+                                          });
+                                        },
+                                        buttonHeight: 28,
+                                        buttonWidth: 28,
+                                        borderRadius: BorderRadius.circular(8),
+                                        animationDuration:
+                                            const Duration(milliseconds: 1),
+                                        animationCurve: Curves.ease,
+                                        topDecoration: BoxDecoration(
+                                          color: Colors.white,
+                                          border: Border.all(),
+                                        ),
+                                        topLayerChild:Icon(
+                                          TablerIcons.circle_filled,
+                                          size: 15,
+                                          color: defaultPalette.extras[4],
+                                        ),
+                                        baseDecoration: BoxDecoration(
+                                          color: defaultPalette.extras[0],
+                                          border: Border.all(),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  //
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ),
+                  ),
+                ),
+                    
+              ]
+            ),
+          ),)
+      :LayoutDesigner(layoutModel: layout!, onPop: (_) {},id: null,));
+    
+    }
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       locale: const Locale('en', 'GB'),
