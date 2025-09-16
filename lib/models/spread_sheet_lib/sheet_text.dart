@@ -65,14 +65,14 @@ class SheetTextBox extends SheetItem {
         'locked': locked,
       };
 
-      print('SheetTextBox: '+map.toString());
+   print('SheetTextBox: '+map.toString());
     return map;
     } 
   String toJson() => jsonEncode(toMap());
 
   factory SheetTextBox.fromMap(Map<String, dynamic> map) {
-    print('in SheetTextBoxFromMap: '+map['id'].toString());
-    print('in SheetTextBoxFromMap: '+map['textEditorController'].toString());
+ print('in SheetTextBoxFromMap: '+map['id'].toString());
+ print('in SheetTextBoxFromMap: '+map['textEditorController'].toString());
     return SheetTextBox(
       id: map['id'],
       parentId: map['parentId'],

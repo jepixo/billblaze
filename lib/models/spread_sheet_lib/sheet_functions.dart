@@ -3,7 +3,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:billblaze/util/custom_uid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -16,6 +15,7 @@ import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/components/elevated_button.dart';
@@ -25,8 +25,8 @@ import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/screens/layout_designer.dart' as ly;
+import 'package:billblaze/util/custom_uid.dart';
 import 'package:billblaze/util/numeric_input_formatter.dart';
-import 'package:uuid/uuid.dart';
 
 part 'sheet_functions.g.dart';
 
@@ -105,7 +105,7 @@ class SheetFunction {
   }
 
   static SheetFunction fromMap(Map<String, dynamic> map) {
-    print('SheetFunction type: '+map['type']);
+ print('SheetFunction type: '+map['type']);
     switch (map['type']) {
       case 'column':
         return ColumnFunction.fromMap(map);
@@ -134,7 +134,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
   List<InputBlock> inputBlocks;
 
   @HiveField(3)
-  List<Map<String, dynamic>> resultJson = [];
+  List<Map<String, dynamic>>? resultJson = [];
 
   @HiveField(4)
   String func;
@@ -166,7 +166,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
     if (visited[inputBlocks]! > 50) {
       return 'recursion detected';
     }
-
+    //  print(func);
     // Extract all numeric values first
     final (values,count) = _collectValues(getItemAtPath, buildCombinedQuillConfiguration,
         spreadSheet: spreadSheet, visited: visited);
@@ -176,10 +176,11 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
     switch (func.toLowerCase()) {
       case 'sum':
         newText = _sum(values).toString();
+        // print(newText);
         break;
       case 'multiply':
         newText = _product(values).toString();
-        print(newText);
+     print(newText);
         break;
       case 'count':
         newText = count.toString();
@@ -222,7 +223,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
         newText = _mad(values).toString();
         break;
       case 'skewness':
-        print('skew: '+_skewness(values).toString());
+     print('skew: '+_skewness(values).toString());
         newText = _skewness(values).toString();
         break;
       case 'kurtosis':
@@ -288,7 +289,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
 
     // Preserve styling in resultJson
     if(returnFormatted)newText = applyFormatting(newText);
-    final oldDelta = Delta.fromJson(resultJson);
+    final oldDelta = Delta.fromJson(resultJson ?? [{'insert': '\n'}]);
     final oldOps = oldDelta.toList();
     final newDelta = _applyStylingFromOldOps(oldOps, newText);
 
@@ -318,11 +319,16 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
       // Nested function handling
       if (block.function != null && !block.useConst) {
         if (block.function is InputBlockFunction) {
-          raw = (block.function as InputBlockFunction)
-              .getConfigurations(buildCombinedQuillConfiguration,
-                  spreadSheet: spreadSheet, visited: visited)
-              .controller
-              .document;
+          //  print('yee');
+          // raw = (block.function as InputBlockFunction).getConfigurations(buildCombinedQuillConfiguration, spreadSheet: spreadSheet, visited: visited).controller.document;
+          raw = block.function!.result(
+            getItemAtPath,
+            buildCombinedQuillConfiguration,
+            spreadSheet: spreadSheet,
+            visited: Map.from(visited!),
+          ).controller.document;
+          //  print('raw');
+          // print(raw);
         } else {
           raw = block.function!.result(
             getItemAtPath,
@@ -343,19 +349,16 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
            baseCount += (double.tryParse(c.toPlainText())??0.0).toInt();
         }
       } else {
+        // print('getting item at path: '+block.indexPath.toString());
+        // print('spreadsheet is : '+spreadSheet.toString());
         final item = spreadSheet == null
             ? getItemAtPath(block.indexPath)
             : getItemAtPath(block.indexPath, spreadSheet);
-
+        // print('getting item: '+item.toString());
         if (item is SheetText) {
-          raw = item.textEditorConfigurations.controller.document
-              .toPlainText()
-              .trim();
+          raw = item.textEditorConfigurations.controller.document.toPlainText().trim();
         } else if (item is SheetTextBox) {
-          raw = Document.fromDelta(
-                  Delta.fromJson(item.textEditorController as List))
-              .toPlainText()
-              .trim();
+          raw = Document.fromDelta( Delta.fromJson(item.textEditorController as List)).toPlainText().trim();
         }
         baseCount++;
       }
@@ -458,48 +461,13 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
   // ──────────────────────────────
   // STYLING PRESERVATION
   // ──────────────────────────────
-  Delta _applyStylingFromOldOps(List<Operation> oldOps, String newText) {
-    final newDelta = Delta();
-    int written = 0;
-
-    for (final op in oldOps) {
-      if (written >= newText.length) break;
-      final data = op.data;
-      final attrs = op.attributes;
-      if (data is String && data.isNotEmpty) {
-        final span = data.length;
-        final take = (newText.length - written).clamp(0, span);
-        final slice = newText.substring(written, written + take);
-        if (slice.isNotEmpty) {
-          newDelta.insert(slice, attrs);
-          written += take;
-        }
-      }
-    }
-
-    if (written < newText.length) {
-      newDelta.insert(newText.substring(written));
-    }
-
-    // preserve last \n attributes if any
-    Map<String, dynamic>? newlineAttrs;
-    for (final op in oldOps.reversed) {
-      if (op.data is String && (op.data as String).endsWith('\n')) {
-        newlineAttrs = op.attributes;
-        break;
-      }
-    }
-    newDelta.insert('\n', newlineAttrs);
-
-    return newDelta;
-  }
 
   QuillEditorConfigurations getConfigurations (
     Function getItemAtPath,
     Function buildCombinedQuillConfiguration,
     Function setState,
     Function customStyleBuilder,
-    {
+  {
     List<SheetListBox>? spreadSheet,
     Map<List<InputBlock>, int>? visited,
   }) {
@@ -542,7 +510,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
       };
 
   factory UniStatFunction.fromMap(Map<String, dynamic> map){ 
-    print('in UniStatFunctionFromMap: '+map['resultJson'].toString());
+ print('in UniStatFunctionFromMap: '+map['resultJson'].toString());
     return UniStatFunction(
         inputBlocks:  (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
@@ -691,7 +659,7 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
   String axisLabel;
 
   @HiveField(5)
-  List<Map<String, dynamic>> resultJson =[];
+  List<Map<String, dynamic>>? resultJson =[];
 
   @HiveField(6)
   bool lockMode = false;
@@ -712,7 +680,8 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
     Map<List<InputBlock>, int>? visited,
     bool returnFormatted = false,
   }) {
-    return UniStatFunction(inputBlocks:inputBlocks, func:func, resultJson: resultJson).result(getItemAtPath, buildCombinedQuillConfiguration, returnFormatted: returnFormatted);
+    return UniStatFunction(inputBlocks:inputBlocks, func:func, resultJson: resultJson)
+    .result(getItemAtPath, buildCombinedQuillConfiguration, returnFormatted: returnFormatted,spreadSheet: spreadSheet);
   }
 
   @override
@@ -727,7 +696,7 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
       };
 
   factory ColumnFunction.fromMap(Map<String, dynamic> map) {
-    print('in ColumnFunctionFromMap: '+map['resultJson'].toString());
+  print('in ColumnFunctionFromMap: '+map['resultJson'].toString());
     return ColumnFunction(
       inputBlocks: 
         (map['inputBlocks'] as List)
@@ -817,14 +786,32 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
   }
   
 
+
+  ColumnFunction copyWith({
+    List<InputBlock>? inputBlocks,
+    String? func,
+    String? axisLabel,
+    List<Map<String, dynamic>>? resultJson,
+    bool? lockMode,
+  }) {
+    return ColumnFunction(
+      inputBlocks: inputBlocks ?? this.inputBlocks,
+      func: func ?? this.func,
+      axisLabel: axisLabel ?? this.axisLabel,
+      resultJson: resultJson ?? this.resultJson,
+      lockMode: lockMode ?? this.lockMode,
+    );
+  }
 }
 
 @HiveType(typeId: 20)
-class InputBlockFunction extends SheetFunction {
+class InputBlockFunction extends SheetFunction with QuillFormattingMixin {
   @HiveField(2)
   List<InputBlock> inputBlocks;
   @HiveField(3)
   String label;
+  @HiveField(4)
+  List<Map<String, dynamic>>? resultJson = [];
 
   InputBlockFunction(
     {
@@ -835,19 +822,102 @@ class InputBlockFunction extends SheetFunction {
 
   @override
   result(Function getItemAtPath, Function buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet,Map<List<InputBlock>, int>? visited,bool returnFormatted = false,}) {
-    if (spreadSheet!=null) {
-      return buildCombinedTextFromBlocks(inputBlocks, spreadSheet);
-    }
-  }
-
-  QuillEditorConfigurations getConfigurations(buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet,Map<List<InputBlock>, int>? visited,}) {
-    if (spreadSheet !=null) {
-      var rawText = buildCombinedQuillConfiguration(inputBlocks, spreadSheet, visited:visited==null?null: Map<List<InputBlock>, int>.from(visited));
-      return QuillEditorConfigurations(controller: QuillController(document: Document()..insert(0, rawText), selection: TextSelection.collapsed(offset: 0)));
-    }
-    return buildCombinedQuillConfiguration(inputBlocks, visited: visited==null?null: Map<List<InputBlock>, int>.from(visited) );
+    if (spreadSheet !=null) { 
+    var rawText = buildCombinedQuillConfiguration(inputBlocks, spreadSheet, visited:visited==null
+      ? null
+      : Map<List<InputBlock>, int>.from(visited)); 
+      return QuillEditorConfigurations(controller: QuillController(document: Document()..insert(0, rawText), selection: TextSelection.collapsed(offset: 0))); 
+    } 
+    return buildCombinedQuillConfiguration(inputBlocks, visited: visited==null?null: Map<List<InputBlock>, int>.from(visited) ); 
   }
   
+  // QuillEditorConfigurations getConfigurations(buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet,Map<List<InputBlock>, int>? visited,}) { 
+  //   if (spreadSheet !=null) { 
+  //     var rawText = buildCombinedQuillConfiguration(inputBlocks, spreadSheet, visited:visited==null
+  //     ? null
+  //     : Map<List<InputBlock>, int>.from(visited)); 
+  //     return QuillEditorConfigurations(controller: QuillController(document: Document()..insert(0, rawText), selection: TextSelection.collapsed(offset: 0))); 
+  //   } 
+  //   return buildCombinedQuillConfiguration(inputBlocks, visited: visited==null?null: Map<List<InputBlock>, int>.from(visited) ); 
+  // }
+
+  QuillEditorConfigurations getConfigurations(
+    buildCombinedQuillConfiguration, 
+    customStyleBuilder,
+    {
+    List<SheetListBox>? spreadSheet,
+    Map<List<InputBlock>, int>? visited,
+  }) {
+    if (spreadSheet != null) {
+      var rawText = buildCombinedQuillConfiguration(
+        inputBlocks,
+        spreadSheet,
+        visited: visited == null ? null : Map<List<InputBlock>, int>.from(visited),
+      );
+
+      // ✅ Apply styling only if resultJson has any attributes
+      if (resultJson != null ) {
+        final oldDelta = Delta.fromJson(resultJson!);
+        final oldOps = oldDelta.toList();
+        final newDelta = _applyStylingFromOldOps(oldOps, rawText.controller.document.toPlainText());
+        // print('A JSON: ${newDelta.toList()}');
+        return QuillEditorConfigurations(
+          controller: QuillController(
+            document: Document.fromDelta(newDelta),
+            selection: TextSelection.collapsed(offset: 0),
+          ),
+        );
+      }
+
+      return QuillEditorConfigurations(
+        controller: QuillController(
+          document: Document()..insert(0, rawText),
+          selection: TextSelection.collapsed(offset: 0),
+        ),
+      );
+    }
+
+    var config = buildCombinedQuillConfiguration(
+      inputBlocks,
+      visited: visited == null ? null : Map<List<InputBlock>, int>.from(visited),
+    );
+    // print('SON: ${config.controller.document.toDelta().toList()}');
+
+    // ✅ Same check for non-spreadSheet path
+    if (resultJson != null ) {
+      final oldDelta = Delta.fromJson(resultJson!);
+      // print('SON: ${oldDelta.toList()}');
+      final oldOps = oldDelta.toList();
+      final newDelta = _applyStylingFromOldOps(oldOps, config.controller.document.toPlainText());
+      final newJson = newDelta.toJson();
+      // print('A JSON: ${newDelta.toList()}');
+        if (newJson != resultJson) {
+          resultJson = newJson;
+        }
+      return QuillEditorConfigurations(
+        controller: QuillController(
+          document: Document.fromDelta(newDelta),
+          selection: TextSelection.collapsed(offset: 0),
+        onReplaceText: (_, __, ___) {
+          // setState(() {});
+          return true;
+        },
+        ),
+        enableScribble: true,
+        enableSelectionToolbar: true,
+        autoFocus: true,
+        contextMenuBuilder: (context, rawEditorState) {
+          return Container();
+        },
+        customStyleBuilder: (attribute) {
+          return customStyleBuilder(attribute); // Default style
+        },
+      );
+    }
+
+    return config;
+  }
+
   @override
   Map<String, dynamic> toMap() => {
         'type': 'inputBlock',
@@ -859,7 +929,7 @@ class InputBlockFunction extends SheetFunction {
       };
 
   factory InputBlockFunction.fromMap(Map<String, dynamic> map) {
-    print('in InputBlockFunctionFromMap: '+map['label']);
+ print('in InputBlockFunctionFromMap: '+map['label']);
     return InputBlockFunction(
         inputBlocks: (map['inputBlocks'] as List)
             .map((e) => InputBlock.fromMap(e))
@@ -879,7 +949,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
   List<InputBlock> inputBlocksY;
 
   @HiveField(4)
-  List<Map<String, dynamic>> resultJson = [];
+  List<Map<String, dynamic>>? resultJson = [];
 
   @HiveField(5)
   String func;
@@ -1022,7 +1092,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
     }
 
     // Preserve styling
-    final oldDelta = Delta.fromJson(resultJson);
+    final oldDelta = Delta.fromJson(resultJson ?? [{'insert': '\n'}]);
     final oldOps = oldDelta.toList();
     final newDelta = _applyStylingFromOldOps(oldOps, newText);
 
@@ -1049,11 +1119,18 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
 
       if (block.function != null && !block.useConst) {
         if (block.function is InputBlockFunction) {
-          raw = (block.function as InputBlockFunction)
-              .getConfigurations(buildCombinedQuillConfiguration,
-                  spreadSheet: spreadSheet, visited: visited)
-              .controller
-              .document;
+          // raw = (block.function as InputBlockFunction)
+          //     .getConfigurations(buildCombinedQuillConfiguration,
+          //         spreadSheet: spreadSheet, visited: visited)
+          //     .controller
+          //     .document;
+          raw = block.function!.result(
+            getItemAtPath,
+            buildCombinedQuillConfiguration,
+            spreadSheet: spreadSheet,
+            visited: Map.from(visited??{}),
+            returnFormatted: false
+          ).controller.document;
         } else {
           raw = block.function!.result(
             getItemAtPath,
@@ -1108,52 +1185,6 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
     return List.generate(length, (i) => (xs[i], ys[i]));
   }
 
-  Delta _applyStylingFromOldOps(List<Operation> oldOps, String newText) {
-    final newDelta = Delta();
-    int written = 0;
-
-    // Find last non-newline attrs
-    Map<String, dynamic>? lastCharAttrs;
-    for (final op in oldOps.reversed) {
-      final data = op.data;
-      if (data is String && data != '\n') {
-        lastCharAttrs = op.attributes;
-        break;
-      }
-    }
-
-    for (final op in oldOps) {
-      if (written >= newText.length) break;
-      final data = op.data;
-      final attrs = op.attributes;
-      if (data is String && data.isNotEmpty) {
-        final span = data.length;
-        final take = (newText.length - written).clamp(0, span);
-        final slice = newText.substring(written, written + take);
-        if (slice.isNotEmpty) {
-          newDelta.insert(slice, attrs);
-          written += take;
-        }
-      }
-    }
-
-    if (written < newText.length) {
-      newDelta.insert(newText.substring(written), lastCharAttrs);
-    }
-
-    // Preserve last newline attributes if any
-    Map<String, dynamic>? newlineAttrs;
-    for (final op in oldOps.reversed) {
-      if (op.data is String && (op.data as String).endsWith('\n')) {
-        newlineAttrs = op.attributes;
-        break;
-      }
-    }
-    newDelta.insert('\n', newlineAttrs);
-
-    return newDelta;
-  }
-  
   QuillEditorConfigurations getConfigurations (
     Function getItemAtPath,
     Function buildCombinedQuillConfiguration,
@@ -2253,7 +2284,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
   String template;
 
   @HiveField(3)
-  List<Map<String, dynamic>> resultJson = [];
+  List<Map<String, dynamic>>? resultJson = [];
   
   @HiveField(4)
   String idKey;
@@ -2305,43 +2336,6 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
   String toJson() => json.encode(toMap());
 
   factory UidGeneratorFunction.fromJson(String source) => UidGeneratorFunction.fromMap(json.decode(source) as Map<String, dynamic>);
-
-
-  Delta _applyStylingFromOldOps(List<Operation> oldOps, String newText) {
-    final newDelta = Delta();
-    int written = 0;
-
-    for (final op in oldOps) {
-      if (written >= newText.length) break;
-      final data = op.data;
-      final attrs = op.attributes;
-      if (data is String && data.isNotEmpty) {
-        final span = data.length;
-        final take = (newText.length - written).clamp(0, span);
-        final slice = newText.substring(written, written + take);
-        if (slice.isNotEmpty) {
-          newDelta.insert(slice, attrs);
-          written += take;
-        }
-      }
-    }
-
-    if (written < newText.length) {
-      newDelta.insert(newText.substring(written));
-    }
-
-    // preserve last \n attributes if any
-    Map<String, dynamic>? newlineAttrs;
-    for (final op in oldOps.reversed) {
-      if (op.data is String && (op.data as String).endsWith('\n')) {
-        newlineAttrs = op.attributes;
-        break;
-      }
-    }
-    newDelta.insert('\n', newlineAttrs);
-
-    return newDelta;
-  }
 
   QuillEditorConfigurations getConfigurations (
     Function getItemAtPath,
@@ -3329,7 +3323,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
   }) {
     
     var newText = UidGenerator.generate(template,idKey: idKey, dateTime:dateTime);
-    final oldDelta = Delta.fromJson(resultJson);
+    final oldDelta = Delta.fromJson(resultJson ?? [{'insert': '\n'}]);
     final oldOps = oldDelta.toList();
     final newDelta = _applyStylingFromOldOps(oldOps, newText);
 
@@ -4168,6 +4162,22 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
   }
   
 
+
+  UidGeneratorFunction copyWith({
+    String? template,
+    List<Map<String, dynamic>>? resultJson,
+    String? idKey,
+    String? func,
+    DateTime? dateTime,
+  }) {
+    return UidGeneratorFunction(
+      template: template ?? this.template,
+      resultJson: resultJson ?? this.resultJson,
+      idKey: idKey ?? this.idKey,
+      func: func ?? this.func,
+      dateTime: dateTime ?? this.dateTime,
+    );
+  }
 }
 
 ///
@@ -4289,7 +4299,7 @@ List<Widget> sliderPropertyTile(TextEditingController s, Function setStateCallba
               letterSpacing: -1),
           onFieldSubmitted: (value) {
             setStateCallback(() {
-              print(value);
+           print(value);
             var parsedValue = (double.tryParse(value)??0.0);
             onChange(parsedValue);
               
@@ -4309,8 +4319,55 @@ List<Widget> sliderPropertyTile(TextEditingController s, Function setStateCallba
 mixin QuillFormattingMixin on SheetFunction {
   /// All implementing classes must have:
   /// `late List<Map<String, dynamic>> resultJson;`
-  List<Map<String, dynamic>> get resultJson;
-  set resultJson(List<Map<String, dynamic>> v);
+  List<Map<String, dynamic>>? get resultJson;
+  set resultJson(List<Map<String, dynamic>>? v);
+
+  Delta _applyStylingFromOldOps(List<Operation> oldOps, String newText) {
+    final newDelta = Delta();
+    int written = 0;
+
+    Map<String, dynamic>? lastAttrs; // last *non-null* attributes we saw
+    Map<String, dynamic>? newlineAttrs;
+    Map<String, dynamic>? finalAttrs = oldOps.isNotEmpty ? oldOps.last.attributes : null;
+  
+    for (final op in oldOps) {
+      if (written >= newText.length) break;
+
+      final data = op.data;
+      final attrs = op.attributes;
+
+      if (data is String && data.isNotEmpty) {
+        final span = data.length;
+        final take = (newText.length - written).clamp(0, span);
+        final slice = newText.substring(written, written + take);
+
+        if (slice.isNotEmpty) {
+          // if attrs is null, fall back to last known attrs
+          final effectiveAttrs = attrs ?? lastAttrs;
+          newDelta.insert(slice, effectiveAttrs);
+
+          if (attrs != null) lastAttrs = attrs; // only update if attrs is not null
+          written += take;
+        }
+      }
+
+      if (data is String && data.endsWith('\n')) {
+        newlineAttrs = attrs ?? newlineAttrs;
+      }
+    }
+
+    if (written < newText.length) {
+      // inherit styling from last seen attrs for extra characters
+      newDelta.insert(newText.substring(written), lastAttrs);
+    }
+
+    // preserve newline attributes
+    // newDelta.insert('\n', newlineAttrs);
+    if (newDelta.isEmpty) newDelta.insert('\n',finalAttrs);
+    if (!(newDelta.last.data as String).endsWith('\n')) newDelta.insert('\n',finalAttrs);
+    return newDelta;
+  }
+
 
   void _toggleAttribute(Attribute attr, QuillController controller) {
     final selection = controller.selection;
@@ -4330,7 +4387,23 @@ mixin QuillFormattingMixin on SheetFunction {
       );
     }
 
-    resultJson = controller.document.toDelta().toJson();
+    // ✅ Clean up attributes on newline inserts
+    // final delta = controller.document.toDelta();
+    // final cleanedDelta = Delta();
+    // print('ORIG DELTA JSON: ${delta.toList()}');
+    // for (final op in delta.toList()) {
+    //   if (op.key == 'insert' &&
+    //       op.value is String &&
+    //       (op.value as String).contains('\n')) {
+    //     // remove all attributes for newlines
+    //     cleanedDelta.insert(op.value);
+    //   } else {
+    //     cleanedDelta.push(op);
+    //   }
+    // }
+    // print('DELTA JSON: ${controller.document.toDelta().toList()}');
+    // resultJson = cleanedDelta.toJson();
+    resultJson =controller.document.toDelta().toJson();
   }
 
   void _setAlignment(Attribute alignment, QuillController controller) {
@@ -4445,6 +4518,7 @@ mixin QuillFormattingMixin on SheetFunction {
     } else {
       c.formatSelection(attr);
     }
+    _removeAttributesFromNewlines(c);
     resultJson = c.document.toDelta().toJson();
   }
 
@@ -4460,6 +4534,7 @@ mixin QuillFormattingMixin on SheetFunction {
     } else {
       c.formatSelection(attr);
     }
+    _removeAttributesFromNewlines(c);
     resultJson = c.document.toDelta().toJson();
   }
 
@@ -4476,6 +4551,42 @@ mixin QuillFormattingMixin on SheetFunction {
     } else {
       c.formatSelection(attr);
     }
+    _removeAttributesFromNewlines(c);
     resultJson = c.document.toDelta().toJson();
   }
+  
+  void _removeAttributesFromNewlines(QuillController c) {
+    final delta = c.document.toDelta();
+    final cleaned = Delta();
+
+    for (final op in delta.toList()) {
+      if (op.key == 'insert' && op.value is String) {
+        final val = op.value as String;
+        if (val.contains('\n')) {
+          // Strip attributes from newlines but keep attributes for other text
+          if (val == '\n') {
+            cleaned.insert('\n'); // no attributes
+          } else {
+            // Split string by newlines, preserve formatting only for non-newline parts
+            final parts = val.split('\n');
+            for (int i = 0; i < parts.length; i++) {
+              if (parts[i].isNotEmpty) {
+                cleaned.insert(parts[i], op.attributes);
+              }
+              if (i < parts.length - 1) {
+                cleaned.insert('\n'); // always clean newline
+              }
+            }
+          }
+        } else {
+          cleaned.push(op);
+        }
+      } else {
+        cleaned.push(op);
+      }
+    }
+
+    c.document = Document.fromDelta(cleaned);
+  }
+
 }

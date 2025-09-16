@@ -1301,6 +1301,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
+  number_to_words:
+    dependency: "direct main"
+    description:
+      name: number_to_words
+      sha256: "279af97baabe7460e3e724be5e797ab1902bcf0ce52d065dd2409a4be423f05c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   package_config:
     dependency: transitive
     description:
@@ -1754,14 +1762,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
-  two_dimensional_scrollables:
-    dependency: "direct main"
-    description:
-      name: two_dimensional_scrollables
-      sha256: f02e99bae8b457f710c2a717dfbd0a32a5bbe332c0814bc559d9549a5b117db3
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.6"
   typed_data:
     dependency: transitive
     description:
@@ -1923,7 +1923,7 @@ packages:
     source: hosted
     version: "3.0.1"
   win32:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: win32
       sha256: a79dbe579cb51ecd6d30b17e0cae4e0ea15e2c0e66f69ad4198f22a6789e94f4

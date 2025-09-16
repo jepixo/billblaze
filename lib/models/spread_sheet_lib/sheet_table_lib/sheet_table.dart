@@ -8,6 +8,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_ro
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
 
 part 'sheet_table.g.dart';
 
@@ -86,12 +87,12 @@ class SheetTableBox extends SheetItem {
         'name': name,
         'expand': expand,
       };
-      print('SheetTableBox: '+map.toString());
+   print('SheetTableBox: '+map.toString());
     return map;
     } 
 
   factory SheetTableBox.fromMap(Map<String, dynamic> map) {
-    print('in SheetTableFromMap: '+map['id']);
+ print('in SheetTableFromMap: '+map['id']);
     return SheetTableBox(
         id: map['id'],
         parentId: map['parentId'],
@@ -187,6 +188,11 @@ class SheetTable extends SheetItem {
     return lookupMap[label];
   }
 
+  @override
+  String newId() {
+    // TODO: implement newId
+    return 'TB-${Uuid().v4()}';
+  }
 
 }
 

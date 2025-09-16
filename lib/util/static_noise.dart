@@ -22,7 +22,7 @@ Future<void> startWhiteNoise() async {
   _whiteNoisePlayer = AudioPlayer();
   await _whiteNoisePlayer!.play(
     BytesSource(buffer.toBytes()),
-    volume: 1.0,
+    volume: 0.2,
     ctx: AudioContext(), // optional: make sure it works across platforms
   );
 

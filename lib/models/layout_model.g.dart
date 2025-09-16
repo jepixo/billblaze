@@ -26,13 +26,15 @@ class LayoutModelAdapter extends TypeAdapter<LayoutModel> {
       type: fields[7] as int,
       pdf: (fields[6] as List?)?.cast<Uint8List>(),
       labelList: (fields[8] as List).cast<RequiredText>(),
+      deleted: fields[9] as bool?,
+      sheetDecorationMap: (fields[10] as Map?)?.cast<String, SheetDecoration>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, LayoutModel obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.docPropsList)
       ..writeByte(1)
@@ -50,7 +52,11 @@ class LayoutModelAdapter extends TypeAdapter<LayoutModel> {
       ..writeByte(7)
       ..write(obj.type)
       ..writeByte(8)
-      ..write(obj.labelList);
+      ..write(obj.labelList)
+      ..writeByte(9)
+      ..write(obj.deleted)
+      ..writeByte(10)
+      ..write(obj.sheetDecorationMap);
   }
 
   @override

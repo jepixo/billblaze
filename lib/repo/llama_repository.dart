@@ -6,33 +6,38 @@ void runLlamaModel(Map args) async {
   final sendPort = args['sendPort'] as SendPort;
   final prompt = args['prompt'] as String;
   final modelPath = args['modelPath'] as String;
-
-  final contextParams = ContextParams()
-    ..nPredict = 128
-    ..nCtx = 8192
-    ..nBatch = 2048;
-  print(contextParams);
-  final samplerParams = SamplerParams()
-    ..temp = 0.7
-    ..topK = 64
-    ..topP = 0.95
-    ..penaltyRepeat = 1.1;
-
-  //TODO: for release turn this into llama.dll only since it will be in the root 
-  // Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
-  Llama.libraryPath = 'llama.dll';
-  final llama = Llama(modelPath, ModelParams(), contextParams, samplerParams, false);
-  print(llama.status);
-
-  llama.setPrompt(prompt);
-  while (true) {
-    final (token, done) = llama.getNext();
-    sendPort.send(token);
-    if (done) break;
+  try { 
+    final contextParams = ContextParams()
+      ..nPredict = 128
+      ..nCtx = 8192
+      ..nBatch = 2048;
+    print(contextParams);
+    final samplerParams = SamplerParams()
+      ..temp = 0.7
+      ..topK = 64
+      ..topP = 0.95
+      ..penaltyRepeat = 1.1;
+    
+    //TODO: for release turn this into llama.dll only since it will be in the root 
+    // Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
+    Llama.libraryPath = 'llama.dll';
+    final llama = Llama(modelPath, ModelParams(), contextParams, samplerParams, false);
+    print(llama.status);
+    
+    llama.setPrompt(prompt);
+    while (true) {
+      final (token, done) = llama.getNext();
+      sendPort.send(token);
+      if (done) break;
+    }
+    
+    llama.dispose();
+    sendPort.send(null); 
+  } on Exception catch (e, st) {
+    sendPort.send("ERROR:\n$e\n$st");
+    sendPort.send(null); 
   }
-
-  llama.dispose();
-  sendPort.send(null); // signal end
+// signal end
 }
 
 void rnLlamaModel(Map args) async {
@@ -96,7 +101,7 @@ void rnLlamaModel(Map args) async {
 //   /// [modelPath] your .gguf file.
 //   static Future<void> init({required String modelPath,int nGpuLayers = 99,int nCtx = 2048,}) async {
 //     // 1) point at the native DLL:
-//   print("llama init...");
+//print("llama init...");
 //     // 2) prepare the load command:
 //     final load = LlamaLoad(
 //       path: modelPath,
@@ -143,11 +148,11 @@ void rnLlamaModel(Map args) async {
 //     if (_llama.status != LlamaStatus.ready) {
 //       throw Exception('Model not ready; call init() first.');
 //     }
-//     print("runpromptt...");
+//  print("runpromptt...");
 //     // listen to tokens:
 //     final sub = _llama.stream.listen(onToken, onError: (e) {
 //       // optionally handle stream error
-//       print('Llama token stream error: $e');
+//    print('Llama token stream error: $e');
 //     });
 
 //     // send it:
@@ -159,7 +164,7 @@ void rnLlamaModel(Map args) async {
 //       if (evt.success) {
 //         onDone();
 //       } else {
-//         print('Llama completion failed: promptId=${evt.promptId}');
+//      print('Llama completion failed: promptId=${evt.promptId}');
 //         onDone();
 //       }
 //       sub.cancel();

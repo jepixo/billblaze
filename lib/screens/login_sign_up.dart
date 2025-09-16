@@ -51,7 +51,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
   bool isEmailValid(String email) {
     if (email.isEmpty) return true;
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    print(emailRegex.hasMatch(email));
+ print(emailRegex.hasMatch(email));
     return emailRegex.hasMatch(email);
   }
   @override
@@ -108,7 +108,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                 child: SvgPicture.asset(
                   'assets/logos/Asset14.svg',
                   width: 35,
-                  height:25,
+                  height:15,
                 ),
               ),
             ),
@@ -230,7 +230,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 style: GoogleFonts.lexend(
                                   color: defaultPalette.extras[0],
                                   letterSpacing: -1,
-                                  fontSize: mapValueDimensionBasedLockOnDesync(15, 45, sWidth, sHeight),
+                                  fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
                                 ),
                                 cursorColor: defaultPalette.tertiary,
                                 validator: (value) {
@@ -244,12 +244,12 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 },
                                 decoration: InputDecoration(
                                   contentPadding: EdgeInsets.only(left: 10),
-                                  hintText: '',
+                                  hintText: 'Email',
                                   focusColor: defaultPalette.extras[0],
                                   hintStyle: GoogleFonts.lexend(
-                                    color: defaultPalette.extras[0],
+                                    color: defaultPalette.extras[0].withOpacity(0.3),
                                     letterSpacing: -1,
-                                    fontSize: 15,
+                                    fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
                                   ),
                                   prefixIcon: Icon(
                                     TablerIcons.mail,
@@ -289,7 +289,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 style: GoogleFonts.redactedScript(
                                 color: defaultPalette.extras[0],
                                 letterSpacing:-1,
-                                fontSize: mapValueDimensionBasedLockOnDesync(15, 45, sWidth, sHeight) ,
+                                fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight) ,
                                 ),
                                 onChanged: (value) {},
                                 
@@ -297,12 +297,12 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 controller: passwordFieldController,
                                 decoration: InputDecoration(
                                   contentPadding: EdgeInsets.all(0).copyWith(left: 10,),
-                                  hintText: '',
+                                  hintText: 'Popcorn',
                                   focusColor: defaultPalette.extras[0],
                                   hintStyle: GoogleFonts.lexend(
-                                    color: defaultPalette.extras[0],
+                                    color: defaultPalette.extras[0].withOpacity(0.3),
                                     letterSpacing:-1,
-                                    fontSize: 15),
+                                    fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight)),
                                   prefixIcon: Icon(TablerIcons.password, size:mapValueDimensionBasedLockOnDesync(25, 35, sWidth, sHeight),
                                       color: defaultPalette.extras[0]),
                                   focusedBorder:  OutlineInputBorder(
@@ -478,11 +478,11 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                   onWebViewCreated: (controller) async {
                                     _controller = controller;
                                     
-                                    print("WebView created");
+                                 print("WebView created");
                                   },
                                   onLoadStop: (controller, url) async {
                                     
-                                    print("Loaded: $url");
+                                 print("Loaded: $url");
                                     await controller.evaluateJavascript(source: "document.documentElement.style.zoom = '100%';");
                                     
                                   },
@@ -499,7 +499,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 70,)
+                            SizedBox(height: 77,)
                           ],
                         ),
                       ),

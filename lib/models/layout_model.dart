@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:hive/hive.dart';
@@ -37,6 +38,10 @@ class LayoutModel extends HiveObject {
   int type;
   @HiveField(8)
   List<RequiredText> labelList;
+  @HiveField(9)
+  bool? deleted;
+  @HiveField(10)
+  Map<String, SheetDecoration>? sheetDecorationMap;
   
   
 
@@ -50,6 +55,8 @@ class LayoutModel extends HiveObject {
     this.type = 0,
     this.pdf = null,
     this.labelList = const [],
+    this.deleted = false,
+    this.sheetDecorationMap = const {},
   });
   // @override
   // String toString() {
@@ -67,6 +74,8 @@ class LayoutModel extends HiveObject {
     List<Uint8List>? pdf,
     int? type,
     List<RequiredText>? labelList,
+    bool? deleted,
+    Map<String, SheetDecoration>? sheetDecorationMap,
   }) {
     return LayoutModel(
       docPropsList: docPropsList ?? this.docPropsList,
@@ -78,6 +87,8 @@ class LayoutModel extends HiveObject {
       pdf: pdf ?? this.pdf,
       type: type ?? this.type,
       labelList: labelList ?? this.labelList,
+      deleted: deleted ?? this.deleted,
+      sheetDecorationMap: sheetDecorationMap ?? this.sheetDecorationMap,
     );
   }
 
@@ -92,6 +103,10 @@ class LayoutModel extends HiveObject {
       'pdf': pdf,
       'type': type,
       'labelList': labelList.map((x) => x.toMap()).toList(),
+      'deleted': deleted,
+      'sheetDecorationMap': sheetDecorationMap?.map(
+        (key, value) => MapEntry(key, value.toMap()),
+      ),
     };
   }
 
@@ -121,12 +136,33 @@ class LayoutModel extends HiveObject {
 
       type: map['type'] as int,
       labelList: List<RequiredText>.from((map['labelList']).map<RequiredText>((x) => RequiredText.fromMap(x as Map<String,dynamic>),),),
-    );
+      deleted: map['deleted']?? false,
+      sheetDecorationMap: (map['sheetDecorationMap'] as Map<String, dynamic>?)
+      ?.map((key, value) => MapEntry(
+          key,
+          SheetDecoration.fromMap(value as Map<String, dynamic>),
+        )),
+   );
   }
 
   String toJson() => json.encode(toMap());
 
   factory LayoutModel.fromJson(String source) => LayoutModel.fromMap(json.decode(source) as Map<String, dynamic>);
+
+  static String toIdFromJson(String source) => (json.decode(source) as Map<String,dynamic>)['id'];
+
+  static Map<String, dynamic> toMetaDataFromJson(String source) { 
+    var map =(json.decode(source) as Map<String, dynamic>);
+    return {
+      'id': map['id'],
+      'name': map['name'] as String,
+      'createdAt': DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
+      'modifiedAt': DateTime.fromMillisecondsSinceEpoch(map['modifiedAt'] as int),
+      'type': map['type'] as int,
+      'deleted': map['deleted'] as bool?
+    };
+    }
+
 }
 
 SheetItem getItemAtPath(IndexPath indexPath, List<SheetListBox> spreadSheetList) {

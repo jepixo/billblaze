@@ -62,7 +62,7 @@ class SheetTableRowBox extends SheetItem {
         'rowDecoration': rowDecoration,
         'rowInputBlocks': rowInputBlocks.map((e) => e.toMap()).toList(),
       };
-      print(map);
+   print(map);
     return map;
     }
 

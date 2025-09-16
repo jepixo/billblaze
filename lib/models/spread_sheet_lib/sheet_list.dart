@@ -11,6 +11,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/box_provider.dart';
+import 'package:uuid/uuid.dart';
 
 part 'sheet_list.g.dart';
 
@@ -90,7 +91,7 @@ class SheetListBox extends SheetItem {
         'mainAxisSize': mainAxisSize,
         'size': size,
       };
-      print('SheetListBox: '+ map.toString());
+   print('SheetListBox: '+ map.toString());
     return map;
     } 
 
@@ -100,7 +101,7 @@ class SheetListBox extends SheetItem {
 
   /// ♻️ Convert back from a map
   factory SheetListBox.fromMap(Map<String, dynamic> map) {
-    print('in SheetListFromMap: '+map['id'].toString());
+ print('in SheetListFromMap: '+map['id'].toString());
     // print('in SheetListFromMap: '+map['indexPath'].toString());
     // print('in SheetListFromMap: '+map['sheetList'].toString());
     return SheetListBox(
@@ -148,7 +149,7 @@ class SheetList extends SheetItem {
       });
 
   SheetListBox toSheetListBox() {
-    print(size.toString());
+ print(size.toString());
     return SheetListBox(
         sheetList: boxSheetList(sheetList),
         direction: direction == Axis.vertical ? true : false,
@@ -281,6 +282,11 @@ class SheetList extends SheetItem {
   String toString() {
     // TODO: implement toString
     return super.toString()+', len: '+sheetList.length.toString()+'.  ';
+  }
+  @override
+  String newId() {
+    // TODO: implement newId
+    return 'LI-${Uuid().v4()}';
   }
 }
 
