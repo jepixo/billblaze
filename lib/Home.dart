@@ -9715,7 +9715,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     
                       width:isBillTab ? sWidth / 1.73 - 100:450,
                       height: sHeight / 1.8-10,
-                      padding: EdgeInsets.all(5).copyWith(right: 10),
+                      padding: EdgeInsets.all( mapValueDimensionBased(5, 10, sWidth, sHeight)).copyWith(right:  mapValueDimensionBased(10, 20, sWidth, sHeight)),
                       decoration: BoxDecoration(
                           color: defaultPalette.primary,
                           border: Border.all(),
@@ -10673,8 +10673,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         ..scale(isBillTab ? 1.0 : 1.3, isBillTab ? 1.0 : 0.6),
                         width:isBillTab ? ((sWidth / 1.73 - 100) / 2 -10).clamp(0, double.infinity):80,
                         height:( sHeight - (sHeight / 1.8) - 90).clamp(0, double.infinity), // 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
-                        padding: EdgeInsets.all(5).copyWith(
-                            right: 8,
+                        padding: EdgeInsets.all( mapValueDimensionBased(5, 10, sWidth, sHeight)).copyWith(
+                            right:  mapValueDimensionBased(8, 10, sWidth, sHeight),
                             bottom: 8,
                             left: mapValueDimensionBased(8, 10, sWidth, sHeight)),
                         decoration: BoxDecoration(
@@ -10691,7 +10691,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 SizedBox(
-                                  width: 5,
+                                  width: 2,
                                 ),
                                 Icon(
                                   TablerIcons.chart_arcs,
@@ -10711,6 +10711,36 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         fontWeight: FontWeight.w600,
                                         letterSpacing: -1),
                                   ),
+                                ),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(6000),
+                                  child: Material(
+                                    color: defaultPalette.transparent,
+                                    child: InkWell(
+                                      hoverColor: defaultPalette.extras[0].withOpacity(0.2),
+                                      splashColor: defaultPalette.extras[0].withOpacity(0.2),
+                                      highlightColor: defaultPalette.extras[0].withOpacity(0.2),
+                                      onTap:()async{
+                                        showCurrencySelectionDialog(context, ref);
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 3.0),
+                                        child: Text(
+                                        ref.read(currencyCodeProvider).symbol,
+                                        style: GoogleFonts.lexend(
+                                            fontSize: mapValueDimensionBased(
+                                                12, 25, sWidth, sHeight),
+                                            color: defaultPalette.extras[0],
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: -1),
+                                                                          ),
+                                      ),
+                                  
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 2,
                                 ),
                               ],
                             ),
@@ -11101,6 +11131,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     }),
                               ),
                             ),
+                            
                           ],
                         ),
                       );
@@ -11218,7 +11249,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     ..scale(isBillTab ? 1.0 : 1.3, isBillTab ? 1.0 : 0.6),
                         width: ((sWidth / 1.73 - 100) / 2 - 10).clamp(0, double.infinity), // -10 because of the gap between the two charts
                         height: (sHeight - (sHeight / 1.8) - 90).clamp(0, double.infinity), // 90 is 70+10+10, 70 for the top bar, 10 for the bottom padding, and 10 for the padding in between the chart above
-                        padding: EdgeInsets.all(5).copyWith(right: 5),
+                        padding: EdgeInsets.all( mapValueDimensionBased(5, 10, sWidth, sHeight)).copyWith(right:  mapValueDimensionBased(5, 10, sWidth, sHeight)),
                         decoration: BoxDecoration(
                             color: defaultPalette.primary,
                             border: Border.all(),
@@ -13274,7 +13305,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       showFlag: true,
       showCurrencyName: true,
       showCurrencyCode: true,
-      favorite: ['USD', 'EUR', 'INR'],
+      favorite: [ref.read(currencyCodeProvider).code,'USD', 'INR', 'EUR',],
       theme: CurrencyPickerThemeData(
       flagSize: 24,
       titleTextStyle: GoogleFonts.lexend(
