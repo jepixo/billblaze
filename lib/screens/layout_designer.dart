@@ -31,11 +31,12 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_ro
 import 'package:billblaze/models/spread_sheet_lib/sized_item.dart';
 import 'package:billblaze/providers/auth_provider.dart';
 import 'package:billblaze/providers/env_provider.dart';
-import 'package:billblaze/util/create_mutex.dart';
+import 'package:billblaze/util/currency_conversion.dart';
 import 'package:cool_background_animation/cool_background_animation.dart';
 import 'package:cool_background_animation/custom_model/bubble_model.dart';
 import 'package:cool_background_animation/custom_model/rainbow_config.dart';
 import 'package:country_code_picker_plus/country_code_picker_plus.dart';
+import 'package:currency_picker/currency_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_quill/extensions.dart';
@@ -860,23 +861,25 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             locked: locked,
             ));
 
-        var lmBox = Boxes.getLayouts(ref);
-        var lm = lmBox.get(key);
-        lm?.spreadSheetList[currentPageIndex].sheetList.add(
-            SheetTextBox(
-                name:name,
-                hide:hide,
-                textEditorController:
-                    textController.document.toDelta().toJson(),
-                id: newId,
-                indexPath: indexPath,
-                parentId: spreadSheetList[currentPageIndex].id,
-                inputBlocks: inputBlocks,
-                textDecoration: textDecoration.toSuperDecorationBox(),
-                type: type.index,
-                locked: locked,
-                ));
-        lm?.save();
+        if (widget.id!=null) {
+          var lmBox = Boxes.getLayouts(ref);
+          var lm = lmBox.get(key);
+          lm?.spreadSheetList[currentPageIndex].sheetList.add(
+              SheetTextBox(
+                  name:name,
+                  hide:hide,
+                  textEditorController:
+                      textController.document.toDelta().toJson(),
+                  id: newId,
+                  indexPath: indexPath,
+                  parentId: spreadSheetList[currentPageIndex].id,
+                  inputBlocks: inputBlocks,
+                  textDecoration: textDecoration.toSuperDecorationBox(),
+                  type: type.index,
+                  locked: locked,
+                  ));
+          lm?.save();
+        }
         // saveDecorations(sheetDecorationMap);
       });
     }
@@ -4128,8 +4131,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     SizedBox(width: 2,),
                                                     Expanded(
                                                       child: ScrollConfiguration(
-                                                      behavior: ScrollBehavior()
-                                                          .copyWith(scrollbars: false),
+                                                      behavior: ScrollBehavior().copyWith(scrollbars: false),
                                                       child: DynMouseScroll(
                                                           durationMS: 500,
                                                           scrollSpeed: 1,
@@ -4137,8 +4139,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                             return ScrollbarUltima(
                                                               alwaysShowThumb: true,
                                                               controller: controller,
-                                                              scrollbarPosition:
-                                                                  ScrollbarPosition.bottom,
+                                                              scrollbarPosition: ScrollbarPosition.bottom,
                                                               backgroundColor: defaultPalette.primary,
                                                               isDraggable: true,
                                                               maxDynamicThumbLength: 90,
@@ -4149,8 +4150,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                   margin: EdgeInsets.only(right: 4, top:0, bottom:mapValueDimensionBased(0, 3, sWidth, sHeight),left: 2),
                                                                   decoration: BoxDecoration(
                                                                       color: defaultPalette.extras[0],
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(2)),
+                                                                      borderRadius: BorderRadius.circular(2)),
                                                                   height: 5,
                                                                 );
                                                               },
@@ -4249,10 +4249,11 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                           onTap: () {
                                                                             if (true ) {
                                                                               
-                                                                              if (item.id != 'yo' &&
+                                                                              if (
+                                                                               item.id != 'yo' &&
                                                                                item.id != '' &&
                                                                                label.name !='itemSheet' && 
-                                                                               label.indexPath.index ==-951&& 
+                                                                               label.indexPath.index ==-951 && 
                                                                                !item.parentId.startsWith('TB-')) {
                                                                                 setState(() {
                                                                                   item.name = label.name;
@@ -4264,6 +4265,9 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                                     check: true,
                                                                                     textItem: item,
                                                                                     );
+                                                                                  if(label.name == 'currency'){
+                                                                                    item.textEditorConfigurations.controller.onReplaceText = (_,__,___)=>false;
+                                                                                  }
                                                                                   doubleCheckLabelList(labelList);
                                                                                 });
                                                                               } else {
@@ -4483,7 +4487,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                                   onTap: () {
                                                                                     setState(() {
                                                                                       lm!.type = entry.value.index;
-                                                                                      lm!.save();
+                                                                                      if(widget.id!=null){lm!.save();}
                                                                                       labelList = getLabelList(SheetType.values[lm!.type], labelList);
                                                                                       assignIndexPathsAndDisambiguate(labelList, spreadSheetList);
                                                                                     });
@@ -7376,7 +7380,9 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               Icon( sheetText.locked?
                  TablerIcons.lock:
                 sheetText.type == SheetTextType.string
-                ? TablerIcons.cursor_text
+                ? sheetText.name == 'currency'
+                  ? TablerIcons.currency_dollar
+                  : TablerIcons.cursor_text
                 : sheetText.type == SheetTextType.integer
                 ? TablerIcons.numbers
                 : sheetText.type == SheetTextType.date
@@ -7594,6 +7600,11 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               ...[
                 const SizedBox(width: 2),
                 buildTimePickerButton(context: context, sheetText: sheetText)
+              ],
+              if(sheetText.name == 'currency')
+              ...[
+                const SizedBox(width: 2),
+                buildCurrencyPickerButton(context: context, sheetText: sheetText)
               ],
             ],
           ),
@@ -16919,6 +16930,9 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                           textItem: item,
                                                         );
                                                         item.name = value;
+                                                        if(value == 'currency'){
+                                                          item.textEditorConfigurations.controller.onReplaceText = (_,__,___)=>false;
+                                                        }
                                                       } else {
                                                         final sheetText = getItemAtPath(path);
                                                         if (sheetText.id == 'yo' || sheetText.id.isEmpty) {
@@ -36399,10 +36413,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     );
   }
 
-  Future<void> _handleTimePickerTap({
-  required BuildContext context,
-  required SheetText sheetText,
-  }) async {
+  Future<void> _handleTimePickerTap({ required BuildContext context, required SheetText sheetText,}) async {
   final picked = await showTimePicker(
     context: context,
     initialTime: extractTimeFromDelta(sheetText.textEditorController.document) ?? TimeOfDay.now(),
@@ -36943,6 +36954,128 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
       ),
     );
   }
+
+  Widget buildCurrencyPickerButton({
+    required BuildContext context,
+    required SheetText sheetText,
+    bool useIcon = false,
+  }) {
+    return Material(
+      color: defaultPalette.primary,
+      child: InkWell(
+        child: Icon(
+          useIcon ? TablerIcons.currency_dollar : TablerIcons.pencil,
+          size: useIcon ? 14 : 18,
+        ),
+        onTap: () async {
+          FocusScope.of(context).unfocus();
+                      
+          setState(() {
+            panelIndex.id = sheetText.id;
+            panelIndex.itemIndexPath = sheetText.indexPath;
+            
+            whichPropertyTabIsClicked = 2;
+            item = sheetText;
+            _findItem();
+            
+          });
+          await _handleCurrencyPickerTap(
+            context: context,
+            sheetText: sheetText,
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _handleCurrencyPickerTap({
+    required BuildContext context,
+    required SheetText sheetText,
+  }) async {
+    String? selectedCurrency;
+
+    // Show currency picker
+    showCurrencyPicker(
+      context: context,
+      showFlag: true,
+      showCurrencyName: true,
+      showCurrencyCode: true,
+      favorite: ['USD', 'EUR', 'INR'],
+      theme: CurrencyPickerThemeData(
+      flagSize: 24,
+      titleTextStyle: GoogleFonts.lexend(
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+        color: defaultPalette.black,
+      ),
+      subtitleTextStyle: GoogleFonts.lexend(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: defaultPalette.extras[0],
+      ),
+      bottomSheetHeight: 500,
+      backgroundColor: defaultPalette.primary,
+      inputDecoration: InputDecoration(
+        hintText: 'Search currency',
+        hintStyle: GoogleFonts.lexend(
+          fontSize: 16,
+          color: defaultPalette.extras[0].withOpacity(0.6),
+        ),
+        prefixIcon: const Icon(TablerIcons.search),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        filled: true,
+        fillColor: defaultPalette.primary.withOpacity(0.8),
+      ),
+      currencySignTextStyle:   GoogleFonts.lexend(
+          fontSize: 16,
+          color: defaultPalette.extras[0].withOpacity(0.6),
+        ),
+      
+      ),
+      onSelect: (Currency currency) {
+        setState(() {
+          selectedCurrency = currency.code;
+          print('Selected currency: $selectedCurrency');
+          if (selectedCurrency == null) return;
+
+          final controller = sheetText.textEditorConfigurations.controller;
+
+          // Temporarily allow editing
+          controller.onReplaceText = (_,__,___) => true;
+
+          // Clear document completely
+          controller.replaceText(
+            0,
+            controller.document.length - 1,
+            '',
+            TextSelection.collapsed(offset: 0),
+          );
+
+          // Insert the new currency code
+          controller.replaceText(
+            0,
+            0,
+            selectedCurrency!,
+            TextSelection.collapsed(offset: selectedCurrency!.length),
+          );
+
+          // Lock it back (prevent manual edits)
+          controller.onReplaceText = (_,__,___) => false;
+
+        });
+      },
+    );
+    
+  }
+
 
 }
 

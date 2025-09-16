@@ -23,8 +23,10 @@ import 'package:billblaze/providers/url_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
 import 'package:billblaze/repo/llama_repository.dart';
 import 'package:billblaze/components/widgets/username.dart';
+import 'package:billblaze/util/currency_conversion.dart';
 import 'package:billblaze/util/numeric_input_formatter.dart';
 import 'package:billblaze/util/static_noise.dart';
+import 'package:currency_picker/currency_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
@@ -36,6 +38,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:flutter_svgl/flutter_svgl.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hive/hive.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/components/elevated_button.dart';
@@ -96,7 +99,26 @@ final folderPathProvider = StateProvider<String?>((ref) {
   final box = Boxes.getFolderPaths();
   return box.get(ref.read(authPr).currentUser?.email??'default');
 });
+final currencyCodeProvider = StateProvider<Currency>((ref) {
+  return CurrencyService().findByCode('INR')!;
+});
+final fxRatesStreamProvider = StreamProvider<Map<String, double>>((ref) async* {
+  while (true) {
+    final response = await http.get(
+      Uri.parse('https://api.frankfurter.app/latest?from=USD'),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('YOOOO::'+data['rates'].toString());
+      yield Map<String, double>.from(data['rates']);
+    }
+    await Future.delayed(Duration(seconds: 10)); // refresh every hour
+  }
+});
 
+final fxRatesProvider = StateProvider<Map<String, double>>((ref) {
+  return {};
+});
 
 
 
@@ -219,16 +241,16 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   List<TextEditingController> pageFormatControllers = [];
   double _globalMinY = double.infinity;
   double _globalMaxY = double.negativeInfinity;
-  final _currencyFormatter = NumberFormat.simpleCurrency(
+  var _currencyFormatter = DynamicCurrencyFormatter(
     locale: 'hi_IN',
-    name: 'INR',
-    decimalDigits: 0,
+    currencyCode: 'INR',
   );
   bool isLoading = true;
   late Directory dir;
   late final Stream<List<LayoutModel>> _stream;
   StreamSubscription<List<LayoutModel>>? _subscription;
   late ProviderSubscription sub;
+
 
   @override
   void initState() {
@@ -252,7 +274,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       createdAt: DateTime.now(), 
       modifiedAt: DateTime.now(),
   );
-    // _initializeDataPoints();
+    
+    _currencyFormatter =DynamicCurrencyFormatter(
+      locale: 'hi_IN',
+      currencyCode:  ref.read(currencyCodeProvider).code,
+    ); 
+  
     pageFormatControllers = [
       TextEditingController()
         ..text = (getPageFormatFromMap(tempLayoutModel.docPropsList[0].pageFormatController).width * pageUnit)
@@ -373,6 +400,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           }
         },
       );
+      ref.read(fxRatesProvider.notifier).state = await fetchFxRates();
       setState(() {
         isLoading = false;
       });}
@@ -499,68 +527,64 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     (_) {
       if(ref.read(homeScreenTabIndexProvider) ==0) {
         setState(() {
-        // X moves forward forever
         _xValue += 1;
-        
-        // monthly line (window = 12)
+
+        // monthly line
         final mVal = monthRevenueMap[_curMonth] ?? 0;
-        // print('month: ${_xValue%12}, $mVal');
         _dataPoints[0].add(FlSpot(_xValue, mVal));
         if (_dataPoints[0].length > kDayCycle) {
           _dataPoints[0].removeAt(0);
         }
 
-        // daily line (window = 31)
+        // daily line
         final dVal = dayRevenueMap[_curDay] ?? 0;
-        // print('day: ${_xValue%31}, $dVal');
         _dataPoints[1].add(FlSpot(_xValue, dVal));
         if (_dataPoints[1].length > kDayCycle) {
           _dataPoints[1].removeAt(0);
         }
 
-        // advance day; wrap at 31
         _curDay = (_curDay + 1) % kDayCycle;
+        _curMonth = (_curMonth + 1) % 12;
 
-        // only advance month when a day cycle completes; wrap at 12
-        // if (_curDay == 0) {
-          _curMonth = (_curMonth + 1) % 12;
-          final latestVal = [mVal, dVal].reduce((a, b) => a > b ? a : b);
-        if (latestVal > _globalMaxY) _globalMaxY = latestVal;
-        if (latestVal < _globalMinY) _globalMinY = latestVal;
-        // }
+        // ✅ RECOMPUTE GLOBAL MAX/MIN BASED ON CURRENT DATA
+        final allValues = [
+          ..._dataPoints[0].map((e) => e.y),
+          ..._dataPoints[1].map((e) => e.y),
+        ];
 
-        // Helper line 2 (below main min line, using 1/4 of min range)
-        // amplitude: fraction of range
+        if (allValues.isNotEmpty) {
+          _globalMaxY = allValues.reduce((a, b) => a > b ? a : b);
+          _globalMinY = allValues.reduce((a, b) => a < b ? a : b);
+        } else {
+          _globalMaxY = 0;
+          _globalMinY = 0;
+        }
+
+        // recompute helper lines with new max/min
         final double ampMin = _globalMaxY.abs() / 12;
         final double ampMax = _globalMaxY / 9;
 
-        // Helper line near min (sine wave)
         final y2Value = (_globalMaxY / 1.2) + sin(_xValue * 0.7) * ampMin;
         _dataPoints[2].add(FlSpot(_xValue - 18, y2Value));
         if (_dataPoints[2].length > 12) _dataPoints[2].removeAt(0);
 
-        // Another min-based, but cosine wave for phase shift
-        final y3Value = (_globalMaxY/ 1.2) + ((_xValue % 4) - 5) / 5 * ampMax;
+        final y3Value = (_globalMaxY / 1.2) + ((_xValue % 4) - 5) / 5 * ampMax;
         _dataPoints[3].add(FlSpot(_xValue + 5, y3Value));
         if (_dataPoints[3].length > 12) _dataPoints[3].removeAt(0);
 
-        // Helper line near max, sine with different frequency
         final y4Value = (_globalMaxY / 1.2) + sin(_xValue * 0.6) * ampMax;
         _dataPoints[4].add(FlSpot(_xValue - 18, y4Value));
         if (_dataPoints[4].length > 12) _dataPoints[4].removeAt(0);
 
-        // Another max-based, saw-like (use modulus trick)
-        final y5Value = (_globalMaxY/ 1.2) + ((_xValue % 4) - 5) / 5 * ampMax;
+        final y5Value = (_globalMaxY / 1.2) + ((_xValue % 4) - 5) / 5 * ampMax;
         _dataPoints[5].add(FlSpot(_xValue + 3, y5Value));
         if (_dataPoints[5].length > 12) _dataPoints[5].removeAt(0);
 
-        // Another max, faster oscillation
-        final y6Value = (_globalMaxY/1.2) + cos(_xValue *1.2) * (ampMax / 2);
+        final y6Value = (_globalMaxY / 1.2) + cos(_xValue * 1.2) * (ampMax / 2);
         _dataPoints[6].add(FlSpot(_xValue - 19, y6Value));
         if (_dataPoints[6].length > 12) _dataPoints[6].removeAt(0);
-
-
       });
+
       }
       // _getCurrentTime();
     },
@@ -745,8 +769,16 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     bool isBillTab = homeScreenTabIndex == 2;
     // bool isProfileTab = homeScreenTabIndex == 3;
     final User? user = ref.watch(authPr).currentUser;
+    ref.listen<Currency>(currencyCodeProvider, (previous, next) {
+      setState(() {
+        _currencyFormatter = DynamicCurrencyFormatter(
+          locale: 'hi_IN', // you can also change this based on next if needed
+          currencyCode: next.code,
+        );
+      });
+    });
     
-    
+
     // RefHolder.ref = ref;
 
     // print(mapValue(value: sHeight, inMin: 480, inMax: 1186, outMin: 0.18, outMax: 0.1));
@@ -754,28 +786,32 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     if(isLoading){
       return Scaffold(
           backgroundColor: defaultPalette.tertiary,
-          body: Center(
+          body: SizedBox(
+            width: sWidth,
+            height: sHeight,
             child: Stack(
               children: [
-              Positioned.fill(
-                child: GestureDetector(
+                
+                Positioned.fill(child: GestureDetector(
                   onTap: ()async{
-                  await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
-                  filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
-                  setState(() {
-                    isLoading = false;
-                  });
+                  // await Hive.deleteBoxFromDisk('decorations');
+                  // await Hive.deleteBoxFromDisk('layouts');
+                  // await Hive.openBox<SheetDecoration>('decorations');
+                  // await Hive.openBox<LayoutModel>(globalContainer.read(authPr).currentUser?.email??'layouts');
+                  // setState(() {
+                  //   isLoading = false;
+                  // });
                 },
                   child: Center(
                     child: SvgPicture.asset(
                       'assets/logos/Asset7.svg',
+                      // allowDrawingOutsideViewBox: true,
+                      // theme: SvgTheme(currentColor: defaultPalette.primary),
                     )
                   ),
-                )
-              ),
-              
-              if (Platform.isWindows)
-                ...windowsTopBar(),
+                )),
+                if (Platform.isWindows)
+                ...windowsTopBar(),   
               ]
             ),
           ),);
@@ -2635,7 +2671,174 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       },
                                     ),
                                   ),
+                                  SizedBox(width:mapValueDimensionBasedLockOnDesync(10, 15, sWidth, sHeight)),
+                                  Expanded(
+                                    flex: 8,
+                                    child: Column(
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.only(top:8),
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.bottomCenter,
+                                            child: Text(ref.watch(currencyCodeProvider).name,
+                                            textAlign: TextAlign.end,
+                                            maxLines:2,
+                                            overflow:TextOverflow.ellipsis,
+                                            style: GoogleFonts.lexend(
+                                              color: defaultPalette.extras[0],
+                                              fontSize: mapValueDimensionBased(12, 85, sWidth, sHeight,b:false),
+                                              letterSpacing: -1,
+                                              fontWeight: FontWeight.w700,
+                                              height: 0.3
+                                            ),),
+                                          ),
+                                        ),
+                                        SizedBox(height:mapValueDimensionBased(10, 15, sWidth, sHeight,b:false)),
+                                        Expanded(
+                                            child: AppinioSwiper(
+                                                backgroundCardCount: 5,
+                                                // initialIndex: ref.read(cCardIndexProvider),
+                                                backgroundCardOffset: Offset(0.8, 0.8),
+                                                duration: Duration(milliseconds: 150),
+                                                backgroundCardScale: 1,
+                                                loop: isHomeTab,
+                                                cardCount: 1,
+                                                isDisabled: false,
+                                                allowUnSwipe: false,
+                                                cardBuilder: (BuildContext context, int index) {
+                                                  // int currentCardIndex =
+                                                  //     ref.watch(profitsIndexProvider);
+                                                  return Stack(
+                                                    children: [
+                                                      Positioned.fill(
+                                                        child: AnimatedContainer(
+                                                          duration: defaultDuration,
+                                                          margin: EdgeInsets.all(0).copyWith(bottom:5),
+                                                          alignment: Alignment.center,
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.white,
+                                                            border: Border.all(width: 1),
+                                                            borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(18, 30, sWidth, sHeight)),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Positioned.fill(
+                                                        child: AnimatedOpacity(
+                                                          opacity: 0 == index
+                                                              ? 0
+                                                              : index >= 0 % 10
+                                                                  ? 1
+                                                                  : (1 -
+                                                                      (_profitsCardPosition / 200)
+                                                                          .clamp(0.0, 1.0)),
+                                                          duration: Duration(milliseconds: 300),
+                                                          child: AnimatedContainer(
+                                                            duration: Duration(milliseconds: 300),
+                                                            margin: EdgeInsets.all(0).copyWith(bottom:5),
+                                                            alignment: Alignment.center,
+                                                            decoration: BoxDecoration(
+                                                              color: index ==
+                                                                      (0 + 1) % 10
+                                                                  ? defaultPalette.extras[0]
+                                                                  : index ==
+                                                                          (0 + 2) % 10
+                                                                      ? defaultPalette.extras[0]
+                                                                      : defaultPalette.extras[0],
+                                                              border: Border.all(width: 2),
+                                                              borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(18, 30, sWidth, sHeight)),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      
+                                                      Positioned.fill(
+                                                        child:MouseRegion(
+                                                          cursor: SystemMouseCursors.click,
+                                                          child: GestureDetector(
+                                                            onTap: () async {
+                                                              showCurrencySelectionDialog(context, ref);
+                                                            },
+                                                            child: Container(
+                                                              margin: EdgeInsets.all(0).copyWith(bottom:5),
+                                                              decoration: BoxDecoration(
+                                                              ),
+                                                              child: Column(
+                                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                crossAxisAlignment: CrossAxisAlignment.center,
+                                                                children: [
+                                                                  Expanded(
+                                                                    child: Container(
+                                                                      margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)).copyWith(bottom:0),
+                                                                      decoration: BoxDecoration(
+                                                                        color: defaultPalette.secondary,
+                                                                        borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(16, 30, sWidth, sHeight)),
+                                                                        border: Border.all()
+                                                                      ),
+                                                                      child: Row(
+                                                                        children: [
+                                                                          Expanded(
+                                                                            child: FittedBox(
+                                                                              fit: BoxFit.scaleDown,
+                                                                              alignment: Alignment.center,
+                                                                              child: Text(ref.watch(currencyCodeProvider).symbol,
+                                                                              textAlign: TextAlign.end,
+                                                                              style: GoogleFonts.lexend(
+                                                                                color: defaultPalette.extras[0],
+                                                                                fontSize: mapValueDimensionBasedLockOnDesync(25, 95, sWidth, sHeight),
+                                                                                letterSpacing: -1,
+                                                                                fontWeight: FontWeight.w700,
+                                                                                height: 0.5
+                                                                              ),),
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                  Padding(
+                                                                    padding: const EdgeInsets.all(4.0).copyWith(bottom: mapValueDimensionBasedLockOnDesync(2, 10, sWidth, sHeight),top:mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight)),
+                                                                    child: FittedBox(
+                                                                      fit: BoxFit.scaleDown,
+                                                                      alignment: Alignment.bottomCenter,
+                                                                      child: Text(ref.watch(currencyCodeProvider).code,
+                                                                      textAlign: TextAlign.end,
+                                                                      maxLines:1,
+                                                                      overflow:TextOverflow.ellipsis,
+                                                                      style: GoogleFonts.lexend(
+                                                                        color: defaultPalette.extras[0],
+                                                                        fontSize: mapValueDimensionBased(15, 50, sWidth, sHeight,b:false),
+                                                                        letterSpacing: -1,
+                                                                        fontWeight: FontWeight.w700,
+                                                                        height: 0.5
+                                                                      ),),
+                                                                    ),
+                                                                  ),
+                                                                  Icon(TablerIcons.chevron_compact_down,
+                                                                    color: defaultPalette.extras[0],
+                                                                    size: mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        )
+                                                      )
+                        
+                                                      
+                                                    ],
+                                                  );
+                                                
+                                                },
+                                              ),
+                                  
+                                        ),
+                                      ],
+                                    ),
+                                    
+                                    ),
                                   // SizedBox(width:5)
+                                  
                                 ],
                               ),
                             ),
@@ -9394,8 +9597,19 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             (lbl) => lbl.name == 'isPaid',
                             orElse:()=> RequiredText(name: 'isPaid', sheetTextType: SheetTextType.bool.index, indexPath: IndexPath(index: -951), isOptional: true),
                           );
+                          final currencyLabel = layout.labelList.firstWhere(
+                            (lbl) => lbl.name == 'currency',
+                            orElse:()=> RequiredText(name: 'currency', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
+                          );
                           // if (isPaidLabel.indexPath.index == -951) continue;
-
+                          
+                          final currencyItem = getItemAtPath(currencyLabel.indexPath, layout.spreadSheetList);
+                          Currency currency = CurrencyService().findByCode(
+                            currencyItem is! SheetTextBox
+                            ? 'INR'
+                            : buildCombinedTextFromBlocks((currencyItem).inputBlocks, layout.spreadSheetList))??CurrencyService().findByCode('INR')!;
+                            
+                          
                           final isPaidItem = getItemAtPath(isPaidLabel.indexPath, layout.spreadSheetList);
                           // print(item);
                           // if (isPaidItem is! SheetTextBox) continue;
@@ -9403,14 +9617,33 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           
                           final isPaid =isPaidItem is! SheetTextBox? 'false': buildCombinedTextFromBlocks((isPaidItem).inputBlocks, layout.spreadSheetList);
 
-                          if (totalPayableLabel != null && totalPayableLabel.indexPath.index != -951 ) {
+                          if ( totalPayableLabel.indexPath.index != -951 ) {
                             final item = getItemAtPath(
                               totalPayableLabel.indexPath,
                               layout.spreadSheetList);
                             if (item is SheetTextBox) {
                               final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
                               double value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ??0;
-
+                              // print(value.toString()+currency.code.toString()+layout.name);
+                              // print(ref.read(currencyCodeProvider).code);
+                              if (currency.code != ref.read(currencyCodeProvider).code) {
+                                try {
+                                  final rates = ref.read(fxRatesProvider);
+                                  // print('rates::'+ref.read(fxRatesProvider).toString());
+                                  value = convertCurrency(
+                                    amount: value,
+                                    from: currency.code,
+                                    to: ref.read(currencyCodeProvider).code,
+                                    rates: rates,
+                                  );
+                                  // print(value.toString()+ref.read(currencyCodeProvider).code.toString()+layout.name);
+                                } catch (e) {
+                                  // Handle conversion error, e.g., log it
+                                  // print('Currency conversion error: $e');
+                                  value = value; // Fallback to original value if conversion fails
+                                }
+                                
+                              }
                               // If it's a credit note, negate the value
                               if (layout.type == SheetType.creditNote.index) {
                                 value *= -1;
@@ -9418,7 +9651,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               if (layout.type == SheetType.proformaInvoice.index ) {
                                 value *= 0;
                               }
-
+                              
                               if(isPaid == 'true'){
                               totalRevenue += value;
 
@@ -9460,7 +9693,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 dayRevenueMap[day.toDouble()] ?? 0)),
                       );
 
-                      // print(monthRevenueMap);
+                      
                       return AnimatedContainer(
                       duration: Durations.extralong1,
                       curve: Curves.decelerate,
@@ -9595,22 +9828,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           ),
                                           TextSpan(
                                             text:
-                                                NumberFormat.decimalPattern(
-                                                        'en_IN')
+                                                _currencyFormatter
                                                     .format(monthRevenueMap[
                                                         (barSpot.x)
                                                             .clamp(1, 12)
-                                                            .round()]),
+                                                            .round()]??0),
                                             style: GoogleFonts.lexend(
                                               color: defaultPalette.primary,
                                               fontWeight: FontWeight.w900,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: '₹ ',
-                                            style: GoogleFonts.lexend(
-                                              fontWeight: FontWeight.w900,
-                                              color: defaultPalette.primary,
                                             ),
                                           ),
                                         ],
@@ -9818,13 +10043,16 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       return const SizedBox
                                           .shrink(); // Hide first and last labels
                                     }
-                                    return Text(
-                                      meta.formattedValue.toLowerCase() +
-                                          '\₹',
-                                      style: GoogleFonts.lexend(
-                                        fontSize: mapValueDimensionBased(
-                                            10, 15, sWidth, sHeight),
-                                        letterSpacing: -1,
+                                    return FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                      ref.read(currencyCodeProvider).symbol +  meta.formattedValue.toLowerCase(),
+                                        style: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased(
+                                              10, 15, sWidth, sHeight),
+                                          letterSpacing: -1,
+                                        ),
                                       ),
                                     );
                                   },
@@ -9947,22 +10175,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           ),
                                           TextSpan(
                                             text:
-                                                NumberFormat.decimalPattern(
-                                                        'en_IN')
+                                                _currencyFormatter
                                                     .format(dayRevenueMap[
                                                         (barSpot.x)
                                                             .clamp(1, 31)
-                                                            .round()]),
+                                                            .round()]??0),
                                             style: GoogleFonts.lexend(
                                               color: defaultPalette.primary,
                                               fontWeight: FontWeight.w900,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: '₹ ',
-                                            style: GoogleFonts.lexend(
-                                              fontWeight: FontWeight.w900,
-                                              color: defaultPalette.primary,
                                             ),
                                           ),
                                         ],
@@ -10178,13 +10398,16 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             value == 0)) {
                                       return const SizedBox.shrink();
                                     }
-                                    return Text(
-                                      meta.formattedValue.toLowerCase() +
-                                          '\₹',
-                                      style: GoogleFonts.lexend(
-                                        fontSize: mapValueDimensionBased(
-                                            10, 15, sWidth, sHeight),
-                                        letterSpacing: -1,
+                                    return FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                      ref.read(currencyCodeProvider).symbol + meta.formattedValue.toLowerCase(),
+                                        style: GoogleFonts.lexend(
+                                          fontSize: mapValueDimensionBased(
+                                              10, 15, sWidth, sHeight),
+                                          letterSpacing: -1,
+                                        ),
                                       ),
                                     );
                                   },
@@ -10308,7 +10531,18 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             (lbl) => lbl.name == 'isPaid',
                             orElse:()=> RequiredText(name: 'isPaid', sheetTextType: SheetTextType.bool.index, indexPath: IndexPath(index: -951), isOptional: true),
                           );
+                          final currencyLabel = layout.labelList.firstWhere(
+                            (lbl) => lbl.name == 'currency',
+                            orElse:()=> RequiredText(name: 'currency', sheetTextType: SheetTextType.string.index, indexPath: IndexPath(index: -951), isOptional: true),
+                          );
                           // if (isPaidLabel.indexPath.index == -951) continue;
+                          
+                          final currencyItem = getItemAtPath(currencyLabel.indexPath, layout.spreadSheetList);
+                          Currency currency = CurrencyService().findByCode(
+                            currencyItem is! SheetTextBox
+                            ? 'INR'
+                            : buildCombinedTextFromBlocks((currencyItem).inputBlocks, layout.spreadSheetList))??CurrencyService().findByCode('INR')!;
+                          
 
                           final isPaidItem = getItemAtPath(isPaidLabel.indexPath, layout.spreadSheetList);
                           
@@ -10326,6 +10560,24 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
                                 double value = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.]'), '')) ??0;
                                 // print('rawText:'+rawText);
+                                if (currency.code != ref.read(currencyCodeProvider).code) {
+                                  try {
+                                    final rates = ref.read(fxRatesProvider);
+                                    // print('rates::'+ref.read(fxRatesProvider).toString());
+                                    value = convertCurrency(
+                                      amount: value,
+                                      from: currency.code,
+                                      to: ref.read(currencyCodeProvider).code,
+                                      rates: rates,
+                                    );
+                                    // print(value.toString()+ref.read(currencyCodeProvider).code.toString()+layout.name);
+                                  } catch (e) {
+                                    // Handle conversion error, e.g., log it
+                                    // print('Currency conversion error: $e');
+                                    value = value; // Fallback to original value if conversion fails
+                                  }
+                                  
+                                }
                                 // If it's a credit note, negate the value
                                 if (layout.type == SheetType.creditNote.index) {
                                   value *= -1;
@@ -10357,8 +10609,25 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             // print(item.inputBlocks);
 
                             final rawText = buildCombinedTextFromBlocks(item.inputBlocks, layout.spreadSheetList);
-                            final cleaned = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.-]'), '')) ?? 0.0;
-                            
+                            var cleaned = double.tryParse(rawText.replaceAll(RegExp(r'[^0-9.-]'), '')) ?? 0.0;
+                            if (currency.code != ref.read(currencyCodeProvider).code) {
+                                try {
+                                  final rates = ref.read(fxRatesProvider);
+                                  // print('rates::'+ref.read(fxRatesProvider).toString());
+                                  cleaned = convertCurrency(
+                                    amount: cleaned,
+                                    from: currency.code,
+                                    to: ref.read(currencyCodeProvider).code,
+                                    rates: rates,
+                                  );
+                                  // print(value.toString()+ref.read(currencyCodeProvider).code.toString()+layout.name);
+                                } catch (e) {
+                                  // Handle conversion error, e.g., log it
+                                  // print('Currency conversion error: $e');
+                                  cleaned = cleaned; // Fallback to original value if conversion fails
+                                }
+                                
+                              }
                            if (label.name == 'profits') {
                               profit = cleaned;
                             } 
@@ -12889,7 +13158,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               ),
               Expanded(
                 child: Text(
-                  _currencyFormatter.format(stats['payable']),
+                  _currencyFormatter.format(stats['payable']??0),
                   maxLines: 1,
                   textAlign: TextAlign.end,
                   style: GoogleFonts.lexend(
@@ -12919,7 +13188,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 child: Text(
                   s == 'Credit Notes'
                       ? '~~~~~~~~'
-                      : _currencyFormatter.format(stats['profit']),
+                      : _currencyFormatter.format(stats['profit']??0),
                   maxLines: 1,
                   textAlign: TextAlign.end,
                   style: GoogleFonts.lexend(
@@ -12978,7 +13247,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               ),
               Expanded(
                 child: Text(
-                  _currencyFormatter.format(stats['unpaidRevenue']),
+                  _currencyFormatter.format(stats['unpaidRevenue']??0),
                   maxLines: 1,
                   textAlign: TextAlign.end,
                   style: GoogleFonts.lexend(
@@ -12998,7 +13267,66 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       ),
     );
   }
+  
+  void showCurrencySelectionDialog(BuildContext context, WidgetRef ref) {
+    showCurrencyPicker(
+      context: context,
+      showFlag: true,
+      showCurrencyName: true,
+      showCurrencyCode: true,
+      favorite: ['USD', 'EUR', 'INR'],
+      theme: CurrencyPickerThemeData(
+      flagSize: 24,
+      titleTextStyle: GoogleFonts.lexend(
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+        color: defaultPalette.black,
+      ),
+      subtitleTextStyle: GoogleFonts.lexend(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: defaultPalette.extras[0],
+      ),
+      bottomSheetHeight: 500,
+      backgroundColor: defaultPalette.primary,
+      inputDecoration: InputDecoration(
+        hintText: 'Search currency',
+        hintStyle: GoogleFonts.lexend(
+          fontSize: 16,
+          color: defaultPalette.extras[0].withOpacity(0.6),
+        ),
+        prefixIcon: const Icon(TablerIcons.search),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: defaultPalette.tertiary, width: 2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: defaultPalette.extras[0].withOpacity(0.4)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        filled: true,
+        fillColor: defaultPalette.primary.withOpacity(0.8),
+      ),
+      currencySignTextStyle:   GoogleFonts.lexend(
+          fontSize: 16,
+          color: defaultPalette.extras[0].withOpacity(0.6),
+        ),
+      
+      ),
+      onSelect: (Currency currency) {
+        setState(() {
+          
+          print('Selected currency: ${currency.code}');
+          if (currency.code == null) return;
+          ref.read(currencyCodeProvider.notifier).state = currency;
+        });
+      },
+    );
+  }
 }
+
+
 
 double mapValue({
   required double value,
