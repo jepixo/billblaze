@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
@@ -13,23 +13,23 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:uuid/uuid.dart';
 
-part 'sheet_list.g.dart';
+// part  'sheet_list.g.dart';
 
-@HiveType(typeId: 2)
+// @HiveType(typeId: 2)
 class SheetListBox extends SheetItem {
-  @HiveField(3)
+  // @HiveField(3)
   List<SheetItem> sheetList;
-  @HiveField(4)
+  // @HiveField(4)
   bool direction; 
-  @HiveField(5)
+  // @HiveField(5)
   int mainAxisAlignment;
-  @HiveField(6)
+  // @HiveField(6)
   int crossAxisAlignment;  
-  @HiveField(7)
+  // @HiveField(7)
   String decorationId;
-  @HiveField(8)
+  // @HiveField(8)
   int mainAxisSize;
-  @HiveField(9)
+  // @HiveField(9)
   List<double>? size;
 
   SheetListBox(

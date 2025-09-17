@@ -6,30 +6,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 import 'package:billblaze/components/color_picker.dart';
 
-part 'sheet_decoration.g.dart';
+// part  'sheet_decoration.g.dart';
 
-@HiveType(typeId: 5)
-enum Access {
-  @HiveField(0)
-  local,
-  @HiveField(1)
-  global
-}
 
-@HiveType(typeId: 6)
+
+// @HiveType(typeId: 6)
 class SheetDecoration extends HiveObject {
-  @HiveField(0)
+  // @HiveField(0)
   String id;
-  @HiveField(1)
+  // @HiveField(1)
   final String name;
-  @HiveField(2)
-  final Access access;
   SheetDecoration(
-      {required this.id, required this.name, this.access = Access.global});
+      {required this.id, required this.name,});
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
@@ -60,9 +52,9 @@ class SheetDecoration extends HiveObject {
   }
 }
 
-@HiveType(typeId: 7)
+// @HiveType(typeId: 7)
 class SuperDecorationBox extends SheetDecoration {
-  @HiveField(3)
+  // @HiveField(3)
   List<String> itemDecorationList;
 
   SuperDecorationBox({
@@ -100,19 +92,21 @@ class SuperDecorationBox extends SheetDecoration {
 
 }
 
-@HiveType(typeId: 8)
+// @HiveType(typeId: 8)
 class ItemDecorationBox extends SheetDecoration {
-  @HiveField(3)
-  Map<String, dynamic> itemDecoration;
+  // @HiveField(3)
+  String itemDecorationString;
 
   ItemDecorationBox({
-    required this.itemDecoration,
+    Map<String, dynamic>? itemDecoration,
     required super.id,
     super.name = 'Untitled',
-  });
+    String? itemDecorationString,
+  }) : itemDecorationString =  itemDecorationString ?? jsonEncode(itemDecoration);
+
 
   ItemDecoration toItemDecoration() {
-    return ItemDecoration.fromJson(itemDecoration);
+    return ItemDecoration.fromJson( jsonDecode(itemDecorationString) as Map<String, dynamic>);
   }
   
 
@@ -121,7 +115,7 @@ class ItemDecorationBox extends SheetDecoration {
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
       'type': 'ItemDecoration',
-      'itemDecoration': itemDecoration,
+      'itemDecoration':  jsonDecode(itemDecorationString) as Map<String, dynamic>,
       'id': super.id,
       'name': super.name,
     };
@@ -588,3 +582,11 @@ Map<String, SheetDecoration> decodeItemDecorationMap(Map<dynamic, dynamic> rawMa
   });
 }
 
+/// ✅ Extension for computed getters/setters (ignored by Hive)
+// extension ItemDecorationBoxX on ItemDecorationBox {
+//   Map<String, dynamic> get itemDecoration =>
+//       jsonDecode(itemDecorationString) as Map<String, dynamic>;
+
+//   set itemDecoration(Map<String, dynamic> value) =>
+//       itemDecorationString = jsonEncode(value);
+// }

@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 import 'package:billblaze/models/bill/bill_type.dart';
 import 'package:billblaze/models/bill/required_text.dart';
@@ -16,31 +16,31 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 
-part 'layout_model.g.dart';
+// part  'layout_model.g.dart';
 
-@HiveType(typeId: 4)
+// @HiveType(typeId: 4)
 class LayoutModel extends HiveObject {
-  @HiveField(0)
+  // @HiveField(0)
   List<DocumentPropertiesBox> docPropsList;
-  @HiveField(1)
+  // @HiveField(1)
   List<SheetListBox> spreadSheetList;
-  @HiveField(2)
+  // @HiveField(2)
   String id;
-  @HiveField(3)
+  // @HiveField(3)
   String name;
-  @HiveField(4)
+  // @HiveField(4)
   DateTime createdAt;
-  @HiveField(5)
+  // @HiveField(5)
   DateTime modifiedAt;
-  @HiveField(6)
+  // @HiveField(6)
   List<Uint8List>? pdf;
-  @HiveField(7)
+  // @HiveField(7)
   int type;
-  @HiveField(8)
+  // @HiveField(8)
   List<RequiredText> labelList;
-  @HiveField(9)
+  // @HiveField(9)
   bool? deleted;
-  @HiveField(10)
+  // @HiveField(10)
   Map<String, SheetDecoration>? sheetDecorationMap;
   
   

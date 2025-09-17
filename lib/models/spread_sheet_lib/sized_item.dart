@@ -2,7 +2,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/models/index_path.dart';
@@ -11,17 +11,17 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/screens/layout_designer.dart';
 import 'package:uuid/uuid.dart';
 
-part 'sized_item.g.dart';
+// part  'sized_item.g.dart';
 
-@HiveType(typeId: 23)
+// @HiveType(typeId: 23)
 class SheetSizedItem extends SheetItem {
-  @HiveField(3)
+  // @HiveField(3)
   double width;
-  @HiveField(4)
+  // @HiveField(4)
   double height;
-  @HiveField(5)
+  // @HiveField(5)
   String sizedItemDecoration;
-  @HiveField(6)
+  // @HiveField(6)
   bool hide;
   SheetSizedItem({
     required super.id, 

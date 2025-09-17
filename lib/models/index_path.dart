@@ -1,14 +1,14 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
-part 'index_path.g.dart';
+// part  'index_path.g.dart';
 
-@HiveType(typeId: 14)
+// @HiveType(typeId: 14)
 class IndexPath {
-  @HiveField(0)
+  // @HiveField(0)
   IndexPath? parent;
-  @HiveField(1)
+  // @HiveField(1)
   int index;
 
   IndexPath({required this.index, this.parent});

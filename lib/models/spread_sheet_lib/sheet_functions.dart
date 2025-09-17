@@ -4,14 +4,13 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:mesh_gradient/mesh_gradient.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
@@ -19,22 +18,20 @@ import 'package:uuid/uuid.dart';
 
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/components/elevated_button.dart';
-import 'package:billblaze/home.dart';
 import 'package:billblaze/models/input_block.dart';
-import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/screens/layout_designer.dart' as ly;
 import 'package:billblaze/util/custom_uid.dart';
 import 'package:billblaze/util/numeric_input_formatter.dart';
 
-part 'sheet_functions.g.dart';
+// part  'sheet_functions.g.dart';
 
-@HiveType(typeId:16)
+// @HiveType(typeId:16)
 class SheetFunction {
-  @HiveField(0)
+  // @HiveField(0)
   final int returnType;
-  @HiveField(1)
+  // @HiveField(1)
   final String name;
   
   
@@ -128,27 +125,33 @@ class SheetFunction {
 
 }
 
-@HiveType(typeId: 17)
+// @HiveType(typeId: 17)
 class UniStatFunction extends SheetFunction with QuillFormattingMixin {
-  @HiveField(2)
+  // @HiveField(2)
   List<InputBlock> inputBlocks;
 
-  @HiveField(3)
-  List<Map<String, dynamic>>? resultJson = [];
+  @override
+  // @HiveField(3)
+  List<String> resultJsonString;
 
-  @HiveField(4)
+  // @HiveField(4)
   String func;
 
-  @HiveField(5)
-  Map<String, dynamic>? formatter;
+  // @HiveField(5)
+  String? formatterString;
 
   UniStatFunction({
     required this.inputBlocks,
-    this.resultJson = const [],
+    List<Map<String, dynamic>> resultJson = const [],
     required this.func,
-    this.formatter,
-  }) : super(1, 'unistat');
-
+    Map<String, dynamic>? formatter,
+    String? formatterString,
+    List<String>? resultJsonString,
+  }) : resultJsonString = resultJsonString?? resultJson.map((m) => jsonEncode(m)).toList(),
+      formatterString = formatterString?? (formatter != null ? jsonEncode(formatter) : null),
+      super(1, 'unistat');
+  
+ 
   // ──────────────────────────────
   // MAIN RESULT ENTRYPOINT
   // ──────────────────────────────
@@ -358,7 +361,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
         if (item is SheetText) {
           raw = item.textEditorConfigurations.controller.document.toPlainText().trim();
         } else if (item is SheetTextBox) {
-          raw = Document.fromDelta( Delta.fromJson(item.textEditorController as List)).toPlainText().trim();
+          raw = Document.fromDelta( Delta.fromJson((item.textEditorControllerString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList()) as List)).toPlainText().trim();
         }
         baseCount++;
       }
@@ -647,30 +650,34 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
   }
 }
 
-@HiveType(typeId:19)
+// @HiveType(typeId:19)
 class ColumnFunction extends SheetFunction with QuillFormattingMixin {
-  @HiveField(2)
+  // @HiveField(2)
   List<InputBlock> inputBlocks;
 
-  @HiveField(3)
+  // @HiveField(3)
   String func;
 
-  @HiveField(4)
+  // @HiveField(4)
   String axisLabel;
 
-  @HiveField(5)
-  List<Map<String, dynamic>>? resultJson =[];
+  @override
+  // @HiveField(5)
+  List<String> resultJsonString;
 
-  @HiveField(6)
+  // @HiveField(6)
   bool lockMode = false;
 
   ColumnFunction({
     required this.inputBlocks, 
     required this.func, 
     required this.axisLabel,
-    this.resultJson = const [],
-    this.lockMode = false
-    }) : super(0, 'column');
+    List<Map<String, dynamic>> resultJson = const [],
+    this.lockMode = false,
+    List<String>? resultJsonString,
+  }) : resultJsonString = resultJsonString??
+            resultJson.map((m) => jsonEncode(m)).toList(),super(0, 'column');
+
 
   @override
   dynamic result(Function getItemAtPath,
@@ -804,21 +811,24 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
   }
 }
 
-@HiveType(typeId: 20)
+// @HiveType(typeId: 20)
 class InputBlockFunction extends SheetFunction with QuillFormattingMixin {
-  @HiveField(2)
+  // @HiveField(2)
   List<InputBlock> inputBlocks;
-  @HiveField(3)
+  // @HiveField(3)
   String label;
-  @HiveField(4)
-  List<Map<String, dynamic>>? resultJson = [];
+  @override
+  // @HiveField(4)
+  List<String> resultJsonString;
 
   InputBlockFunction(
     {
       required this.inputBlocks,
       required this.label,
-    }
-  ):super(0,'inputBlock');
+      List<Map<String, dynamic>> resultJson = const [],
+    List<String>? resultJsonString,
+  }) : resultJsonString = resultJsonString??resultJson.map((m) => jsonEncode(m)).toList(),super(0,'inputBlock');
+
 
   @override
   result(Function getItemAtPath, Function buildCombinedQuillConfiguration, {List<SheetListBox>? spreadSheet,Map<List<InputBlock>, int>? visited,bool returnFormatted = false,}) {
@@ -940,30 +950,35 @@ class InputBlockFunction extends SheetFunction with QuillFormattingMixin {
 
 }
 
-@HiveType(typeId: 21)
+// @HiveType(typeId: 21)
 class BiStatFunction extends SheetFunction with QuillFormattingMixin {
-  @HiveField(2)
+  // @HiveField(2)
   List<InputBlock> inputBlocksX;
 
-  @HiveField(3)
+  // @HiveField(3)
   List<InputBlock> inputBlocksY;
 
-  @HiveField(4)
-  List<Map<String, dynamic>>? resultJson = [];
+  @override
+  // @HiveField(4)
+  List<String> resultJsonString;
 
-  @HiveField(5)
+  // @HiveField(5)
   String func;
-
+  
+  // @HiveField(6)
   bool isX = true;
 
   BiStatFunction({
     required this.inputBlocksX,
     required this.inputBlocksY,
-    this.resultJson = const [],
+    List<Map<String, dynamic>> resultJson = const [],
     required this.func,
     this.isX = true,
-  }) : super(1, 'bistat');
+  List<String>? resultJsonString,
+  }) : resultJsonString = resultJsonString??resultJson.map((m) => jsonEncode(m)).toList(), 
+      super(1, 'bistat');
 
+  
   @override
   dynamic result(
     Function getItemAtPath,
@@ -1153,7 +1168,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
           
         } else if (item is SheetTextBox) {
           raw = Document.fromDelta(
-                  Delta.fromJson(item.textEditorController as List))
+                  Delta.fromJson(item.textEditorControllerString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList() as List))
               .toPlainText()
               .trim();
         }
@@ -2278,32 +2293,33 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
   }
 }
 
-@HiveType(typeId: 22)
+// @HiveType(typeId: 22)
 class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
-  @HiveField(2)
+  // @HiveField(2)
   String template;
 
-  @HiveField(3)
-  List<Map<String, dynamic>>? resultJson = [];
+  @override
+  // @HiveField(3)
+  List<String> resultJsonString;
   
-  @HiveField(4)
+  // @HiveField(4)
   String idKey;
 
-  @HiveField(5)
+  // @HiveField(5)
   String func;
 
-  @HiveField(6)
+  // @HiveField(6)
   DateTime? dateTime;
 
   UidGeneratorFunction({
     required this.template,
-    this.resultJson = const [],
+    List<Map<String, dynamic>> resultJson = const [],
     this.idKey = '00',
     this.func = 'uidGenerator',
-    required this.dateTime
-  }):super(1, 'uidgen');
+    required this.dateTime,
+  List<String>? resultJsonString,
+  }) : resultJsonString = resultJsonString?? resultJson.map((m) => jsonEncode(m)).toList(),super(1, 'uidgen');
 
-  
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
@@ -4319,8 +4335,24 @@ List<Widget> sliderPropertyTile(TextEditingController s, Function setStateCallba
 mixin QuillFormattingMixin on SheetFunction {
   /// All implementing classes must have:
   /// `late List<Map<String, dynamic>> resultJson;`
-  List<Map<String, dynamic>>? get resultJson;
-  set resultJson(List<Map<String, dynamic>>? v);
+  List<String> get resultJsonString;
+  set resultJsonString(List<String> v);
+
+  /// Helpers — do not expose a resultJson getter here.
+  List<Map<String, dynamic>> decodeResultJsonList(List<String> src) {
+    if (src.isEmpty) return [];
+    return src.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList();
+  }
+
+  List<String> encodeResultJsonList(List<Map<String, dynamic>>? src) {
+    return src?.map((m) => jsonEncode(m)).toList() ?? <String>[];
+  }
+
+  /// Formatter helper
+  Map<String, dynamic>? decodeFormatter(String? s) =>
+      s == null ? null : Map<String, dynamic>.from(jsonDecode(s));
+  String? encodeFormatter(Map<String, dynamic>? m) =>
+      m == null ? null : jsonEncode(m);
 
   Delta _applyStylingFromOldOps(List<Operation> oldOps, String newText) {
     final newDelta = Delta();
@@ -4403,7 +4435,7 @@ mixin QuillFormattingMixin on SheetFunction {
     // }
     // print('DELTA JSON: ${controller.document.toDelta().toList()}');
     // resultJson = cleanedDelta.toJson();
-    resultJson =controller.document.toDelta().toJson();
+    resultJsonString =encodeResultJsonList(controller.document.toDelta().toJson());
   }
 
   void _setAlignment(Attribute alignment, QuillController controller) {
@@ -4416,7 +4448,7 @@ mixin QuillFormattingMixin on SheetFunction {
 
     if (!sel.isCollapsed) {
       controller.formatSelection(apply);
-      resultJson = controller.document.toDelta().toJson();
+      resultJsonString =encodeResultJsonList(controller.document.toDelta().toJson());
       return;
     }
 
@@ -4428,7 +4460,7 @@ mixin QuillFormattingMixin on SheetFunction {
       if (sel.baseOffset >= runningOffset &&
           sel.baseOffset < runningOffset + blockLength) {
         controller.formatText(runningOffset, blockLength, apply);
-        resultJson = controller.document.toDelta().toJson();
+        resultJsonString =encodeResultJsonList(controller.document.toDelta().toJson());
         return;
       }
       runningOffset += blockLength;
@@ -4436,7 +4468,7 @@ mixin QuillFormattingMixin on SheetFunction {
 
     // fallback → whole doc
     controller.formatText(0, controller.document.length - 1, apply);
-    resultJson = controller.document.toDelta().toJson();
+    resultJsonString =encodeResultJsonList(controller.document.toDelta().toJson());
   }
 
   // ───── Text style toggles ─────
@@ -4490,7 +4522,7 @@ mixin QuillFormattingMixin on SheetFunction {
       if (hasOff) apply(Attribute.clone(offAttr, null));
       apply(onAttr);
     }
-    resultJson = c.document.toDelta().toJson();
+    resultJsonString =encodeResultJsonList(c.document.toDelta().toJson());
   }
 
   // ───── Font & spacing updates ─────
@@ -4519,7 +4551,7 @@ mixin QuillFormattingMixin on SheetFunction {
       c.formatSelection(attr);
     }
     _removeAttributesFromNewlines(c);
-    resultJson = c.document.toDelta().toJson();
+    resultJsonString =encodeResultJsonList(c.document.toDelta().toJson());
   }
 
   void updateFontFamily(String fontName, QuillController c) {
@@ -4535,7 +4567,7 @@ mixin QuillFormattingMixin on SheetFunction {
       c.formatSelection(attr);
     }
     _removeAttributesFromNewlines(c);
-    resultJson = c.document.toDelta().toJson();
+    resultJsonString =encodeResultJsonList(c.document.toDelta().toJson());
   }
 
   // Shared helper
@@ -4552,7 +4584,7 @@ mixin QuillFormattingMixin on SheetFunction {
       c.formatSelection(attr);
     }
     _removeAttributesFromNewlines(c);
-    resultJson = c.document.toDelta().toJson();
+    resultJsonString =encodeResultJsonList(c.document.toDelta().toJson());
   }
   
   void _removeAttributesFromNewlines(QuillController c) {
@@ -4589,4 +4621,48 @@ mixin QuillFormattingMixin on SheetFunction {
     c.document = Document.fromDelta(cleaned);
   }
 
+}
+
+
+extension UniStatFunctionX on UniStatFunction {
+  List<Map<String, dynamic>> get resultJson =>
+      resultJsonString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList();
+
+  set resultJson(List<Map<String, dynamic>>? v) =>
+      resultJsonString = v?.map((m) => jsonEncode(m)).toList() ?? [];
+
+  Map<String, dynamic>? get formatter =>
+      formatterString != null ? Map<String, dynamic>.from(jsonDecode(formatterString!)) : null;
+
+  set formatter(Map<String, dynamic>? v) =>
+      formatterString = v != null ? jsonEncode(v) : null;
+}
+
+extension BiStatFunctionX on BiStatFunction {
+  List<Map<String, dynamic>> get resultJson =>
+      resultJsonString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList();
+
+  set resultJson(List<Map<String, dynamic>>? v) =>
+      resultJsonString = v?.map((m) => jsonEncode(m)).toList() ?? [];
+}
+extension UidGeneratorFunctionX on UidGeneratorFunction {
+  List<Map<String, dynamic>> get resultJson =>
+      resultJsonString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList();
+
+  set resultJson(List<Map<String, dynamic>>? v) =>
+      resultJsonString = v?.map((m) => jsonEncode(m)).toList() ?? [];
+}
+extension ColumnFunctionX on ColumnFunction {
+  List<Map<String, dynamic>> get resultJson =>
+      resultJsonString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList();
+
+  set resultJson(List<Map<String, dynamic>>? v) =>
+      resultJsonString = v?.map((m) => jsonEncode(m)).toList() ?? [];
+}
+extension InputBlockFunctionX on InputBlockFunction {
+  List<Map<String, dynamic>> get resultJson =>
+      resultJsonString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList();
+
+  set resultJson(List<Map<String, dynamic>>? v) =>
+      resultJsonString = v?.map((m) => jsonEncode(m)).toList() ?? [];
 }

@@ -17,7 +17,7 @@ import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart'
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:googleapis/sheets/v4.dart' as sheets;
 import 'package:googleapis_auth/auth_io.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
 
 Future<bool> authenticateAndSyncLayoutModels(

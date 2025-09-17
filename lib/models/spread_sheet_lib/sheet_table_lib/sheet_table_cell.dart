@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:billblaze/colors.dart';
@@ -18,7 +18,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.da
 import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/screens/layout_designer.dart';
 
-part 'sheet_table_cell.g.dart';
+// part  'sheet_table_cell.g.dart';
 
 class SheetTableCell extends SheetItem {
   String data;
@@ -73,19 +73,19 @@ class SheetTableCell extends SheetItem {
 }
 
 
-@HiveType(typeId: 10)
+// @HiveType(typeId: 10)
 class SheetTableCellBox extends SheetItem {
-  @HiveField(3)
+  // @HiveField(3)
   String data;
-  @HiveField(4)
+  // @HiveField(4)
   SheetItem sheetItem;
-  @HiveField(5)
+  // @HiveField(5)
   bool isVisible= true;
-  @HiveField(6)
+  // @HiveField(6)
   bool hasError = false;
-  @HiveField(7)
+  // @HiveField(7)
   int rowSpan = 1;
-  @HiveField(8)
+  // @HiveField(8)
   int colSpan = 1;
 
   SheetTableCellBox({
@@ -126,7 +126,7 @@ class SheetTableCellBox extends SheetItem {
         findItem: findItem, 
         textFieldTapDown: textFieldTapDown, 
         getReplaceTextFunctionForType: getReplaceTextFunctionForType,
-        docString: sheetItem.textEditorController,
+        docString: sheetItem.textEditorControllerString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList(),
         textDecoration: sheetItem.textDecoration.toSuperDecoration(),
         hide: sheetItem.hide,
         name: sheetItem.name,

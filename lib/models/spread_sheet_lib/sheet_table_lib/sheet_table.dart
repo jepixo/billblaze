@@ -7,30 +7,30 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_co
 import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_row.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:uuid/uuid.dart';
 
-part 'sheet_table.g.dart';
+// part  'sheet_table.g.dart';
 
-@HiveType(typeId: 9)
+// @HiveType(typeId: 9)
 class SheetTableBox extends SheetItem {
-  @HiveField(3)
+  // @HiveField(3)
   List<List<SheetTableCellBox>> cellData;
-  @HiveField(4)
+  // @HiveField(4)
   List<SheetTableRowBox> rowData;
-  @HiveField(5)
+  // @HiveField(5)
   List<SheetTableColumnBox> columnData;
-  @HiveField(6)
+  // @HiveField(6)
   int pinnedRows;
-  @HiveField(7)
+  // @HiveField(7)
   int pinnedColumns;
-  @HiveField(8)
+  // @HiveField(8)
   SuperDecorationBox sheetTableDecoration;
-  @HiveField(9)
+  // @HiveField(9)
   SuperDecorationBox sheetTablebgDecoration;
-  @HiveField(10)
+  // @HiveField(10)
   String name;
-  @HiveField(11)
+  // @HiveField(11)
   bool expand;
 
   SheetTableBox({

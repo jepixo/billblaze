@@ -40,7 +40,7 @@ import 'package:currency_picker/currency_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_quill/extensions.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/providers/box_provider.dart';
@@ -368,7 +368,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
         if (box is ItemDecorationBox) {
           return MapEntry(key, {
             'type': 'ItemDecoration',
-            'value': box.itemDecoration, // pass as-is
+            'value': jsonDecode(box.itemDecorationString) as Map<String, dynamic>, // pass as-is
           });
         } else if (box is SuperDecorationBox) {
           return MapEntry(key, {
@@ -436,7 +436,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
         if (box is ItemDecorationBox) {
           return MapEntry(key, {
             'type': 'ItemDecoration',
-            'value': box.itemDecoration, // pass as-is
+            'value': jsonDecode(box.itemDecorationString) as Map<String, dynamic>, // pass as-is
           });
         } else if (box is SuperDecorationBox) {
           return MapEntry(key, {
@@ -645,7 +645,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
         if (item is SheetTextBox) {
           SheetText tEItem = _addTextField(
               shouldReturn: true,
-              docString: item.textEditorController,
+              docString: item.textEditorControllerString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList(),
               id: item.id,
               parentId: item.parentId,
               name: item.name,
@@ -683,7 +683,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
 
         SheetText tEItem = _addTextField(
           shouldReturn: true,
-          docString: item.textEditorController,
+          docString: item.textEditorControllerString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList(),
           id: item.id,
           parentId: item.parentId,
           name: item.name,

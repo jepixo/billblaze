@@ -4,7 +4,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:billblaze/colors.dart';
@@ -15,15 +15,15 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/models/spread_sheet_lib/sized_item.dart';
 import 'package:billblaze/screens/layout_designer.dart';
 
-part 'sheet_item.g.dart';
+// part  'sheet_item.g.dart';
 
-@HiveType(typeId: 1)
+// @HiveType(typeId: 1)
 class SheetItem extends HiveObject {
-  @HiveField(0)
+  // @HiveField(0)
   String id;
-  @HiveField(1)
+  // @HiveField(1)
   String parentId;
-  @HiveField(2)
+  // @HiveField(2)
   IndexPath indexPath;
   
 

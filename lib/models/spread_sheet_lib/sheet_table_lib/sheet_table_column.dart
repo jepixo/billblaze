@@ -4,24 +4,24 @@ import 'dart:convert';
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:uuid/uuid.dart';
 
-part 'sheet_table_column.g.dart';
+// part  'sheet_table_column.g.dart';
 
-@HiveType(typeId: 12)
+// @HiveType(typeId: 12)
 class SheetTableColumnBox extends SheetItem {
-  @HiveField(3)
+  // @HiveField(3)
   double size;
-  @HiveField(4)
+  // @HiveField(4)
   double minSize;
-  @HiveField(5)
+  // @HiveField(5)
   double maxSize;
-  @HiveField(6)
+  // @HiveField(6)
   bool hide;
-  @HiveField(7)
+  // @HiveField(7)
   String columnDecoration;
-  @HiveField(8)
+  // @HiveField(8)
   List<InputBlock> columnInputBlocks;
 
   SheetTableColumnBox({

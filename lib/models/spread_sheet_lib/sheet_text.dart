@@ -3,6 +3,7 @@
 // import 'dart:math';
 import 'dart:convert';
 
+import 'package:billblaze/hive/hive_adapters.dart';
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
@@ -12,33 +13,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:uuid/uuid.dart';
-part 'sheet_text.g.dart';
+// part  'sheet_text.g.dart';
 
 //  ignore: depend_on_referenced_packages
 // import 'package:parchment_delta/parchment_delta.dart';
-@HiveType(typeId: 3)
+// @HiveType(typeId: 3)
 class SheetTextBox extends SheetItem {
-  @HiveField(3)
-  final List<Map<String, dynamic>> textEditorController;
-  @HiveField(4)
+  // @HiveField(3)
+  List<String> textEditorControllerString;
+  // @HiveField(4)
   final SuperDecorationBox textDecoration;
-  @HiveField(5)
+  // @HiveField(5)
   String name;
-  @HiveField(6)
+  // @HiveField(6)
   bool hide;
-  @HiveField(7)
+  // @HiveField(7)
   List<InputBlock> inputBlocks;
-  @HiveField(8)
+  // @HiveField(8)
   int type;
-  @HiveField(9)
+  // @HiveField(9)
   bool locked;
 
   SheetTextBox({
     required this.textDecoration,
-    required this.textEditorController,
+    List<Map<String, dynamic>>? textEditorController,
     required super.id,
     required super.parentId,
     required this.hide,
@@ -47,7 +48,10 @@ class SheetTextBox extends SheetItem {
     List<InputBlock>? inputBlocks,
     this.type = 0,
     required this.locked,
-  }): inputBlocks = inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2],id: id)];
+    List<String>? textEditorControllerString,
+  }): textEditorControllerString =textEditorControllerString?? textEditorController!.map((m) => jsonEncode(m)).toList(),
+  inputBlocks = inputBlocks ?? [InputBlock(indexPath:indexPath, blockIndex: [-2],id: id)];
+
 
   @override
   Map<String, dynamic> toMap() {
@@ -56,7 +60,7 @@ class SheetTextBox extends SheetItem {
         'id': id,
         'parentId': parentId,
         'indexPath': indexPath.toJson(),
-        'textEditorController': textEditorController,
+        'textEditorController': textEditorControllerString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList(),
         'textDecoration': textDecoration.toMap(),
         'name': name,
         'hide': hide,
@@ -475,3 +479,20 @@ enum SheetTextType {
   currency,
 
 }
+
+// extension SheetTextBoxX on SheetTextBox {
+//     List<Map<String, dynamic>> get textEditorController =>
+//       textEditorControllerString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList();
+
+//   set textEditorController(List<Map<String, dynamic>> v) =>
+//       textEditorControllerString = v.map((m) => jsonEncode(m)).toList();
+
+// }
+// extension SheetTextBoxAdapterX on SheetTextBoxAdapter {
+//     List<Map<String, dynamic>> get textEditorController =>
+//       textEditorControllerString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList();
+
+//   set textEditorController(List<Map<String, dynamic>> v) =>
+//       textEditorControllerString = v.map((m) => jsonEncode(m)).toList();
+
+// }

@@ -3,28 +3,28 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_functions.dart';
 
-part 'input_block.g.dart';
+// part  'input_block.g.dart';
 
-@HiveType(typeId: 15)
+// @HiveType(typeId: 15)
 class InputBlock {
-  @HiveField(0)
+  // @HiveField(0)
   IndexPath indexPath;
-  @HiveField(1)
+  // @HiveField(1)
   List<int> blockIndex;
-  @HiveField(2)
+  // @HiveField(2)
   String id;
-  @HiveField(3)
+  // @HiveField(3)
   bool isExpanded;
-  @HiveField(4)
+  // @HiveField(4)
   SheetFunction? function;
-  @HiveField(5)
+  // @HiveField(5)
   bool useConst;
-  @HiveField(6)
+  // @HiveField(6)
   int lockMode;
 
   InputBlock( {

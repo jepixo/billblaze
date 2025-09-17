@@ -4,22 +4,8 @@ import 'dart:io';
 import 'package:billblaze/components/elevated_button.dart' show ElevatedLayerButton;
 import 'package:billblaze/home.dart';
 import 'package:billblaze/colors.dart';
-import 'package:billblaze/models/bill/required_text.dart';
-import 'package:billblaze/models/index_path.dart';
-import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/layout_model.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_functions.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_list.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_cell.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_column.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_table_lib/sheet_table_row.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
 import 'package:billblaze/firebase_options.dart';
-import 'package:billblaze/models/document_properties_model.dart';
-import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
-import 'package:billblaze/models/spread_sheet_lib/sized_item.dart';
 import 'package:billblaze/providers/auth_provider.dart';
 import 'package:billblaze/providers/box_provider.dart';
 import 'package:billblaze/screens/layout_designer.dart';
@@ -34,26 +20,13 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_inappwebview_windows/flutter_inappwebview_windows.dart';
 // import 'package:llama_cpp_dart/llama_cpp_dart.dart';
-// void redirectPrintToFile() {
-//   final logFile = File('${Directory.systemTemp.path}\\my_app_log.txt');
-//   final logSink = logFile.openWrite(mode: FileMode.append);
-//   Zone.current.fork(specification: ZoneSpecification(
-//     print: (self, parent, zone, line) {
-//       final ts = DateTime.now().toIso8601String();
-//       logSink.writeln('[$ts] $line');
-//       logSink.flush();
-//       parent.print(zone, line);
-//     },
-//   )).run(() {
-//     runApp(const ProviderScope(child: MainApp()));
-//   });
-// }
+
 
 String? pendingFilePath;
 
@@ -70,10 +43,6 @@ Future<void> main(List<String> args) async {
 
   // Get Hive directory
   final directory = await getApplicationSupportDirectory();
-  // final files = directory.listSync().where((f) => f.path.endsWith('.hive'));
-  // for (var file in files) {
-  //   await file.delete();
-  // }
   
   // Create BillBlaze folder inside it
   final billBlazeDir = Directory('${directory.path}/BillBlaze');
@@ -84,29 +53,30 @@ Future<void> main(List<String> args) async {
 
 
   Hive.init('${directory.path}/hive');
-  Hive.registerAdapter(DocumentPropertiesBoxAdapter());
-  Hive.registerAdapter(SheetItemAdapter());
-  Hive.registerAdapter(SheetListBoxAdapter());
-  Hive.registerAdapter(SheetTextBoxAdapter());
-  Hive.registerAdapter(LayoutModelAdapter());
-  Hive.registerAdapter(SheetDecorationAdapter());
-  Hive.registerAdapter(SuperDecorationBoxAdapter());
-  Hive.registerAdapter(AccessAdapter());
-  Hive.registerAdapter(ItemDecorationBoxAdapter());
-  Hive.registerAdapter(SheetTableBoxAdapter());
-  Hive.registerAdapter(SheetTableCellBoxAdapter());
-  Hive.registerAdapter(SheetTableRowBoxAdapter());
-  Hive.registerAdapter(SheetTableColumnBoxAdapter());
-  Hive.registerAdapter(IndexPathAdapter());
-  Hive.registerAdapter(InputBlockAdapter());
-  Hive.registerAdapter(SheetFunctionAdapter());
-  Hive.registerAdapter(RequiredTextAdapter());
-  Hive.registerAdapter(ColumnFunctionAdapter());
-  Hive.registerAdapter(InputBlockFunctionAdapter());
-  Hive.registerAdapter(UniStatFunctionAdapter());
-  Hive.registerAdapter(BiStatFunctionAdapter());
-  Hive.registerAdapter(UidGeneratorFunctionAdapter());
-  Hive.registerAdapter(SheetSizedItemAdapter());
+  // Hive.registerAdapters(); 
+  // Hive.registerAdapter(DocumentPropertiesBoxAdapter());
+  // Hive.registerAdapter(SheetItemAdapter());
+  // Hive.registerAdapter(SheetListBoxAdapter());
+  // Hive.registerAdapter(SheetTextBoxAdapter());
+  // Hive.registerAdapter(LayoutModelAdapter());
+  // Hive.registerAdapter(SheetDecorationAdapter());
+  // Hive.registerAdapter(SuperDecorationBoxAdapter());
+  // Hive.registerAdapter(AccessAdapter());
+  // Hive.registerAdapter(ItemDecorationBoxAdapter());
+  // Hive.registerAdapter(SheetTableBoxAdapter());
+  // Hive.registerAdapter(SheetTableCellBoxAdapter());
+  // Hive.registerAdapter(SheetTableRowBoxAdapter());
+  // Hive.registerAdapter(SheetTableColumnBoxAdapter());
+  // Hive.registerAdapter(IndexPathAdapter());
+  // Hive.registerAdapter(InputBlockAdapter());
+  // Hive.registerAdapter(SheetFunctionAdapter());
+  // Hive.registerAdapter(RequiredTextAdapter());
+  // Hive.registerAdapter(ColumnFunctionAdapter());
+  // Hive.registerAdapter(InputBlockFunctionAdapter());
+  // Hive.registerAdapter(UniStatFunctionAdapter());
+  // Hive.registerAdapter(BiStatFunctionAdapter());
+  // Hive.registerAdapter(UidGeneratorFunctionAdapter());
+  // Hive.registerAdapter(SheetSizedItemAdapter());
   // await Hive.deleteBoxFromDisk('decorations');
   // await Hive.deleteBoxFromDisk('layouts');
   // await Hive.deleteBoxFromDisk('fetchedLayoutBox');
@@ -302,7 +272,7 @@ class MainAppState extends ConsumerState<MainApp> {
                 // ref
                 //     .read(authRepositoryProvider)
                 //     .checkAndCreateUserDocument(context, ref);
-                () async{await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');}();
+                // () async{await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');}();
                 return const Home();
                 // return SafeArea(
                 //     child: Material(

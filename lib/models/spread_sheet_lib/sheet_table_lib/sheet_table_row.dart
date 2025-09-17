@@ -3,23 +3,23 @@ import 'dart:convert';
 import 'package:billblaze/models/index_path.dart';
 import 'package:billblaze/models/input_block.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_item.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
-part 'sheet_table_row.g.dart';
+// part  'sheet_table_row.g.dart';
 
-@HiveType(typeId: 11)
+// @HiveType(typeId: 11)
 class SheetTableRowBox extends SheetItem {
-  @HiveField(3)
+  // @HiveField(3)
   double size;
-  @HiveField(4)
+  // @HiveField(4)
   double minSize;
-  @HiveField(5)
+  // @HiveField(5)
   double maxSize;
-  @HiveField(6)
+  // @HiveField(6)
   bool hide;
-  @HiveField(7)
+  // @HiveField(7)
   String rowDecoration;
-  @HiveField(8)
+  // @HiveField(8)
   List<InputBlock> rowInputBlocks;
   
   SheetTableRowBox({

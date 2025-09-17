@@ -36,8 +36,8 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_svgl/flutter_svgl.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:billblaze/colors.dart';
@@ -4163,12 +4163,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               case 0:
                 tempLayoutModel.docPropsList[0].pageFormatController = {
                   'width': parsedValue/pageUnit, 
-                  'height': tempLayoutModel.docPropsList[0].pageFormatController['height']};
+                  'height': tempLayoutModel.docPropsList[0].pageFormatController['height']??0};
                 pageFormatControllers[0].text = parsedValue.toString();
                 break;
               case 1:
                 tempLayoutModel.docPropsList[0].pageFormatController = {
-                  'width': tempLayoutModel.docPropsList[0].pageFormatController['width'], 
+                  'width': tempLayoutModel.docPropsList[0].pageFormatController['width']??0, 
                   'height': parsedValue/pageUnit};
                 pageFormatControllers[1].text = parsedValue.toString();
                 break;
@@ -4248,12 +4248,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               case 0:
                 tempLayoutModel.docPropsList[0].pageFormatController = {
                   'width': parsedValue, 
-                  'height': tempLayoutModel.docPropsList[0].pageFormatController['height']};
+                  'height': tempLayoutModel.docPropsList[0].pageFormatController['height']??0};
                 pageFormatControllers[s].text = parsedValue.toString();
                 break;
               case 1:
                 tempLayoutModel.docPropsList[0].pageFormatController = {
-                  'width': tempLayoutModel.docPropsList[0].pageFormatController['width'], 
+                  'width': tempLayoutModel.docPropsList[0].pageFormatController['width']??0, 
                   'height': parsedValue};
                 pageFormatControllers[s].text = parsedValue.toString();
                 break;   
@@ -4357,7 +4357,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       double.parse(format['height'].toString()),
     );
   }
-  Map<String, dynamic> getMapFromPageFormat(PdfPageFormat format) {
+  Map<String, double> getMapFromPageFormat(PdfPageFormat format) {
     return {
       'width': format.width,
       'height': format.height,
@@ -13524,7 +13524,7 @@ String buildCombinedTextFromBlocks(
     Delta delta;
 
     if (item is SheetTextBox) {
-      delta = Delta.fromJson(item.textEditorController);
+      delta = Delta.fromJson(item.textEditorControllerString.map((s) => Map<String, dynamic>.from(jsonDecode(s))).toList());
     } else if (item is SheetText) {
       delta = item.textEditorConfigurations.controller.document.toDelta();
     } else {
