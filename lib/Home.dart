@@ -8024,28 +8024,15 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                             ElevatedLayerButton(
                                                               onClick:
                                                                   () async {
-                                                                final layoutsBox = Boxes.getLayouts(ref);
-                                                                // Delete the item
-                                                                // print(layoutsBox);
-                                                                // await layoutsBox.get(layoutsBox.keyAt(i))?.delete();
-                                                                layoutsBox.get(layoutsBox.keyAt(i))?..deleted = true..save();
-                                                                setState(() {
-                                                                  filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
-                                                                });
-                                                                // if (layoutModel != null) {
-                                                                //   final dir = ref.read(folderPathProvider); // wherever you save .bbc files
-                                                                //   final safeName = layoutModel.name;
-                                                                //   final filePath = '$dir\\$safeName';
-                                                                //   final file = File(filePath);
-                                        
-                                                                //   if (await file.exists()) {
-                                                                //    _subscription?.pause();
-                                                                //     await file.delete();
-                                                                //    _subscription?.resume();
-                                                                //  print("Deleted file: $filePath");
-                                                                //   }
-                                                                // }
-                                                                
+                                                                    
+                                                                await showConfirmDeleteDialog(context, () async {
+                                                                  final layoutsBox = Boxes.getLayouts(ref);
+                                                                  // Delete the item
+                                                                  layoutsBox.get(layoutsBox.keyAt(i))?..deleted = true..save();
+                                                                  setState(() {
+                                                                    filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                                  });
+                                                                }, sWidth, sHeight);
                                                               },
                                                               buttonHeight: 45,
                                                               buttonWidth: 45,
@@ -8300,24 +8287,15 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                             ElevatedLayerButton(
                                                               onClick:
                                                                   () async {
-                                                                final layoutsBox = Boxes.getLayouts(ref);
+                                                                    await showConfirmDeleteDialog(context, () async {
+                                                                  final layoutsBox = Boxes.getLayouts(ref);
                                                                 // Delete the item
                                                                 // await layoutsBox.get(layoutsBox .keyAt( i)) ?.delete();
                                                                 layoutsBox.get(layoutsBox.keyAt(i))?..deleted = true..save();
                                                                 setState(() {});
-                                                                // if (layoutModel != null) {
-                                                                //   final dir = ref.read(folderPathProvider); // wherever you save .bbc files
-                                                                //   final safeName = layoutModel.name;
-                                                                //   final filePath = '$dir\\$safeName';
-                                                                //   final file = File(filePath);
-                                        
-                                                                //   if (await file.exists()) {
-                                                                //    _subscription?.pause();
-                                                                //     await file.delete();
-                                                                //    _subscription?.resume();
-                                                                //  print("Deleted file: $filePath");
-                                                                //   }
-                                                                // }
+                                                                
+                                                                }, sWidth, sHeight);
+                                                                
                                                               },
                                                               buttonHeight: 30,
                                                               buttonWidth: 30,
@@ -9149,7 +9127,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               ElevatedLayerButton(
                                                                 onClick:
                                                                     () async {
-                                                                  print( filteredLayoutBox);
+                                                                  await showConfirmDeleteDialog(context, () async {
                                                                   final layoutsBox = Boxes.getLayouts(ref);
                                                                       // Delete the item
                                                                   // print(  layoutsBox);
@@ -9161,19 +9139,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                         .values
                                                                         .toList();
                                                                   });
-                                                                //   if (layoutModel != null) {
-                                                                //   final dir = ref.read(folderPathProvider); // wherever you save .bbc files
-                                                                //   final safeName = layoutModel.name;
-                                                                //   final filePath = '$dir\\$safeName';
-                                                                //   final file = File(filePath);
-                                        
-                                                                //   if (await file.exists()) {
-                                                                //   //  _subscription?.pause();
-                                                                //     await file.delete();
-                                                                //   // _subscription?.resume();
-                                                                //  print("Deleted file: $filePath");
-                                                                //   }
-                                                                // }
+                                                                }, sWidth, sHeight, 'Are you sure you want to delete this bill?');
+                                                                
                                                                 },
                                                                 buttonHeight:30,
                                                                 buttonWidth: 30,
@@ -9436,43 +9403,25 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               ElevatedLayerButton(
                                                                 onClick:
                                                                     () async {
+                                                                      await showConfirmDeleteDialog(context, () async {
                                                                   final layoutsBox = Boxes.getLayouts(ref);
                                                                   // Delete the item
                                                                   // await layoutsBox.get(layoutsBox.keyAt(i))?.delete();
                                                                   layoutsBox.get(layoutsBox.keyAt(i))?..deleted = true..save();
                                                                   setState(() {});
-                                                                //   if (layoutModel != null) {
-                                                                //   final dir = ref.read(folderPathProvider); // wherever you save .bbc files
-                                                                //   final safeName = layoutModel.name;
-                                                                //   final filePath = '$dir\\$safeName';
-                                                                //   final file = File(filePath);
-                                        
-                                                                //   if (await file.exists()) {
-                                                                //     _subscription?.pause();
-                                                                //     await file.delete();
-                                                                //     _subscription?.resume();
-                                                                //  print("Deleted file: $filePath");
-                                                                //   }
-                                                                // }
+                                                                }, sWidth, sHeight, 'Are you sure you want to delete this bill?');
+                                                                
+                                                                  
+                                                                
                                                                 },
                                                                 buttonHeight:20,
                                                                 buttonWidth: 20,
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            10),
-                                                                animationDuration:
-                                                                    const Duration(
-                                                                        milliseconds:
-                                                                            200),
-                                                                animationCurve:
-                                                                    Curves.ease,
-                                                                topDecoration:
-                                                                    BoxDecoration(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  border: Border
-                                                                      .all(),
+                                                                borderRadius: BorderRadius.circular( 10),
+                                                                animationDuration: const Duration( milliseconds: 200),
+                                                                animationCurve: Curves.ease,
+                                                                topDecoration: BoxDecoration(
+                                                                  color: Colors.white,
+                                                                  border: Border.all(),
                                                                 ),
                                                                 topLayerChild:
                                                                     Icon(
@@ -13355,6 +13304,58 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       },
     );
   }
+
+  Future<void> showConfirmDeleteDialog(BuildContext context, Function func, double sWidth, double sHeight,[String message = 'Are you sure you want to delete this layout?']) async {
+    await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Confirm Delete',style: GoogleFonts
+          .lexend(
+            fontSize: mapValueDimensionBased( 18, 25, sWidth, sHeight),
+            color: defaultPalette.extras[0],
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+          ),),
+          content: Text(message,style: GoogleFonts
+          .lexend(
+            fontSize: mapValueDimensionBased( 12, 20, sWidth, sHeight),
+            color: defaultPalette.extras[0],
+            fontWeight: FontWeight.w400,
+            letterSpacing: -0.2,
+          ),),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel',style: GoogleFonts
+          .lexend(
+            fontSize: mapValueDimensionBased( 15, 22, sWidth, sHeight),
+            color: defaultPalette.extras[0],
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.2,
+          ),),
+            ),
+            TextButton(
+              onPressed: () { 
+                func();
+                Navigator.of(context).pop(true);
+                
+                },
+              style: TextButton.styleFrom(foregroundColor: defaultPalette.extras[4]),
+              child: Text('Delete',style: GoogleFonts
+          .lexend(
+            fontSize: mapValueDimensionBased(
+                    15, 22, sWidth, sHeight),
+            color: defaultPalette.extras[4],
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.2,
+          )),
+          ),
+          ],
+        ); },
+    );
+    
+  }
 }
 
 
@@ -13369,8 +13370,7 @@ double mapValue({
   return outMin + (value - inMin) * (outMax - outMin) / (inMax - inMin);
 }
 
-double mapValueDimensionBased(double outMin, double outMax, double w, double h,
-    {bool b = true, bool useWidth = false}) {
+double mapValueDimensionBased(double outMin, double outMax, double w, double h, {bool b = true, bool useWidth = false}) {
   return mapValue(
       value: b
           ? useWidth

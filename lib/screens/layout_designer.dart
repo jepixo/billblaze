@@ -10629,8 +10629,9 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     bool checkSideSelection(int s) {
       final label = sheetTableCell.id;                // e.g. "C4"
       final match = RegExp(r"^([A-Z]+)(\d+)$").firstMatch(label);
-      if (match == null) return false;
 
+      if (match == null) return false;
+      if(sheetTableCell.rowSpan>1||sheetTableCell.colSpan>1) return true;
       final colLabel = match.group(1)!;               // e.g. "C"
       final rowNum = int.parse(match.group(2)!);      // e.g. 4
 
