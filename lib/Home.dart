@@ -97,7 +97,7 @@ final aiModelPathProvider = StateProvider<String>((ref) {
 });
 final folderPathProvider = StateProvider<String?>((ref) {
   final box = Boxes.getFolderPaths();
-  return box.get(ref.read(authPr).currentUser?.email??'default');
+  return box.get(ref.read(authPr).currentUser?.uid??'default');
 });
 final currencyCodeProvider = StateProvider<Currency>((ref) {
   return CurrencyService().findByCode('INR')!;
@@ -329,12 +329,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
    
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async{
       try {
-        await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
+        await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts');
         filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
         _updateGraphLineSpeed(100);
         // await syncLayoutsWithAssets();
       } on Exception catch (_) {
-        // TODO
+        print('Boxes: ${Hive.boxExists( ref.read(authPr).currentUser?.uid??'layouts')}');
       }finally{
         if (ref.read(folderPathProvider)==null) {
           final directory = await getApplicationSupportDirectory();
@@ -450,71 +450,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     }
   }
   
-  //
-  //
-  // void _startDataUpdate() {
-  //   _timer = Timer.periodic(Duration(milliseconds: _graphLineSpeedTween.value),
-  //       (timer) {
-  //     setState(() {
-  //       // Generate an oscillating y value using a sine wave
-  //       double yValue =
-  //           20 * sin(_xValue * 0.8); // Adjust amplitude and frequency as needed
-  //       _xValue += 0.5;
-  //       _dataPoints[0].add(FlSpot(_xValue, yValue));
-  //       if (_dataPoints[0].length >
-  //           (_dataPoints[0].last.x <= _graphLineSpeedTween.value
-  //               ? _dataPoints[0].last.x + 10
-  //               : _graphLineSpeedTween.value)) {
-  //         _dataPoints[0].removeAt(0);
-  //       }
-  //       if (even) {
-  //         _xxValue = _xxValue + 1;
-  //       }
-  //       even = !even;
-  //       // Alternates between 10 and -10
-  //       // double yyValue = 20 * double.parse(sin(_xxValue).round().toString());
-  //       double yyValue = _xxValue % 2 == 0 ? -10 : -20;
-  //       _dataPoints[1].add(FlSpot(_xValue + 1, yyValue));
-  //       if (_dataPoints[1].length > 20) {
-  //         _dataPoints[1].removeAt(0);
-  //       }
-  //       double yyyValue = _xxValue % 2 == 0 ? -10 : -20;
-  //       _dataPoints[2].add(FlSpot(
-  //           _graphLineSpeedTween.value <= 50 ? _xValue - 20 : _xValue - 25,
-  //           yyyValue));
-  //       if (_dataPoints[2].length > 25) {
-  //         _dataPoints[2].removeAt(0);
-  //       }
-  //       double y4Value = _xxValue % 2 == 0 ? -10 : -20;
-  //       _dataPoints[3].add(FlSpot(_xValue - 1.7, y4Value));
-  //       if (_dataPoints[3].length > 20) {
-  //         _dataPoints[3].removeAt(0);
-  //       }
-  //       double y5Value = _xxValue % 2 == 0 ? 10 : 20;
-  //       _dataPoints[4].add(FlSpot(
-  //           _graphLineSpeedTween.value <= 50
-  //               ? _xValue - 18.21
-  //               : _xValue - 20.21,
-  //           y5Value));
-  //       if (_dataPoints[4].length > 20) {
-  //         _dataPoints[4].removeAt(0);
-  //       }
-  //       double y6Value = _xxValue % 2 == 0 ? 10 : 20;
-  //       _dataPoints[5].add(FlSpot(_xValue + 3, y6Value));
-  //       if (_dataPoints[5].length > 25) {
-  //         _dataPoints[5].removeAt(0);
-  //       }
-  //       double y7Value = _xxValue % 2 == 0 ? 10 : 20;
-  //       _dataPoints[6].add(FlSpot(
-  //           _graphLineSpeedTween.value <= 50 ? _xValue - 19 : _xValue - 21,
-  //           y7Value));
-  //       if (_dataPoints[6].length > 25) {
-  //         _dataPoints[6].removeAt(0);
-  //       }
-  //     });
-  //     _getCurrentTime();
-  //   });
-  // }
 
   int _curDay = 0;    // 0..30
   int _curMonth = 0;  // 0..11
@@ -3510,9 +3445,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                     id: layoutModel.id,
                                                                                     // layoutModel: layoutModel,
                                                                                     onPop: (pdf) {
-                                                                                      // setState(() {
-                                                                                      //   filteredLayoutBox = Boxes.getLayouts().values.toList();
-                                                                                      // });
+                                                                                      setState(() {
+                                                                                        filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                                                      });
                                                                                     //  subscribeStream();
                                                                                     },
                                                                                   ),
@@ -4442,51 +4377,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     return Size(newWidth, newHeight);
   }
   
-  // Stream<List<LayoutModel>> layoutStream() async* {
-  //     if (!await dir.exists()) {
-  //       yield [];
-  //       return;
-  //     }
-  //     // Initial emit
-  //     List<FileSystemEntity> files = dir
-  //         .listSync()
-  //         .whereType<File>()
-  //         .where((f) => f.path.endsWith('.bbc'))
-  //         .toList();
-  //
-  //     yield files.map((file) {
-  //       try {
-  //         final content = (file as File).readAsStringSync();
-  //         final json = jsonDecode(content);
-  //         var model =LayoutModel.fromJson(content)..name = file.path.split('\\').last;
-  //         print(model.name);
-  //         return model;
-  //       } catch (e) {
-  //         // print('Error reading ${file.path}: $e');
-  //         return null;
-  //       }
-  //     }).whereType<LayoutModel>().toList();
-  //
-  //     // Watch for changes
-  //     await for (final event in dir.watch(recursive: false)) {
-  //       final updatedFiles = dir
-  //           .listSync()
-  //           .whereType<File>()
-  //           .where((f) => f.path.endsWith('.bbc'))
-  //           .toList();
-  //
-  //       yield updatedFiles.map((file) {
-  //         try {
-  //           final content = file.readAsStringSync();
-  //           final json = jsonDecode(content);
-  //           return LayoutModel.fromJson(content)..name = file.path.split('\\').last.replaceAll(r'\.bbc$', '');
-  //         } catch (e) {
-  //           return null;
-  //         }
-  //       }).whereType<LayoutModel>().toList();
-  //     }
-  //   }
-  
+
   Future<void> saveFile(LayoutModel newLayout) async {
     final payload = newLayout.toJson();
     final content = payload is String ? payload : jsonEncode(payload);
@@ -4624,7 +4515,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           final fm = parseFull(meta['file'] as File)?..name = (meta['file'] as File).path.split('\\').last;
           if (fm != null) {
             fm.id = newId;
-            box.put(fm.id, fm);
+            await box.put(fm.id, fm);
           }}
 
         } else if (lm != null && meta != null) {
@@ -4644,7 +4535,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             // File newer → overwrite Hive
             final fm = parseFull(meta['file'] as File)?..name = (meta['file'] as File).path.split('\\').last;
             if (fm != null) {
-              box.put(fm.id, fm);
+             await box.put(fm.id, fm);
             }
           } else {
             // Same timestamp → keep Hive (or just trust either side)
@@ -6265,7 +6156,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   );
 
                                   final box = Boxes.getLayouts(ref);
-                                  box.put(layoutId, newLayout);
+                                  await box.put(layoutId, newLayout);
 
                                   // Convert to JSON string safely
                                   // saveFile(newLayout);
@@ -6280,7 +6171,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       canPop: false,
                                       child: LayoutDesigner(
                                         onPop: (pdf) {
-                                        //  subscribeStream();
+                                        setState(() {
+                                          filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                        });
                                         },
                                         id: layoutId,
                                         // layoutModel: newLayout,
@@ -6387,7 +6280,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                   );
 
                                   final box = Boxes.getLayouts(ref);
-                                  box.put(billId, newLayout);
+                                  await box.put(billId, newLayout);
 
                                   Navigator.push(
                                       context,
@@ -6402,7 +6295,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   id: billId,
                                                   // layoutModel: newLayout,
                                                   onPop: (pdf) {
-                                                  //  subscribeStream();
+                                                  setState(() {
+                                                    filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                  });
                                                   },
                                                 ),
                                               ));
@@ -7051,7 +6946,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   if (shouldOverwrite == 0)
                                                     continue;
                                                   if (shouldOverwrite == 1) {
-                                                    box.put(
+                                                    await box.put(
                                                         id,
                                                         incoming.copyWith(
                                                             pdf: existing.pdf));
@@ -7076,10 +6971,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       pdf: existing.pdf,
                                                       type: incoming.type,
                                                     );
-                                                    box.put(newId, newlm);
+                                                    await box.put(newId, newlm);
                                                   }
                                                 } else if (existing == null) {
-                                                  box.put(
+                                                  await box.put(
                                                       id,
                                                       incoming
                                                           .copyWith(pdf: []));
@@ -7802,7 +7697,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                             // layoutModel:layoutModel,
                                                             id: Boxes.getLayouts(ref).keyAt(i),
                                                             onPop: (pdf) {
-                                                            //  subscribeStream();
+                                                            setState(() {
+                                                              filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                            });
                                                             },
                                                           ),
                                                         );
@@ -7939,7 +7836,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   borderRadius: BorderRadius.circular(50)),
                                                               child:
                                                                   ElevatedLayerButton(
-                                                                onClick: () {
+                                                                onClick: () async {
                                                                   final box = Boxes.getLayouts(ref);
                                                                   final name = Boxes.getBillName(ref);
                                                                   var key ='BI-${const Uuid().v4()}';
@@ -7965,7 +7862,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                     sheetDecorationMap: prevLm?.sheetDecorationMap
                                                                   );
                                         
-                                                                  box.put( key, lm);
+                                                                  await box.put( key, lm);
                                                                   lm.save();
                                                                   // saveFile(lm);
                                                                   ref.read(homeScreenTabIndexProvider.notifier).update((state) =>2,);
@@ -7981,7 +7878,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                 id: key,
                                                                                 // layoutModel: lm,
                                                                                 onPop: (pdf) {
-                                                                                //  subscribeStream();
+                                                                                setState(() {
+                                                                                  filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                                                });
                                                                                 },
                                                                               ),
                                                                               canPop: false,
@@ -8089,7 +7988,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                             id: Boxes.getLayouts(ref).keyAt(i),
                                                             // layoutModel: layoutModel,
                                                             onPop: (pdf) {
-                                                            //  subscribeStream();
+                                                            setState(() {
+                                                              filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                            });
                                                             },
                                                           ),
                                                         );
@@ -8190,7 +8091,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                               50)),
                                                               child:
                                                                   ElevatedLayerButton(
-                                                                onClick: () {
+                                                                onClick: () async {
                                                                   final box = Boxes
                                                                       .getLayouts(ref);
                                                                   final name = Boxes
@@ -8223,7 +8124,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                     sheetDecorationMap: prevLm?.sheetDecorationMap,
                                                                   );
                                         
-                                                                  box.put(key, lm);
+                                                                  await box.put(key, lm);
                                                                   lm.save();
                                                                   saveFile(lm);
                                                                   ref.read(homeScreenTabIndexProvider.notifier) .update(
@@ -8238,7 +8139,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                   id: key,
                                                                                   // layoutModel: lm,
                                                                                   onPop: (pdf) {
-                                                                                  //  subscribeStream();
+                                                                                  setState(() {
+                                                                                    filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                                                  });
                                                                                   },
                                                                                 ),
                                                                                 canPop: false,
@@ -8792,7 +8695,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               id: Boxes .getLayouts(ref).keyAt(i),
                                                               // layoutModel: layoutModel,
                                                               onPop: (pdf) {
-                                                              //  subscribeStream();
+                                                              setState(() {
+                                                                filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                              });
                                                               },
                                                             ),
                                                           );
@@ -8934,7 +8839,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                             // layoutModel: layoutModel,
                                                                             onPop:
                                                                                 (pdf) {
-                                                                            //  subscribeStream();
+                                                                            setState(() {
+                                                                              filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                                            });
                                                                             },
                                                                             exportPdf:
                                                                                 true,
@@ -9021,7 +8928,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                             50)),
                                                                 child:
                                                                     ElevatedLayerButton(
-                                                                  onClick: () {
+                                                                  onClick: () async {
                                                                     final box =
                                                                         Boxes
                                                                             .getLayouts(ref);
@@ -9057,7 +8964,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       sheetDecorationMap: prevLm?.sheetDecorationMap,
                                                                     );
                                           
-                                                                    box.put(key,lm);
+                                                                    await box.put(key,lm);
                                                                     lm.save();
                                                                     saveFile(lm);
                                                                     //unsubscribeStream();
@@ -9070,7 +8977,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                     id: key,
                                                                                     // layoutModel: lm,
                                                                                     onPop: (pdf) {
-                                                                                    //  subscribeStream();
+                                                                                    setState(() {
+                                                                                        filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                                                      });
                                                                                     },
                                                                                   ),
                                                                                   canPop: false,
@@ -9211,7 +9120,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               id: Boxes.getLayouts(ref).keyAt(i),
                                                               // layoutModel: layoutModel,
                                                               onPop: (pdf) {
-                                                              //  subscribeStream();
+                                                              setState(() {
+                                                                filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                              });
                                                               },
                                                             ),
                                                           );
@@ -9312,7 +9223,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                             50)),
                                                                 child:
                                                                     ElevatedLayerButton(
-                                                                  onClick: () {
+                                                                  onClick: () async {
                                                                     final box =
                                                                         Boxes
                                                                             .getLayouts(ref);
@@ -9338,7 +9249,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       sheetDecorationMap: prevLm?.sheetDecorationMap
                                                                     );
                                           
-                                                                    box.put(key,lm);
+                                                                    await box.put(key,lm);
                                                                     lm.save();
                                                                     saveFile(lm);
                                                                    //unsubscribeStream();
@@ -9351,7 +9262,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                     id: key,
                                                                                     // layoutModel: lm,
                                                                                     onPop: (pdf) {
-                                                                                    //  subscribeStream();
+                                                                                    setState(() {
+                                                                                        filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                                                      });
                                                                                     },
                                                                                   ),
                                                                                   canPop: false,
@@ -9504,7 +9417,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 width:(isBillTab ? (sWidth / 1.73 - 100).clamp(0, double.infinity):450),
                 height:( sHeight / 1.8-10),
                 child: ValueListenableBuilder(
-                    valueListenable: Hive.box<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts').listenable(),
+                    valueListenable: Hive.box<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts').listenable(),
                     builder: (context, Box<LayoutModel> box, _) {
                       monthRevenueMap = {};
                       dayRevenueMap = {};
@@ -10438,7 +10351,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 top: isBillTab ? 70 + sHeight / 1.8 : sHeight / 4,
                 child: ValueListenableBuilder(
                     valueListenable:
-                        Hive.box<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts').listenable(),
+                        Hive.box<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts').listenable(),
                     builder: (context, Box<LayoutModel> box, _) {
                       final allLayouts = box.values.toList();
 
@@ -11125,7 +11038,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 top: isBillTab ? 70 + sHeight / 1.8 : sHeight / 4,
                 child: ValueListenableBuilder(
                     valueListenable:
-                        Hive.box<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts').listenable(),
+                        Hive.box<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts').listenable(),
                     builder: (context, Box<LayoutModel> box, _) {
                       final allLayouts = box.values.toList();
 

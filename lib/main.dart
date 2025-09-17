@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:billblaze/components/elevated_button.dart' show ElevatedLayerButton;
+import 'package:billblaze/hive/hive_registrar.g.dart';
 import 'package:billblaze/home.dart';
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/models/layout_model.dart';
@@ -53,7 +54,7 @@ Future<void> main(List<String> args) async {
 
 
   Hive.init('${directory.path}/hive');
-  // Hive.registerAdapters(); 
+  Hive.registerAdapters();
   // Hive.registerAdapter(DocumentPropertiesBoxAdapter());
   // Hive.registerAdapter(SheetItemAdapter());
   // Hive.registerAdapter(SheetListBoxAdapter());
@@ -272,7 +273,7 @@ class MainAppState extends ConsumerState<MainApp> {
                 // ref
                 //     .read(authRepositoryProvider)
                 //     .checkAndCreateUserDocument(context, ref);
-                // () async{await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');}();
+                () async{await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts');}();
                 return const Home();
                 // return SafeArea(
                 //     child: Material(
@@ -512,7 +513,7 @@ class _ErrorAppState extends ConsumerState<ErrorApp> {
 
       final box = Boxes.getLayouts(ref);
       if (!box.containsKey(layout.id)) {
-        box.put(layout.id, layout);
+        await box.put(layout.id, layout);
       }
       pendingFilePath =null;
       WidgetsBinding.instance.addPostFrameCallback((_) {

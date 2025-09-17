@@ -421,8 +421,9 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
       } else {
       print('inelse');
         lm = box.get(widget.id);
-        spreadSheetList = boxToSpreadSheet(lm?.spreadSheetList);
-        documentPropertiesList = boxToDocProp(lm?.docPropsList);
+        print('Loaded layout model: $lm');
+        spreadSheetList = boxToSpreadSheet(lm?.spreadSheetList??[]);
+        documentPropertiesList = boxToDocProp(lm?.docPropsList??[]);
         layoutName.text = lm!.name;
         initialLayoutName = lm!.name;
         labelList = lm!.labelList.isEmpty? getLabelList(SheetType.values[lm!.type],null):lm!.labelList;
@@ -450,8 +451,8 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
       sheetDecorationMap = await compute(decodeItemDecorationMap, rawMap??{});
       
       filteredDecorations = sheetDecorationMap;
-      spreadSheetList = boxToSpreadSheet(lm?.spreadSheetList);
-      documentPropertiesList = boxToDocProp(lm?.docPropsList);
+      spreadSheetList = boxToSpreadSheet(lm?.spreadSheetList??[]);
+      documentPropertiesList = boxToDocProp(lm?.docPropsList??[]);
       layoutName.text = lm!.name;
       initialLayoutName = lm!.name;
       labelList = lm!.labelList.isEmpty? getLabelList(SheetType.values[lm!.type],null):lm!.labelList;
@@ -577,7 +578,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     super.dispose();
   }
 
-  List<DocumentProperties> boxToDocProp(docproplist) {
+  List<DocumentProperties> boxToDocProp(List<DocumentPropertiesBox> docproplist) {
     List<DocumentProperties> listbox = [];
 
     for (DocumentPropertiesBox doc in docproplist) {
@@ -635,7 +636,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     return sheetListBox;
   }
 
-  List<SheetList> boxToSpreadSheet(spreadsheetlist) {
+  List<SheetList> boxToSpreadSheet(List<SheetListBox> spreadsheetlist) {
     List<SheetList> listbox = [];
     for (SheetListBox e in spreadsheetlist) {
       SheetList sheetList = e.toSheetList(_findItem,textFieldTapDown,getReplaceTextFunctionForType);
@@ -6221,7 +6222,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         
                         if (widget.layoutModel != null && pendingFilePath!=null) {
                           pendingFilePath=null;
-                          await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
+                          await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts');
                           await Hive.openBox<String>('folderPaths');
                           Navigator.pushReplacement(context,
                               MaterialPageRoute(

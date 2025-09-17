@@ -92,7 +92,7 @@ class AuthRepository {
 
       // Sign in with Firebase using the Google credentials
       final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-      await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
+      await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts');
       ref.read(folderPathProvider.notifier).state = Boxes.getFolderPaths().get(userCredential.user!.email??'default');
       final directory = await getApplicationSupportDirectory();
       final billBlazeDir = Directory('${directory.path}\\BillBlaze');
