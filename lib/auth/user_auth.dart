@@ -40,8 +40,8 @@ class AuthRepository {
       await _googleLoginWeb();
     } else if (_platform.isAndroid) {
       await _googleLoginAndroid(ref);
-    } else if (_platform.isWindows) {
-      await _googleLoginWindows(ref);
+    } else if (!kIsWeb && _platform.isWindows) {
+      // await _googleLoginWindows(ref);
     }
   }
 
@@ -73,62 +73,58 @@ class AuthRepository {
     }
   }
 
-  Future<void> _googleLoginWindows(WidgetRef ref) async {
-    final gap.GoogleSignIn _googleSignIn = ref.read(googleSignInProvider);
-
-    try {
-      final creds = await _googleSignIn.signInOnline();
-      if (creds == null) {
-     print('Could not sign in');
-        return;
-      }
-      //  ref.read(authCredentialsProvider.notifier).update((state) => creds,);
-      // Now, sign in with Firebase using the obtained credentials
-
-      final credential = GoogleAuthProvider.credential(
-        accessToken: creds.accessToken,
-        idToken: creds.idToken,
-      );
-
-      // Sign in with Firebase using the Google credentials
-      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-      await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts');
-      ref.read(folderPathProvider.notifier).state = Boxes.getFolderPaths().get(userCredential.user!.email??'default');
-      final directory = await getApplicationSupportDirectory();
-      final billBlazeDir = Directory('${directory.path}\\BillBlaze');
-      if (!(await billBlazeDir.exists())) {
-        await billBlazeDir.create(recursive: true);
-      }
-      
-      if (userCredential.user != null) {
-        final userDir = Directory('${billBlazeDir.path}\\${userCredential.user!.uid}');
-        if (!(await userDir.exists())) {
-          await userDir.create(recursive: true);
-        }
-        final mainDir = Directory('${userDir.path}\\main');
-        if (!(await mainDir.exists())) {
-          await mainDir.create(recursive: true);
-        }
-        // print('User folder: ${userDir.path}');
-        var path = Boxes.getFolderPaths().get(userCredential.user!.email??'default');
-        print('GAYYYYYYYYYYYYYYYYYYYYYYY'+path.toString());
-        if (path == null) {
-          
-          Boxes.getFolderPaths().put(userCredential.user!.email??'default', mainDir.path);
-          ref.read(folderPathProvider.notifier).state = mainDir.path.replaceAll('/', '\\');
-        } else {
-          if (ref.read(folderPathProvider)!=path) {
-            ref.read(folderPathProvider.notifier).state = path;
-            print('HEYYYYYYYYYYYYYYYYYYYYYYY'+ref.read(folderPathProvider).toString());
-          }
-        }
-      }
-   print('Signed in successfully: ${userCredential.user}');
-    } catch (e) {
-   print('Error signing in with Google: $e');
-      // Handle error here
-    }
-  } //
+  // Future<void> _googleLoginWindows(WidgetRef ref) async {
+  //   final gap.GoogleSignIn _googleSignIn = ref.read(googleSignInProvider);
+  //   try {
+  //     final creds = await _googleSignIn.signInOnline();
+  //     if (creds == null) {
+  //    print('Could not sign in');
+  //       return;
+  //     }
+  //     //  ref.read(authCredentialsProvider.notifier).update((state) => creds,);
+  //     // Now, sign in with Firebase using the obtained credentials
+  //     final credential = GoogleAuthProvider.credential(
+  //       accessToken: creds.accessToken,
+  //       idToken: creds.idToken,
+  //     );
+  //     // Sign in with Firebase using the Google credentials
+  //     final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+  //     await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts');
+  //     ref.read(folderPathProvider.notifier).state = Boxes.getFolderPaths().get(userCredential.user!.email??'default');
+  //     final directory = await getApplicationSupportDirectory();
+  //     final billBlazeDir = Directory('${directory.path}\\BillBlaze');
+  //     if (!(await billBlazeDir.exists())) {
+  //       await billBlazeDir.create(recursive: true);
+  //     }
+  //     if (userCredential.user != null) {
+  //       final userDir = Directory('${billBlazeDir.path}\\${userCredential.user!.uid}');
+  //       if (!(await userDir.exists())) {
+  //         await userDir.create(recursive: true);
+  //       }
+  //       final mainDir = Directory('${userDir.path}\\main');
+  //       if (!(await mainDir.exists())) {
+  //         await mainDir.create(recursive: true);
+  //       }
+  //       // print('User folder: ${userDir.path}');
+  //       var path = Boxes.getFolderPaths().get(userCredential.user!.email??'default');
+  //       print('GAYYYYYYYYYYYYYYYYYYYYYYY'+path.toString());
+  //       if (path == null) {
+  //         Boxes.getFolderPaths().put(userCredential.user!.email??'default', mainDir.path);
+  //         ref.read(folderPathProvider.notifier).state = mainDir.path.replaceAll('/', '\\');
+  //       } else {
+  //         if (ref.read(folderPathProvider)!=path) {
+  //           ref.read(folderPathProvider.notifier).state = path;
+  //           print('HEYYYYYYYYYYYYYYYYYYYYYYY'+ref.read(folderPathProvider).toString());
+  //         }
+  //       }
+  //     }
+  //  print('Signed in successfully: ${userCredential.user}');
+  //   } catch (e) {
+  //  print('Error signing in with Google: $e');
+  //     // Handle error here
+  //   }
+  // } //
+  
   //
   /// Sign in with email + password
   Future<AuthResult> emailPasswordSignIn({
@@ -164,11 +160,11 @@ class AuthRepository {
     
     await googleSignIn.signOut(); // Sign out from Google
     await ref.read(authPr).signOut(); // Sign out from FirebaseAuth
-    ref.read(folderPathProvider.notifier).state = null;
- print('Signed out successfully');
+    // ref.read(folderPathProvider.notifier).state = null;
+    print('Signed out successfully');
   } catch (e, st) {
- print('Error signing out: $e');
- print(st);
+    print('Error signing out: $e');
+    print(st);
   }
 }
 

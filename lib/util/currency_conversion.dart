@@ -23,15 +23,15 @@ double convertCurrency({
   return amountInBase * toRate;
 }
 
-Future<File> _getRatesFile() async {
-  final dir = await getApplicationSupportDirectory(); 
-  // This folder is NOT user-accessible on iOS/Android, 
-  // and less obvious on desktop.
-  return File('${dir.path}/fx_rates.json');
-}
+// Future<File> _getRatesFile() async {
+//   final dir = await getApplicationSupportDirectory(); 
+//   // This folder is NOT user-accessible on iOS/Android, 
+//   // and less obvious on desktop.
+//   return File('${dir.path}/fx_rates.json');
+// }
 
 Future<Map<String, double>> fetchFxRates({bool useCache = true}) async {
-  final file = await _getRatesFile();
+  // final file = await _getRatesFile();
 
   
 
@@ -49,25 +49,25 @@ Future<Map<String, double>> fetchFxRates({bool useCache = true}) async {
     });
 
     // 3️⃣ Save to cache
-    await file.writeAsString(jsonEncode(rates));
+    // await file.writeAsString(jsonEncode(rates));
 
     return rates;
   } else {
     // 1️⃣ Try reading from cache first
-  if (useCache && await file.exists()) {
-    try {
-      final cached = jsonDecode(await file.readAsString());
-      final cachedRates = Map<String, double>.from(
-        (cached as Map<String, dynamic>).map(
-          (key, value) => MapEntry(key, (value as num).toDouble()),
-        ),
-      );
-      return cachedRates;
-    } catch (e) {
+  // if (useCache && await file.exists()) {
+  //   try {
+  //     final cached = jsonDecode(await file.readAsString());
+  //     final cachedRates = Map<String, double>.from(
+  //       (cached as Map<String, dynamic>).map(
+  //         (key, value) => MapEntry(key, (value as num).toDouble()),
+  //       ),
+  //     );
+  //     return cachedRates;
+  //   } catch (e) {
       
-     // fallback to API fetch below
-    }
-  }
+  //    // fallback to API fetch below
+  //   }
+  // }
   }
   return {
   "USD": 1, "AED": 3.67, "AFN": 68.09, "ALL": 82.43, "AMD": 383.31,

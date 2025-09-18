@@ -735,21 +735,13 @@ packages:
     source: hosted
     version: "1.3.0+1"
   flutter_inappwebview_web:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_inappwebview_web
       sha256: d8c680abfb6fec71609a700199635d38a744df0febd5544c5a020bd73de8ee07
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
-  flutter_inappwebview_windows:
-    dependency: "direct main"
-    description:
-      name: flutter_inappwebview_windows
-      sha256: "8b4d3a46078a2cdc636c4a3d10d10f2a16882f6be607962dbfff8874d1642055"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.6.0"
   flutter_keyboard_visibility:
     dependency: transitive
     description:
@@ -1205,14 +1197,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
-  llama_cpp_dart:
-    dependency: "direct main"
-    description:
-      name: llama_cpp_dart
-      sha256: "7351764e4901014a87bc0e46bb7fd1e63597f08db7ad877844d03122d063a6c1"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.0"
   loading_animation_widget:
     dependency: "direct main"
     description:
@@ -1762,14 +1746,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.2"
-  typed_isolate:
-    dependency: transitive
-    description:
-      name: typed_isolate
-      sha256: e245b87368104f9da13a75268e0bce16a2a8d4c9a4194a5eb50bb569be680c65
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.0.0"
   url_launcher:
     dependency: transitive
     description:

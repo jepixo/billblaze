@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  llama_cpp_dart: ^0.1.0
+  # llama_cpp_dart: ^0.1.0
   cupertino_icons: ^1.0.2
   permission_handler: any
   cloud_firestore: 
@@ -28,7 +28,7 @@ dependencies:
   iconsax_plus: ^1.0.0
   flutter_svgl: ^1.2.0
   flutter_inappwebview: 
-  flutter_inappwebview_windows:
+  flutter_inappwebview_web:
   #sketchy
   #comment for web
   google_sign_in_all_platforms: ^0.0.4 
@@ -106,58 +106,68 @@ flutter:
     - .env
     # - assets/models/phi-2.Q8_0.gguf
     # - assets/models/Phi-3-mini-4k-instruct-q4.gguf
-    - assets/models/LFM2-1.2B-Q4_K_M.gguf
     - assets/static.html
     - assets/
-    - assets/layouts/
-    - assets/nuget/
     - assets/logos/
+
   fonts:
-    - family: Billabong
+    - family: Lexend
       fonts:
-        - asset: assets/fonts/Billabong.ttf
-    - family: AlexBrush
+        - asset: assets/fonts/Lexend/Lexend-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Lexend/Lexend-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/Lexend/Lexend-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Lexend/Lexend-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Lexend/Lexend-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Lexend/Lexend-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Lexend/Lexend-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Lexend/Lexend-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Lexend/Lexend-Black.ttf
+          weight: 900
+    - family: LeagueSpartan
       fonts:
-        - asset: assets/fonts/AlexBrush-Regular.ttf
-    - family: Allura
+        - asset: assets/fonts/LeagueSpartan/LeagueSpartan-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/LeagueSpartan/LeagueSpartan-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/LeagueSpartan/LeagueSpartan-Light.ttf
+          weight: 300
+        - asset: assets/fonts/LeagueSpartan/LeagueSpartan-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/LeagueSpartan/LeagueSpartan-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/LeagueSpartan/LeagueSpartan-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/LeagueSpartan/LeagueSpartan-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/LeagueSpartan/LeagueSpartan-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/LeagueSpartan/LeagueSpartan-Black.ttf
+          weight: 900
+    - family: AbrilFatface
       fonts:
-        - asset: assets/fonts/Allura-Regular.otf
-    - family: Arizonia
+        - asset: assets/fonts/AbrilFatface/AbrilFatface-Regular.ttf
+    - family: PressStart2P
       fonts:
-        - asset: assets/fonts/Arizonia-Regular.ttf
-    - family: ChunkFive
+        - asset: assets/fonts/PressStart2P/PressStart2P-Regular.ttf
+    - family: Silkscreen
       fonts:
-        - asset: assets/fonts/ChunkFive-Regular.otf
-    - family: GrandHotel
+        - asset: assets/fonts/Silkscreen/Silkscreen-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Silkscreen/Silkscreen-Bold.ttf
+          weight: 700
+    - family: RedactedScript
       fonts:
-        - asset: assets/fonts/GrandHotel-Regular.otf
-    - family: GreatVibes
-      fonts:
-        - asset: assets/fonts/GreatVibes-Regular.otf
-    - family: Lobster
-      fonts:
-        - asset: assets/fonts/Lobster_1.3.otf
-    - family: OpenSans
-      fonts:
-        - asset: assets/fonts/OpenSans-Regular.ttf
-    - family: OstrichSans
-      fonts:
-        - asset: assets/fonts/OstrichSans-Medium.otf
-    - family: Oswald
-      fonts:
-        - asset: assets/fonts/Oswald-Regular.ttf
-    - family: Pacifico
-      fonts:
-        - asset: assets/fonts/Pacifico.ttf
-    - family: Quicksand
-      fonts:
-        - asset: assets/fonts/Quicksand-Regular.otf
-    - family: Roboto
-      fonts:
-        - asset: assets/fonts/Roboto-Regular.ttf
-    - family: SEASRN
-      fonts:
-        - asset: assets/fonts/SEASRN.ttf
-    - family: Windsong
-      fonts:
-        - asset: assets/fonts/Windsong.ttf
+        - asset: assets/fonts/RedactedScript/RedactedScript-Light.ttf
+          weight: 300
+        - asset: assets/fonts/RedactedScript/RedactedScript-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/RedactedScript/RedactedScript-Bold.ttf
+          weight: 700

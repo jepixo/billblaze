@@ -22,10 +22,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:llama_cpp_dart/llama_cpp_dart.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
+// import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:flutter_inappwebview_windows/flutter_inappwebview_windows.dart';
+// import 'package:flutter_inappwebview_windows/flutter_inappwebview_windows.dart';
 // import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 
 
@@ -42,18 +43,24 @@ Future<void> main(List<String> args) async {
   );
   // await Hive.close();
 
-  // Get Hive directory
-  final directory = await getApplicationSupportDirectory();
-  
-  // Create BillBlaze folder inside it
-  final billBlazeDir = Directory('${directory.path}/BillBlaze');
+  if (kIsWeb) {
+    // Web: No real directories. Hive will use IndexedDB automatically.
+    await Hive.initFlutter();
 
-  if (!(await billBlazeDir.exists())) {
-    await billBlazeDir.create(recursive: true);
+    // You can define a virtual "path" if you need it logically
+    const billBlazeVirtualPath = '/virtual/BillBlaze';
+    print('Using virtual path for web: $billBlazeVirtualPath');
+  } else {
+    final directory = await getApplicationSupportDirectory();
+
+    // Create BillBlaze folder
+    final billBlazeDir = Directory('${directory.path}/BillBlaze');
+    if (!(await billBlazeDir.exists())) {
+      await billBlazeDir.create(recursive: true);
+    }
+
+    Hive.init('${billBlazeDir.path}/hive');
   }
-
-
-  Hive.init('${directory.path}/hive');
   Hive.registerAdapters();
   // Hive.registerAdapter(DocumentPropertiesBoxAdapter());
   // Hive.registerAdapter(SheetItemAdapter());
@@ -87,8 +94,9 @@ Future<void> main(List<String> args) async {
   debugPaintPointersEnabled = false;
   await dotenv.load(fileName: ".env");
   // Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
-  Llama.libraryPath = 'llama.dll';
-  InAppWebViewPlatform.instance = WindowsInAppWebViewPlatform();
+  // Llama.libraryPath = 'llama.dll';
+  // InAppWebViewPlatform.instance = WebInAppWebViewPlatform();
+  // InAppWebViewPlatform.instance = WebPlatformInAppWebViewPlatform();
   // if (args.isEmpty && kDebugMode) {
   //   args = ['C:\\Users\\ANTEC\\AppData\\Roaming\\com.jepixo\\billblaze\\BillBlaze\\1Idn8T7QbydncSOmqLv7yHYKztF2\\main\\Bill-0.bbc'];
   // }
@@ -115,7 +123,7 @@ Future<void> main(List<String> args) async {
     // If any exception happens, show a fallback UI with the error
     runApp(ErrorApp(error: e, stackTrace: st));
   }
-  if (Platform.isWindows) {
+  if (!kIsWeb && Platform.isWindows) {
     doWhenWindowReady(() {
       final win = appWindow;
       win.minSize = const Size(800, 500);
@@ -147,7 +155,7 @@ class MainAppState extends ConsumerState<MainApp> {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async{
       if (pendingFilePath == null) {
         try {
-          await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
+          await Hive.openBox<LayoutModel>('layouts');
         } on Exception catch (e) {
           log = e.toString();
         } finally{
@@ -210,7 +218,7 @@ class MainAppState extends ConsumerState<MainApp> {
                     )
                   ),
                 )),
-                if (Platform.isWindows)
+                if (!kIsWeb && Platform.isWindows)
                 ...windowsTopBar(),   
               ]
             ),
@@ -259,49 +267,14 @@ class MainAppState extends ConsumerState<MainApp> {
                     )
                   ),
                 )),
-                if (Platform.isWindows)
+                if (!kIsWeb && Platform.isWindows)
                 ...windowsTopBar(),   
               ]
             ),
           ),)
       : Consumer(builder: (context, ref, c) {
         // RefHolder.ref = ref;
-        return StreamBuilder(
-            stream: FirebaseAuth.instance.authStateChanges(),
-            builder: (context, stream) {
-              if (stream.hasData) {
-                // ref
-                //     .read(authRepositoryProvider)
-                //     .checkAndCreateUserDocument(context, ref);
-                () async{await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts');}();
-                return const Home();
-                // return SafeArea(
-                //     child: Material(
-                //         child: SpreadSheet(
-                //             // items: ref.watch(itemListProvider),
-                //             )
-                //         //  MultiBoardListExample()
-                //         ));
-                // return LayoutDesigner();
-              } else if (stream.hasError) {
-                return const Center(child: Text('Gone Wrong'));
-              } else if (stream.connectionState == ConnectionState.waiting) {
-                return const LoginSignUp();
-                // return  Container(
-                //   color: defaultPalette.extras[0],
-                //   child: Center(
-                //       child: SvgPicture.asset(
-                //         'assets/logos/Asset6.svg',
-                //         // allowDrawingOutsideViewBox: true,
-                //         // theme: SvgTheme(currentColor: defaultPalette.primary),
-                //       )
-                //     ),
-                // );
-              } else {
-                return const LoginSignUp();
-                // return Container();
-              }
-            });
+        return const Home();
       }),
     
     );
@@ -352,7 +325,7 @@ class _ErrorAppState extends ConsumerState<ErrorApp> {
               ),
             ),
             // Windows top bar
-              if (Platform.isWindows)
+            if (!kIsWeb && Platform.isWindows)
                 Positioned.fill(
                   top: 0,
                   child: GestureDetector(
@@ -505,25 +478,3 @@ class _ErrorAppState extends ConsumerState<ErrorApp> {
   }
 }
 
-  Future<void> loadBBCFile(String path, WidgetRef ref, BuildContext context) async {
-    try {
-      final file = File(path);
-      final content = await file.readAsString();
-      final layout = LayoutModel.fromJson(content);
-
-      final box = Boxes.getLayouts(ref);
-      if (!box.containsKey(layout.id)) {
-        await box.put(layout.id, layout);
-      }
-      pendingFilePath =null;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => LayoutDesigner(id: layout.id, onPop: (_) {}),
-          ),
-        );
-      });
-    } catch (e) {
-      debugPrint("❌ Failed to open .bbc file: $e");
-    }
-  }

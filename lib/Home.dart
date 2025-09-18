@@ -21,7 +21,7 @@ import 'package:billblaze/models/spread_sheet_lib/sheet_text.dart';
 import 'package:billblaze/providers/auth_provider.dart';
 import 'package:billblaze/providers/url_provider.dart';
 import 'package:billblaze/repo/google_cloud_storage_repository.dart';
-import 'package:billblaze/repo/llama_repository.dart';
+// import 'package:billblaze/repo/llama_repository.dart';
 import 'package:billblaze/components/widgets/username.dart';
 import 'package:billblaze/util/currency_conversion.dart';
 import 'package:billblaze/util/numeric_input_formatter.dart';
@@ -29,6 +29,7 @@ import 'package:billblaze/util/static_noise.dart';
 import 'package:currency_picker/currency_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_context_menu/flutter_context_menu.dart' as cm;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -54,9 +55,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
-import 'package:llama_cpp_dart/llama_cpp_dart.dart';
+// import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 import 'package:loading_indicator/loading_indicator.dart';
-import 'package:path_provider/path_provider.dart';
+// import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
@@ -95,10 +96,10 @@ final aiPromptProvider = StateProvider<String>((ref) {
 final aiModelPathProvider = StateProvider<String>((ref) {
   return "assets/models/LFM2-1.2B-Q4_K_M.gguf";
 });
-final folderPathProvider = StateProvider<String?>((ref) {
-  final box = Boxes.getFolderPaths();
-  return box.get(ref.read(authPr).currentUser?.uid??'default');
-});
+// final folderPathProvider = StateProvider<String?>((ref) {
+//   final box = Boxes.getFolderPaths();
+//   return box.get(ref.read(authPr).currentUser?.uid??'default');
+// });
 final currencyCodeProvider = StateProvider<Currency>((ref) {
   return CurrencyService().findByCode('INR')!;
 });
@@ -336,70 +337,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       } on Exception catch (_) {
         print('Boxes: ${Hive.boxExists( ref.read(authPr).currentUser?.uid??'layouts')}');
       }finally{
-        if (ref.read(folderPathProvider)==null) {
-          final directory = await getApplicationSupportDirectory();
-          final billBlazeDir = Directory('${directory.path}\\BillBlaze');
-          
-          if (!(await billBlazeDir.exists())) {
-            await billBlazeDir.create(recursive: true);
-          }
-          
-          final user = ref.read(authPr).currentUser;
-          if (user != null) {
-            final userDir = Directory('${billBlazeDir.path}\\${user.uid}');
-            if (!(await userDir.exists())) {
-              await userDir.create(recursive: true);
-            }
-            final mainDir = Directory('${userDir.path}\\main');
-            if (!(await mainDir.exists())) {
-              await mainDir.create(recursive: true);
-            }
-            print('User folder: ${userDir.path}');
-            ref.read(folderPathProvider.notifier).state = mainDir.path.replaceAll('/', '\\');
-            folderPathController.text = ref.read(folderPathProvider)?.replaceAll('${directory.path}\\BillBlaze\\${ref.read(authPr).currentUser!.uid}', '...')??'';
-            Boxes.setFolderPath(ref, mainDir.path);
-            dir = mainDir;
-          }
-        } else {
-          final directory = await getApplicationSupportDirectory();
-          folderPathController.text = ref.read(folderPathProvider)?.replaceAll('${directory.path}\\BillBlaze\\${ref.read(authPr).currentUser!.uid}', '...')??'';
-          dir = Directory(ref.read(folderPathProvider)!);
-          if (!(await dir.exists())) {
-            await dir.create(recursive: true);
-          }
-        }
-        await syncLayoutsBoxAndFolder(dir);
-        _stream = layoutStream().asBroadcastStream();
-        _subscription = _stream.listen((layouts)async {
-        try {
-          final didChange = await syncLayoutsBoxAndFolder(dir);
-          if (!didChange) {
-            // nothing to write → no new event
-            return;
-          }
-        } finally {
-        }
-      });
-      sub = ref.listenManual<String?>(
-        folderPathProvider,
-        (previous, next) async {
-          if (previous != next) {
-            // folder path changed → restart your sync or restart stream
-            
-            final directory = await getApplicationSupportDirectory();
-            folderPathController.text = ref.read(folderPathProvider)?.replaceAll('${directory.path}\\BillBlaze\\${ref.read(authPr).currentUser!.uid}', '...')??'';
-            dir = Directory(ref.read(folderPathProvider)!);
-            if (!(await dir.exists())) {
-              await dir.create(recursive: true);
-            }
-            
-            if (next!=null) {
-              dir = Directory(next);
-              await syncLayoutsBoxAndFolder(dir);
-            }
-          }
-        },
-      );
+      
       ref.read(fxRatesProvider.notifier).state = await fetchFxRates();
       setState(() {
         isLoading = false;
@@ -544,7 +482,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   //
   TypewriterAnimatedText typewriterText(bool isHomeTab, double sWidth, double sHeight, String text){
     return TypewriterAnimatedText(text,
-      textStyle: GoogleFonts.lexend(
+      textStyle: TextStyle(                                fontFamily: 'Lexend',
           fontSize: (isHomeTab) ? mapValueDimensionBasedLockOnDesync( 12, 30, sWidth, sHeight) : 20,
           color: defaultPalette.extras[0].withOpacity(0.4),
           height: 1.7),
@@ -671,25 +609,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     });
   }
 
-  void unsubscribeStream(){
-    _subscription?.cancel();
-    _subscription = null;
-  }
-
-  void subscribeStream(){
-    _subscription = _stream.listen((layouts)async {
-        // _subscription?.pause();
-      try {
-        final didChange = await syncLayoutsBoxAndFolder(dir);
-        if (!didChange) {
-          // nothing to write → no new event
-          return;
-        }
-      } finally {
-        // _subscription?.resume();
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -745,7 +664,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     )
                   ),
                 )),
-                if (Platform.isWindows)
+                if (!kIsWeb && Platform.isWindows)
                 ...windowsTopBar(),   
               ]
             ),
@@ -809,7 +728,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             animatedTexts: [
                               if(!isHomeTab)
                               TypewriterAnimatedText("Bill\nBlaze.".toUpperCase(),
-                                  textStyle: GoogleFonts.pressStart2p(
+                                  textStyle: TextStyle(                                fontFamily: 'PressStart2P',
                                       fontSize:
                                           (isHomeTab) ? titleFontSize/1.5 : 12,
                                       color: (isHomeTab)
@@ -819,7 +738,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       height: (isHomeTab) ? 1.2:1.3),
                                   speed: Duration(milliseconds: 100)),
                               TypewriterAnimatedText("Bill\nBlaze.",
-                                  textStyle: GoogleFonts.abrilFatface(
+                                  textStyle: TextStyle(                                fontFamily: 'AbrilFatface',
                                       fontSize:
                                           (isHomeTab) ? titleFontSize : 20,
                                       color: defaultPalette.extras[0],
@@ -844,7 +763,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       height: 1),
                                   speed: Duration(milliseconds: 100)),
                               TypewriterAnimatedText("Bill\nBlaze.",
-                                  textStyle: GoogleFonts.silkscreen(
+                                  textStyle: TextStyle(  
+                                    fontFamily: 'Silkscreen',
                                       fontSize:
                                           (isHomeTab) ? titleFontSize*0.9 : 20,
                                       color: (isHomeTab)
@@ -865,7 +785,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           height: 1),
                                   speed: Duration(milliseconds: 100)),
                               TypewriterAnimatedText("Bill\nBlaze.",
-                                  textStyle: GoogleFonts.redactedScript(
+                                  textStyle: TextStyle(                                fontFamily: 'RedactedScript',
                                       fontSize:
                                           (isHomeTab) ? titleFontSize : 20,
                                       color: (isHomeTab)
@@ -993,11 +913,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         FittedBox(
                                           fit: BoxFit.scaleDown,
                                           alignment: Alignment.centerRight,
-                                          child: Text('Hola, ${user?.displayName}!',
+                                          child: Text('Hola, Traveller!',
                                           textAlign: TextAlign.end,
                                           maxLines:1,
                                           overflow:TextOverflow.ellipsis,
-                                          style: GoogleFonts.lexend(
+                                          style: TextStyle(
+                                            fontFamily: 'Lexend',
                                             color: defaultPalette.extras[0],
                                             fontSize: mapValueDimensionBasedLockOnDesync(14, 35, sWidth, sHeight),
                                             letterSpacing: -1,
@@ -1062,7 +983,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           + mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight) +5,
                           // bottom: mapValueDimensionBasedLockOnDesync(18, 28, sWidth, sHeight),
                           left: mapValueDimensionBasedLockOnDesync(65, 80, sWidth, sHeight)+5,
-                          height: sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
+                          height: sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)+mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
                           width: mapValueDimensionBased(453, 1315, sWidth, sHeight,useWidth: true),
                           child:IgnorePointer(
                             ignoring: !isHomeTab,
@@ -1086,7 +1007,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           + mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
                           // bottom: mapValueDimensionBasedLockOnDesync(18+5, 28+5, sWidth, sHeight),
                           left: mapValueDimensionBasedLockOnDesync(65, 80, sWidth, sHeight),
-                          height: sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight),
+                          height: sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)+mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
                           width: mapValueDimensionBased(453, 1315, sWidth, sHeight,useWidth: true),
                           child:IgnorePointer(
                             ignoring: !isHomeTab,
@@ -1111,7 +1032,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           + mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
                           // bottom: mapValueDimensionBasedLockOnDesync(18+5, 28+5, sWidth, sHeight),
                           left: mapValueDimensionBasedLockOnDesync(65, 80, sWidth, sHeight),
-                          height: sHeight / 4,
+                          height: sHeight / 4 + mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
                           width: mapValueDimensionBased(453, 1315, sWidth, sHeight,useWidth: true),
                           child: IgnorePointer(
                             ignoring: !isHomeTab,
@@ -1140,7 +1061,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             + mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
                           // bottom: mapValueDimensionBasedLockOnDesync(18+5, 28+5, sWidth, sHeight),
                           left: mapValueDimensionBasedLockOnDesync(65, 80, sWidth, sHeight),
-                          height: sHeight / 4,
+                          height: sHeight / 4 + mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
                           width: mapValueDimensionBased(453, 1315, sWidth, sHeight,useWidth: true),
                           child: IgnorePointer(
                             ignoring: !isHomeTab,
@@ -1318,7 +1239,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           if (barSpot.barIndex ==0 || barSpot.barIndex ==1)
                                           return LineTooltipItem(
                                             label,
-                                            GoogleFonts.lexend(
+                                            TextStyle(                                fontFamily: 'Lexend',
                                               color:barSpot.barIndex == 0? defaultPalette.extras[0]:defaultPalette.tertiary,
                                               fontWeight: FontWeight.w500,
                                             ),
@@ -1361,7 +1282,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           //some padding
                           + mapValueDimensionBasedLockOnDesync(5, 25, sWidth, sHeight)
                           //height of graph
-                          + sHeight / 4,
+                          + sHeight / 4
+                          + mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
                           // bottom: mapValueDimensionBasedLockOnDesync(18, 28, sWidth, sHeight)+sHeight / 4,
                           left: mapValueDimensionBasedLockOnDesync(97, 122, sWidth, sHeight),
                           height: 20,
@@ -1406,238 +1328,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             ),
                           )),
                         //
-                        //Folder Selector BGGBLACKK and open in explorer
-                        AnimatedPositioned(
-                          duration: defaultDuration,
-                          top: topPadPosDistance 
-                          +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
-                          //height of greetings
-                          +  mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight)
-                          //some padding
-                          + mapValueDimensionBasedLockOnDesync(10, 30, sWidth, sHeight)
-                          //height of graphh
-                          + sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
-                          //some padding
-                          + mapValueDimensionBasedLockOnDesync(17, 23, sWidth, sHeight),
-                          left: mapValueDimensionBasedLockOnDesync(67, 80, sWidth, sHeight),
-                          height: mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
-                          width: mapValueDimensionBased(453, 1320, sWidth, sHeight,useWidth: true),
-                          child: IgnorePointer(
-                            ignoring: !isHomeTab,
-                            child: AnimatedOpacity(
-                              opacity: isHomeTab ? 1 : 0,
-                              duration: Durations.medium1,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color:defaultPalette.extras[0],
-                                  borderRadius:BorderRadius.circular(mapValueDimensionBasedLockOnDesync(18, 30, sWidth, sHeight))
-                                ),
-                                child: Row(
-                                  children:[
-                                    SizedBox(width: mapValueDimensionBased(300, 860, sWidth, sHeight,useWidth: true),),
-                                    Expanded(
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        SizedBox(width: mapValueDimensionBasedLockOnDesync(4, 6, sWidth, sHeight)),
-                                        Expanded(
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            alignment: Alignment.centerLeft,
-                                            child: Text('bills dir',
-                                            textAlign: TextAlign.end,
-                                            maxLines:1,
-                                            overflow:TextOverflow.ellipsis,
-                                            style: GoogleFonts.lexend(
-                                              color: defaultPalette.primary,
-                                              fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
-                                              letterSpacing: -1,
-                                              fontWeight: FontWeight.w400,
-                                              height: 0.5
-                                            ),),
-                                          ),
-                                        ),
-                                        ClipRRect(
-                                          borderRadius:BorderRadius.circular(9999),
-                                          child: Material(
-                                            color: defaultPalette.transparent,
-                                            child: InkWell(
-                                              hoverColor: defaultPalette.primary.withOpacity(0.2),
-                                              splashColor: defaultPalette.primary.withOpacity(0.2),
-                                              highlightColor: defaultPalette.primary.withOpacity(0.2),
-                                              onTap:()async{
-                                                final directory = await getApplicationSupportDirectory();
-                                                final billBlazeDir = Directory('${directory.path}\\BillBlaze');
-                                                
-                                                if (!(await billBlazeDir.exists())) {
-                                                  await billBlazeDir.create(recursive: true);
-                                                }
-                                                
-                                                final user = ref.read(authPr).currentUser;
-                                                if (user != null) {
-                                                  final userDir = Directory('${billBlazeDir.path}\\${user.uid}');
-                                                  if (!(await userDir.exists())) {
-                                                    await userDir.create(recursive: true);
-                                                  }
-                                                  final mainDir = Directory('${userDir.path}\\main');
-                                                  if (!(await mainDir.exists())) {
-                                                    await mainDir.create(recursive: true);
-                                                  }
-                                                  print('User folder: ${userDir.path}');
-                                                  ref.read(folderPathProvider.notifier).state = mainDir.path.replaceAll('/', '\\');
-                                                  folderPathController.text = ref.read(folderPathProvider)?.replaceAll('${directory.path}\\BillBlaze\\${ref.read(authPr).currentUser!.uid}', '...')??'';
-                                                  Boxes.setFolderPath(ref, mainDir.path);
-                                                  dir = mainDir;
-                                                }
-                                              },
-                                              child: Padding(
-                                                padding:EdgeInsets.all(mapValueDimensionBasedLockOnDesync(4, 10, sWidth, sHeight)),
-                                                child:Icon(TablerIcons.refresh,
-                                              size: mapValueDimensionBasedLockOnDesync( 22, 45, sWidth, sHeight),
-                                              color:defaultPalette.extras[3]
-                                              ),)
-                                            ),
-                                          ),
-                                        ),
-                                        ClipRRect(
-                                          borderRadius:BorderRadius.circular(9999),
-                                          child: Material(
-                                            color: defaultPalette.transparent,
-                                            child: InkWell(
-                                              hoverColor: defaultPalette.primary.withOpacity(0.2),
-                                              splashColor: defaultPalette.primary.withOpacity(0.2),
-                                              highlightColor: defaultPalette.primary.withOpacity(0.2),
-                                              onTap:()async{
-                                                final path = ref.read(folderPathProvider);
-                                            print(path);
-                                                if (path == null || path.isEmpty) return;
-                                                final dir = Directory(path.replaceAll('/', '\\'));
-                                                if (await dir.exists()) {
-                                                  if (Platform.isWindows) {
-                                                  await Process.run('explorer', [dir.path]);
-                                                  }
-                                                }
-                                              },
-                                              child: Padding(
-                                                padding:EdgeInsets.all(mapValueDimensionBasedLockOnDesync(4, 10, sWidth, sHeight)),
-                                                child:Icon(TablerIcons.folder_share,
-                                              size: mapValueDimensionBasedLockOnDesync( 22, 45, sWidth, sHeight),
-                                              color:defaultPalette.primary
-                                              ),)
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(width: mapValueDimensionBasedLockOnDesync(4, 6, sWidth, sHeight))
-                                      ],
-                                    ),
-                                    )
-                                  ]
-                                ),
-                              )
-                        ))),
-                        //Folder Selector 
-                        AnimatedPositioned(
-                          duration: defaultDuration,
-                          top: topPadPosDistance 
-                          +  mapValueDimensionBased(115, 275, sWidth, sHeight, b:false)
-                          //height of greetings
-                          +  mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight)
-                          //some padding
-                          + mapValueDimensionBasedLockOnDesync(10, 30, sWidth, sHeight)
-                          //height of graphh
-                          + sHeight / 4+ mapValueDimensionBasedLockOnDesync(15, 30, sWidth, sHeight)
-                          //some padding
-                          + mapValueDimensionBasedLockOnDesync(13, 18, sWidth, sHeight),
-                          left: mapValueDimensionBasedLockOnDesync(65, 80, sWidth, sHeight),
-                          height: mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
-                          width: mapValueDimensionBased(300, 860, sWidth, sHeight,useWidth: true),
-                          child: IgnorePointer(
-                            ignoring: !isHomeTab,
-                            child: AnimatedOpacity(
-                              opacity: isHomeTab ? 1 : 0,
-                              duration: Durations.medium1,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color:defaultPalette.primary,
-                                  borderRadius:BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 13, 20, sWidth, sHeight)),
-                                  border: Border.all()
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child:  Container(
-                                        height: mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight),
-                                        margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(4, 6, sWidth, sHeight)),
-                                        alignment: Alignment(-1, 0),
-                                        decoration: BoxDecoration(
-                                            color: defaultPalette.secondary,
-                                            borderRadius:BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 11, 18, sWidth, sHeight)),
-                                            border: Border.all(width: 0.5)),
-                                        child: TextFormField(
-                                          onTapOutside: (event) => folderPathFocusNode.unfocus(),
-                                          onTap: () {
-                                            FocusManager.instance.primaryFocus?.unfocus();
-                                            keyboardFocusNode.unfocus();
-                                            folderPathFocusNode.requestFocus();
-                                            folderPathFocusNode.requestFocus();
-                                            Future.delayed(Durations.short2).then((value) => folderPathFocusNode.requestFocus(),);
-                                          },
-                                          focusNode: folderPathFocusNode,
-                                          controller:
-                                              folderPathController,
-                                          cursorColor:
-                                              defaultPalette.tertiary,
-                                          selectionControls:
-                                              NoMenuTextSelectionControls(),
-                                          textAlign: TextAlign.start,
-                                          textAlignVertical:
-                                              TextAlignVertical(
-                                                  y: -1),
-                                          maxLines: 1,
-                                          minLines: 1,
-                                          decoration: InputDecoration(
-                                            contentPadding: const EdgeInsets.only( left: 15, top: 5, bottom: 5),
-                                            labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
-                                            fillColor: defaultPalette.transparent,
-                                            border: InputBorder.none,
-                                            enabledBorder: OutlineInputBorder( borderSide: BorderSide.none),
-                                            focusedBorder: OutlineInputBorder( borderSide: BorderSide.none),
-                                          ),
-                                          style: GoogleFonts.lexend(
-                                              fontSize: mapValueDimensionBasedLockOnDesync( 15, 30, sWidth, sHeight),
-                                              color: defaultPalette.extras[0],
-                                              fontWeight: FontWeight.w400,
-                                              letterSpacing: -1),
-                                          onFieldSubmitted: (value) async {
-                                                await syncLayoutsBoxAndFolder(dir);
-                                                final directory = await getApplicationSupportDirectory();
-                                                final dirt = Directory(value.replaceAll('...','${directory.path}\\BillBlaze\\${ref.read(authPr).currentUser!.uid}'));
-                                                print(dirt.path);
-                                                if (await dirt.exists()) {
-                                                  ref.read(folderPathProvider.notifier).state = dirt.path;
-                                                  folderPathController.text = dirt.path.replaceAll('${directory.path}\\BillBlaze\\${ref.read(authPr).currentUser!.uid}', '...');
-                                                } else {
-                                                  try {
-                                                    await dirt.create();
-                                                    ref.read(folderPathProvider.notifier).state = dirt.path;
-                                                    folderPathController.text = dirt.path.replaceAll('${directory.path}\\BillBlaze\\${ref.read(authPr).currentUser!.uid}', '...');
-                                                  // ignore: empty_catches
-                                                  } catch (e) {
-                                                  }
-                                                }
-                                                Boxes.setFolderPath(ref, dirt.path);
-                                              },
-                                        ),
-                                      ),
-                                    ),
-                                    Icon(TablerIcons.folder_filled,
-                                    size: mapValueDimensionBasedLockOnDesync( 25, 45, sWidth, sHeight),
-                                    ),
-                                    SizedBox(width: mapValueDimensionBasedLockOnDesync(6, 8, sWidth, sHeight))
-                                  ],
-                                ),
-                              )
-                        ))),
                         //
                         //STATCARDSSS
                         AnimatedPositioned(
@@ -1653,7 +1343,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           //height of folderPath
                           +  mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight)
                           //some padding
-                          + mapValueDimensionBasedLockOnDesync(10, 30, sWidth, sHeight)
+                          // + mapValueDimensionBasedLockOnDesync(10, 30, sWidth, sHeight)
                           ,
                           left: mapValueDimensionBasedLockOnDesync(60, 75, sWidth, sHeight),
                           height: mapValueDimensionBasedLockOnDesync(100, 290, sWidth, sHeight),
@@ -1761,7 +1451,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   textAlign: TextAlign.end,
                                                                   maxLines:1,
                                                                   overflow:TextOverflow.ellipsis,
-                                                                  style: GoogleFonts.lexend(
+                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                     color: defaultPalette.primary,
                                                                     fontSize: mapValueDimensionBasedLockOnDesync(45, 85, sWidth, sHeight),
                                                                     letterSpacing: -1,
@@ -1784,7 +1474,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               maxLines:1,
                                                               overflow:TextOverflow.ellipsis,
                                                               textAlign: TextAlign.center,
-                                                              style: GoogleFonts.lexend(
+                                                              style: TextStyle(                                fontFamily: 'Lexend',
                                                                 color: defaultPalette.extras[4],
                                                                 fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                                 letterSpacing: -1,
@@ -1841,7 +1531,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                         : typeStats[SheetType.proformaInvoice]
                                                                     )?['unpaid']??0).round().toString(),
                                                                   textAlign: TextAlign.end,
-                                                                  style: GoogleFonts.lexend(
+                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                     color: defaultPalette.primary,
                                                                     fontSize: mapValueDimensionBasedLockOnDesync(45, 85, sWidth, sHeight),
                                                                     letterSpacing: -1,
@@ -1877,7 +1567,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       : 'unpaid ProInv',
                                                                   textAlign:TextAlign.center,
                                                                   maxLines: 1,overflow: TextOverflow.ellipsis,
-                                                                  style: GoogleFonts.lexend(
+                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                     color: defaultPalette.extras[4],
                                                                     fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                                     letterSpacing: -1,
@@ -2002,7 +1692,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   textAlign: TextAlign.end,
                                                                   maxLines:1,
                                                                   overflow:TextOverflow.ellipsis,
-                                                                  style: GoogleFonts.lexend(
+                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                     color: defaultPalette.extras[0],
                                                                     fontSize: mapValueDimensionBasedLockOnDesync(45, 85, sWidth, sHeight),
                                                                     letterSpacing: -1,
@@ -2023,7 +1713,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                           Text('totalRevenue',
                                                             maxLines:1,
                                                             overflow:TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle(                                fontFamily: 'Lexend',
                                                               color: defaultPalette.extras[0],
                                                               fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                               letterSpacing: -1,
@@ -2079,7 +1769,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                         : typeStats[SheetType.proformaInvoice]
                                                                     )?['payable']??0),
                                                                   textAlign: TextAlign.end,
-                                                                  style: GoogleFonts.lexend(
+                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                     color: defaultPalette.extras[0],
                                                                     fontSize: mapValueDimensionBasedLockOnDesync(45, 85, sWidth, sHeight),
                                                                     letterSpacing: -1,
@@ -2112,7 +1802,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                     : 'proInv Revenue',
                                                                 textAlign:TextAlign.center,
                                                                 maxLines: 1,overflow: TextOverflow.ellipsis,
-                                                                style: GoogleFonts.lexend(
+                                                                style: TextStyle(                                fontFamily: 'Lexend',
                                                                   color: defaultPalette.extras[0],
                                                                   fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                                   letterSpacing: -1,
@@ -2241,7 +1931,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   alignment: Alignment.centerRight,
                                                                   child: Text(totalBills.toString(),
                                                                   textAlign: TextAlign.end,
-                                                                  style: GoogleFonts.lexend(
+                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                     color: defaultPalette.extras[0],
                                                                     fontSize: mapValueDimensionBasedLockOnDesync(45, 85, sWidth, sHeight),
                                                                     letterSpacing: -1,
@@ -2260,7 +1950,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                         children: [
                                                           Text('totalBills',
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle(                                fontFamily: 'Lexend',
                                                               color: defaultPalette.extras[0],
                                                               fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                               letterSpacing: -1,
@@ -2316,7 +2006,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                         : typeStats[SheetType.proformaInvoice]
                                                                     )?['count']?.toInt().toString()??'0',
                                                                   textAlign: TextAlign.end,
-                                                                  style: GoogleFonts.lexend(
+                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                     color: defaultPalette.extras[0],
                                                                     fontSize: mapValueDimensionBasedLockOnDesync(45, 85, sWidth, sHeight),
                                                                     letterSpacing: -1,
@@ -2343,7 +2033,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       : index==4
                                                                       ? 'billOfSupply'
                                                                       : 'proformaInvoices',
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle(                                fontFamily: 'Lexend',
                                                               color: defaultPalette.extras[0],
                                                               fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                               letterSpacing: -1,
@@ -2471,7 +2161,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   alignment: Alignment.centerRight,
                                                                   child: Text(_currencyFormatter.format(totalProfit),
                                                                   textAlign: TextAlign.end,
-                                                                  style: GoogleFonts.lexend(
+                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                     color: defaultPalette.extras[0],
                                                                     fontSize: mapValueDimensionBasedLockOnDesync(45, 85, sWidth, sHeight),
                                                                     letterSpacing: -1,
@@ -2490,7 +2180,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                         children: [
                                                           Text('totalProfits',
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle(                                fontFamily: 'Lexend',
                                                               color: defaultPalette.extras[0],
                                                               fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                               letterSpacing: -1,
@@ -2546,7 +2236,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                         : typeStats[SheetType.proformaInvoice]
                                                                     )?['profit']??0),
                                                                   textAlign: TextAlign.end,
-                                                                  style: GoogleFonts.lexend(
+                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                     color: defaultPalette.extras[0],
                                                                     fontSize: mapValueDimensionBasedLockOnDesync(45, 85, sWidth, sHeight),
                                                                     letterSpacing: -1,
@@ -2579,7 +2269,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                     : 'proInv Profits',
                                                                 textAlign:TextAlign.center,
                                                                 maxLines: 1,overflow: TextOverflow.ellipsis,
-                                                                style: GoogleFonts.lexend(
+                                                                style: TextStyle(                                fontFamily: 'Lexend',
                                                                   color: defaultPalette.extras[0],
                                                                   fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
                                                                   letterSpacing: -1,
@@ -2620,7 +2310,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             textAlign: TextAlign.end,
                                             maxLines:2,
                                             overflow:TextOverflow.ellipsis,
-                                            style: GoogleFonts.lexend(
+                                            style: TextStyle(                                fontFamily: 'Lexend',
                                               color: defaultPalette.extras[0],
                                               fontSize: mapValueDimensionBased(12, 85, sWidth, sHeight,b:false),
                                               letterSpacing: -1,
@@ -2718,7 +2408,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                               alignment: Alignment.center,
                                                                               child: Text(ref.watch(currencyCodeProvider).symbol,
                                                                               textAlign: TextAlign.end,
-                                                                              style: GoogleFonts.lexend(
+                                                                              style: TextStyle(                                fontFamily: 'Lexend',
                                                                                 color: defaultPalette.extras[0],
                                                                                 fontSize: mapValueDimensionBasedLockOnDesync(25, 95, sWidth, sHeight),
                                                                                 letterSpacing: -1,
@@ -2740,7 +2430,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       textAlign: TextAlign.end,
                                                                       maxLines:1,
                                                                       overflow:TextOverflow.ellipsis,
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                                         color: defaultPalette.extras[0],
                                                                         fontSize: mapValueDimensionBased(15, 50, sWidth, sHeight,b:false),
                                                                         letterSpacing: -1,
@@ -2887,7 +2577,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       maxLines: 1,
                                                       overflow:TextOverflow.ellipsis,
                                                       textAlign: TextAlign.center,
-                                                      style: GoogleFonts.pressStart2p(
+                                                      style: TextStyle(                                fontFamily: 'PressStart2P',
                                                         fontSize: mapValueDimensionBasedLockOnDesync(
                                                                 15,
                                                                 22,
@@ -2986,7 +2676,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       ),
                                                                       child:Text(
                                                                       ref.watch(aiPromptProvider),
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                                           fontSize:
                                                                               mapValueDimensionBasedLockOnDesync(
                                                                                   15,
@@ -3009,7 +2699,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       ),
                                                                       child:Text(
                                                                       ref.watch(aiPromptProvider),
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                                           fontSize:
                                                                               mapValueDimensionBasedLockOnDesync(
                                                                                   15,
@@ -3045,7 +2735,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       ),
                                                                       child:Text(
                                                                       ref.watch(aiTokenProvider).trimLeft(),
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                                           fontSize:
                                                                               mapValueDimensionBasedLockOnDesync(
                                                                                   15,
@@ -3068,7 +2758,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       ),
                                                                       child:Text(
                                                                       ref.watch(aiTokenProvider).trimLeft(),
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                                           fontSize:
                                                                               mapValueDimensionBasedLockOnDesync(
                                                                                   15,
@@ -3099,92 +2789,88 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 children: [
                                                   ElevatedLayerButton(
                                                   onClick: () async {
-                                                    ref.read(aiPromptProvider.notifier).state = chatTextController.text;
-                                                    if (!isLlmProcessing) {
-                                                      setState(() {
-                                                        isLlmProcessing = true;
-                                                      });
-                                                      try{
-                                                        final receivePort =
-                                                            ReceivePort();
-                                                        final errorPort = ReceivePort();                                                 
-                                                        final prompt =
-                                                            ChatHistory()
-                                                              ..addMessage(
-                                                                  role:
-                                                                      Role.system,
-                                                                  content:
-                                                                """"" You are a concise, analytical assistant.
-                                                                    Always focus directly on asnwering the user's prompt, 
-                                                                    keep responses short and precise. 
-                                                                    Only generate the answer and stop.
-                                                                    Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. If you can't answer something just say so but don't remain silent to a question.
-                                                                    Do not generate questions or mention unrelated topics. Keep your responses strictly bound to the BillBlaze data and decorate linguistically for the user. 
-                                                                    Here's the BillBlaze Data: $typeStats, Selected year: $selectedYear, Selected Month: $selectedMonth, YearStats: $monthRevenueMap, MonthStats: $dayRevenueMap Current Date: ${DateFormat('dd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
-                                                                      Total Revenue: $totalRevenue, Total Profit: $totalProfit, Total bills: $totalBills.
-                                                                  Payable means our total revenue.
-                                                                  Count means number of bills made by the user.
-                                                                """)
-                                                              ..addMessage(
-                                                                  role: Role.user,
-                                                                  content:
-                                                                      chatTextController
-                                                                          .text)
-                                                              ..addMessage(
-                                                                  role: Role
-                                                                      .assistant,
-                                                                  content: "");
-                                                                                                          
-                                                        final modelPath = ref.read(aiModelPathProvider);
-                                                        // final modelPath =
-                                                        //     "C:/Users/ANTEC/Downloads/Compressed/Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf";
-                                                                                                          
-                                                        // ✅ Pass only data, not Flutter state
-                                                        await Isolate.spawn(
-                                                            runLlamaModel, {
-                                                          'sendPort': receivePort
-                                                              .sendPort,
-                                                          'prompt':
-                                                              prompt.exportFormat(
-                                                                  ChatFormat
-                                                                      .chatml,
-                                                                  leaveLastAssistantOpen:
-                                                                      true),
-                                                          'modelPath': modelPath,
-                                                        },
-                                                        onError: errorPort.sendPort,
-                                                        );
-                                                        ref.read(aiTokenProvider
-                                                                .notifier).state = '';
-                                                        errorPort.listen((err) {
-                                                          // err is [error, stackTrace]
-                                                          ref.read(aiTokenProvider.notifier).state = "Error: ${err[0]}";
-                                                          setState(() {
-                                                            isLlmProcessing = false;
-                                                          });
-                                                          return;
-                                                        });                                                  
-                                                        final buffer =
-                                                            StringBuffer();
-                                                        await for (final token
-                                                            in receivePort) {
-                                                          if (token == null)
-                                                            break;
-                                                          buffer.write(token);
-                                                          ref.read(aiTokenProvider.notifier).state += (token);
-                                                          ref.read(aiTokenProvider.notifier).state = ref.read(
-                                                                  aiTokenProvider.notifier).state
-                                                                  .replaceAll('<|im_start|> assistant\n', '')
-                                                                  .replaceAll('<|im_start|>assistant\n', '')
-                                                                  .replaceAll('<|im_end|>', '')
-                                                                  ;
-                                                        }
-                                                        print( "✅ Final Response: ${buffer.toString()}");
-                                                      } finally{
-                                                      setState(() {
-                                                        isLlmProcessing = false;
-                                                      });}
-                                                    }
+                                                    // ref.read(aiPromptProvider.notifier).state = chatTextController.text;
+                                                    // if (!isLlmProcessing) {
+                                                    //   setState(() {
+                                                    //     isLlmProcessing = true;
+                                                    //   });
+                                                    //   try{
+                                                    //     final receivePort =
+                                                    //         ReceivePort();
+                                                    //     final errorPort = ReceivePort();                                                 
+                                                    //     final prompt =
+                                                    //         ChatHistory()
+                                                    //           ..addMessage(
+                                                    //               role:
+                                                    //                   Role.system,
+                                                    //               content:
+                                                    //             """"" You are a concise, analytical assistant.
+                                                    //                 Always focus directly on asnwering the user's prompt, 
+                                                    //                 keep responses short and precise. 
+                                                    //                 Only generate the answer and stop.
+                                                    //                 Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. If you can't answer something just say so but don't remain silent to a question.
+                                                    //                 Do not generate questions or mention unrelated topics. Keep your responses strictly bound to the BillBlaze data and decorate linguistically for the user. 
+                                                    //                 Here's the BillBlaze Data: $typeStats, Selected year: $selectedYear, Selected Month: $selectedMonth, YearStats: $monthRevenueMap, MonthStats: $dayRevenueMap Current Date: ${DateFormat('dd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
+                                                    //                   Total Revenue: $totalRevenue, Total Profit: $totalProfit, Total bills: $totalBills.
+                                                    //               Payable means our total revenue.
+                                                    //               Count means number of bills made by the user.
+                                                    //             """)
+                                                    //           ..addMessage(
+                                                    //               role: Role.user,
+                                                    //               content:
+                                                    //                   chatTextController
+                                                    //                       .text)
+                                                    //           ..addMessage(
+                                                    //               role: Role
+                                                    //                   .assistant,
+                                                    //               content: "");
+                                                    //     final modelPath = ref.read(aiModelPathProvider);
+                                                    //     // final modelPath =
+                                                    //     //     "C:/Users/ANTEC/Downloads/Compressed/Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf";
+                                                    //     // ✅ Pass only data, not Flutter state
+                                                    //     await Isolate.spawn(
+                                                    //         runLlamaModel, {
+                                                    //       'sendPort': receivePort
+                                                    //           .sendPort,
+                                                    //       'prompt':
+                                                    //           prompt.exportFormat(
+                                                    //               ChatFormat.chatml,
+                                                    //               leaveLastAssistantOpen: true),
+                                                    //       'modelPath': modelPath,
+                                                    //     },
+                                                    //     onError: errorPort.sendPort,
+                                                    //     );
+                                                    //     ref.read(aiTokenProvider
+                                                    //             .notifier).state = '';
+                                                    //     errorPort.listen((err) {
+                                                    //       // err is [error, stackTrace]
+                                                    //       ref.read(aiTokenProvider.notifier).state = "Error: ${err[0]}";
+                                                    //       setState(() {
+                                                    //         isLlmProcessing = false;
+                                                    //       });
+                                                    //       return;
+                                                    //     });                                                  
+                                                    //     final buffer =
+                                                    //         StringBuffer();
+                                                    //     await for (final token
+                                                    //         in receivePort) {
+                                                    //       if (token == null)
+                                                    //         break;
+                                                    //       buffer.write(token);
+                                                    //       ref.read(aiTokenProvider.notifier).state += (token);
+                                                    //       ref.read(aiTokenProvider.notifier).state = ref.read(
+                                                    //               aiTokenProvider.notifier).state
+                                                    //               .replaceAll('<|im_start|> assistant\n', '')
+                                                    //               .replaceAll('<|im_start|>assistant\n', '')
+                                                    //               .replaceAll('<|im_end|>', '')
+                                                    //               ;
+                                                    //     }
+                                                    //     print( "✅ Final Response: ${buffer.toString()}");
+                                                    //   } finally{
+                                                    //   setState(() {
+                                                    //     isLlmProcessing = false;
+                                                    //   });}
+                                                    // }
                                                   },
                                                   
                                                   buttonHeight: mapValueDimensionBasedLockOnDesync( 45, 85, sWidth, sHeight),
@@ -3276,7 +2962,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   top: 5,
                                                                   bottom: 5),
                                                           labelStyle:
-                                                              GoogleFonts.lexend(
+                                                              TextStyle(                                fontFamily: 'Lexend',
                                                                   color:
                                                                       defaultPalette
                                                                           .black),
@@ -3294,7 +2980,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       BorderSide
                                                                           .none),
                                                         ),
-                                                        style: GoogleFonts.lexend(
+                                                        style: TextStyle(                                fontFamily: 'Lexend',
                                                             fontSize:
                                                                 mapValueDimensionBasedLockOnDesync(
                                                                     15,
@@ -3320,7 +3006,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 'LLMs can make mistakes, or hallucinate. Fact check important stuff.',
                                                 maxLines: 1,
                                                 overflow:TextOverflow.ellipsis,
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle(                                fontFamily: 'Lexend',
                                                   fontSize: mapValueDimensionBasedLockOnDesync( 6, 12, sWidth, sHeight),
                                                     color: defaultPalette.extras[0],
                                                     fontWeight: FontWeight.w500,),
@@ -3350,7 +3036,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                           textAlign: TextAlign.left,
                                                           maxLines: 1,
                                                           overflow: TextOverflow.ellipsis,
-                                                        style: GoogleFonts.pressStart2p(
+                                                        style: TextStyle(                                fontFamily: 'PressStart2P',
                                                             color: defaultPalette.extras[0],
                                                             fontSize: mapValueDimensionBasedLockOnDesync(25, 45, sWidth, sHeight),
                                                             letterSpacing: -2,
@@ -3437,7 +3123,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                             Navigator.push(context,
                                                                                 MaterialPageRoute(
                                                                               builder: (context) {
-                                                                                //unsubscribeStream();
                                                                                 // _timer?.cancel();
                                                                                 return PopScope(
                                                                                   canPop: false,
@@ -3448,7 +3133,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                       setState(() {
                                                                                         filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
                                                                                       });
-                                                                                    //  subscribeStream();
                                                                                     },
                                                                                   ),
                                                                                 );
@@ -3481,7 +3165,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                           child: Tooltip(
                                                                                             message:
                                                                                             layoutModel.name,
-                                                                                            textStyle: GoogleFonts.lexend(
+                                                                                            textStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                                               fontSize: mapValueDimensionBasedLockOnDesync(15,20, sWidth, sHeight),
                                                                                               color:defaultPalette.primary,
                                                                                               fontWeight: FontWeight.w600,
@@ -3495,7 +3179,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                               maxLines: 1,
                                                                                               overflow: TextOverflow.ellipsis,
                                                                                               textAlign: TextAlign.end,
-                                                                                              style: GoogleFonts.lexend(
+                                                                                              style: TextStyle(                                fontFamily: 'Lexend',
                                                                                                 fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
                                                                                                 color: defaultPalette.extras[0],
                                                                                                 fontWeight: FontWeight.w600,
@@ -3524,7 +3208,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                               maxLines: 1,
                                                                                               // overflow: TextOverflow.ellipsis,
                                                                                               text: TextSpan(
-                                                                                                style: GoogleFonts.lexend(
+                                                                                                style: TextStyle(                                fontFamily: 'Lexend',
                                                                                                   fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
                                                                                                   fontWeight: FontWeight.w300,
                                                                                                   letterSpacing: -0.2,
@@ -3532,7 +3216,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                 children: [
                                                                                                   TextSpan(
                                                                                                     text: 'Created: ',
-                                                                                                    style: GoogleFonts.lexend(
+                                                                                                    style: TextStyle(                                fontFamily: 'Lexend',
                                                                                                         color: defaultPalette.extras[0]),
                                                                                                   ),
                                                                                                   TextSpan(
@@ -3552,7 +3236,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                               maxLines: 1,
                                                                                               overflow: TextOverflow.ellipsis,
                                                                                               text: TextSpan(
-                                                                                                style: GoogleFonts.lexend(
+                                                                                                style: TextStyle(                                fontFamily: 'Lexend',
                                                                                                   fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
                                                                                                   fontWeight: FontWeight.w300,
                                                                                                   letterSpacing: -0.2,
@@ -3560,7 +3244,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                 children: [
                                                                                                   TextSpan(
                                                                                                     text: 'Modified: ',
-                                                                                                    style: GoogleFonts.lexend(
+                                                                                                    style: TextStyle(                                fontFamily: 'Lexend',
                                                                                                       color: defaultPalette.extras[0],
                                                                                                       fontWeight: FontWeight.w400,
                                                                                                     ),
@@ -3580,7 +3264,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                             maxLines: 1,
                                                                                             overflow: TextOverflow.ellipsis,
                                                                                             text: TextSpan(
-                                                                                              style: GoogleFonts.lexend(
+                                                                                              style: TextStyle(                                fontFamily: 'Lexend',
                                                                                                 fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
                                                                                                 fontWeight: FontWeight.w300,
                                                                                                 letterSpacing: -0.2,
@@ -3589,7 +3273,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                 TextSpan(
                                                                                                   text:
                                                                                                       '${SheetType.values[layoutModel.type].name} · ',
-                                                                                                  style: GoogleFonts.lexend(
+                                                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                                                     fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
                                                                                                     color: defaultPalette.extras[0],
                                                                                                     fontWeight: FontWeight.w600,
@@ -3599,7 +3283,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                 TextSpan(
                                                                                                   text:
                                                                                                       'Pages: ${layoutModel.spreadSheetList.isEmpty ? '1' : layoutModel.spreadSheetList.length.toString()}',
-                                                                                                  style: GoogleFonts.lexend(
+                                                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                                                     fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
                                                                                                     color: defaultPalette.extras[0],
                                                                                                     fontWeight: FontWeight.w400,
@@ -3785,7 +3469,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 preferBelow: true,
                                 margin: EdgeInsets.only(left: 45),
                                 padding: EdgeInsets.symmetric(horizontal: 15,vertical: 8),
-                                textStyle: GoogleFonts.lexend(
+                                textStyle: TextStyle(                                fontFamily: 'Lexend',
                                   fontSize: mapValueDimensionBased( 15, 20, sWidth, sHeight),
                                   color: defaultPalette.primary,
                                   fontWeight: FontWeight.w600,
@@ -3815,7 +3499,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 preferBelow: true,
                                 margin: EdgeInsets.only(left: 45),
                                 padding: EdgeInsets.symmetric(horizontal: 15,vertical: 8),
-                                textStyle: GoogleFonts.lexend(
+                                textStyle: TextStyle(                                fontFamily: 'Lexend',
                                   fontSize: mapValueDimensionBased( 15, 20, sWidth, sHeight),
                                   color: defaultPalette.primary,
                                   fontWeight: FontWeight.w600,
@@ -3845,7 +3529,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 preferBelow: true,
                                 margin: EdgeInsets.only(left: 45),
                                 padding: EdgeInsets.symmetric(horizontal: 15,vertical: 8),
-                                textStyle: GoogleFonts.lexend(
+                                textStyle: TextStyle(                                fontFamily: 'Lexend',
                                   fontSize: mapValueDimensionBased( 15, 20, sWidth, sHeight),
                                   color: defaultPalette.primary,
                                   fontWeight: FontWeight.w600,
@@ -3875,7 +3559,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 preferBelow: true,
                                 margin: EdgeInsets.only(left: 45),
                                 padding: EdgeInsets.symmetric(horizontal: 15,vertical: 8),
-                                textStyle: GoogleFonts.lexend(
+                                textStyle: TextStyle(                                fontFamily: 'Lexend',
                                   fontSize: mapValueDimensionBased( 15, 20, sWidth, sHeight),
                                   color: defaultPalette.primary,
                                   fontWeight: FontWeight.w600,
@@ -3922,7 +3606,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 }),
               ),
               // Windows top bar
-              if (Platform.isWindows)
+              if (!kIsWeb && Platform.isWindows)
                 GestureDetector(
                   behavior: HitTestBehavior.translucent,
                   onPanStart: (details) {
@@ -4137,7 +3821,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               : s==2
               ? ' pages: '
               : ' line ',
-              style: GoogleFonts.lexend(
+              style: TextStyle(                                fontFamily: 'Lexend',
                   fontSize: mapValueDimensionBasedLockOnDesync(13, 26, sWidth, sHeight),
                   letterSpacing: -1,
                   fontWeight: FontWeight.w600,
@@ -4163,7 +3847,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           textAlign: TextAlign.end,
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.all(0),
-            labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+            labelStyle: TextStyle(                                fontFamily: 'Lexend',color: defaultPalette.black),
             fillColor: defaultPalette.transparent,
             border: InputBorder.none,
             enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -4237,7 +3921,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         : pageUnit == 0.03528
         ? 'cm'
         : '',
-        style:GoogleFonts.lexend(
+        style:TextStyle(                                fontFamily: 'Lexend',
           fontSize:mapValueDimensionBasedLockOnDesync(12, 25, sWidth, sHeight),
           fontWeight: FontWeight.w600,
           letterSpacing:-1,
@@ -4338,7 +4022,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         },
         hoverColor: defaultPalette.primary.withOpacity(0.02),
         unfocusedColor: defaultPalette.primary.withOpacity(0.2),
-        style: GoogleFonts.lexend(
+        style: TextStyle(                                fontFamily: 'Lexend',
           fontWeight: FontWeight.w500,
           color: defaultPalette.primary,
           fontSize: mapValueDimensionBasedLockOnDesync(12, 24, sWidth, sHeight),
@@ -4383,7 +4067,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     final content = payload is String ? payload : jsonEncode(payload);
 
     // Get folder path from provider
-    final dir = ref.read(folderPathProvider);
     String safeName = newLayout.name.trim();
     if (!safeName.endsWith('.bbc')) {
       safeName='$safeName.bbc';
@@ -4411,155 +4094,139 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     }
   }
   
-  Stream<List<LayoutModel>> layoutStream() async* {
-    if (!await dir.exists()) {
-      yield [];
-      return;
-    }
+  // Stream<List<LayoutModel>> layoutStream() async* {
+  //   if (!await dir.exists()) {
+  //     yield [];
+  //     return;
+  //   }
+  //   // --- Watch for changes ---
+  //   await for (final event in dir.watch(recursive: false)) {
+  //     // await syncLayoutsBoxAndFolder(dir);
+  //     if (event.type != FileSystemEvent.modify) {
+  //       yield [];
+  //     }
+  //   }
+  // }
+  // Future<bool> syncLayoutsBoxAndFolder(Directory dir) async{
+  //   if (dir.path=='@@@@@') {
+  //     return false;
+  //   }
+  //   if (!await dir.exists()) {
+  //     return false;
+  //   }
+  //   // --- Helper: extract metadata only ---
+  //   Map<String, dynamic>? parseMeta(File file) {
+  //     try {
+  //       final content = file.readAsStringSync();
+  //       final meta = LayoutModel.toMetaDataFromJson(content);
+  //       print(meta);
+  //       return {
+  //         ...meta,
+  //         'file': file,
+  //       };
+  //     } catch (e) {
+  //       print('Error parsing ${file.path}: $e');
+  //       return null;
+  //     }
+  //   }
 
-    // --- Watch for changes ---
-    await for (final event in dir.watch(recursive: false)) {
-      // await syncLayoutsBoxAndFolder(dir);
-      if (event.type != FileSystemEvent.modify) {
-        yield [];
-      }
-      
-    }
-  
-  }
-
-  Future<bool> syncLayoutsBoxAndFolder(Directory dir) async{
-    if (dir.path=='@@@@@') {
-      return false;
-    }
-    if (!await dir.exists()) {
-      return false;
-    }
-
-    // --- Helper: extract metadata only ---
-    Map<String, dynamic>? parseMeta(File file) {
-      try {
-        final content = file.readAsStringSync();
-        final meta = LayoutModel.toMetaDataFromJson(content);
-        print(meta);
-        return {
-          ...meta,
-          'file': file,
-        };
-      } catch (e) {
-        print('Error parsing ${file.path}: $e');
-        return null;
-      }
-    }
-
-    // --- Helper: parse full LayoutModel ---
-    LayoutModel? parseFull(File file) {
-      try {
-        final content = file.readAsStringSync();
-        final model = LayoutModel.fromJson(content);
-        model.name = file.uri.pathSegments.last.replaceAll(RegExp(r'\.bbc$'), '');
-        return model;
-      } catch (e) {
-        print('Error parsing ${file.path}: $e');
-        return null;
-      }
-    }
-
-    Future<bool> syncLayouts() async {
-      final box = Boxes.getLayouts(ref);
-
-      // Snapshot Hive + Files
-      final boxLayouts = box.values.toList();
-      final fileMetas = dir
-          .listSync()
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.bbc'))
-          .map(parseMeta)
-          .whereType<Map<String, dynamic>>()
-          .toList(); // your existing logic
-
-      // Build lookup maps
-      final boxMap = {for (var lm in boxLayouts) lm.id: lm};
-      final fileMap = {for (var m in fileMetas) m['id'] as String: m};
-
-    
-
-      // Union of all IDs
-      final allIds = {...boxMap.keys, ...fileMap.keys};
-      // print('allids: $allIds');
-      for (final id in allIds) {
-        final lm = boxMap[id];
-        final meta = fileMap[id];
-        // print('file: $id');
-        // print('lm: $lm');
-        // print('meta: $meta');
-        if (lm != null && meta == null) {
-          // Exists in Hive only → write to file
-          if(lm.deleted??false){
-            await lm.delete();
-          } else{
-          saveFile(lm);}
-
-        } else if (lm == null && meta != null) {
-          if(meta['deleted']??false){
-            print('fileExists not Hive: $id');
-            (meta['file'] as File)?.delete();
-          } else {
-          // Exists in file only → write to Hive
-          var newId = id;
-          // print('fileExists not Hive: $id');
-          // if (newId.isEmpty || boxMap.containsKey(newId)) {
-          //   final prefix = id.startsWith('BI') ? 'BI' : 'LY';
-          //   newId = '$prefix-${Uuid().v4()}';
-          // }
-          final fm = parseFull(meta['file'] as File)?..name = (meta['file'] as File).path.split('\\').last;
-          if (fm != null) {
-            fm.id = newId;
-            await box.put(fm.id, fm);
-          }}
-
-        } else if (lm != null && meta != null) {
-          
-          // Exists in both → compare modifiedAt
-          if(lm.deleted??false){
-            print('Exists in both → compare modifiedAt: $id');
-            (meta['file'] as File)?.delete();
-          }
-          else {
-          final fileModifiedAt = meta['modifiedAt'] as DateTime;
-          final diff = lm.modifiedAt.difference(fileModifiedAt).inSeconds;
-          if (diff>10) {
-            // Hive newer → overwrite file
-            saveFile(lm);
-          } else if (diff<-10) {
-            // File newer → overwrite Hive
-            final fm = parseFull(meta['file'] as File)?..name = (meta['file'] as File).path.split('\\').last;
-            if (fm != null) {
-             await box.put(fm.id, fm);
-            }
-          } else {
-            // Same timestamp → keep Hive (or just trust either side)
-            box.get(id)?..name = (meta['file'] as File).path.split('\\').last..save();
-          }}
-          // return false;
-        } else {
-            // Same timestamp → keep Hive (or just trust either side)
-            if(lm?.deleted??false){
-              print('Exists in both → compare modifiedAt: $id');
-              (meta?['file'] as File).delete();
-            }else {
-              box.get(id)?..name = (meta?['file'] as File).path.split('\\').last..save();}
-            // return false;
-          }
-      }
-
-      print("Synced layouts");
-      return false;
-    }
-
-    // --- Initial sync ---
-    return syncLayouts();
-  }
+  //   // --- Helper: parse full LayoutModel ---
+  //   LayoutModel? parseFull(File file) {
+  //     try {
+  //       final content = file.readAsStringSync();
+  //       final model = LayoutModel.fromJson(content);
+  //       model.name = file.uri.pathSegments.last.replaceAll(RegExp(r'\.bbc$'), '');
+  //       return model;
+  //     } catch (e) {
+  //       print('Error parsing ${file.path}: $e');
+  //       return null;
+  //     }
+  //   }
+  //   Future<bool> syncLayouts() async {
+  //     final box = Boxes.getLayouts(ref);
+  //     // Snapshot Hive + Files
+  //     final boxLayouts = box.values.toList();
+  //     final fileMetas = dir
+  //         .listSync()
+  //         .whereType<File>()
+  //         .where((f) => f.path.endsWith('.bbc'))
+  //         .map(parseMeta)
+  //         .whereType<Map<String, dynamic>>()
+  //        .toList(); // your existing logic
+  //     // Build lookup maps
+  //     final boxMap = {for (var lm in boxLayouts) lm.id: lm};
+  //     final fileMap = {for (var m in fileMetas) m['id'] as String: m};
+  //     // Union of all IDs
+  //     final allIds = {...boxMap.keys, ...fileMap.keys};
+  //     // print('allids: $allIds');
+  //     for (final id in allIds) {
+  //       final lm = boxMap[id];
+  //       final meta = fileMap[id];
+  //       // print('file: $id');
+  //       // print('lm: $lm');
+  //       // print('meta: $meta');
+  //       if (lm != null && meta == null) {
+  //         // Exists in Hive only → write to file
+  //         if(lm.deleted??false){
+  //           await lm.delete();
+  //         } else{
+  //         saveFile(lm);}
+  //       } else if (lm == null && meta != null) {
+  //         if(meta['deleted']??false){
+  //           print('fileExists not Hive: $id');
+  //           (meta['file'] as File)?.delete();
+  //         } else {
+  //         // Exists in file only → write to Hive
+  //         var newId = id;
+  //         // print('fileExists not Hive: $id');
+  //         // if (newId.isEmpty || boxMap.containsKey(newId)) {
+  //         //   final prefix = id.startsWith('BI') ? 'BI' : 'LY';
+  //         //   newId = '$prefix-${Uuid().v4()}';
+  //         // }
+  //         final fm = parseFull(meta['file'] as File)?..name = (meta['file'] as File).path.split('\\').last;
+  //         if (fm != null) {
+  //           fm.id = newId;
+  //           await box.put(fm.id, fm);
+  //         }}
+  //       } else if (lm != null && meta != null) { 
+  //         // Exists in both → compare modifiedAt
+  //         if(lm.deleted??false){
+  //           print('Exists in both → compare modifiedAt: $id');
+  //           (meta['file'] as File)?.delete();
+  //         }
+  //         else {
+  //         final fileModifiedAt = meta['modifiedAt'] as DateTime;
+  //         final diff = lm.modifiedAt.difference(fileModifiedAt).inSeconds;
+  //         if (diff>10) {
+  //           // Hive newer → overwrite file
+  //           saveFile(lm);
+  //         } else if (diff<-10) {
+  //           // File newer → overwrite Hive
+  //           final fm = parseFull(meta['file'] as File)?..name = (meta['file'] as File).path.split('\\').last;
+  //           if (fm != null) {
+  //            await box.put(fm.id, fm);
+  //           }
+  //         } else {
+  //           // Same timestamp → keep Hive (or just trust either side)
+  //           box.get(id)?..name = (meta['file'] as File).path.split('\\').last..save();
+  //         }}
+  //         // return false;
+  //       } else {
+  //           // Same timestamp → keep Hive (or just trust either side)
+  //           if(lm?.deleted??false){
+  //             print('Exists in both → compare modifiedAt: $id');
+  //             (meta?['file'] as File).delete();
+  //           }else {
+  //             box.get(id)?..name = (meta?['file'] as File).path.split('\\').last..save();}
+  //           // return false;
+  //         }
+  //     }
+  //     print("Synced layouts");
+  //     return false;
+  //   }
+  //   // --- Initial sync ---
+  //   return syncLayouts();
+  // }
 
   Future<void> forceDelete(String path) async {
     final result = await Process.run(
@@ -4761,7 +4428,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   overflow:
                                                       TextOverflow.ellipsis,
                                                   textAlign: TextAlign.end,
-                                                  style: GoogleFonts.lexend(
+                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                     fontSize:
                                                         mapValueDimensionBasedLockOnDesync(
                                                             15,
@@ -4803,7 +4470,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 child: Text(' date: ',
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
-                                                  style: GoogleFonts.lexend(
+                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                       fontSize: mapValueDimensionBasedLockOnDesync(13, 26, sWidth, sHeight),
                                                       letterSpacing: -1,
                                                       fontWeight: FontWeight.w600,
@@ -4828,15 +4495,15 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                             return Theme(
                                                               data: Theme.of(context).copyWith(
                                                                 inputDecorationTheme: InputDecorationTheme(
-                                                                  labelStyle: GoogleFonts.lexend(
+                                                                  labelStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 12,
                                                                     color: defaultPalette.extras[0],
                                                                   ),
-                                                                  hintStyle: GoogleFonts.lexend(
+                                                                  hintStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 15,
                                                                     color: defaultPalette.extras[0].withOpacity(0.6),
                                                                   ),
-                                                                  errorStyle: GoogleFonts.lexend(
+                                                                  errorStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 15,
                                                                     color: defaultPalette.extras[0].withOpacity(0.6),
                                                                   ),
@@ -4846,17 +4513,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   ),
                                                                 ),
                                                                 textTheme: Theme.of(context).textTheme.copyWith(
-                                                                  titleLarge: GoogleFonts.lexend(
+                                                                  titleLarge: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 24,
                                                                     fontWeight: FontWeight.w600,
                                                                     color: defaultPalette.black,
                                                                   ),
-                                                                  headlineSmall: GoogleFonts.lexend(
+                                                                  headlineSmall: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 20,
                                                                     fontWeight: FontWeight.w600,
                                                                     color: defaultPalette.black,
                                                                   ),
-                                                                  headlineMedium: GoogleFonts.lexend(
+                                                                  headlineMedium: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 20,
                                                                     fontWeight: FontWeight.w600,
                                                                     color: defaultPalette.black,
@@ -4865,7 +4532,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                 textButtonTheme: TextButtonThemeData(
                                                                   style: ButtonStyle(
                                                                     textStyle: WidgetStateProperty.all(
-                                                                      GoogleFonts.lexend(fontSize: 15, letterSpacing: -1),
+                                                                      TextStyle(                                fontFamily: 'Lexend',fontSize: 15, letterSpacing: -1),
                                                                     ),
                                                                     foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
                                                                   ),
@@ -4912,7 +4579,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   dividerColor: defaultPalette.extras[0].withOpacity(0.4),
                                                                   confirmButtonStyle: ButtonStyle(
                                                                     textStyle: WidgetStateProperty.all(
-                                                                      GoogleFonts.lexend(
+                                                                      TextStyle(                                fontFamily: 'Lexend',
                                                                         fontSize: 15,
                                                                         letterSpacing: -1,
                                                                         color: defaultPalette.tertiary,
@@ -4922,7 +4589,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   ),
                                                                   cancelButtonStyle: ButtonStyle(
                                                                     textStyle: WidgetStateProperty.all(
-                                                                      GoogleFonts.lexend(
+                                                                      TextStyle(                                fontFamily: 'Lexend',
                                                                         fontSize: 15,
                                                                         letterSpacing: -1,
                                                                         color: defaultPalette.tertiary,
@@ -4930,40 +4597,40 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       ),
                                                                     ),
                                                                   ),
-                                                                  yearStyle: GoogleFonts.lexend(
+                                                                  yearStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 15,
                                                                     color: defaultPalette.tertiary,
                                                                     letterSpacing: -1,
                                                                   ),
-                                                                  dayStyle: GoogleFonts.lexend(
+                                                                  dayStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 15,
                                                                     color: defaultPalette.tertiary,
                                                                     letterSpacing: -1,
                                                                   ),
-                                                                  weekdayStyle: GoogleFonts.lexend(
+                                                                  weekdayStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 14,
                                                                     letterSpacing: -1,
                                                                     color: defaultPalette.tertiary,
                                                                     fontWeight: FontWeight.w600,
                                                                   ),
-                                                                  headerHeadlineStyle: GoogleFonts.lexend(
+                                                                  headerHeadlineStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 30,
                                                                     letterSpacing: -1,
                                                                     color: defaultPalette.tertiary,
                                                                     fontWeight: FontWeight.w600,
                                                                   ),
-                                                                  rangePickerHeaderHeadlineStyle: GoogleFonts.lexend(
+                                                                  rangePickerHeaderHeadlineStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 14,
                                                                     letterSpacing: -1,
                                                                     color: defaultPalette.tertiary,
                                                                   ),
-                                                                  rangePickerHeaderHelpStyle: GoogleFonts.lexend(
+                                                                  rangePickerHeaderHelpStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                     fontSize: 14,
                                                                     letterSpacing: -1,
                                                                     color: defaultPalette.tertiary,
                                                                     fontWeight: FontWeight.w600,
                                                                   ),
-                                                                headerHelpStyle: GoogleFonts.lexend(
+                                                                headerHelpStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                   fontSize: 14,
                                                                   letterSpacing: -1,
                                                                   color: defaultPalette.tertiary,
@@ -4994,7 +4661,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                     maxLines: 1,
                                                     overflow: TextOverflow.ellipsis,
                                                     textAlign: TextAlign.end,
-                                                    style: GoogleFonts.lexend(
+                                                    style: TextStyle(                                fontFamily: 'Lexend',
                                                       fontSize: mapValueDimensionBasedLockOnDesync(12, 24, sWidth, sHeight),
                                                       letterSpacing: -1,
                                                       fontWeight: FontWeight.w500,
@@ -5149,7 +4816,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       getPageFormatString(
                                                         getPageFormatFromMap(tempLayoutModel.docPropsList[0].pageFormatController),
                                                       ),
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                         fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
                                                         color: defaultPalette.extras[0],
                                                         fontWeight: FontWeight.w800
@@ -5264,7 +4931,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                 Text(
                                                                                   getLabelList(SheetType.values[tempLayoutModel.type], null).length.toString(),
                                                                                   maxLines: 1,
-                                                                                  style: GoogleFonts.lexend(
+                                                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                                                     height:1.35,
                                                                                     fontSize: mapValueDimensionBasedLockOnDesync(
                                                                                       20 + mapValueDimensionBased(-4, -6, sWidth, sHeight,useWidth: true), 
@@ -5284,7 +4951,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                             .toString(),
                                                                                         maxLines: 1,
                                                                                         textAlign: TextAlign.center,
-                                                                                        style: GoogleFonts.lexend(fontSize: mapValueDimensionBasedLockOnDesync(11, 50, sWidth, sHeight), letterSpacing: -1, color: defaultPalette.extras[4], fontWeight: FontWeight.w500),
+                                                                                        style: TextStyle(                                fontFamily: 'Lexend',fontSize: mapValueDimensionBasedLockOnDesync(11, 50, sWidth, sHeight), letterSpacing: -1, color: defaultPalette.extras[4], fontWeight: FontWeight.w500),
                                                                                       ),
                                                                                     ),
                                                                                     Expanded(
@@ -5296,7 +4963,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                             .toString(),
                                                                                         maxLines: 1,
                                                                                         textAlign: TextAlign.center,
-                                                                                        style: GoogleFonts.lexend(
+                                                                                        style: TextStyle(                                fontFamily: 'Lexend',
                                                                                           fontSize: mapValueDimensionBasedLockOnDesync(11, 50, sWidth, sHeight), letterSpacing: -1, color: defaultPalette.primary, fontWeight: FontWeight.w500),
                                                                                       ),
                                                                                     ),
@@ -5349,11 +5016,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                     text: TextSpan(children: [
                                                                                                       TextSpan(
                                                                                                         text: '${ent.key + 1}.',
-                                                                                                        style: GoogleFonts.lexend(fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight), letterSpacing: -0.2, color: ent.value.isOptional ? defaultPalette.extras[0].withOpacity(0.95) : defaultPalette.extras[4], fontWeight: FontWeight.w300),
+                                                                                                        style: TextStyle(                                fontFamily: 'Lexend',fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight), letterSpacing: -0.2, color: ent.value.isOptional ? defaultPalette.extras[0].withOpacity(0.95) : defaultPalette.extras[4], fontWeight: FontWeight.w300),
                                                                                                       ),
                                                                                                       TextSpan(
                                                                                                         text: ' ${ent.value.name}',
-                                                                                                        style: GoogleFonts.lexend(fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight), letterSpacing: -0.2, color: defaultPalette.extras[0].withOpacity(0.95), fontWeight: FontWeight.w300),
+                                                                                                        style: TextStyle(                                fontFamily: 'Lexend',fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight), letterSpacing: -0.2, color: defaultPalette.extras[0].withOpacity(0.95), fontWeight: FontWeight.w300),
                                                                                                       )
                                                                                                     ]));
                                                                                               },
@@ -5381,7 +5048,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                     SheetType.values[tempLayoutModel.type].name.replaceFirstMapped(RegExp(r'^[a-z]+(?=[A-Z])'), (m) => '${m[0]}\n'),
                                                                                     maxLines: 2,
                                                                                     textAlign: TextAlign.end,
-                                                                                    style: GoogleFonts.lexend(fontSize:  mapValueDimensionBasedLockOnDesync(11, 30, sWidth, sHeight), letterSpacing: -1, height: 1, color: defaultPalette.extras[0], fontWeight: FontWeight.w500),
+                                                                                    style: TextStyle(                                fontFamily: 'Lexend',fontSize:  mapValueDimensionBasedLockOnDesync(11, 30, sWidth, sHeight), letterSpacing: -1, height: 1, color: defaultPalette.extras[0], fontWeight: FontWeight.w500),
                                                                                   ),
                                                                                 ),
                                                                               ),
@@ -5514,7 +5181,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                             'searchTypes...',
                                                                         focusColor:
                                                                             defaultPalette.extras[0],
-                                                                        hintStyle: GoogleFonts.lexend(
+                                                                        hintStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                             color: defaultPalette.extras[0],
                                                                             letterSpacing: -1,
                                                                             fontSize: 15),
@@ -5624,7 +5291,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                             Text(
                                                                                                               getLabelList(entry.value, null).length.toString(),
                                                                                                               maxLines: 1,
-                                                                                                              style: GoogleFonts.lexend(fontSize: 45, letterSpacing: -1, color: defaultPalette.extras[0], fontWeight: FontWeight.w500),
+                                                                                                              style: TextStyle(                                fontFamily: 'Lexend',fontSize: 45, letterSpacing: -1, color: defaultPalette.extras[0], fontWeight: FontWeight.w500),
                                                                                                             ),
                                                                                                             Row(
                                                                                                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -5638,7 +5305,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                                       .length
                                                                                                                       .toString(),
                                                                                                                   maxLines: 1,
-                                                                                                                  style: GoogleFonts.lexend(fontSize: 25, letterSpacing: -1, color: defaultPalette.extras[4], fontWeight: FontWeight.w500),
+                                                                                                                  style: TextStyle(                                fontFamily: 'Lexend',fontSize: 25, letterSpacing: -1, color: defaultPalette.extras[4], fontWeight: FontWeight.w500),
                                                                                                                 ),
                                                                                                                 Text(
                                                                                                                   getLabelList(entry.value, null)
@@ -5649,7 +5316,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                                       .length
                                                                                                                       .toString(),
                                                                                                                   maxLines: 1,
-                                                                                                                  style: GoogleFonts.lexend(fontSize: 25, letterSpacing: -1, color: defaultPalette.extras[0], fontWeight: FontWeight.w500),
+                                                                                                                  style: TextStyle(                                fontFamily: 'Lexend',fontSize: 25, letterSpacing: -1, color: defaultPalette.extras[0], fontWeight: FontWeight.w500),
                                                                                                                 ),
                                                                                                               ],
                                                                                                             )
@@ -5700,11 +5367,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                                                 text: TextSpan(children: [
                                                                                                                                   TextSpan(
                                                                                                                                     text: '${ent.key + 1}.',
-                                                                                                                                    style: GoogleFonts.lexend(fontSize: 12, letterSpacing: -0.2, color: ent.value.isOptional ? defaultPalette.primary.withOpacity(0.6) : defaultPalette.extras[4], fontWeight: FontWeight.w300),
+                                                                                                                                    style: TextStyle(                                fontFamily: 'Lexend',fontSize: 12, letterSpacing: -0.2, color: ent.value.isOptional ? defaultPalette.primary.withOpacity(0.6) : defaultPalette.extras[4], fontWeight: FontWeight.w300),
                                                                                                                                   ),
                                                                                                                                   TextSpan(
                                                                                                                                     text: ' ${ent.value.name}',
-                                                                                                                                    style: GoogleFonts.lexend(fontSize: 12, letterSpacing: -0.2, color: defaultPalette.primary.withOpacity(0.6), fontWeight: FontWeight.w300),
+                                                                                                                                    style: TextStyle(                                fontFamily: 'Lexend',fontSize: 12, letterSpacing: -0.2, color: defaultPalette.primary.withOpacity(0.6), fontWeight: FontWeight.w300),
                                                                                                                                   )
                                                                                                                                 ]));
                                                                                                                           },
@@ -5729,7 +5396,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                                   entry.value.name.replaceFirstMapped(RegExp(r'^[a-z]+(?=[A-Z])'), (m) => '${m[0]}\n'),
                                                                                                                   maxLines: 2,
                                                                                                                   textAlign: TextAlign.end,
-                                                                                                                  style: GoogleFonts.lexend(fontSize: 17, letterSpacing: -1, height: 1, color: defaultPalette.primary, fontWeight: FontWeight.w500),
+                                                                                                                  style: TextStyle(                                fontFamily: 'Lexend',fontSize: 17, letterSpacing: -1, height: 1, color: defaultPalette.primary, fontWeight: FontWeight.w500),
                                                                                                                 ),
                                                                                                               ),
                                                                                                             ),
@@ -6202,7 +5869,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     ),
                                     Text(
                                       'Layout',
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle(                                fontFamily: 'Lexend',
                                           fontSize:
                                               mapValueDimensionBasedLockOnDesync(
                                             15.5,
@@ -6217,7 +5884,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     ),
                                     Text(
                                       'New',
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle(                                fontFamily: 'Lexend',
                                         fontSize:
                                             mapValueDimensionBasedLockOnDesync(
                                           15.5,
@@ -6326,7 +5993,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       maxLines: 1,
                                       // overflow: TextOverflow.ellipsis,
                                       text: TextSpan(
-                                        style: GoogleFonts.lexend(
+                                        style: TextStyle(                                fontFamily: 'Lexend',
                                             fontSize:
                                                 mapValueDimensionBasedLockOnDesync(
                                               15.5,
@@ -6344,7 +6011,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           ),
                                           TextSpan(
                                             text: 'out',
-                                            style: GoogleFonts.lexend(
+                                            style: TextStyle(                                fontFamily: 'Lexend',
                                                 color: defaultPalette.primary),
                                           ),
                                         ],
@@ -6352,7 +6019,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     ),
                                     Text(
                                       'New',
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle(                                fontFamily: 'Lexend',
                                         fontSize:
                                             mapValueDimensionBasedLockOnDesync(
                                           15.5,
@@ -6471,7 +6138,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                           ),
                                                         ),
                                                       ),
-                                                      if (Platform.isWindows)
+                                                      if (!kIsWeb && Platform.isWindows)
                                                         GestureDetector(
                                                           behavior:
                                                               HitTestBehavior
@@ -6640,7 +6307,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       title: Text(
                                                         "Older ${incoming.id.startsWith('LY-') ? 'Layout' : incoming.type == 0 ? 'Bill' : SheetType.values[incoming.type].name} In The Cloud!",
                                                         style:
-                                                            GoogleFonts.lexend(
+                                                            TextStyle(                                fontFamily: 'Lexend',
                                                           fontSize: 25,
                                                           color: defaultPalette
                                                               .extras[0],
@@ -6724,7 +6391,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                     TextSpan(
                                                                       text:
                                                                           'Created: ',
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                                           color:
                                                                               defaultPalette.extras[0]),
                                                                     ),
@@ -6762,7 +6429,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                     TextSpan(
                                                                       text:
                                                                           'Modified: ',
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                                           color:
                                                                               defaultPalette.extras[0]),
                                                                     ),
@@ -6826,7 +6493,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                     TextSpan(
                                                                       text:
                                                                           'Created: ',
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                                           color:
                                                                               defaultPalette.extras[0]),
                                                                     ),
@@ -6864,7 +6531,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                     TextSpan(
                                                                       text:
                                                                           'Modified: ',
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                                           color:
                                                                               defaultPalette.extras[0]),
                                                                     ),
@@ -7143,7 +6810,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                           ),
                                                         ),
                                                       ),
-                                                      if (Platform.isWindows)
+                                                      if (!kIsWeb && Platform.isWindows)
                                                         GestureDetector(
                                                           behavior:
                                                               HitTestBehavior
@@ -7438,7 +7105,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               //     maxLines: 2,
               //     overflow: TextOverflow.ellipsis,
               //     // textAlign: TextAlign.end,
-              //     style: GoogleFonts.lexend(
+              //     style: TextStyle(                                fontFamily: 'Lexend',
               //         fontSize: mapValueDimensionBased(15, 30, sWidth, sHeight),
               //         color: defaultPalette.extras[0].withOpacity(0.4),
               //         letterSpacing: -0.2,
@@ -8408,7 +8075,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     textAlign: TextAlign.left,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.pressStart2p(
+                                  style: TextStyle(                                fontFamily: 'PressStart2P',
                                       color: defaultPalette.extras[0],
                                       fontSize: mapValueDimensionBasedLockOnDesync(25, 75, sWidth, sHeight),
                                       letterSpacing: -2,
@@ -8528,7 +8195,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             : value ==2
                                               ?'Show Owed Bills.'
                                               :'Show Settled Bills.',
-                                        textStyle: GoogleFonts.lexend(
+                                        textStyle: TextStyle(                                fontFamily: 'Lexend',
                                           fontSize: mapValueDimensionBased( 15, 20, sWidth, sHeight),
                                           color: defaultPalette.primary,
                                           fontWeight: FontWeight.w600,
@@ -8810,7 +8477,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               //Export as pdf of the bill button
                                                               Tooltip(
                                                                 message: '  Export ${layoutModel.name} as pdf.  ',
-                                                                textStyle: GoogleFonts.lexend(
+                                                                textStyle: TextStyle(                                fontFamily: 'Lexend',
                                                                   fontSize: mapValueDimensionBased( 15, 20, sWidth, sHeight),
                                                                   color: defaultPalette.primary,
                                                                   fontWeight: FontWeight.w600,
@@ -9607,7 +9274,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                               Expanded(
                                 child: Text(
                                   'Revenue',
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle(                                fontFamily: 'Lexend',
                                       fontSize: mapValueDimensionBased(
                                           20, 23, sWidth, sHeight),
                                       color: defaultPalette.extras[0],
@@ -9676,14 +9343,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
                                     return LineTooltipItem(
                                         '${monthNames[(barSpot.x - 1).clamp(0, 12).round()]}',
-                                        GoogleFonts.lexend(
+                                        TextStyle(                                fontFamily: 'Lexend',
                                           color: defaultPalette.tertiary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                         children: [
                                           TextSpan(
                                             text: ' Revenue: \n',
-                                            style: GoogleFonts.lexend(
+                                            style: TextStyle(                                fontFamily: 'Lexend',
                                               color: defaultPalette.primary,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -9695,7 +9362,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         (barSpot.x)
                                                             .clamp(1, 12)
                                                             .round()]??0),
-                                            style: GoogleFonts.lexend(
+                                            style: TextStyle(                                fontFamily: 'Lexend',
                                               color: defaultPalette.primary,
                                               fontWeight: FontWeight.w900,
                                             ),
@@ -9910,7 +9577,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       alignment: Alignment.centerLeft,
                                       child: Text(
                                       ref.read(currencyCodeProvider).symbol +  meta.formattedValue.toLowerCase(),
-                                        style: GoogleFonts.lexend(
+                                        style: TextStyle(                                fontFamily: 'Lexend',
                                           fontSize: mapValueDimensionBased(
                                               10, 15, sWidth, sHeight),
                                           letterSpacing: -1,
@@ -9933,7 +9600,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       monthNames[(value - 1)
                                           .clamp(0, double.infinity)
                                           .round()],
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle(                                fontFamily: 'Lexend',
                                         fontSize: mapValueDimensionBased(
                                             10, 15, sWidth, sHeight),
                                         letterSpacing: -1,
@@ -10023,14 +9690,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
                                     return LineTooltipItem(
                                         '${DateFormat.MMMMEEEEd().format(DateTime(selectedYear, selectedMonth, barSpot.x.toInt()))}${getOrdinal(barSpot.x.toInt())}\n',
-                                        GoogleFonts.lexend(
+                                        TextStyle(                                fontFamily: 'Lexend',
                                           color: defaultPalette.extras[0],
                                           fontWeight: FontWeight.bold,
                                         ),
                                         children: [
                                           TextSpan(
                                             text: 'Revenue: \n',
-                                            style: GoogleFonts.lexend(
+                                            style: TextStyle(                                fontFamily: 'Lexend',
                                               color: defaultPalette.primary,
                                               fontWeight: FontWeight.w900,
                                             ),
@@ -10042,7 +9709,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         (barSpot.x)
                                                             .clamp(1, 31)
                                                             .round()]??0),
-                                            style: GoogleFonts.lexend(
+                                            style: TextStyle(                                fontFamily: 'Lexend',
                                               color: defaultPalette.primary,
                                               fontWeight: FontWeight.w900,
                                             ),
@@ -10265,7 +9932,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       alignment: Alignment.centerLeft,
                                       child: Text(
                                       ref.read(currencyCodeProvider).symbol + meta.formattedValue.toLowerCase(),
-                                        style: GoogleFonts.lexend(
+                                        style: TextStyle(                                fontFamily: 'Lexend',
                                           fontSize: mapValueDimensionBased(
                                               10, 15, sWidth, sHeight),
                                           letterSpacing: -1,
@@ -10289,7 +9956,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           .clamp(0, double.infinity)
                                           .round()
                                           .toString(),
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle(                                fontFamily: 'Lexend',
                                         fontSize: mapValueDimensionBased(
                                             10, 15, sWidth, sHeight),
                                         letterSpacing: -1,
@@ -10566,7 +10233,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 Expanded(
                                   child: Text(
                                     'Summary',
-                                    style: GoogleFonts.lexend(
+                                    style: TextStyle(                                fontFamily: 'Lexend',
                                         fontSize: mapValueDimensionBased(
                                             15, 25, sWidth, sHeight),
                                         color: defaultPalette.extras[0],
@@ -10589,7 +10256,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         padding: const EdgeInsets.symmetric(horizontal: 3.0),
                                         child: Text(
                                         ref.read(currencyCodeProvider).symbol,
-                                        style: GoogleFonts.lexend(
+                                        style: TextStyle(                                fontFamily: 'Lexend',
                                             fontSize: mapValueDimensionBased(
                                                 12, 25, sWidth, sHeight),
                                             color: defaultPalette.extras[0],
@@ -10654,7 +10321,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   Expanded(
                                                     child: Text(
                                                       'Total Revenue',
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                           fontSize:
                                                               mapValueDimensionBased(
                                                                   10,
@@ -10673,7 +10340,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       _currencyFormatter.format(totalRevenue),
                                                       maxLines: 1,
                                                       textAlign: TextAlign.end,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                           fontSize:
                                                               mapValueDimensionBased(
                                                                   10,
@@ -10710,7 +10377,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   Expanded(
                                                     child: Text(
                                                       'Total Profit',
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                           fontSize: mapValueDimensionBased( 10, 23, sWidth, sHeight),
                                                           color: defaultPalette.extras[0],
                                                           fontWeight: FontWeight.w500,
@@ -10722,7 +10389,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       _currencyFormatter.format(totalProfit),
                                                       maxLines: 1,
                                                       textAlign: TextAlign.end,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                           fontSize: mapValueDimensionBased( 10, 23, sWidth, sHeight),
                                                           color: defaultPalette.extras[0],
                                                           fontWeight: FontWeight.w500,
@@ -10761,7 +10428,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   Expanded(
                                                     child: Text(
                                                       'Total Bills',
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                           fontSize:
                                                               mapValueDimensionBased(
                                                                   10,
@@ -10786,7 +10453,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                           .toString(),
                                                       maxLines: 1,
                                                       textAlign: TextAlign.end,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                           fontSize:
                                                               mapValueDimensionBased(
                                                                   10,
@@ -10822,7 +10489,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   Expanded(
                                                     child: Text(
                                                       'Total Unpaid',
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                           fontSize: mapValueDimensionBased( 10,23,sWidth, sHeight),
                                                           color: defaultPalette
                                                               .extras[0],
@@ -10836,7 +10503,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       totalUnpaid.toString(),
                                                       maxLines: 1,
                                                       textAlign: TextAlign.end,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                         fontSize: mapValueDimensionBased( 10, 23, sWidth, sHeight),
                                                         color: defaultPalette.extras[totalUnpaid==0?0:4],
                                                         fontWeight: FontWeight.w500,
@@ -10869,7 +10536,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   Expanded(
                                                     child: Text(
                                                       'Total Pending',
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                           fontSize:
                                                               mapValueDimensionBased(
                                                                   10,
@@ -10887,7 +10554,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       _currencyFormatter.format(totalUnpaidRevenue),
                                                       maxLines: 1,
                                                       textAlign: TextAlign.end,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                           fontSize:
                                                               mapValueDimensionBased(
                                                                   10,
@@ -11138,7 +10805,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 Expanded(
                                   child: Text(
                                     'Quantity',
-                                    style: GoogleFonts.lexend(
+                                    style: TextStyle(                                fontFamily: 'Lexend',
                                         fontSize: mapValueDimensionBased(
                                             14, 23, sWidth, sHeight),
                                         color: defaultPalette.extras[0],
@@ -11150,7 +10817,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     child: Text(
                                   '$selectedMonth/${selectedYear.toString().substring(2, 4)}',
                                   textAlign: TextAlign.end,
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle(                                fontFamily: 'Lexend',
                                     fontSize: mapValueDimensionBased(
                                         10, 15, sWidth, sHeight),
                                     color: defaultPalette.extras[0],
@@ -11235,7 +10902,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
                                                     return LineTooltipItem(
                                                         '${DateFormat.yMMMM().format(DateTime(selectedYear, selectedMonth))}\n',
-                                                        GoogleFonts.lexend(
+                                                        TextStyle(                                fontFamily: 'Lexend',
                                                           color: defaultPalette
                                                               .extras[0],
                                                           fontWeight:
@@ -11485,7 +11152,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                     }
                                                     return Text(
                                                       value.toString() + '  ',
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                         fontSize:
                                                             mapValueDimensionBased(
                                                                 8,
@@ -11521,7 +11188,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                       .infinity)
                                                               .round()]
                                                           .name,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                         fontSize:
                                                             mapValueDimensionBased(
                                                                 10,
@@ -11615,7 +11282,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 child: Tooltip(
                   message:
                   layoutModel.name,
-                  textStyle: GoogleFonts.lexend(
+                  textStyle: TextStyle(                                fontFamily: 'Lexend',
                     fontSize: mapValueDimensionBased(15,20, sWidth, sHeight),
                     color:defaultPalette.primary,
                     fontWeight: FontWeight.w600,
@@ -11629,7 +11296,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.end,
-                    style: GoogleFonts.lexend(
+                    style: TextStyle(                                fontFamily: 'Lexend',
                       fontSize: mapValueDimensionBased(
                           isBill ? 18 :isRecent?10: 25, isBill ? 20 :isRecent?15: 35, sWidth, sHeight),
                       color: defaultPalette.extras[0],
@@ -11673,7 +11340,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           maxLines: 1,
                           // overflow: TextOverflow.ellipsis,
                           text: TextSpan(
-                            style: GoogleFonts.lexend(
+                            style: TextStyle(                                fontFamily: 'Lexend',
                               fontSize: fontSize,
                               fontWeight: FontWeight.w300,
                               letterSpacing: -0.2,
@@ -11681,7 +11348,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             children: [
                               TextSpan(
                                 text: 'Created: ',
-                                style: GoogleFonts.lexend(
+                                style: TextStyle(                                fontFamily: 'Lexend',
                                     color: defaultPalette.extras[0]),
                               ),
                               TextSpan(
@@ -11701,7 +11368,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           text: TextSpan(
-                            style: GoogleFonts.lexend(
+                            style: TextStyle(                                fontFamily: 'Lexend',
                               fontSize: fontSize,
                               fontWeight: FontWeight.w300,
                               letterSpacing: -0.2,
@@ -11709,7 +11376,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             children: [
                               TextSpan(
                                 text: 'Modified: ',
-                                style: GoogleFonts.lexend(
+                                style: TextStyle(                                fontFamily: 'Lexend',
                                   color: defaultPalette.extras[0],
                                   fontWeight: FontWeight.w400,
                                 ),
@@ -11729,7 +11396,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         text: TextSpan(
-                          style: GoogleFonts.lexend(
+                          style: TextStyle(                                fontFamily: 'Lexend',
                             fontSize: fontSize,
                             fontWeight: FontWeight.w300,
                             letterSpacing: -0.2,
@@ -11738,7 +11405,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             TextSpan(
                               text:
                                   '${SheetType.values[layoutModel.type].name} · ',
-                              style: GoogleFonts.lexend(
+                              style: TextStyle(                                fontFamily: 'Lexend',
                                 fontSize: fontSize,
                                 color: defaultPalette.extras[0],
                                 fontWeight: FontWeight.w600,
@@ -11748,7 +11415,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             TextSpan(
                               text:
                                   'Pages: ${layoutModel.spreadSheetList.isEmpty ? '1' : layoutModel.spreadSheetList.length.toString()}',
-                              style: GoogleFonts.lexend(
+                              style: TextStyle(                                fontFamily: 'Lexend',
                                 fontSize: fontSize,
                                 color: defaultPalette.extras[0],
                                 fontWeight: FontWeight.w400,
@@ -11896,7 +11563,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 depth: 3,
                                 subfac: 3,
                                 onClick: () async {
-                                  await syncLayoutsBoxAndFolder(dir);
+                                  // await syncLayoutsBoxAndFolder(dir);
                                   ref.read(homeScreenTabIndexProvider.notifier).state = 0;
                                   await ref.read(authRepositoryProvider).googleLogOut(ref);
                                   ref.read(revIndexProvider.notifier).state = 0;
@@ -12028,7 +11695,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.start,
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle(                                fontFamily: 'Lexend',
                                         fontSize: mapValueDimensionBased(
                                           12,
                                           25,
@@ -12127,7 +11794,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           pageZoom: 10,
                                           supportZoom: true,
                                           displayZoomControls: true,
-                                          maximumZoomScale: 0.5),
+                                          minimumZoomScale: 0.8,
+                                          maximumZoomScale: 1.5),
                                     ),
                                   ),
                                 ),
@@ -12216,7 +11884,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             textAlign: TextAlign.center,
                                             // overflow: TextOverflow.ellipsis,
                                             text: TextSpan(
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle(                                fontFamily: 'Lexend',
                                                 fontSize:
                                                     mapValueDimensionBasedLockOnDesync(
                                                   12,
@@ -12233,7 +11901,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               children: [
                                                 TextSpan(
                                                   text: ' FLUX',
-                                                  style: GoogleFonts.lexend(
+                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                       color: defaultPalette.extras[0]),
                                                 ),
                                                 TextSpan(
@@ -12508,7 +12176,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       maxLines: 1,
                                                       overflow: TextOverflow.ellipsis,
                                                       textAlign: TextAlign.center,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                         fontSize:
                                                             mapValueDimensionBased(
                                                           8,
@@ -12553,7 +12221,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             ),
                                             Tooltip(
                                               message:'FluxTV showcases cool websites made by cool creators. \nAll content belongs to its original owners.',
-                                              textStyle: GoogleFonts.lexend(
+                                              textStyle: TextStyle(                                fontFamily: 'Lexend',
                                                 fontSize: mapValueDimensionBasedLockOnDesync(10,20, sWidth, sHeight),
                                                 color:defaultPalette.primary,
                                                 fontWeight: FontWeight.w500,
@@ -12671,7 +12339,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             textAlign: TextAlign.end,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.all(0),
-              labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+              labelStyle: TextStyle(                                fontFamily: 'Lexend',color: defaultPalette.black),
               fillColor: defaultPalette.transparent,
               border: InputBorder.none,
               enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -12880,7 +12548,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           value: 100,
           title: "0",
           radius: radius,
-          titleStyle: GoogleFonts.lexend(
+          titleStyle: TextStyle(                                fontFamily: 'Lexend',
             fontSize: fontSize,
             fontWeight: FontWeight.bold,
             color: Colors.grey[700],
@@ -12901,7 +12569,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
             child: Text(
               "No\nBills",
               textAlign: TextAlign.center,
-              style: GoogleFonts.lexend(
+              style: TextStyle(                                fontFamily: 'Lexend',
                 fontSize: fontSize * 0.4,
                 color: Colors.white,
               ),
@@ -12939,7 +12607,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         value: count.toDouble() / totalBills * 100,
         title: count.toString(),
         radius: radius,
-        titleStyle: GoogleFonts.lexend(
+        titleStyle: TextStyle(                                fontFamily: 'Lexend',
           fontSize: fontSize *
               mapValueDimensionBasedLockOnDesync(
                   isTouched ? 0.5 : 0.8, isTouched ? 0.7 : 1, sWidth, sHeight),
@@ -12964,7 +12632,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
           child: Text(
             badgeLabel,
             textAlign: TextAlign.center,
-            style: GoogleFonts.lexend(
+            style: TextStyle(                                fontFamily: 'Lexend',
               fontSize: fontSize *
                   mapValueDimensionBasedLockOnDesync(0.4, 0.5, sWidth, sHeight),
               color: defaultPalette.extras[0],
@@ -13009,7 +12677,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 child: Text(
                   s,
                   textAlign: textAlign,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle(                                fontFamily: 'Lexend',
                       fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
                       color: defaultPalette.extras[0],
                       fontWeight: FontWeight.w500,
@@ -13021,7 +12689,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   NumberFormat.decimalPattern('en_IN').format(stats['count']),
                   maxLines: 1,
                   textAlign: TextAlign.end,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle(                                fontFamily: 'Lexend',
                       fontSize: mapValueDimensionBased(12, 23, sWidth, sHeight),
                       color: defaultPalette.extras[0],
                       fontWeight: FontWeight.w500,
@@ -13042,7 +12710,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       ? 'settled '
                       : 'revenue  ',
                   textAlign: textAlign,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle(                                fontFamily: 'Lexend',
                       fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
                       color: defaultPalette.extras[0],
                       fontWeight: FontWeight.w500,
@@ -13054,7 +12722,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   _currencyFormatter.format(stats['payable']??0),
                   maxLines: 1,
                   textAlign: TextAlign.end,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle(                                fontFamily: 'Lexend',
                     fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
                     color: defaultPalette.extras[0],
                     fontWeight: FontWeight.w500,
@@ -13070,7 +12738,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 child: Text(
                   'profit  ',
                   textAlign: textAlign,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle(                                fontFamily: 'Lexend',
                       fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
                       color: defaultPalette.extras[0],
                       fontWeight: FontWeight.w500,
@@ -13084,7 +12752,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       : _currencyFormatter.format(stats['profit']??0),
                   maxLines: 1,
                   textAlign: TextAlign.end,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle(                                fontFamily: 'Lexend',
                       fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
                       color: defaultPalette.extras[0],
                       fontWeight: FontWeight.w500,
@@ -13100,7 +12768,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 child: Text(
                   'unpaid  ',
                   textAlign: textAlign,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle(                                fontFamily: 'Lexend',
                       fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
                       color: defaultPalette.extras[stats['unpaid']==0?0:4],
                       fontWeight: FontWeight.w500,
@@ -13112,7 +12780,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   (stats['unpaid']??0).round().toString(),
                   maxLines: 1,
                   textAlign: TextAlign.end,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle(                                fontFamily: 'Lexend',
                       fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
                       color: defaultPalette.extras[stats['unpaid']==0?0:4],
                       fontWeight: FontWeight.w500,
@@ -13131,7 +12799,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       ? 'owed'
                       :  'pending  ',
                   textAlign: textAlign,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle(                                fontFamily: 'Lexend',
                       fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
                       color: defaultPalette.extras[stats['unpaidRevenue']==0.0?0:4],
                       fontWeight: FontWeight.w500,
@@ -13143,7 +12811,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   _currencyFormatter.format(stats['unpaidRevenue']??0),
                   maxLines: 1,
                   textAlign: TextAlign.end,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle(                                fontFamily: 'Lexend',
                       fontSize: mapValueDimensionBased(10, 23, sWidth, sHeight),
                       color: defaultPalette.extras[stats['unpaidRevenue']==0.0?0:4],
                       fontWeight: FontWeight.w500,
@@ -13170,12 +12838,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       favorite: [ref.read(currencyCodeProvider).code,'USD', 'INR', 'EUR',],
       theme: CurrencyPickerThemeData(
       flagSize: 24,
-      titleTextStyle: GoogleFonts.lexend(
+      titleTextStyle: TextStyle(                                fontFamily: 'Lexend',
         fontSize: 22,
         fontWeight: FontWeight.w600,
         color: defaultPalette.black,
       ),
-      subtitleTextStyle: GoogleFonts.lexend(
+      subtitleTextStyle: TextStyle(                                fontFamily: 'Lexend',
         fontSize: 16,
         fontWeight: FontWeight.w400,
         color: defaultPalette.extras[0],
@@ -13184,7 +12852,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
       backgroundColor: defaultPalette.primary,
       inputDecoration: InputDecoration(
         hintText: 'Search currency',
-        hintStyle: GoogleFonts.lexend(
+        hintStyle: TextStyle(                                fontFamily: 'Lexend',
           fontSize: 16,
           color: defaultPalette.extras[0].withOpacity(0.6),
         ),
@@ -13201,7 +12869,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         filled: true,
         fillColor: defaultPalette.primary.withOpacity(0.8),
       ),
-      currencySignTextStyle:   GoogleFonts.lexend(
+      currencySignTextStyle:   TextStyle(                                fontFamily: 'Lexend',
           fontSize: 16,
           color: defaultPalette.extras[0].withOpacity(0.6),
         ),
@@ -13483,7 +13151,7 @@ String buildCombinedTextFromBlocks(
 
 List<Widget> windowsTopBar(){
   // Windows top bar
-  if (Platform.isWindows){
+  if (!kIsWeb && Platform.isWindows){
   return [
     GestureDetector(
       behavior: HitTestBehavior.translucent,

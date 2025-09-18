@@ -277,7 +277,7 @@ class SheetTableCellBox extends SheetItem {
       // maxHeight: 50,
       customStyles: DefaultStyles(
         placeHolder: DefaultTextBlockStyle(
-          GoogleFonts.lexend(
+          TextStyle(                                fontFamily: 'Lexend',
             color: defaultPalette.extras[0].withOpacity(0.4),
             letterSpacing: -1,
             fontSize:12,
