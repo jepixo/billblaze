@@ -63,6 +63,7 @@ import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:html' as html;
 
 final cCardIndexProvider = StateProvider<int>((ref) {
   return 0;
@@ -92,9 +93,6 @@ final aiTokenProvider = StateProvider<String>((ref) {
 });
 final aiPromptProvider = StateProvider<String>((ref) {
   return '';
-});
-final aiModelPathProvider = StateProvider<String>((ref) {
-  return "assets/models/LFM2-1.2B-Q4_K_M.gguf";
 });
 // final folderPathProvider = StateProvider<String?>((ref) {
 //   final box = Boxes.getFolderPaths();
@@ -609,6 +607,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     });
   }
 
+  
+  void openYouTubeChannel() async {
+    html.window.open("https://www.youtube.com/@billblazex", "_blank");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -939,7 +941,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 SizedBox(width:mapValueDimensionBasedLockOnDesync( 5, 20, sWidth, sHeight)),
                                 ElevatedLayerButton(
                                     onClick: () async {
-                                      
+                                      openYouTubeChannel();
                                     },
                                     buttonHeight: mapValueDimensionBasedLockOnDesync(45, 80, sWidth, sHeight),
                                     buttonWidth: mapValueDimensionBasedLockOnDesync(45, 80, sWidth, sHeight),
@@ -1469,21 +1471,26 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       Row(
                                                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                         children: [
+                                                          SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                           Expanded(
-                                                            child: Text('totalUnpaid',
-                                                              maxLines:1,
-                                                              overflow:TextOverflow.ellipsis,
-                                                              textAlign: TextAlign.center,
-                                                              style: TextStyle(                                fontFamily: 'Lexend',
-                                                                color: defaultPalette.extras[4],
-                                                                fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
-                                                                letterSpacing: -1,
-                                                                fontWeight: FontWeight.w500,
-                                                                height: 0.6
+                                                            child: FittedBox(
+                                                                  fit: BoxFit.scaleDown,
+                                                                  alignment: Alignment.center,
+                                                              child: Text('totalUnpaid',
+                                                                maxLines:1,
+                                                                overflow:TextOverflow.ellipsis,
+                                                                textAlign: TextAlign.center,
+                                                                style: TextStyle(                                fontFamily: 'Lexend',
+                                                                  color: defaultPalette.extras[4],
+                                                                  fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
+                                                                  letterSpacing: -1,
+                                                                  fontWeight: FontWeight.w500,
+                                                                  height: 0.6
+                                                                ),
                                                               ),
                                                             ),
                                                           ),
-                                                  
+                                                        SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                         ],
                                                       ),
                                                       SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),)
@@ -1551,6 +1558,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         child: Row(
                                                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                           children: [
+                                                            SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                             Expanded(
                                                               child: FittedBox(
                                                                 fit: BoxFit.scaleDown,
@@ -1577,6 +1585,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                 ),
                                                               ),
                                                             ),
+                                                            SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                                                                         
                                                           ],
                                                         ),
@@ -1710,17 +1719,25 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       Row(
                                                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                         children: [
-                                                          Text('totalRevenue',
-                                                            maxLines:1,
-                                                            overflow:TextOverflow.ellipsis,
-                                                            style: TextStyle(                                fontFamily: 'Lexend',
-                                                              color: defaultPalette.extras[0],
-                                                              fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
-                                                              letterSpacing: -1,
-                                                              fontWeight: FontWeight.w500,
-                                                              height: 0.6
+                                                          SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                          Expanded(
+                                                            child: FittedBox(
+                                                                  fit: BoxFit.scaleDown,
+                                                                  alignment: Alignment.center,
+                                                              child: Text('totalRevenue',
+                                                                maxLines:1,
+                                                                overflow:TextOverflow.ellipsis,
+                                                                style: TextStyle(                                fontFamily: 'Lexend',
+                                                                  color: defaultPalette.extras[0],
+                                                                  fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
+                                                                  letterSpacing: -1,
+                                                                  fontWeight: FontWeight.w500,
+                                                                  height: 0.6
+                                                                ),
+                                                              ),
                                                             ),
                                                           ),
+                                                          SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                   
                                                         ],
                                                       ),
@@ -1789,29 +1806,34 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         child: Row(
                                                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                           children: [
+                                                            SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                             Expanded(
-                                                              child: Text(
-                                                                index==1
-                                                                ? 'txInv Revenue'
-                                                                : index==2
-                                                                  ? 'crdNotes Revenue'
-                                                                  : index==3
-                                                                    ? 'dbtNotes Revenue'
-                                                                    : index==4
-                                                                    ? 'bOS Revenue'
-                                                                    : 'proInv Revenue',
-                                                                textAlign:TextAlign.center,
-                                                                maxLines: 1,overflow: TextOverflow.ellipsis,
-                                                                style: TextStyle(                                fontFamily: 'Lexend',
-                                                                  color: defaultPalette.extras[0],
-                                                                  fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
-                                                                  letterSpacing: -1,
-                                                                  fontWeight: FontWeight.w500,
-                                                                  height: 0.6
+                                                              child: FittedBox(
+                                                                  fit: BoxFit.scaleDown,
+                                                                  alignment: Alignment.center,
+                                                                child: Text(
+                                                                  index==1
+                                                                  ? 'txInv Revenue'
+                                                                  : index==2
+                                                                    ? 'crdNotes Revenue'
+                                                                    : index==3
+                                                                      ? 'dbtNotes Revenue'
+                                                                      : index==4
+                                                                      ? 'bOS Revenue'
+                                                                      : 'proInv Revenue',
+                                                                  textAlign:TextAlign.center,
+                                                                  maxLines: 1,overflow: TextOverflow.ellipsis,
+                                                                  style: TextStyle(                                fontFamily: 'Lexend',
+                                                                    color: defaultPalette.extras[0],
+                                                                    fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
+                                                                    letterSpacing: -1,
+                                                                    fontWeight: FontWeight.w500,
+                                                                    height: 0.6
+                                                                  ),
                                                                 ),
                                                               ),
                                                             ),
-                                                                                                        
+                                                            SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),                                            
                                                           ],
                                                         ),
                                                       ),
@@ -1949,16 +1971,23 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       Row(
                                                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                         children: [
-                                                          Text('totalBills',
-                                                            style: TextStyle(                                fontFamily: 'Lexend',
-                                                              color: defaultPalette.extras[0],
-                                                              fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
-                                                              letterSpacing: -1,
-                                                              fontWeight: FontWeight.w500,
-                                                              height: 0.6
+                                                          SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                          Expanded(
+                                                            child: FittedBox(
+                                                                  fit: BoxFit.scaleDown,
+                                                                  alignment: Alignment.center,
+                                                              child: Text('totalBills',
+                                                                style: TextStyle(                                fontFamily: 'Lexend',
+                                                                  color: defaultPalette.extras[0],
+                                                                  fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
+                                                                  letterSpacing: -1,
+                                                                  fontWeight: FontWeight.w500,
+                                                                  height: 0.6
+                                                                ),
+                                                              ),
                                                             ),
                                                           ),
-                                                  
+                                                          SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                         ],
                                                       ),
                                                       SizedBox(height: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),)
@@ -2024,23 +2053,31 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       Row(
                                                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                         children: [
-                                                          Text(index==1
-                                                                  ? 'taxInvoices'
-                                                                  : index==2
-                                                                    ? 'creditNotes'
-                                                                    : index==3
-                                                                      ? 'debitNotes'
-                                                                      : index==4
-                                                                      ? 'billOfSupply'
-                                                                      : 'proformaInvoices',
-                                                            style: TextStyle(                                fontFamily: 'Lexend',
-                                                              color: defaultPalette.extras[0],
-                                                              fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
-                                                              letterSpacing: -1,
-                                                              fontWeight: FontWeight.w500,
-                                                              height: 0.6
+                                                          SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                          Expanded(
+                                                            child: FittedBox(
+                                                                  fit: BoxFit.scaleDown,
+                                                                  alignment: Alignment.center,
+                                                              child: Text(index==1
+                                                                      ? 'taxInvoices'
+                                                                      : index==2
+                                                                        ? 'creditNotes'
+                                                                        : index==3
+                                                                          ? 'debitNotes'
+                                                                          : index==4
+                                                                          ? 'billOfSupply'
+                                                                          : 'proformaInvoices',
+                                                                style: TextStyle(                                fontFamily: 'Lexend',
+                                                                  color: defaultPalette.extras[0],
+                                                                  fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
+                                                                  letterSpacing: -1,
+                                                                  fontWeight: FontWeight.w500,
+                                                                  height: 0.6
+                                                                ),
+                                                              ),
                                                             ),
                                                           ),
+                                                          SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                   
                                                         ],
                                                       ),
@@ -2179,15 +2216,23 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       Row(
                                                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                         children: [
-                                                          Text('totalProfits',
-                                                            style: TextStyle(                                fontFamily: 'Lexend',
-                                                              color: defaultPalette.extras[0],
-                                                              fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
-                                                              letterSpacing: -1,
-                                                              fontWeight: FontWeight.w500,
-                                                              height: 0.6
+                                                          SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
+                                                          Expanded(
+                                                            child: FittedBox(
+                                                                  fit: BoxFit.scaleDown,
+                                                                  alignment: Alignment.center,
+                                                              child: Text('totalProfits',
+                                                                style: TextStyle(                                fontFamily: 'Lexend',
+                                                                  color: defaultPalette.extras[0],
+                                                                  fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
+                                                                  letterSpacing: -1,
+                                                                  fontWeight: FontWeight.w500,
+                                                                  height: 0.6
+                                                                ),
+                                                              ),
                                                             ),
                                                           ),
+                                                          SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                   
                                                         ],
                                                       ),
@@ -2256,29 +2301,34 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         child: Row(
                                                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                           children: [
+                                                            SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),
                                                             Expanded(
-                                                              child: Text(
-                                                                index==1
-                                                                ? 'txInv Profits'
-                                                                : index==2
-                                                                  ? 'crdNotes Profits'
-                                                                  : index==3
-                                                                    ? 'dbtNotes Profits'
-                                                                    : index==4
-                                                                    ? 'bOS Profits'
-                                                                    : 'proInv Profits',
-                                                                textAlign:TextAlign.center,
-                                                                maxLines: 1,overflow: TextOverflow.ellipsis,
-                                                                style: TextStyle(                                fontFamily: 'Lexend',
-                                                                  color: defaultPalette.extras[0],
-                                                                  fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
-                                                                  letterSpacing: -1,
-                                                                  fontWeight: FontWeight.w500,
-                                                                  height: 0.6
+                                                              child: FittedBox(
+                                                                  fit: BoxFit.scaleDown,
+                                                                  alignment: Alignment.center,
+                                                                child: Text(
+                                                                  index==1
+                                                                  ? 'txInv Profits'
+                                                                  : index==2
+                                                                    ? 'crdNotes Profits'
+                                                                    : index==3
+                                                                      ? 'dbtNotes Profits'
+                                                                      : index==4
+                                                                      ? 'bOS Profits'
+                                                                      : 'proInv Profits',
+                                                                  textAlign:TextAlign.center,
+                                                                  maxLines: 1,overflow: TextOverflow.ellipsis,
+                                                                  style: TextStyle(                                fontFamily: 'Lexend',
+                                                                    color: defaultPalette.extras[0],
+                                                                    fontSize: mapValueDimensionBasedLockOnDesync(12, 35, sWidth, sHeight),
+                                                                    letterSpacing: -1,
+                                                                    fontWeight: FontWeight.w500,
+                                                                    height: 0.6
+                                                                  ),
                                                                 ),
                                                               ),
                                                             ),
-                                                                                                        
+                                                           SizedBox(width: mapValueDimensionBasedLockOnDesync(8, 15, sWidth, sHeight),),                                             
                                                           ],
                                                         ),
                                                       ),
@@ -2471,7 +2521,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                         ),
                         
                         //
-                        //AIIIIII CARDS
+                        //RECENTS CARDS
                         AnimatedPositioned(
                           duration: defaultDuration,
                           top: topPadPosDistance + 10,
@@ -2573,11 +2623,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   SizedBox(width: 30,),
                                                   Expanded(
                                                     child: Text(
-                                                      ref.watch(aiModelPathProvider).split('/').last.replaceAll('.gguf', '').toUpperCase(),
-                                                      maxLines: 1,
+                                                      'Made\nWith\nLove',
+                                                      maxLines: 3,
                                                       overflow:TextOverflow.ellipsis,
                                                       textAlign: TextAlign.center,
-                                                      style: TextStyle(                                fontFamily: 'PressStart2P',
+                                                      style: TextStyle(
+                                                        fontFamily: 'PressStart2P',
+                                                        height: 0.85,
                                                         fontSize: mapValueDimensionBasedLockOnDesync(
                                                                 15,
                                                                 22,
@@ -2593,27 +2645,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                   SizedBox(width: 15,),
                                                   ElevatedLayerButton(
                                                     onClick: () async {
-                                                      final result = await FilePicker.platform.pickFiles(
-                                                        type: FileType.custom,
-                                                        allowedExtensions: ['gguf'], // only allow .gguf
-                                                        allowMultiple: false,
-                                                      );
-                                          
-                                                      if (result != null && result.files.isNotEmpty) {
-                                                          ref.read(aiModelPathProvider.notifier).state = result.files.single.path?.replaceAll('\\', '/')??ref.read(aiModelPathProvider.notifier).state;
-                                                        
-                                                      }
                                                     },
-                                                    buttonHeight:
-                                                        mapValueDimensionBasedLockOnDesync(
-                                                            30, 55, sWidth, sHeight),
-                                                    buttonWidth:mapValueDimensionBasedLockOnDesync(
-                                                            30, 55, sWidth, sHeight),
+                                                    buttonHeight: mapValueDimensionBasedLockOnDesync( 30, 55, sWidth, sHeight),
+                                                    buttonWidth:mapValueDimensionBasedLockOnDesync( 30, 55, sWidth, sHeight),
                                                     borderRadius: BorderRadius.circular(
-                                                        mapValueDimensionBasedLockOnDesync(
-                                                            16, 30, sWidth, sHeight)),
-                                                    animationDuration:
-                                                        const Duration(milliseconds: 200),
+                                                        mapValueDimensionBasedLockOnDesync( 16, 30, sWidth, sHeight)),
+                                                    animationDuration: const Duration(milliseconds: 200),
                                                     animationCurve: Curves.ease,
                                                     subfac: mapValueDimensionBasedLockOnDesync(
                                                         2, 4, sWidth, sHeight),

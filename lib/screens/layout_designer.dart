@@ -99,7 +99,7 @@ import 'package:pie_menu/pie_menu.dart';
 import 'package:scrollbar_ultima/scrollbar_ultima.dart';
 import 'package:smooth_scroll_multiplatform/smooth_scroll_multiplatform.dart';
 import 'dart:math' as math;
-
+import 'dart:html' as html;
 import 'package:uuid/uuid.dart';
 
 import '../components/checkable_treeview/treeview.dart';
@@ -2191,94 +2191,104 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
 
     final Uint8List pdfBytes = await pdf.save();
 
-    // 🔽 Show native "Save As" dialog
-    final FileSaveLocation? path = await getSaveLocation(
-      suggestedName: '${layoutName.text.replaceAll('.bbc','')}.pdf',
-      acceptedTypeGroups: [
-        const XTypeGroup(
-          label: 'PDF files',
-          extensions: <String>['pdf'],
-        )
-      ]
-      );
+     if (kIsWeb) {
+      // 🔽 WEB: Trigger browser download
+      final blob = html.Blob([pdfBytes], 'application/pdf');
+      final url = html.Url.createObjectUrlFromBlob(blob);
 
-    if (path != null) {
-      final file = XFile.fromData(
-        pdfBytes,
-        mimeType: 'application/pdf',
-      );
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", layoutName.text.replaceAll('.bbc','')+'.pdf')
+        ..click();
 
-      await file.saveTo(path.path);
-   print("PDF saved at: $path");
-    } else {
-   print("User canceled save dialog");
+      html.Url.revokeObjectUrl(url); // cleanup
+      print("BBC to PDF file download triggered on web");
     }
   }
 
   Future<void> _printPdf() async {
     final pdf = pw.Document();
 
-    for (var img in _images) {
-      final image = pw.MemoryImage(img);
-      final index = _images.indexOf(img);
+  for (var img in _images) {
+    final image = pw.MemoryImage(img);
+    final index = _images.indexOf(img);
 
-      pdf.addPage(
-        pw.Page(
-          margin: pw.EdgeInsets.zero,
-          orientation: documentPropertiesList[index].orientationController,
-          pageFormat: documentPropertiesList[index].pageFormatController,
-          build: (context) => pw.Center(child: pw.Image(image)),
-        ),
-      );
-    }
-
-    await Printing.layoutPdf(
-      onLayout: (format) => pdf.save(),
+    pdf.addPage(
+      pw.Page(
+        margin: pw.EdgeInsets.zero,
+        orientation: documentPropertiesList[index].orientationController,
+        pageFormat: documentPropertiesList[index].pageFormatController,
+        build: (context) => pw.Center(child: pw.Image(image)),
+      ),
     );
+  }
+
+  final pdfBytes = await pdf.save();
+
+  if (kIsWeb) {
+    // ✅ Web-safe print flow
+    final blob = html.Blob([pdfBytes], 'application/pdf');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+
+    // Opens PDF in new tab — user can print using browser dialog
+    html.window.open(url, "_blank");
+
+    // Clean up object URL after opening
+    html.Url.revokeObjectUrl(url);
+  } 
   }
   
   Future<void> _genBbc() async {
     final layout = lm;
-    layout!.docPropsList = docPropToBox(documentPropertiesList);
-    layout.spreadSheetList = spreadSheetToBox(spreadSheetList);
-    layout.modifiedAt = DateTime.now();
-    layout.pdf = _images;
-    layout.labelList = labelList;// or whichever key you want to export
-
     if (layout == null) {
-   print("No layout found for key: ${widget.key}");
+      print("No layout found for key: ${widget.key}");
       return;
     }
 
-    // Convert to JSON string
+    layout.docPropsList = docPropToBox(documentPropertiesList);
+    layout.spreadSheetList = spreadSheetToBox(spreadSheetList);
+    layout.modifiedAt = DateTime.now();
+    layout.pdf = _images;
+    layout.labelList = labelList;
+
+    // Convert layout to JSON string
     final content = layout.toJson() == null
         ? '{}'
         : (layout.toJson() is String
             ? layout.toJson()
             : jsonEncode(layout.toJson()));
 
-    // 🔽 Show native "Save As" dialog
-    final FileSaveLocation? path = await getSaveLocation(
-      suggestedName: '${layoutName.text}.bbc',
-      acceptedTypeGroups: [
-        const XTypeGroup(
-          label: 'BBC Layout files',
-          extensions: <String>['bbc'],
-        )
-      ],
-    );
+    final bytes = Uint8List.fromList(utf8.encode(content));
 
-    if (path != null) {
-      final file = XFile.fromData(
-        utf8.encode(content), // XFile needs bytes
-        mimeType: 'application/octet-stream',
+    if (kIsWeb) {
+      // 🔽 WEB: Trigger browser download
+      final blob = html.Blob([bytes], 'application/octet-stream');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", layoutName.text.endsWith('.bbc')?layoutName.text:"${layoutName.text}.bbc")
+        ..click();
+
+      html.Url.revokeObjectUrl(url); // cleanup
+      print("BBC file download triggered on web");
+    } else {
+      // 🔽 DESKTOP: Use file_selector to open save dialog
+      final FileSaveLocation? path = await getSaveLocation(
+        suggestedName: '${layoutName.text}.bbc',
+        acceptedTypeGroups: [
+          const XTypeGroup(
+            label: 'BBC Layout files',
+            extensions: <String>['bbc'],
+          )
+        ],
       );
 
-      await file.saveTo(path.path);
-   print("BBC file saved at: ${path.path}");
-      // ref.read(folderPathProvider.notifier).state = path.path;
-    } else {
-   print("User canceled save dialog");
+      if (path != null) {
+        final file = XFile.fromData(bytes, mimeType: 'application/octet-stream');
+        await file.saveTo(path.path);
+        print("BBC file saved at: ${path.path}");
+      } else {
+        print("User canceled save dialog");
+      }
     }
   }
 
@@ -3206,9 +3216,8 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     overlayState.insert(overlay);
 
     try {
-      // await Future.delayed(messageDuration*10);
+      await Future.delayed(Durations.long4);
       await asyncFunction();
-
       // ✅ Update overlay to show success message
       updateState(() {
         currentMessage = successMessage;
@@ -3736,61 +3745,40 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           errorMessage: 'Failed to save! Please try again.',
                                           successMessage: 'BBC saved and ready for you!',
                                           );
-                                          
                                         });
-                                          
-                                          //   final layout = layoutsBox.get(key);
-                                          //   if (layout == null) throw Exception('No layout for key: $key');
-                                            
-                                          //   final payload = layout.toJson(); // Map? String? maybe null
-                                          //   final content = payload == null
-                                          //       ? '{}'
-                                          //       : (payload is String ? payload : jsonEncode(payload));
-                                            
-                                          //   // safer than hardcoding E:\
-                                          //   final dir = ref.read(folderPathProvider);
-                                          //   final safeName = layoutName.text;
-                                          //   final filePath = '${dir}\\$safeName.bbc';
-                                          // try {  
-                                          //   final file = File(filePath);
-                                          //   await file.create(recursive: true);
-                                          //   await file.writeAsString(content, encoding: utf8, flush: true);
-                                          // } on Exception catch (e) {
-                                          //   _genBbc();
-                                          // }
                                         
                                         await relinkIndexPathsInInputBlocks();
                                       },
                                     ),
-                                    toolBarButton(TablerIcons.upload, 'export',
+                                    toolBarButton(TablerIcons.download, 'export',
                                     fontSize: 12,
                                     iconSize: 13,
-                                    tooltip: 'export as pdf. \nChoose the path to save it.',
+                                    tooltip: 'export as BBC. \nChoose the path to save it.',
                                     hoverColor: defaultPalette.secondary,
                                     onTap: () async {
                                       runWithToastOverlay(
                                         context,
                                         () async {
-                                          await _capturePng();
-                                          _genPdf();
+                                          await _capturePng(pixelRatio: 5);
+                                          await _genBbc();
                                         },
                                         loadingMessage: 'Rendering the pages',
                                         errorMessage: 'Uh Oh, I\'m a failure! Please try again.',
-                                        successMessage: 'PDF made successfully!',
+                                        successMessage: 'BBC hot and served successfully!',
                                       );
                                       },
                                     ),
-                                    toolBarButton(TablerIcons.printer, 'print',
+                                    toolBarButton(TablerIcons.file_type_pdf, 'pdf',
                                     fontSize: 12,
                                     iconSize: 13,
-                                    tooltip: 'print as pdf.',
+                                    tooltip: 'save as pdf.',
                                     hoverColor: defaultPalette.secondary,
                                     onTap: () async {
                                       runWithToastOverlay(
                                         context,
                                         () async {
-                                          await _capturePng();
-                                          _printPdf();
+                                          await _capturePng(pixelRatio: 5);
+                                          await _genPdf();
                                         },
                                         loadingMessage: 'Rendering the pages',
                                         errorMessage: 'Uh Oh, I\'m a failure! Please try again.',
@@ -11379,51 +11367,6 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
 
   Future<void> saveLayout() async {
     await _capturePng(pixelRatio: 0.5);
-    if(widget.layoutModel !=null && pendingFilePath!=null){
-      final layout = widget.layoutModel;
-      layout!.docPropsList = docPropToBox(documentPropertiesList);
-      layout.spreadSheetList = spreadSheetToBox(spreadSheetList);
-      layout.modifiedAt = DateTime.now();
-      layout.pdf = _images;
-      layout.labelList = labelList;
-      if (layout == null) throw Exception('No layout for key: $key');
-      
-      // Convert to JSON string safely
-      final payload = layout.toJson();
-      // final content = payload is String ? payload : jsonEncode(payload);
-      
-      // Get folder path from provider
-      final fpath = pendingFilePath!;
-      final dir = File(fpath).parent.path;
-      String safeName = lm!.name.trim();
-      if (!safeName.endsWith('.bbc')) {
-        safeName='$safeName.bbc';
-        lm!.name = safeName;
-        lm!.save();
-      }
-      final filePath = '$dir\\$safeName';
-      try {
-        
-        final file = File(filePath);
-
-        if (await file.exists()) {
-          //✅ Update existing
-          await file.writeAsString(payload, encoding: utf8, flush: true);
-          print("Updated existing layout: $filePath");
-        } else {
-          //✅ Create new
-          await file.create(recursive: true);
-          await file.writeAsString(payload, encoding: utf8, flush: true);
-          print("Created new layout: $filePath");
-        }
-      } catch (e, st) {
-        print("Error writing file: $e");
-        print(st);
-        // fallback to your export dialog
-        _genBbc();
-      }
-      return;
-    }
     var lmBox = Boxes.getLayouts(ref);
     var lym = lmBox.get(key);
     lym?.docPropsList = docPropToBox(documentPropertiesList);

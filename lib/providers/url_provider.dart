@@ -3,6 +3,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final loginPageUrls = [
+"https://billblaze.web.app/",
 "https://floor796.com/#t4r0,752,308",
 "http://because-recollection.com/cerrone",
 "https://nicopowa.github.io/ripples3/",
@@ -42,5 +43,5 @@ final loginPageUrls = [
 ];
 
 final loginPageUrlProvider = StateProvider<String>((ref) {
-  return "https://github.com/jepixo";
+  return "https://billblaze.web.app/";
 });

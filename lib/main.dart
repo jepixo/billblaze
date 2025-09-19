@@ -26,8 +26,8 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 // import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-// import 'package:flutter_inappwebview_windows/flutter_inappwebview_windows.dart';
-// import 'package:llama_cpp_dart/llama_cpp_dart.dart';
+import 'dart:html' as html;
+
 
 
 String? pendingFilePath;
@@ -114,7 +114,7 @@ Future<void> main(List<String> args) async {
   //   modelPath: Directory.current.path +"/assets/models/Phi-3-mini-4k-instruct-q4.gguf",
   // );
   
-
+  disableRightClick();
   runApp(const ProviderScope(child: MainApp()));
   
   }
@@ -134,6 +134,14 @@ Future<void> main(List<String> args) async {
     });
   }
 }
+
+void disableRightClick() {
+  html.document.onContextMenu.listen((event) {
+    event.preventDefault(); // Stops the default right-click menu
+  });
+}
+
+
 
 
 class MainApp extends ConsumerStatefulWidget {
