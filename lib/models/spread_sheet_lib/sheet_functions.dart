@@ -602,7 +602,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
     final entries = UniStatFunction.functionCategories.entries.map((category) {
     return MenuItem.submenu(
       label: category.key,
-      style: GoogleFonts.lexend(color: defaultPalette.primary),
+      style: TextStyle( fontFamily: 'Lexend',color: defaultPalette.primary),
       hoverColor: defaultPalette.extras[0],
       unfocusedColor: defaultPalette.primary.withOpacity(0.05),
       items: category.value.map((funcName) {
@@ -610,7 +610,7 @@ class UniStatFunction extends SheetFunction with QuillFormattingMixin {
         return MenuItem(
           label: funcName,
           icon: icon,
-          style: GoogleFonts.lexend(color: defaultPalette.primary),
+          style: TextStyle( fontFamily: 'Lexend',color: defaultPalette.primary),
           hoverColor: defaultPalette.extras[0],
           unfocusedColor: defaultPalette.primary.withOpacity(0.05),
           onSelected: () {
@@ -730,7 +730,7 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
     final entries = UniStatFunction.functionCategories.entries.map((category) {
     return MenuItem.submenu(
       label: category.key,
-      style: GoogleFonts.lexend(color: defaultPalette.primary),
+      style: TextStyle( fontFamily: 'Lexend',color: defaultPalette.primary),
       hoverColor: defaultPalette.extras[0],
       unfocusedColor: defaultPalette.primary.withOpacity(0.05),
       items: category.value.map((funcName) {
@@ -738,7 +738,7 @@ class ColumnFunction extends SheetFunction with QuillFormattingMixin {
         return MenuItem(
           label: funcName,
           icon: icon,
-          style: GoogleFonts.lexend(color: defaultPalette.primary),
+          style: TextStyle( fontFamily: 'Lexend',color: defaultPalette.primary),
           hoverColor: defaultPalette.extras[0],
           unfocusedColor: defaultPalette.primary.withOpacity(0.05),
           onSelected: () {
@@ -1350,7 +1350,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                           textAlign: TextAlign.end,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.lexend(
+                          style: TextStyle( fontFamily: 'Lexend',
                             letterSpacing: -1,
                             fontWeight: FontWeight.w500,
                             fontSize: 18,
@@ -1382,7 +1382,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                             Expanded(
                               child: RichText(
                                 text: TextSpan(
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                     letterSpacing: -1,
                                     fontWeight: FontWeight.w400,
                                     fontSize: 14,
@@ -1403,7 +1403,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                             Expanded(
                               child: RichText(
                                 text: TextSpan(
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                     letterSpacing: -1,
                                     fontWeight: FontWeight.w400,
                                     fontSize: 14,
@@ -1424,7 +1424,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                              Expanded(
                               child: RichText(
                                 text: TextSpan(
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                     letterSpacing: -1,
                                     fontWeight: FontWeight.w400,
                                     fontSize: 14,
@@ -1484,7 +1484,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                           textAlign: TextAlign.start,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.lexend(
+                                          style: TextStyle( fontFamily: 'Lexend',
                                             letterSpacing: -1,
                                             fontWeight: FontWeight.w500,
                                             fontSize: 14,
@@ -1508,7 +1508,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                       textAlign: TextAlign.center,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle( fontFamily: 'Lexend',
                                         letterSpacing: -1,
                                         fontWeight: FontWeight.w500,
                                         fontSize: 14,
@@ -1550,7 +1550,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                           textAlign: TextAlign.end,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.lexend(
+                                          style: TextStyle( fontFamily: 'Lexend',
                                             letterSpacing: -1,
                                             fontWeight: FontWeight.w500,
                                             fontSize: 14,
@@ -1574,7 +1574,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                       textAlign: TextAlign.center,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle( fontFamily: 'Lexend',
                                         letterSpacing: -1,
                                         fontWeight: FontWeight.w500,
                                         fontSize: 14,
@@ -1845,7 +1845,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                     textAlign: TextAlign.end,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.lexend(
+                    style: TextStyle( fontFamily: 'Lexend',
                       letterSpacing: -1,
                       fontWeight: FontWeight.w500,
                       fontSize:18,
@@ -1858,7 +1858,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                       textAlign: TextAlign.end,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                         letterSpacing: -1,
                         fontWeight: FontWeight.w500,
                         fontSize: 18,
@@ -1962,7 +1962,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                         Expanded(
                           child: RichText(
                             text: TextSpan(
-                              style: GoogleFonts.lexend(
+                              style: TextStyle( fontFamily: 'Lexend',
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w400,
                                 fontSize: 14,
@@ -1983,7 +1983,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                         Expanded(
                           child: RichText(
                             text: TextSpan(
-                              style: GoogleFonts.lexend(
+                              style: TextStyle( fontFamily: 'Lexend',
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w400,
                                 fontSize: 14,
@@ -2004,7 +2004,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                          Expanded(
                           child: RichText(
                             text: TextSpan(
-                              style: GoogleFonts.lexend(
+                              style: TextStyle( fontFamily: 'Lexend',
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w400,
                                 fontSize: 14,
@@ -2064,7 +2064,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                       textAlign: TextAlign.start,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle( fontFamily: 'Lexend',
                                         letterSpacing: -1,
                                         fontWeight: FontWeight.w500,
                                         fontSize: 14,
@@ -2088,7 +2088,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                   textAlign: TextAlign.center,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                     letterSpacing: -1,
                                     fontWeight: FontWeight.w500,
                                     fontSize: 14,
@@ -2130,7 +2130,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                       textAlign: TextAlign.end,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle( fontFamily: 'Lexend',
                                         letterSpacing: -1,
                                         fontWeight: FontWeight.w500,
                                         fontSize: 14,
@@ -2154,7 +2154,7 @@ class BiStatFunction extends SheetFunction with QuillFormattingMixin {
                                   textAlign: TextAlign.center,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                     letterSpacing: -1,
                                     fontWeight: FontWeight.w500,
                                     fontSize: 14,
@@ -2415,7 +2415,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
         },
         hoverColor: defaultPalette.primary.withOpacity(0.02),
         unfocusedColor: defaultPalette.primary.withOpacity(0.2),
-        style: GoogleFonts.lexend(
+        style: TextStyle( fontFamily: 'Lexend',
           fontWeight: FontWeight.w500,
           color: defaultPalette.primary,
           fontSize: 15,
@@ -2498,7 +2498,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                     textAlign: TextAlign.end,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.lexend(
+                    style: TextStyle( fontFamily: 'Lexend',
                       letterSpacing: -1,
                       fontWeight: FontWeight.w500,
                       fontSize: 18,
@@ -2547,7 +2547,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                           textAlign: TextAlign.start,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.lexend(
+                          style: TextStyle( fontFamily: 'Lexend',
                             letterSpacing: -1,
                             fontWeight: FontWeight.w500,
                             fontSize: 14,
@@ -2629,15 +2629,15 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                             return Theme(
                               data: Theme.of(context).copyWith(
                                 inputDecorationTheme: InputDecorationTheme(
-                                  labelStyle: GoogleFonts.lexend(
+                                  labelStyle: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 12,
                                     color: defaultPalette.extras[0],
                                   ),
-                                  hintStyle: GoogleFonts.lexend(
+                                  hintStyle: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 15,
                                     color: defaultPalette.extras[0].withOpacity(0.6),
                                   ),
-                                  errorStyle: GoogleFonts.lexend(
+                                  errorStyle: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 15,
                                     color: defaultPalette.extras[0].withOpacity(0.6),
                                   ),
@@ -2647,17 +2647,17 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                                   ),
                                 ),
                                 textTheme: Theme.of(context).textTheme.copyWith(
-                                  titleLarge: GoogleFonts.lexend(
+                                  titleLarge: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 24,
                                     fontWeight: FontWeight.w600,
                                     color: defaultPalette.black,
                                   ),
-                                  headlineSmall: GoogleFonts.lexend(
+                                  headlineSmall: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 20,
                                     fontWeight: FontWeight.w600,
                                     color: defaultPalette.black,
                                   ),
-                                  headlineMedium: GoogleFonts.lexend(
+                                  headlineMedium: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 20,
                                     fontWeight: FontWeight.w600,
                                     color: defaultPalette.black,
@@ -2666,7 +2666,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                                 textButtonTheme: TextButtonThemeData(
                                   style: ButtonStyle(
                                     textStyle: WidgetStateProperty.all(
-                                      GoogleFonts.lexend(fontSize: 15, letterSpacing: -1),
+                                      TextStyle( fontFamily: 'Lexend',fontSize: 15, letterSpacing: -1),
                                     ),
                                     foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
                                   ),
@@ -2713,7 +2713,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                                   dividerColor: defaultPalette.extras[0].withOpacity(0.4),
                                   confirmButtonStyle: ButtonStyle(
                                     textStyle: WidgetStateProperty.all(
-                                      GoogleFonts.lexend(
+                                      TextStyle( fontFamily: 'Lexend',
                                         fontSize: 15,
                                         letterSpacing: -1,
                                         color: defaultPalette.tertiary,
@@ -2723,7 +2723,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                                   ),
                                   cancelButtonStyle: ButtonStyle(
                                     textStyle: WidgetStateProperty.all(
-                                      GoogleFonts.lexend(
+                                      TextStyle( fontFamily: 'Lexend',
                                         fontSize: 15,
                                         letterSpacing: -1,
                                         color: defaultPalette.tertiary,
@@ -2731,40 +2731,40 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                                       ),
                                     ),
                                   ),
-                                  yearStyle: GoogleFonts.lexend(
+                                  yearStyle: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 15,
                                     color: defaultPalette.tertiary,
                                     letterSpacing: -1,
                                   ),
-                                  dayStyle: GoogleFonts.lexend(
+                                  dayStyle: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 15,
                                     color: defaultPalette.tertiary,
                                     letterSpacing: -1,
                                   ),
-                                  weekdayStyle: GoogleFonts.lexend(
+                                  weekdayStyle: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 14,
                                     letterSpacing: -1,
                                     color: defaultPalette.tertiary,
                                     fontWeight: FontWeight.w600,
                                   ),
-                                  headerHeadlineStyle: GoogleFonts.lexend(
+                                  headerHeadlineStyle: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 30,
                                     letterSpacing: -1,
                                     color: defaultPalette.tertiary,
                                     fontWeight: FontWeight.w600,
                                   ),
-                                  rangePickerHeaderHeadlineStyle: GoogleFonts.lexend(
+                                  rangePickerHeaderHeadlineStyle: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 14,
                                     letterSpacing: -1,
                                     color: defaultPalette.tertiary,
                                   ),
-                                  rangePickerHeaderHelpStyle: GoogleFonts.lexend(
+                                  rangePickerHeaderHelpStyle: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 14,
                                     letterSpacing: -1,
                                     color: defaultPalette.tertiary,
                                     fontWeight: FontWeight.w600,
                                   ),
-                                headerHelpStyle: GoogleFonts.lexend(
+                                headerHelpStyle: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 14,
                                   letterSpacing: -1,
                                   color: defaultPalette.tertiary,
@@ -2801,7 +2801,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                       textAlign: TextAlign.end,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                         letterSpacing: -1,
                         fontWeight: FontWeight.w500,
                         fontSize: 18,
@@ -2856,7 +2856,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                               textAlign: TextAlign.end,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.lexend(
+                              style: TextStyle( fontFamily: 'Lexend',
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w400,
                                 fontSize: 14,
@@ -2874,14 +2874,14 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                                 textAlign: TextAlign.end,
                                 decoration: InputDecoration(
                                   contentPadding: const EdgeInsets.all(0),
-                                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                  labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                                   fillColor: defaultPalette.transparent,
                                   border: InputBorder.none,
                                   enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
                                   focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
                                 ),
                                 keyboardType: TextInputType.number,
-                                style: GoogleFonts.lexend(
+                                style: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 15,
                                     color: defaultPalette.primary,
                                     fontWeight: FontWeight.w400,
@@ -2954,15 +2954,15 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                           return Theme(
                             data: Theme.of(context).copyWith(
                               inputDecorationTheme: InputDecorationTheme(
-                                labelStyle: GoogleFonts.lexend(
+                                labelStyle: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 24,
                                   color: defaultPalette.extras[0],
                                 ),
-                                hintStyle: GoogleFonts.lexend(
+                                hintStyle: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 15,
                                   color: defaultPalette.extras[0].withOpacity(0.6),
                                 ),
-                                errorStyle: GoogleFonts.lexend(
+                                errorStyle: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 15,
                                   color: defaultPalette.extras[0].withOpacity(0.6),
                                 ),
@@ -2972,42 +2972,42 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                                 ),
                               ),
                               textTheme: Theme.of(context).textTheme.copyWith(
-                                titleLarge: GoogleFonts.lexend(
+                                titleLarge: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 24,
                                   fontWeight: FontWeight.w600,
                                   color: defaultPalette.black,
                                 ),
-                                titleMedium: GoogleFonts.lexend(
+                                titleMedium: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 48,
                                   fontWeight: FontWeight.w600,
                                   color: defaultPalette.black,
                                 ),
-                                titleSmall: GoogleFonts.lexend(
+                                titleSmall: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 48,
                                   fontWeight: FontWeight.w600,
                                   color: defaultPalette.black,
                                 ),
-                                headlineSmall: GoogleFonts.lexend(
+                                headlineSmall: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                   color: defaultPalette.black,
                                 ),
-                                headlineMedium: GoogleFonts.lexend(
+                                headlineMedium: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                   color: defaultPalette.black,
                                 ),
-                                bodyLarge: GoogleFonts.lexend(
+                                bodyLarge: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                   color: defaultPalette.black,
                                 ),
-                                displayLarge: GoogleFonts.lexend(
+                                displayLarge: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                   color: defaultPalette.black,
                                 ),
-                                headlineLarge: GoogleFonts.lexend(
+                                headlineLarge: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                   color: defaultPalette.black,
@@ -3016,7 +3016,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                               textButtonTheme: TextButtonThemeData(
                                 style: ButtonStyle(
                                   textStyle: WidgetStateProperty.all(
-                                    GoogleFonts.lexend(
+                                    TextStyle( fontFamily: 'Lexend',
                                       fontSize: 15,
                                       letterSpacing: -1,
                                     ),
@@ -3026,19 +3026,19 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                               ),
                               timePickerTheme: TimePickerThemeData(
                                 backgroundColor: defaultPalette.primary,
-                                hourMinuteTextStyle: GoogleFonts.lexend(
+                                hourMinuteTextStyle: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 48,
                                   fontWeight: FontWeight.w600,
                                   color: defaultPalette.extras[0],
                                   letterSpacing: -1,
                                 ),
-                                dayPeriodTextStyle: GoogleFonts.lexend(
+                                dayPeriodTextStyle: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                   color: defaultPalette.extras[0],
                                   letterSpacing: -1,
                                 ),
-                                helpTextStyle: GoogleFonts.lexend(
+                                helpTextStyle: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 15,
                                   fontWeight: FontWeight.w400,
                                   color: defaultPalette.extras[0],
@@ -3049,7 +3049,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                                 dialBackgroundColor: defaultPalette.primary,
                                 hourMinuteColor: defaultPalette.primary,
                                 timeSelectorSeparatorTextStyle: WidgetStatePropertyAll(
-                                  GoogleFonts.lexend(
+                                  TextStyle( fontFamily: 'Lexend',
                                     fontSize: 48,
                                     fontWeight: FontWeight.w400,
                                     color: defaultPalette.extras[0],
@@ -3085,7 +3085,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                       textAlign: TextAlign.end,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                         letterSpacing: -1,
                         fontWeight: FontWeight.w500,
                         fontSize: 18,
@@ -3140,7 +3140,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                               textAlign: TextAlign.end,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.lexend(
+                              style: TextStyle( fontFamily: 'Lexend',
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w400,
                                 fontSize: 14,
@@ -3158,14 +3158,14 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                                 textAlign: TextAlign.end,
                                 decoration: InputDecoration(
                                   contentPadding: const EdgeInsets.all(0),
-                                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                  labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                                   fillColor: defaultPalette.transparent,
                                   border: InputBorder.none,
                                   enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
                                   focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
                                 ),
                                 keyboardType: TextInputType.number,
-                                style: GoogleFonts.lexend(
+                                style: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 15,
                                     color: defaultPalette.primary,
                                     fontWeight: FontWeight.w400,
@@ -3214,7 +3214,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                       textAlign: TextAlign.end,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                         letterSpacing: -1,
                         fontWeight: FontWeight.w500,
                         fontSize: 18,
@@ -3269,7 +3269,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                               textAlign: TextAlign.end,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.lexend(
+                              style: TextStyle( fontFamily: 'Lexend',
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w400,
                                 fontSize: 14,
@@ -3287,14 +3287,14 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                                 textAlign: TextAlign.end,
                                 decoration: InputDecoration(
                                   contentPadding: const EdgeInsets.all(0),
-                                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                  labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                                   fillColor: defaultPalette.transparent,
                                   border: InputBorder.none,
                                   enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
                                   focusedBorder: OutlineInputBorder(borderSide: BorderSide.none),
                                 ),
                                 keyboardType: TextInputType.number,
-                                style: GoogleFonts.lexend(
+                                style: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 15,
                                     color: defaultPalette.primary,
                                     fontWeight: FontWeight.w400,
@@ -3402,7 +3402,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                         textAlign: TextAlign.end,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.lexend(
+                        style: TextStyle( fontFamily: 'Lexend',
                           letterSpacing: -1,
                           fontWeight: FontWeight.w500,
                           fontSize: 18,
@@ -3434,7 +3434,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                           Expanded(
                             child: RichText(
                               text: TextSpan(
-                                style: GoogleFonts.lexend(
+                                style: TextStyle( fontFamily: 'Lexend',
                                   letterSpacing: -1,
                                   fontWeight: FontWeight.w400,
                                   fontSize: 14,
@@ -3824,7 +3824,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                         textAlign: TextAlign.end,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.lexend(
+                        style: TextStyle( fontFamily: 'Lexend',
                           letterSpacing: -1,
                           fontWeight: FontWeight.w500,
                           fontSize: 18,
@@ -3928,7 +3928,7 @@ class UidGeneratorFunction extends SheetFunction with QuillFormattingMixin {
                           Expanded(
                             child: RichText(
                               text: TextSpan(
-                                style: GoogleFonts.lexend(
+                                style: TextStyle( fontFamily: 'Lexend',
                                   letterSpacing: -1,
                                   fontWeight: FontWeight.w400,
                                   fontSize: 14,
@@ -4275,7 +4275,7 @@ List<Widget> sliderPropertyTile(TextEditingController s, Function setStateCallba
           children: [
             const SizedBox(width: 3),
             Text(' length:',
-              style: GoogleFonts.lexend(
+              style: TextStyle( fontFamily: 'Lexend',
                 fontWeight: FontWeight.w400,
                 fontSize: 14,
                 letterSpacing: -1,
@@ -4301,7 +4301,7 @@ List<Widget> sliderPropertyTile(TextEditingController s, Function setStateCallba
           textAlign: TextAlign.end,
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.all(0),
-            labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+            labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
             fillColor: defaultPalette.transparent,
             border: InputBorder.none,
             enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),

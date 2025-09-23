@@ -95,7 +95,11 @@ Future<void> main(List<String> args) async {
   if (args.isNotEmpty) {
     pendingFilePath = args.first;
     print('Pending file path: $pendingFilePath');
-    runApp(const ProviderScope(child: MainApp()));
+    try {
+      runApp(const ProviderScope(child: MainApp()));
+    } on Exception catch (e,st) {
+      runApp(ErrorApp(error: e, stackTrace: st));
+    }
   } else {
   // await LlamaRepository.init(
   await Hive.openBox<LayoutModel>('layouts');
@@ -204,7 +208,8 @@ class MainAppState extends ConsumerState<MainApp> {
                 },
                   child: Center(
                     child: SvgPicture.asset(
-                      'assets/logos/Asset6.svg',
+                      'assets/logos/billblazeLogoSplashTM.svg',
+                      height: sHeight/2,
                       // allowDrawingOutsideViewBox: true,
                       // theme: SvgTheme(currentColor: defaultPalette.primary),
                     )
@@ -253,7 +258,8 @@ class MainAppState extends ConsumerState<MainApp> {
                 },
                   child: Center(
                     child: SvgPicture.asset(
-                      'assets/logos/Asset6.svg',
+                      'assets/logos/billblazeLogoSplashTM.svg',
+                      height: sHeight/2,
                       // allowDrawingOutsideViewBox: true,
                       // theme: SvgTheme(currentColor: defaultPalette.primary),
                     )

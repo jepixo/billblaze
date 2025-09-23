@@ -156,7 +156,8 @@ class DocumentPropertiesBox extends HiveObject {
       marginBottomController: map['marginBottomController'] as String,
       marginTopController: map['marginTopController'] as String,
       orientationController: map['orientationController'] as bool,
-      pageFormatController: map['pageFormatController'] as Map<String, double>,
+      pageFormatController: (map['pageFormatController'] as Map<String, dynamic>)
+        .map((key, value) => MapEntry(key, (value as num).toDouble())),
       useIndividualMargins: map['useIndividualMargins'] as bool,
       pageColor: map['pageColor'] as String,
     );

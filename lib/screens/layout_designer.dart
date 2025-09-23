@@ -824,7 +824,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
       : 'Enter Text',
       customStyles: DefaultStyles(
         placeHolder: DefaultTextBlockStyle(
-          GoogleFonts.lexend(
+          TextStyle( fontFamily: 'Lexend',
             color: defaultPalette.extras[0].withOpacity(0.4),
             letterSpacing: -1,
             fontSize:16,
@@ -2773,7 +2773,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               border:Border.all(color:defaultPalette.extras[0]),
               borderRadius:BorderRadius.circular(10)
               ),
-            child:Text(p+': '+s, style: GoogleFonts.lexend(letterSpacing:-1, fontSize:12, color:defaultPalette.extras[0]))
+            child:Text(p+': '+s, style: TextStyle( fontFamily: 'Lexend',letterSpacing:-1, fontSize:12, color:defaultPalette.extras[0]))
             
           ),
         ),
@@ -3108,7 +3108,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
         color:defaultPalette.primary,
         border: Border.all(),
       ),
-      textStyle: GoogleFonts.lexend(
+      textStyle: TextStyle( fontFamily: 'Lexend',
         color: defaultPalette.extras[0], 
         fontSize: 14,
         letterSpacing: letterSpacing,
@@ -3135,7 +3135,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                 //   child: Text(
                 //     ' ${text}',
                 //     textAlign: TextAlign.start,
-                //     style: GoogleFonts.lexend(
+                //     style: TextStyle( fontFamily: 'Lexend',
                 //       color: fontColor, 
                 //       fontSize: fontSize,
                 //       letterSpacing: letterSpacing,
@@ -3401,7 +3401,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     padding: EdgeInsets.only(top:50, left:4,right:3),
                                                     child:Text(
                                                       'text',
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         color:defaultPalette.tertiary,
                                                         fontSize: 12,
                                                         letterSpacing: -0.5,
@@ -3545,7 +3545,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     // ),
                                                     child: Text(
                                                       ' list ',
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         color: defaultPalette.tertiary, 
                                                         fontSize: 12,
                                                         letterSpacing: -0.5,
@@ -3614,7 +3614,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                    
                                                     child: Text(
                                                       ' table ',
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         color: defaultPalette.tertiary, 
                                                         fontSize: 12,
                                                         letterSpacing: -0.5,
@@ -3682,7 +3682,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                    
                                                     child: Text(
                                                       ' misc ',
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         color: defaultPalette.tertiary, 
                                                         fontSize: 12,
                                                         letterSpacing: -0.5,
@@ -4108,7 +4108,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 maxLines:2,
                                                 overflow:TextOverflow.ellipsis,
                                                 textAlign: TextAlign.end,
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                   fontSize: mapValueDimensionBased(10, 20, sWidth, sHeight, b: false),
                                                   color: defaultPalette.primary,
                                                   letterSpacing: -0.3,
@@ -4196,7 +4196,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                           borderRadius: BorderRadius.circular(8),
                                                                         ),
                                                                         richMessage: TextSpan(
-                                                                          style: GoogleFonts.lexend(
+                                                                          style: TextStyle( fontFamily: 'Lexend',
                                                                             fontSize: 13,
                                                                             color: defaultPalette.primary,
                                                                           ),
@@ -4308,7 +4308,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                             ),
                                                                             child: Text(
                                                                               label.name,
-                                                                              style: GoogleFonts.lexend(
+                                                                              style: TextStyle( fontFamily: 'Lexend',
                                                                                 fontSize: 10.5,
                                                                                 color:
                                                                                     !isMapped ? label.isOptional? defaultPalette.extras[0]: defaultPalette.primary : defaultPalette.extras[0],
@@ -4424,7 +4424,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                               ),
                                                               height: 30,
                                                               child: TextFormField(
-                                                                style: GoogleFonts.lexend(
+                                                                style: TextStyle( fontFamily: 'Lexend',
                                                                 color: defaultPalette.extras[0],
                                                                 letterSpacing:-1,
                                                                 fontSize: 15,
@@ -4440,7 +4440,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                   contentPadding: EdgeInsets.all(0),
                                                                   hintText: 'searchTypes...',
                                                                   focusColor: defaultPalette.extras[0],
-                                                                  hintStyle: GoogleFonts.lexend(
+                                                                  hintStyle: TextStyle( fontFamily: 'Lexend',
                                                                     color: defaultPalette.extras[0],
                                                                     letterSpacing:-1,
                                                                     fontSize: 15),
@@ -4532,7 +4532,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                                                   Text(
                                                                                                     getLabelList(entry.value,null).length.toString(),
                                                                                                     maxLines: 1,
-                                                                                                    style: GoogleFonts.lexend(
+                                                                                                    style: TextStyle( fontFamily: 'Lexend',
                                                                                                       fontSize: 45,
                                                                                                       letterSpacing: -1,
                                                                                                       color: defaultPalette.extras[0],
@@ -4544,7 +4544,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                                                         Text(
                                                                                                     getLabelList(entry.value,null).where((el) => !el.isOptional,).toList().length.toString(),
                                                                                                     maxLines: 1,
-                                                                                                    style: GoogleFonts.lexend(
+                                                                                                    style: TextStyle( fontFamily: 'Lexend',
                                                                                                       fontSize: 25,
                                                                                                       letterSpacing: -1,
                                                                                                       color: defaultPalette.extras[4],
@@ -4553,7 +4553,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                                                         Text(
                                                                                                     getLabelList(entry.value,null).where((el) => el.isOptional,).toList().length.toString(),
                                                                                                     maxLines: 1,
-                                                                                                    style: GoogleFonts.lexend(
+                                                                                                    style: TextStyle( fontFamily: 'Lexend',
                                                                                                       fontSize: 25,
                                                                                                       letterSpacing: -1,
                                                                                                       color: defaultPalette.extras[0],
@@ -4610,7 +4610,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                                                                 TextSpan(
                                                                                                                   text:'${ent.key+1}.',
                                                                                                                 
-                                                                                                                  style: GoogleFonts.lexend(
+                                                                                                                  style: TextStyle( fontFamily: 'Lexend',
                                                                                                                     fontSize: 12,
                                                                                                                     letterSpacing: -0.2,
                                                                                                                     color:ent.value.isOptional? defaultPalette.primary.withOpacity(0.6):defaultPalette.extras[4],
@@ -4618,7 +4618,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                                                                   ),
                                                                                                                 TextSpan(
                                                                                                                   text:' ${ent.value.name}',
-                                                                                                                  style: GoogleFonts.lexend(
+                                                                                                                  style: TextStyle( fontFamily: 'Lexend',
                                                                                                                     fontSize: 12,
                                                                                                                     letterSpacing: -0.2,
                                                                                                                     color: defaultPalette.primary.withOpacity(0.6),
@@ -4648,7 +4648,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                                                         entry.value.name.replaceFirstMapped(RegExp(r'^[a-z]+(?=[A-Z])'), (m) => '${m[0]}\n'),
                                                                                                         maxLines: 2,
                                                                                                         textAlign: TextAlign.end,
-                                                                                                        style: GoogleFonts.lexend(
+                                                                                                        style: TextStyle( fontFamily: 'Lexend',
                                                                                                           fontSize: 17,
                                                                                                           letterSpacing: -1,
                                                                                                           height: 1,
@@ -6150,7 +6150,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       // key: ValueKey(appinioLoop),
                       animatedTexts: [
                         TypewriterAnimatedText("Bill\nBlaze.",
-                            textStyle: GoogleFonts.abrilFatface(
+                            textStyle: TextStyle( fontFamily: 'AbrilFatface',
                                 fontSize: 13,
                                 color: const Color(0xFF000000).withOpacity(0.8),
                                 height: 0.9),
@@ -6319,7 +6319,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             ),
                           ),
                           // keyboardType: TextInputType.number,
-                          style: GoogleFonts.lexend(
+                          style: TextStyle( fontFamily: 'Lexend',
                               color: defaultPalette.black, 
                               letterSpacing:-0.2,
                               fontWeight:FontWeight.w600,
@@ -6732,7 +6732,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                   panelIndex.parentId = sheetList.id;
                   // panelIndex.runTimeType = sheetList.runtimeType;
                 });
-                var style = GoogleFonts.lexend(
+                var style = TextStyle( fontFamily: 'Lexend',
                       color: defaultPalette.extras[0],
                       fontWeight: FontWeight.w400,
                       letterSpacing: -0.5,
@@ -7409,7 +7409,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                   sheetText.name,
                   maxLines: 2,
                   overflow:TextOverflow.ellipsis,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle( fontFamily: 'Lexend',
                     letterSpacing: -1,
                     height:0.9,
                     fontWeight: FontWeight.w500,
@@ -7441,7 +7441,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                   child: Text(
                                     '${extractedDate?.day.toString().padLeft(2, '0') ?? '--'}',
                                     textAlign: TextAlign.center,
-                                    style: GoogleFonts.lexend(
+                                    style: TextStyle( fontFamily: 'Lexend',
                                   fontSize: 15,
                                   letterSpacing: -0.5,
                                   color: defaultPalette.extras[0],
@@ -7461,7 +7461,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                   child: Text(
                                     '${extractedDate?.month.toString().padLeft(2, '0') ?? '--'}',
                                     textAlign: TextAlign.center,
-                                    style: GoogleFonts.lexend(
+                                    style: TextStyle( fontFamily: 'Lexend',
                                       fontSize: 15,
                                       letterSpacing: -0.5,
                                       color: defaultPalette.extras[0],
@@ -7481,7 +7481,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                   child: Text(
                                     ' ${extractedDate?.year ?? '----'}  ',
                                     textAlign: TextAlign.center,
-                                    style: GoogleFonts.lexend(
+                                    style: TextStyle( fontFamily: 'Lexend',
                                       fontSize: 15,
                                       letterSpacing: -0.5,
                                       color: defaultPalette.extras[0],
@@ -7522,7 +7522,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(5),
                                         color: defaultPalette.secondary,
-                                      ),child: Text(hourStr, style: GoogleFonts.lexend(
+                                      ),child: Text(hourStr, style: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 15,
                                     letterSpacing: -1,
                                   ),)),
@@ -7534,7 +7534,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(5),
                                       color: defaultPalette.secondary,
-                                    ),child: Text(minuteStr, style: GoogleFonts.lexend(
+                                    ),child: Text(minuteStr, style: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 15,
                                     letterSpacing: -1,
                                   ),))),
@@ -7646,7 +7646,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
 
   List<ContextMenuEntry> buildSizedItemContextMenuEntries(int index, SheetSizedItem sheetSizedItem,SheetList sheetList){
     var entries = <ContextMenuEntry>[];
-    var style = GoogleFonts.lexend(
+    var style = TextStyle( fontFamily: 'Lexend',
       fontSize:13,
       color: defaultPalette.extras[0],
       fontWeight: FontWeight.w400,
@@ -8434,7 +8434,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
 
   List<ContextMenuEntry> buildContextMenuEntries( QuillController textEditorController, int index, SheetText sheetText,SheetList sheetList) {
   var entries = <ContextMenuEntry>[];
-  var style = GoogleFonts.lexend(
+  var style = TextStyle( fontFamily: 'Lexend',
     color: defaultPalette.extras[0],
     fontWeight: FontWeight.w400,
     letterSpacing: -0.5,
@@ -9423,7 +9423,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
           child: sheetTable.columnData[ind-1].hide?
           Icon(TablerIcons.eye_closed, size: 13, color: defaultPalette.extras[0],):
           Text('${s}',
-          style: GoogleFonts.lexend(
+          style: TextStyle( fontFamily: 'Lexend',
             letterSpacing: -1,
             fontSize: 12
           ),
@@ -9504,7 +9504,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               child: sheetTable.rowData[ind-1].hide?
               Icon(TablerIcons.eye_closed, size: 13, color: defaultPalette.extras[0],):
               Text('${ind}',
-              style: GoogleFonts.lexend(
+              style: TextStyle( fontFamily: 'Lexend',
                 letterSpacing: -1,
                 fontSize: 13
               ),
@@ -9538,7 +9538,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             // panelIndex.itemIndexPath = sheetTable.cellData[0][0].sheetItem.indexPath;
             // _findItem();
             });
-            var style = GoogleFonts.lexend(
+            var style = TextStyle( fontFamily: 'Lexend',
               color: defaultPalette.extras[0],
               fontWeight: FontWeight.w400,
               fontSize:13,
@@ -10465,7 +10465,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                   child: Text(sheetTable.name,
                     maxLines:1,
                     overflow:TextOverflow.ellipsis,
-                    style: GoogleFonts.lexend(
+                    style: TextStyle( fontFamily: 'Lexend',
                     letterSpacing: -1,
                     fontSize: 12
                   ),),
@@ -11865,7 +11865,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
           '  ${message.replaceAll(RegExp(r'\n'), '')}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.lexend(
+          style: TextStyle( fontFamily: 'Lexend',
             color: defaultPalette.extras[0],
             fontWeight: FontWeight.w400,
             letterSpacing: -1,
@@ -12655,7 +12655,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       child: Text(
                         name,
                         maxLines: 1,
-                        style: GoogleFonts.lexend(
+                        style: TextStyle( fontFamily: 'Lexend',
                             fontSize: fontSize,
                             color:color,
                             letterSpacing: -1,
@@ -12745,7 +12745,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             : s==2
                             ? ' word '
                             : ' line ',
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: 14,
                                 letterSpacing: -1,
                                 color: defaultPalette.extras[0]),
@@ -12770,7 +12770,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         textAlign: TextAlign.end,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(0),
-                          labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                          labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                           fillColor: defaultPalette.transparent,
                           border: InputBorder.none,
                           enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -12847,7 +12847,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     : index==5
                     ? TablerIcons.clock_hour_4
                     : TablerIcons.phone,
-                    style:  GoogleFonts.lexend(
+                    style:  TextStyle( fontFamily: 'Lexend',
                       color: defaultPalette.extras[0],
                       fontWeight: FontWeight.w400,
                       letterSpacing: -0.5,
@@ -12989,7 +12989,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                     Text(
                                       '${i + 1}.   ',
                                       textAlign: TextAlign.end,
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle( fontFamily: 'Lexend',
                                         fontSize: 10,
                                         color: Colors.white,
                                       ),
@@ -13072,7 +13072,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                       ' '+sheetItem.name,
                                       maxLines:1,
                                       overflow:TextOverflow.ellipsis,
-                                      style:GoogleFonts.lexend(
+                                      style:TextStyle( fontFamily: 'Lexend',
                                         color: defaultPalette.primary,
                                         fontWeight: FontWeight.w500,
                                         fontSize: 18,
@@ -13109,7 +13109,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                       ' ${sheetItem.name}',
                                       maxLines:1,
                                       overflow:TextOverflow.ellipsis,
-                                      style:GoogleFonts.lexend(
+                                      style:TextStyle( fontFamily: 'Lexend',
                                         color: defaultPalette.extras[0],
                                         fontWeight: FontWeight.w500,
                                         fontSize: 18,
@@ -13182,7 +13182,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                     child: Text(
                                                                     '',
                                                                     textAlign: TextAlign.center,
-                                                                    style: GoogleFonts.lexend(
+                                                                    style: TextStyle( fontFamily: 'Lexend',
                                                                       color: defaultPalette.primary,
                                                                       fontWeight: FontWeight.w500,
                                                                       fontSize: 12,
@@ -13252,7 +13252,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                       child: Text(
                                                                       numberToColumnLabel(el.key+1),
                                                                       textAlign: TextAlign.center,
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle( fontFamily: 'Lexend',
                                                                         color: defaultPalette.primary,
                                                                         fontWeight: FontWeight.w500,
                                                                         fontSize: 12,
@@ -13330,7 +13330,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                       child: Text(
                                                                       (elm.key+1).toString(),
                                                                       textAlign: TextAlign.center,
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle( fontFamily: 'Lexend',
                                                                         color: defaultPalette.primary,
                                                                         fontWeight: FontWeight.w500,
                                                                         fontSize: 12,
@@ -13386,7 +13386,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                     child: Text(
                                                                     sheetCellItem.name,
                                                                     textAlign: TextAlign.center,
-                                                                    style: GoogleFonts.lexend(
+                                                                    style: TextStyle( fontFamily: 'Lexend',
                                                                       color: defaultPalette.primary,
                                                                       fontWeight: FontWeight.w500,
                                                                       fontSize: 12,
@@ -13488,7 +13488,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                       const SizedBox(height: 4),
                                       Text(
                                         '  Page ${spreadSheetList.indexWhere((el) => el.id == spreadList[entry.key-1].id,)+1}',
-                                        style:GoogleFonts.lexend(
+                                        style:TextStyle( fontFamily: 'Lexend',
                                           color: defaultPalette.primary,
                                           fontWeight: FontWeight.w500,
                                           fontSize: 18,
@@ -13598,7 +13598,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             ),
                                             height: 30,
                                             child: TextFormField(
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                               color: defaultPalette.primary,
                                               letterSpacing:-1,
                                               fontSize: 15,
@@ -13634,7 +13634,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 contentPadding: EdgeInsets.all(0),
                                                 hintText: 'searchFields...',
                                                 focusColor: defaultPalette.primary,
-                                                hintStyle: GoogleFonts.lexend(
+                                                hintStyle: TextStyle( fontFamily: 'Lexend',
                                                   color: defaultPalette.primary,
                                                   letterSpacing:-1,
                                                   fontSize: 15),
@@ -13943,7 +13943,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                 color:defaultPalette.extras[1],
                                 child:Text(
                                   '⚠️ Error: Invalid indexPath ${block.indexPath} in input block at position $inx',
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                     color: Colors.red,
                                     fontWeight: FontWeight.w500,
                                     fontSize: 14,
@@ -13958,7 +13958,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                 color:defaultPalette.extras[1],
                                 child:Text(
                                   '⚠️ Error: Invalid indexPath ${block.indexPath} in input block at position $inx',
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                     color: Colors.red,
                                     fontWeight: FontWeight.w500,
                                     fontSize: 14,
@@ -14000,7 +14000,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             children: [
                                               // Text(
                                               //   'indexPath ${block.indexPath} ',
-                                              //   style: GoogleFonts.lexend(
+                                              //   style: TextStyle( fontFamily: 'Lexend',
                                               //     color: Colors.white,
                                               //     fontWeight: FontWeight.w500,
                                               //     fontSize: 10,
@@ -14016,7 +14016,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                       textAlign: TextAlign.end,
                                                       maxLines: 1,
                                                       overflow: TextOverflow.ellipsis,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         letterSpacing: -1,
                                                         fontWeight: FontWeight.w500,
                                                         fontSize:18,
@@ -14040,7 +14040,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                           textAlign: TextAlign.end,
                                                           maxLines: 1,
                                                           overflow: TextOverflow.ellipsis,
-                                                          style: GoogleFonts.lexend(
+                                                          style: TextStyle( fontFamily: 'Lexend',
                                                             letterSpacing: -1,
                                                             fontWeight: FontWeight.w500,
                                                             fontSize: 14,
@@ -14056,7 +14056,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                       textAlign: TextAlign.end,
                                                       maxLines: 1,
                                                       overflow: TextOverflow.ellipsis,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         letterSpacing: -1,
                                                         fontWeight: FontWeight.w500,
                                                         fontSize: 18,
@@ -14196,7 +14196,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
-                                                              style: GoogleFonts.lexend(
+                                                              style: TextStyle( fontFamily: 'Lexend',
                                                                 letterSpacing: -1,
                                                                 fontWeight: FontWeight.w400,
                                                                 fontSize: 12,
@@ -14222,7 +14222,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
-                                                              style: GoogleFonts.lexend(
+                                                              style: TextStyle( fontFamily: 'Lexend',
                                                                 letterSpacing: -1,
                                                                 fontWeight: FontWeight.w400,
                                                                 fontSize: 12,
@@ -14327,7 +14327,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle( fontFamily: 'Lexend',
                                                               letterSpacing: -1,
                                                               fontWeight: FontWeight.w500,
                                                               fontSize: 18,
@@ -14361,7 +14361,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                       MenuItem(
                                                                         label: 'sum',
                                                                         icon: TablerIcons.sum,
-                                                                        style: GoogleFonts.lexend(
+                                                                        style: TextStyle( fontFamily: 'Lexend',
                                                                           fontWeight: FontWeight.w300,
                                                                           color: defaultPalette.primary,
                                                                         ),
@@ -14375,7 +14375,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                       ),
                                                                       MenuItem(label: 'count',
                                                                       icon: TablerIcons.tallymarks,
-                                                                      style: GoogleFonts.lexend(
+                                                                      style: TextStyle( fontFamily: 'Lexend',
                                                                           fontWeight: FontWeight.w300,
                                                                           color: defaultPalette.primary,
                                                                         ),
@@ -14416,7 +14416,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                         '${(sheetFunction as ColumnFunction).func}:',
                                                                         maxLines: 1,
                                                                         overflow:TextOverflow.ellipsis,
-                                                                        style: GoogleFonts.lexend(
+                                                                        style: TextStyle( fontFamily: 'Lexend',
                                                                           letterSpacing: -0.5,
                                                                           fontWeight: FontWeight.w400,
                                                                           fontSize: 12,
@@ -14432,7 +14432,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                 Expanded(
                                                                   child: RichText(
                                                                   text: TextSpan(
-                                                                    style: GoogleFonts.lexend(
+                                                                    style: TextStyle( fontFamily: 'Lexend',
                                                                       letterSpacing: -1,
                                                                       fontWeight: FontWeight.w400,
                                                                       fontSize: 14,
@@ -14470,7 +14470,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle( fontFamily: 'Lexend',
                                                               letterSpacing: -1,
                                                               fontWeight: FontWeight.w500,
                                                               fontSize: 18,
@@ -14497,7 +14497,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                 textAlign: TextAlign.end,
                                                                 maxLines: 1,
                                                                 overflow: TextOverflow.ellipsis,
-                                                                style: GoogleFonts.lexend(
+                                                                style: TextStyle( fontFamily: 'Lexend',
                                                                   letterSpacing: -1,
                                                                   fontWeight: FontWeight.w500,
                                                                   fontSize: 18,
@@ -14548,7 +14548,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle( fontFamily: 'Lexend',
                                                               letterSpacing: -1,
                                                               fontWeight: FontWeight.w500,
                                                               fontSize: 18,
@@ -14574,7 +14574,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                               Expanded(
                                                                 child: RichText(
                                                                   text: TextSpan(
-                                                                    style: GoogleFonts.lexend(
+                                                                    style: TextStyle( fontFamily: 'Lexend',
                                                                       letterSpacing: -1,
                                                                       fontWeight: FontWeight.w400,
                                                                       fontSize: 14,
@@ -14606,7 +14606,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                             textAlign: TextAlign.end,
                                                             maxLines:1,
                                                             overflow:TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle( fontFamily: 'Lexend',
                                                               letterSpacing: -1,
                                                               fontWeight: FontWeight.w400,
                                                               fontSize: 14,
@@ -14639,7 +14639,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
-                                                              style: GoogleFonts.lexend(
+                                                              style: TextStyle( fontFamily: 'Lexend',
                                                                 letterSpacing: -1,
                                                                 fontWeight: FontWeight.w400,
                                                                 fontSize: 12,
@@ -14666,7 +14666,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
-                                                              style: GoogleFonts.lexend(
+                                                              style: TextStyle( fontFamily: 'Lexend',
                                                                 letterSpacing: -1,
                                                                 fontWeight: FontWeight.w400,
                                                                 fontSize: 12,
@@ -14819,7 +14819,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     textAlign: TextAlign.end,
                                                     maxLines: 1,
                                                     overflow: TextOverflow.ellipsis,
-                                                    style: GoogleFonts.lexend(
+                                                    style: TextStyle( fontFamily: 'Lexend',
                                                       letterSpacing: -1,
                                                       fontWeight: FontWeight.w500,
                                                       fontSize: 18,
@@ -14834,7 +14834,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                       textAlign: TextAlign.end,
                                                       maxLines: 1,
                                                       overflow: TextOverflow.ellipsis,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         letterSpacing: -1,
                                                         fontWeight: FontWeight.w500,
                                                         fontSize: 18,
@@ -14882,7 +14882,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         textAlign: TextAlign.end,
                                                         maxLines: 1,
                                                         overflow: TextOverflow.ellipsis,
-                                                        style: GoogleFonts.lexend(
+                                                        style: TextStyle( fontFamily: 'Lexend',
                                                           letterSpacing: -1,
                                                           fontWeight: FontWeight.w500,
                                                           fontSize: 14,
@@ -14970,7 +14970,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle( fontFamily: 'Lexend',
                                                               letterSpacing: -1,
                                                               fontWeight: FontWeight.w500,
                                                               fontSize: 18,
@@ -14991,7 +14991,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                             margin: EdgeInsets.all(4).copyWith(bottom: 2),
                                                             child: RichText(
                                                             text: TextSpan(
-                                                              style: GoogleFonts.lexend(
+                                                              style: TextStyle( fontFamily: 'Lexend',
                                                                 letterSpacing: -1,
                                                                 fontWeight: FontWeight.w400,
                                                                 fontSize: 14,
@@ -15019,7 +15019,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle( fontFamily: 'Lexend',
                                                               letterSpacing: -1,
                                                               fontWeight: FontWeight.w500,
                                                               fontSize: 18,
@@ -15069,7 +15069,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                             textAlign: TextAlign.end,
                                                             maxLines: 1,
                                                             overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle( fontFamily: 'Lexend',
                                                               letterSpacing: -1,
                                                               fontWeight: FontWeight.w500,
                                                               fontSize: 18,
@@ -15094,7 +15094,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                               Expanded(
                                                                 child: RichText(
                                                                   text: TextSpan(
-                                                                    style: GoogleFonts.lexend(
+                                                                    style: TextStyle( fontFamily: 'Lexend',
                                                                       letterSpacing: -1,
                                                                       fontWeight: FontWeight.w400,
                                                                       fontSize: 14,
@@ -15145,7 +15145,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                Expanded(
                                                                 child: RichText(
                                                                   text: TextSpan(
-                                                                    style: GoogleFonts.lexend(
+                                                                    style: TextStyle( fontFamily: 'Lexend',
                                                                       letterSpacing: -1,
                                                                       fontWeight: FontWeight.w400,
                                                                       fontSize: 12,
@@ -15172,7 +15172,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         Expanded(
                                                           child: RichText(
                                                             text: TextSpan(
-                                                              style: GoogleFonts.lexend(
+                                                              style: TextStyle( fontFamily: 'Lexend',
                                                                 letterSpacing: -1,
                                                                 fontWeight: FontWeight.w400,
                                                                 fontSize: 12,
@@ -15457,7 +15457,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                   textAlign: TextAlign.end,
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
-                                                  style: GoogleFonts.lexend(
+                                                  style: TextStyle( fontFamily: 'Lexend',
                                                     letterSpacing: -1,
                                                     fontWeight: FontWeight.w500,
                                                     fontSize: 18,
@@ -15486,7 +15486,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           Expanded(
                                             child: RichText(
                                               text: TextSpan(
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                   letterSpacing: -1,
                                                   fontWeight: FontWeight.w400,
                                                   fontSize: 14,
@@ -15509,7 +15509,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           Expanded(
                                             child: RichText(
                                               text: TextSpan(
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                   letterSpacing: -1,
                                                   fontWeight: FontWeight.w400,
                                                   fontSize: 14,
@@ -15704,7 +15704,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                               textAlign: TextAlign.end,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                                 letterSpacing: -1,
                                                 fontWeight: FontWeight.w500,
                                                 fontSize: 18,
@@ -15739,7 +15739,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                       '${(funcBlock.function as ColumnFunction).func.replaceAll('root mean cube', 'rmc').replaceAll('quadratic', 'q').replaceAll('range ratio','rg ratio').replaceAll('standard deviation','stddev').replaceAll('mean absolute deviation', 'mad').replaceAll('sum of cubes', '∑i^3').replaceAll('sum of squares', 'energy')
                                                   .replaceAll('geometric','geo').replaceAll('harmonic','har')} '
                                                   ,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         letterSpacing: -1,
                                                         fontWeight: FontWeight.w400,
                                                         fontSize: 14,
@@ -15766,7 +15766,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 Expanded(
                                                   child: RichText(
                                                     text: TextSpan(
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         letterSpacing: -1,
                                                         fontWeight: FontWeight.w400,
                                                         fontSize: 14,
@@ -15787,7 +15787,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 Expanded(
                                                   child: RichText(
                                                     text: TextSpan(
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         letterSpacing: -1,
                                                         fontWeight: FontWeight.w400,
                                                         fontSize: 14,
@@ -15986,7 +15986,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                               textAlign: TextAlign.end,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                                 letterSpacing: -1,
                                                 fontWeight: FontWeight.w500,
                                                 fontSize: 18,
@@ -16020,7 +16020,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 Expanded(
                                                   child: RichText(
                                                     text: TextSpan(
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         letterSpacing: -1,
                                                         fontWeight: FontWeight.w400,
                                                         fontSize: 14,
@@ -16041,7 +16041,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 Expanded(
                                                   child: RichText(
                                                     text: TextSpan(
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         letterSpacing: -1,
                                                         fontWeight: FontWeight.w400,
                                                         fontSize: 14,
@@ -16394,7 +16394,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                 textAlign: TextAlign.end,
                                                                 maxLines: 1,
                                                                 overflow: TextOverflow.ellipsis,
-                                                                style: GoogleFonts.lexend(
+                                                                style: TextStyle( fontFamily: 'Lexend',
                                                                   letterSpacing: -1,
                                                                   fontWeight: FontWeight.w500,
                                                                   fontSize: 18,
@@ -16734,7 +16734,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           maxLines:1,
                                           style: TextStyle(
                                             height: 1,
-                                            fontFamily: GoogleFonts.lexend().fontFamily,
+                                            fontFamily: TextStyle( fontFamily: 'Lexend',).fontFamily,
                                             letterSpacing:-0.5,
                                             overflow: TextOverflow.ellipsis,
                                             fontWeight: FontWeight.w400,        
@@ -16789,7 +16789,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                   MenuHeader(
                                                     text: 'blocks',
                                                     disableUppercase: true,
-                                                    style:GoogleFonts.lexend(
+                                                    style:TextStyle( fontFamily: 'Lexend',
                                                       color: defaultPalette.extras[0],
                                                       fontWeight: FontWeight.w200,
                                                       letterSpacing: -0.2,
@@ -16799,7 +16799,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
 
                                                   MenuItem(
                                                     label: 'textField',
-                                                    style: GoogleFonts.lexend(
+                                                    style: TextStyle( fontFamily: 'Lexend',
                                                       color: defaultPalette.extras[0],
                                                       fontWeight: FontWeight.w400,
                                                       letterSpacing: -0.5,
@@ -16817,7 +16817,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     dynamic func = ibl.value.function!;
                                                     return MenuItem(
                                                     label: func is InputBlockFunction? (getItemAtPath(ibl.value.indexPath) as SheetText).name: func.func,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                       color: defaultPalette.extras[0],
                                                       fontWeight: FontWeight.w400,
                                                       letterSpacing: -0.5,
@@ -16978,7 +16978,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             cursorColor: defaultPalette.tertiary,
                                             decoration: InputDecoration(
                                               contentPadding: const EdgeInsets.only(left: 2),
-                                              labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                              labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                                               hoverColor: defaultPalette.transparent,
                                               filled: true,
                                               fillColor: defaultPalette.transparent,
@@ -16994,7 +16994,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 borderRadius: BorderRadius.circular(12),
                                               ),
                                             ),
-                                            style: GoogleFonts.lexend(
+                                            style: TextStyle( fontFamily: 'Lexend',
                                                 letterSpacing: -1,
                                                 fontWeight: FontWeight.w500,
                                                 fontSize: 14,
@@ -17020,7 +17020,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                       entries: [
                                                         MenuHeader(text: 'types',
                                                         disableUppercase: true,
-                                                        style:  GoogleFonts.lexend(
+                                                        style:  TextStyle( fontFamily: 'Lexend',
                                                           color: defaultPalette.extras[0],
                                                           fontWeight: FontWeight.w200,
                                                           letterSpacing: -0.2,
@@ -17070,7 +17070,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     maxLines: 1,
                                                     overflow:TextOverflow.ellipsis,
                                                     textAlign: TextAlign.end,
-                                                    style: GoogleFonts.lexend(
+                                                    style: TextStyle( fontFamily: 'Lexend',
                                                       fontWeight: FontWeight.w500,
                                                       letterSpacing: -1,
                                                       fontSize:15
@@ -17134,7 +17134,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                       textBuilder: (value) {
                                         return Text(
                                           value == false ? 'visible' : 'hidden',
-                                          style: GoogleFonts.lexend(
+                                          style: TextStyle( fontFamily: 'Lexend',
                                                 letterSpacing: -1,
                                                 fontWeight: FontWeight.w500,
                                                 fontSize: 14,
@@ -17203,7 +17203,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                       textBuilder: (value) {
                                         return Text(
                                           value == false ? 'unlocked' : 'locked',
-                                          style: GoogleFonts.lexend(
+                                          style: TextStyle( fontFamily: 'Lexend',
                                                 letterSpacing: -1,
                                                 fontWeight: FontWeight.w500,
                                                 fontSize: 14,
@@ -17253,7 +17253,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             style: TextStyle(
                                                 height: 1,
                                                 fontFamily:
-                                                    GoogleFonts.lexend()
+                                                    TextStyle( fontFamily: 'Lexend',)
                                                         .fontFamily,
                                                 letterSpacing:-1,
                                                 fontWeight: FontWeight.w800,        
@@ -17276,7 +17276,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 height: 1,
                                                 fontStyle: FontStyle.italic,
                                                 fontFamily:
-                                                    GoogleFonts.lexend()
+                                                    TextStyle( fontFamily: 'Lexend',)
                                                         .fontFamily,
                                                 color: defaultPalette
                                                     .extras[0],
@@ -17288,7 +17288,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 decoration: TextDecoration.underline,
                                                 letterSpacing:-1,
                                                 fontFamily:
-                                                    GoogleFonts.lexend()
+                                                    TextStyle( fontFamily: 'Lexend',)
                                                         .fontFamily,
                                                 fontWeight: FontWeight.w900,         
                                                 color: defaultPalette
@@ -17886,7 +17886,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                               cursorColor: defaultPalette.tertiary,
                                               decoration: InputDecoration(
                                                 contentPadding: const EdgeInsets.only(left: 2),
-                                                labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                                labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                                                 hoverColor: defaultPalette.transparent,
                                                 filled: true,
                                                 fillColor: defaultPalette.transparent,
@@ -17899,7 +17899,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                   borderRadius: BorderRadius.circular(12),
                                                 ),
                                               ),
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                                   letterSpacing: -1,
                                                   fontWeight: FontWeight.w500,
                                                   fontSize: 14,
@@ -17969,7 +17969,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                         fontHex,
                                       )).toLowerCase()}',
                                       textAlign: TextAlign.start,
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle( fontFamily: 'Lexend',
                                           fontSize: 14,
                                           letterSpacing: -1,
                                           color: defaultPalette.extras[0]),
@@ -18129,11 +18129,11 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                               defaultPalette.extras[0],
                                             ],
                                             duration: Durations.short4,
-                                            selectedTextStyle: GoogleFonts.abrilFatface(
+                                            selectedTextStyle: TextStyle( fontFamily: 'AbrilFatface',
                                               fontSize: 14,
                                               color: defaultPalette.extras[0],
                                             ),
-                                            unselectedTextStyle: GoogleFonts.abrilFatface(
+                                            unselectedTextStyle: TextStyle( fontFamily: 'AbrilFatface',
                                               fontSize: 12,
                                               color: defaultPalette.primary,
                                             ),
@@ -18609,7 +18609,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                     // Text(item.indexPath.toString(),
                                     //   maxLines: 1,
                                     //   overflow: TextOverflow.ellipsis,
-                                    //   style: GoogleFonts.lexend(
+                                    //   style: TextStyle( fontFamily: 'Lexend',
                                     //     height: 0.9,
                                     //     fontSize:18,
                                     //     color: Colors.white,
@@ -18660,7 +18660,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     child: Text(
                                                       fontTextControllers[4].text,
                                                       textAlign: TextAlign.end,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                       letterSpacing: -0.6,
                                                       fontWeight: FontWeight.w500,
                                                       fontSize: 14,
@@ -18714,7 +18714,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         maxLines: 1,
                                                         overflow:TextOverflow.ellipsis,
                                                         textAlign: TextAlign.end,
-                                                        style: GoogleFonts.lexend(
+                                                        style: TextStyle( fontFamily: 'Lexend',
                                                           fontWeight: FontWeight.w300,
                                                           letterSpacing: -0.5,
                                                           fontSize:14,
@@ -18751,7 +18751,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           textAlign:TextAlign.end,
-                                          style: GoogleFonts.lexend(
+                                          style: TextStyle( fontFamily: 'Lexend',
                                             height: 0.9,
                                             fontSize:12,
                                             color: defaultPalette.primary,
@@ -18986,7 +18986,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     name,
                     maxLines: 1,
                     overflow:TextOverflow.ellipsis,
-                    style: GoogleFonts.lexend(
+                    style: TextStyle( fontFamily: 'Lexend',
                         fontSize: fontSize,
                         letterSpacing: -1,
                         fontWeight: FontWeight.w500),
@@ -19170,7 +19170,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 maxLines:1,
                                                 style: TextStyle(
                                                   height: 1,
-                                                  fontFamily: GoogleFonts.lexend().fontFamily,
+                                                  fontFamily: TextStyle( fontFamily: 'Lexend',).fontFamily,
                                                   letterSpacing:-0.5,
                                                   overflow: TextOverflow.ellipsis,
                                                   fontWeight: FontWeight.w400,        
@@ -19327,7 +19327,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                   maxLines: 1,
                                                   textAlign: TextAlign.end,
                                                   overflow: TextOverflow.ellipsis,
-                                                  style: GoogleFonts.lexend(
+                                                  style: TextStyle( fontFamily: 'Lexend',
                                                       fontSize: 14,
                                                       height:2,
                                                       letterSpacing: -1,
@@ -19370,7 +19370,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                   maxLines: 1,
                                                   textAlign: TextAlign.end,
                                                   overflow: TextOverflow.ellipsis,
-                                                  style: GoogleFonts.lexend(
+                                                  style: TextStyle( fontFamily: 'Lexend',
                                                       fontSize: 14,
                                                       height:2,
                                                       letterSpacing: -1,
@@ -19399,7 +19399,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
                                                   textAlign:TextAlign.end,
-                                                  style: GoogleFonts.lexend(
+                                                  style: TextStyle( fontFamily: 'Lexend',
                                                     height: 0.9,
                                                     fontSize:13,
                                                     color: defaultPalette.extras[0],
@@ -19515,7 +19515,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.lexend(
+                    style: TextStyle( fontFamily: 'Lexend',
                         fontSize: fontSize,
                         letterSpacing: -1,
                         fontWeight: FontWeight.w500),
@@ -19622,7 +19622,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           ),
                           Text(
                             name,
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: 14,
                                 letterSpacing: -1,
                                 color: defaultPalette.extras[0]),
@@ -19647,7 +19647,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         textAlign: TextAlign.end,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(0),
-                          labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                          labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                           fillColor: defaultPalette.transparent,
                           border: InputBorder.none,
                           enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -19975,7 +19975,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                               Text(
                               axis==0? 'rows ':'columns ',
                               maxLines: 1,
-                              style: GoogleFonts.lexend(
+                              style: TextStyle( fontFamily: 'Lexend',
                                 height: 0.7,
                                 fontSize:20,
                                 letterSpacing: -1,
@@ -19989,7 +19989,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                               //   maxLines: 1,
                               //   overflow: TextOverflow.ellipsis,
                               //   textAlign: TextAlign.center,
-                              //   style: GoogleFonts.lexend(
+                              //   style: TextStyle( fontFamily: 'Lexend',
                               //     height: 0.8,
                               //     fontSize: 8,
                               //     letterSpacing: -1,
@@ -20099,7 +20099,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           textBuilder: (value) {
                                             return Text(
                                               value == false ? 'visible' : 'hidden',
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                               letterSpacing: -1,
                                               fontWeight: FontWeight.w400,
                                               fontSize: 12,
@@ -20230,7 +20230,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                     5)),
                                                       child: Text(
                                                         ' ${axis ==0? i+1:numberToColumnLabel(i+1)}',
-                                                        style: GoogleFonts.lexend(
+                                                        style: TextStyle( fontFamily: 'Lexend',
                                                             fontSize: axis==0? 17:15,
                                                             letterSpacing:
                                                                 -1,
@@ -20520,7 +20520,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                       // Text(sheetTableItem.indexPath.toString(),
                                       //   maxLines: 1,
                                       //   overflow: TextOverflow.ellipsis,
-                                      //   style: GoogleFonts.lexend(
+                                      //   style: TextStyle( fontFamily: 'Lexend',
                                       //     height: 0.9,
                                       //     fontSize:18,
                                       //     letterSpacing: -1,
@@ -20557,7 +20557,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                   Text('tableProperties',
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
-                                                  style: GoogleFonts.lexend(
+                                                  style: TextStyle( fontFamily: 'Lexend',
                                                     height: 0.9,
                                                     fontSize:18,
                                                     letterSpacing: -1,
@@ -20571,7 +20571,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     maxLines: 1,
                                                     overflow: TextOverflow.ellipsis,
                                                     textAlign: TextAlign.center,
-                                                    style: GoogleFonts.lexend(
+                                                    style: TextStyle( fontFamily: 'Lexend',
                                                       height: 1,
                                                       fontSize: 8,
                                                       letterSpacing: -1,
@@ -20603,7 +20603,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             Expanded(
                                               child: Text( '${sheetTableItem.columnData.length*sheetTableItem.rowData.length}', 
                                               textAlign: TextAlign.center,
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                                   fontSize:13,
                                                   letterSpacing: -1,
                                                   color: defaultPalette.extras[0]),
@@ -20620,7 +20620,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             Expanded(
                                               child: Text( '${sheetTableItem.rowData.length}', 
                                               textAlign: TextAlign.center,
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                                   fontSize:13,
                                                   letterSpacing: -1,
                                                   color: defaultPalette.extras[0]),
@@ -20637,7 +20637,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             Expanded(
                                               child: Text( '${sheetTableItem.columnData.length}', 
                                               textAlign: TextAlign.center,
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                                   fontSize:13,
                                                   letterSpacing: -1,
                                                   color: defaultPalette.extras[0]),
@@ -20716,7 +20716,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 cursorColor: defaultPalette.tertiary,
                                                 decoration: InputDecoration(
                                                   contentPadding: const EdgeInsets.only(left: 2),
-                                                  labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                                                  labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                                                   hoverColor: defaultPalette.transparent,
                                                   filled: true,
                                                   fillColor: defaultPalette.transparent,
@@ -20732,7 +20732,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     borderRadius: BorderRadius.circular(12),
                                                   ),
                                                 ),
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                     letterSpacing: -1,
                                                     fontWeight: FontWeight.w500,
                                                     fontSize: 14,
@@ -20762,7 +20762,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               textAlign:TextAlign.end,
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                                 height: 0.9,
                                                 fontSize:14,
                                                 color: defaultPalette.extras[0],
@@ -20822,7 +20822,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           textBuilder: (value) {
                                             return Text(
                                               value == false ? 'overflow' : 'fit',
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                                     letterSpacing: -1,
                                                     fontWeight: FontWeight.w500,
                                                     fontSize: 14,
@@ -20899,7 +20899,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                               maxLines: 1,
                                                               textAlign: TextAlign.start,
                                                               overflow: TextOverflow.ellipsis,
-                                                              style: GoogleFonts.lexend(
+                                                              style: TextStyle( fontFamily: 'Lexend',
                                                                 color: defaultPalette.extras[0],
                                                                 fontSize: 15,
                                                                 letterSpacing: -1,
@@ -20976,7 +20976,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                             maxLines: 1,
                                                             textAlign: TextAlign.center,
                                                             overflow: TextOverflow.ellipsis,
-                                                            style: GoogleFonts.lexend(
+                                                            style: TextStyle( fontFamily: 'Lexend',
                                                               color: defaultPalette.extras[0],
                                                               fontSize: 15,
                                                               letterSpacing: -1,
@@ -21026,7 +21026,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                       maxLines: 1,
                                                       overflow: TextOverflow.ellipsis,
                                                       textAlign: TextAlign.center,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         color:defaultPalette.extras[0].withOpacity(0.1),
                                                         height: 1,
                                                         fontSize:90,
@@ -21057,7 +21057,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                       Text('cell',
                                                       maxLines: 1,
                                                       overflow: TextOverflow.ellipsis,
-                                                      style: GoogleFonts.lexend(
+                                                      style: TextStyle( fontFamily: 'Lexend',
                                                         height: 0.9,
                                                         fontSize:18,
                                                         letterSpacing: -1,
@@ -21218,7 +21218,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           ),
                           Text(
                             name,
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: 14,
                                 letterSpacing: -1,
                                 color: defaultPalette.extras[0]),
@@ -21243,7 +21243,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         textAlign: TextAlign.end,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(0),
-                          labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                          labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                           fillColor: defaultPalette.transparent,
                           border: InputBorder.none,
                           enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -21286,7 +21286,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     name,
                     maxLines: 1,
                     overflow:TextOverflow.ellipsis,
-                    style: GoogleFonts.lexend(
+                    style: TextStyle( fontFamily: 'Lexend',
                         fontSize: fontSize,
                         letterSpacing: -1,
                         fontWeight: FontWeight.w500),
@@ -21407,7 +21407,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 maxLines:1,
                                                 style: TextStyle(
                                                   height: 1,
-                                                  fontFamily: GoogleFonts.lexend().fontFamily,
+                                                  fontFamily: TextStyle( fontFamily: 'Lexend',).fontFamily,
                                                   letterSpacing:-0.5,
                                                   overflow: TextOverflow.ellipsis,
                                                   fontWeight: FontWeight.w400,        
@@ -21438,7 +21438,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
                                                   textAlign:TextAlign.end,
-                                                  style: GoogleFonts.lexend(
+                                                  style: TextStyle( fontFamily: 'Lexend',
                                                     height: 0.9,
                                                     fontSize:12,
                                                     color: defaultPalette.extras[0],
@@ -21647,7 +21647,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             : s==2
                             ? ' word '
                             : ' line ',
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: 14,
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w600,
@@ -21673,7 +21673,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         textAlign: TextAlign.end,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(0),
-                          labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                          labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                           fillColor: defaultPalette.transparent,
                           border: InputBorder.none,
                           enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -21738,7 +21738,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       : pageUnit == 0.03528
                       ? 'cm'
                       : '',
-                      style:GoogleFonts.lexend(
+                      style:TextStyle( fontFamily: 'Lexend',
                         fontSize:13,
                         fontWeight: FontWeight.w600,
                         letterSpacing:-1,
@@ -21829,7 +21829,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             : s==3
                             ? ' left '
                             : ' right ',
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: 15,
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w600,
@@ -21856,7 +21856,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         textAlign: TextAlign.end,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(0),
-                          labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                          labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                           fillColor: defaultPalette.transparent,
                           border: InputBorder.none,
                           enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -22100,7 +22100,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         .toString(),
                                                     scrollCount: 3,
                                                     textStyle:
-                                                        GoogleFonts.pressStart2p(
+                                                        TextStyle( fontFamily: 'PressStart2P',
                                                             color: defaultPalette
                                                                 .extras[0],
                                                             fontSize: 50))),
@@ -22136,7 +22136,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         .toString(),
                                                       scrollCount: 3,
                                                       textStyle:
-                                                          GoogleFonts.pressStart2p(
+                                                          TextStyle( fontFamily: 'PressStart2P',
                                                               color: defaultPalette
                                                                   .extras[0],
                                                               fontSize: 20)),
@@ -22407,7 +22407,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 ' port\n rait',
                                                 maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                   fontSize: 14,
                                                   color: defaultPalette.extras[0],
                                                   letterSpacing: -1,
@@ -22458,7 +22458,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 ' land\n scape',
                                                 maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                   fontSize: 14,
                                                   color: defaultPalette.extras[0],
                                                   letterSpacing: -1,
@@ -22664,7 +22664,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                               ' color ',
                                               maxLines:1,
                                               overflow:TextOverflow.ellipsis,
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                                   fontSize: 15,
                                                   letterSpacing: -1,
                                                   fontWeight: FontWeight.w600,
@@ -22691,7 +22691,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 decoration: InputDecoration(
                                                   contentPadding: const EdgeInsets.only(left: 0),
                                                   labelStyle:
-                                                      GoogleFonts.lexend(color: defaultPalette.black),
+                                                      TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                                                   hoverColor: defaultPalette.transparent,
                                                   filled: true,
                                                   fillColor: defaultPalette.transparent,
@@ -22704,7 +22704,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     borderRadius: BorderRadius.circular(5.0),
                                                   ),
                                                 ),
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                   fontSize: 13,
                                                   letterSpacing: -0.5,
                                                   fontWeight: FontWeight.w600,
@@ -22803,7 +22803,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         )).toLowerCase()}',
                                                         maxLines:1,
                                                         overflow: TextOverflow.ellipsis,
-                                                        style: GoogleFonts.lexend(
+                                                        style: TextStyle( fontFamily: 'Lexend',
                                                             fontSize: 15,
                                                             letterSpacing: -1,
                                                             fontWeight: FontWeight.w600,
@@ -22985,7 +22985,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 funcKey,
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                   height: 0.9,
                                                   fontSize:14,
                                                   color: Colors.white,
@@ -23037,7 +23037,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                 funcKey,
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                   height: 0.9,
                                                   fontSize:14,
                                                   color: Colors.white,
@@ -23113,7 +23113,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                   textAlign: TextAlign.end,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                     letterSpacing: -1,
                                     fontWeight: FontWeight.w500,
                                     fontSize: 19,
@@ -23265,7 +23265,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                 textAlign: TextAlign.end,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.lexend(
+                                style: TextStyle( fontFamily: 'Lexend',
                                   letterSpacing: -1,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 19,
@@ -23480,7 +23480,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                 child: Text(
                   s,
                   maxLines: 1,
-                  style: GoogleFonts.lexend(
+                  style: TextStyle( fontFamily: 'Lexend',
                       fontSize: 13,
                       letterSpacing: -1,
                       color: defaultPalette.extras[0]),
@@ -23529,7 +23529,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             Text('Decoration',
                             maxLines:1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                               color: defaultPalette.extras[0],
                               fontWeight:FontWeight.w600,
                               letterSpacing: -1,
@@ -23540,7 +23540,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             Text('Library', 
                             maxLines:1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                               color: defaultPalette.extras[0], 
                               fontWeight:FontWeight.w600,
                               letterSpacing: -1,
@@ -23602,7 +23602,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                   Text('   add a new one or select from the library.',
                     maxLines:1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.lexend(
+                    style: TextStyle( fontFamily: 'Lexend',
                     color: defaultPalette.extras[0], 
                     fontWeight:FontWeight.w500,
                     letterSpacing: -0.5,
@@ -23620,7 +23620,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     borderRadius: BorderRadius.circular(10)
                   ),
                   child: TextFormField(
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           color: defaultPalette.primary,
                           letterSpacing:-1,
                           fontSize: 15),
@@ -23630,7 +23630,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         contentPadding: EdgeInsets.all(0),
                         hintText: 'searchDecors...',
                         focusColor: defaultPalette.primary,
-                        hintStyle: GoogleFonts.lexend(
+                        hintStyle: TextStyle( fontFamily: 'Lexend',
                           color: defaultPalette.primary,
                           letterSpacing:-0.8,
                           fontWeight: FontWeight.w300,
@@ -23981,7 +23981,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                     : whichTableDecorationIsClicked==0
                                       ?'tableDecor '
                                       :'tableBgDecor ',
-                                      style: GoogleFonts.lexend(
+                                      style: TextStyle( fontFamily: 'Lexend',
                                           fontSize: 18,
                                           color: defaultPalette
                                               .primary),
@@ -24019,7 +24019,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           '' +('Layer ' + (decorationIndex).toString())
                                           , 
                                           maxLines:1,
-                                            style: GoogleFonts.lexend(
+                                            style: TextStyle( fontFamily: 'Lexend',
                                             color: defaultPalette.extras[0],
                                             height: 1.5,
                                             fontSize: 8,
@@ -24272,7 +24272,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
 
 
                                           },
-                                          style: GoogleFonts.lexend(
+                                          style: TextStyle( fontFamily: 'Lexend',
                                               color:
                                                   defaultPalette.black,
                                               fontSize: 15),
@@ -24286,7 +24286,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             text: TextSpan(
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                   color: defaultPalette.extras[0],
                                                   height: 1.5,
                                                   fontSize: 6,
@@ -24299,7 +24299,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     : decorationIndex == -1 
                                                     ? (sheetDecorationMap[inx] as SuperDecoration).id 
                                                     : (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList[decorationIndex],
-                                                    style: GoogleFonts.lexend(color: defaultPalette.extras[0], fontSize: 6, fontWeight: FontWeight.normal),
+                                                    style: TextStyle( fontFamily: 'Lexend',color: defaultPalette.extras[0], fontSize: 6, fontWeight: FontWeight.normal),
                                                   ),
                                                 ])),
                                       ),
@@ -24372,7 +24372,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           children: [
                                             Text( '  ' +' layer ' + (decorationIndex).toString(),
                                               maxLines: 1,
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                                   fontSize: 10,
                                                   letterSpacing: -1,
                                                   color: defaultPalette.extras[0]),
@@ -24512,7 +24512,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     shape: BoxShape.circle,),
                                                   child: Text(
                                                     (sheetDecorationMap[tmpinx] as SuperDecoration).itemDecorationList.indexOf(ex).toString(),
-                                                    style: GoogleFonts.lexend(
+                                                    style: TextStyle( fontFamily: 'Lexend',
                                                     fontSize: 12,
                                                     letterSpacing: -1,
                                                     fontWeight: FontWeight.w600,
@@ -24549,7 +24549,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
         right: 16,
         bottom: 18,
         child: Builder(builder: (context) {
-          var style = GoogleFonts.lexend(
+          var style = TextStyle( fontFamily: 'Lexend',
               fontSize: 13, color: defaultPalette.extras[0]);
           var childStyle = style.copyWith(fontSize: 11);
           var iconColor = defaultPalette.extras[0];
@@ -25055,7 +25055,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     borderRadius: BorderRadius.circular(5)
                   ),
                   child: TextFormField(
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           color: defaultPalette.extras[0],
                           letterSpacing:-1,
                           fontSize: 15),
@@ -25065,7 +25065,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         contentPadding: EdgeInsets.all(0),
                         hintText: 'searchDecors...',
                         focusColor: defaultPalette.primary,
-                        hintStyle: GoogleFonts.lexend(
+                        hintStyle: TextStyle( fontFamily: 'Lexend',
                           color: defaultPalette.extras[0],
                           letterSpacing:-1,
                           fontSize: 15),
@@ -25462,7 +25462,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                 mainAlignment: MainAxisAlignment.center,
                                                                 singleScollDuration: Durations.short1,
                                                                 scrollCount: 2,
-                                                                textStyle: GoogleFonts.lexend(
+                                                                textStyle: TextStyle( fontFamily: 'Lexend',
                                                                   fontSize: decorationIndex == entry.key
                                                                           ? mapValueDimensionBased(14, 15, sWidth, sHeight, b:false)
                                                                           : 10,
@@ -25638,7 +25638,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         border: Border.all(color: defaultPalette.extras[0],),),
                       child: Text(
                         index.toString(),
-                        style: GoogleFonts.lexend(
+                        style: TextStyle( fontFamily: 'Lexend',
                         fontSize: 20,
                         letterSpacing: -1,
                         fontWeight: FontWeight.w600,
@@ -25650,7 +25650,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       textAlign: TextAlign.end,
                       maxLines:1,
                       overflow:TextOverflow.ellipsis,
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                         fontSize: 20,
                         letterSpacing: -1,
                         fontWeight: FontWeight.w600,
@@ -25701,7 +25701,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         border: Border.all(color: defaultPalette.extras[0],),),
                       child: Text(
                         index.toString(),
-                        style: GoogleFonts.lexend(
+                        style: TextStyle( fontFamily: 'Lexend',
                         fontSize: 20,
                         letterSpacing: -1,
                         fontWeight: FontWeight.w600,
@@ -25713,7 +25713,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       textAlign: TextAlign.end,
                       maxLines:1,
                       overflow:TextOverflow.ellipsis,
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                         fontSize: 20,
                         letterSpacing: -1,
                         fontWeight: FontWeight.w600,
@@ -25862,7 +25862,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     child: Text('newSuperDecoration',
                     maxLines:1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.lexend(
+                    style: TextStyle( fontFamily: 'Lexend',
                       color: defaultPalette.extras[0], 
                       fontWeight:FontWeight.w500,
                       letterSpacing: -0.5,
@@ -26019,7 +26019,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                       children: [
                                         Text(
                                           e.name,
-                                          style: GoogleFonts.lexend(
+                                          style: TextStyle( fontFamily: 'Lexend',
                                             color: defaultPalette.extras[0],
                                             letterSpacing: -1,
                                             fontSize: 15,
@@ -26028,7 +26028,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                         ),
                                         Text(
                                           e.id,
-                                          style: GoogleFonts.lexend(
+                                          style: TextStyle( fontFamily: 'Lexend',
                                             color: defaultPalette.extras[0],
                                             letterSpacing: -0.5,
                                             fontSize: 8,
@@ -26294,7 +26294,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               maxLines:2,
               overflow:TextOverflow.ellipsis,
               textAlign: TextAlign.start,
-              style: GoogleFonts.lexend(
+              style: TextStyle( fontFamily: 'Lexend',
                 fontSize: 12,
                 color: defaultPalette.extras[0],
                 letterSpacing: -1,
@@ -26354,7 +26354,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         border: Border.all(color: defaultPalette.extras[0],),),
                       child: Text(
                         index.toString(),
-                        style: GoogleFonts.lexend(
+                        style: TextStyle( fontFamily: 'Lexend',
                         fontSize: 20,
                         letterSpacing: -1,
                         fontWeight: FontWeight.w600,
@@ -26364,7 +26364,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     Expanded(
                       child: Text(itemDecoration.name +' ',
                       textAlign: TextAlign.end,
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                         fontSize: 20,
                         letterSpacing: -1,
                         fontWeight: FontWeight.w600,
@@ -26419,7 +26419,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         border: Border.all(color: defaultPalette.extras[0],),),
                       child: Text(
                         index.toString(),
-                        style: GoogleFonts.lexend(
+                        style: TextStyle( fontFamily: 'Lexend',
                         fontSize: 20,
                         letterSpacing: -1,
                         fontWeight: FontWeight.w600,
@@ -26429,7 +26429,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     Expanded(
                       child: Text(itemDecoration!.name +' ',
                       textAlign: TextAlign.end,
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                         fontSize: 20,
                         letterSpacing: -1,
                         fontWeight: FontWeight.w600,
@@ -26912,7 +26912,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                         : (sWidth * wH2DividerPosition) > 220
                                             ? ' padding '
                                             : ' pad ',
-                                style: GoogleFonts.lexend(
+                                style: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 15,
                                     letterSpacing: -1,
                                     color: defaultPalette.extras[0]),
@@ -26936,7 +26936,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             textAlign: TextAlign.end,
                             decoration: InputDecoration(
                               contentPadding: const EdgeInsets.all(2),
-                              labelStyle: GoogleFonts.lexend(
+                              labelStyle: TextStyle( fontFamily: 'Lexend',
                                   color: defaultPalette.black),
                               fillColor: defaultPalette.transparent,
                               border: InputBorder.none,
@@ -27669,7 +27669,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           : (sWidth * wH2DividerPosition) > 220
                                               ? ' padding '
                                               : ' pad ',
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                       fontSize: 15,
                                       letterSpacing: -1,
                                       color: defaultPalette.extras[0]),
@@ -27693,7 +27693,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                               textAlign: TextAlign.end,
                               decoration: InputDecoration(
                                 contentPadding: const EdgeInsets.all(2),
-                                labelStyle: GoogleFonts.lexend(
+                                labelStyle: TextStyle( fontFamily: 'Lexend',
                                     color: defaultPalette.black),
                                 fillColor: defaultPalette.transparent,
                                 border: InputBorder.none,
@@ -28786,7 +28786,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       },
                       child: Text(
                         '  $side ',
-                        style: GoogleFonts.lexend(
+                        style: TextStyle( fontFamily: 'Lexend',
                             fontSize: 14,
                             letterSpacing: -1,
                             color: defaultPalette.extras[0]),
@@ -28810,7 +28810,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(0),
                           labelStyle:
-                              GoogleFonts.lexend(color: defaultPalette.black),
+                              TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                           fillColor: defaultPalette.transparent,
                           border: InputBorder.none,
                           enabledBorder:
@@ -28923,7 +28923,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         scrollDirection: Axis.horizontal,
                         child: Text(
                           'foreground',
-                          style: GoogleFonts.lexend(
+                          style: TextStyle( fontFamily: 'Lexend',
                               fontSize: 15,
                               letterSpacing: -1,
                               color: defaultPalette.extras[0]),
@@ -28982,7 +28982,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           scrollDirection: Axis.horizontal,
                           child: Text(
                             ' color ',
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: 15,
                                 letterSpacing: -1,
                                 color: defaultPalette.extras[0]),
@@ -29019,7 +29019,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             decoration: InputDecoration(
                               contentPadding: const EdgeInsets.only(left: 2),
                               labelStyle:
-                                  GoogleFonts.lexend(color: defaultPalette.black),
+                                  TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                               hoverColor: defaultPalette.transparent,
                               filled: true,
                               fillColor: defaultPalette.transparent,
@@ -29032,7 +29032,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                 borderRadius: BorderRadius.circular(5.0),
                               ),
                             ),
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 14,
@@ -29131,7 +29131,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             decor.color ??
                                 defaultPalette.transparent,
                           )).toLowerCase()}',
-                          style: GoogleFonts.lexend(
+                          style: TextStyle( fontFamily: 'Lexend',
                               fontSize: 14,
                               letterSpacing: -1,
                               color: defaultPalette.extras[0]),
@@ -29288,7 +29288,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Text(' border ',
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           fontSize: 15,
                           letterSpacing: -1,
                           color: defaultPalette.extras[0]),
@@ -29325,7 +29325,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       decoration: InputDecoration(
                         contentPadding: const EdgeInsets.only(left: 2),
                         labelStyle:
-                            GoogleFonts.lexend(color: defaultPalette.black),
+                            TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                         hoverColor: defaultPalette.transparent,
                         filled: true,
                         fillColor: defaultPalette.transparent,
@@ -29338,7 +29338,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           borderRadius: BorderRadius.circular(5.0),
                         ),
                       ),
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           letterSpacing: -1,
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
@@ -29466,7 +29466,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                 ),
                                 Text(
                                   'line ',
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                       fontSize: 14,
                                       letterSpacing: -1,
                                       color: defaultPalette.extras[0]),
@@ -29479,14 +29479,14 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                               children: [
                                 Text(
                                   ' side',
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                       fontSize: 12,
                                       letterSpacing: -1,
                                       color: defaultPalette.extras[0]),
                                 ),
                                 Text(
                                   'width',
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                       fontSize: 12,
                                       letterSpacing: -1,
                                       color: defaultPalette.extras[0]),
@@ -29595,7 +29595,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           scrollDirection: Axis.horizontal,
                           child: Text(
                             ' ${(ColorTools.nameThatColor(currentBorder.top.color)).toLowerCase()}',
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: 14,
                                 letterSpacing: -1,
                                 color: defaultPalette.extras[0]),
@@ -29937,7 +29937,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       },
                       child: Text(
                         '  $side ',
-                        style: GoogleFonts.lexend(
+                        style: TextStyle( fontFamily: 'Lexend',
                             fontSize: 14,
                             letterSpacing: -1,
                             color: defaultPalette.extras[0]),
@@ -29961,7 +29961,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(0),
                           labelStyle:
-                              GoogleFonts.lexend(color: defaultPalette.black),
+                              TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                           fillColor: defaultPalette.transparent,
                           border: InputBorder.none,
                           enabledBorder:
@@ -30073,7 +30073,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         scrollDirection: Axis.horizontal,
                         child: Text(
                           isForeground? 'foregroundDecor':' decor ',
-                          style: GoogleFonts.lexend(
+                          style: TextStyle( fontFamily: 'Lexend',
                               fontSize: 15,
                               letterSpacing: -1,
                               color: defaultPalette.extras[0]),
@@ -30185,7 +30185,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           scrollDirection: Axis.horizontal,
                           child: Text(
                             ' color ',
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: 15,
                                 letterSpacing: -1,
                                 color: defaultPalette.extras[0]),
@@ -30222,7 +30222,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             decoration: InputDecoration(
                               contentPadding: const EdgeInsets.only(left: 2),
                               labelStyle:
-                                  GoogleFonts.lexend(color: defaultPalette.black),
+                                  TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                               hoverColor: defaultPalette.transparent,
                               filled: true,
                               fillColor: defaultPalette.transparent,
@@ -30235,7 +30235,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                 borderRadius: BorderRadius.circular(5.0),
                               ),
                             ),
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 letterSpacing: -1,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 14,
@@ -30363,7 +30363,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             decor.color ??
                                 defaultPalette.transparent,
                           )).toLowerCase()}',
-                          style: GoogleFonts.lexend(
+                          style: TextStyle( fontFamily: 'Lexend',
                               fontSize: 14,
                               letterSpacing: -1,
                               color: defaultPalette.extras[0]),
@@ -30517,7 +30517,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Text(' border ',
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           fontSize: 15,
                           letterSpacing: -1,
                           color: defaultPalette.extras[0]),
@@ -30554,7 +30554,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       decoration: InputDecoration(
                         contentPadding: const EdgeInsets.only(left: 2),
                         labelStyle:
-                            GoogleFonts.lexend(color: defaultPalette.black),
+                            TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                         hoverColor: defaultPalette.transparent,
                         filled: true,
                         fillColor: defaultPalette.transparent,
@@ -30567,7 +30567,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           borderRadius: BorderRadius.circular(5.0),
                         ),
                       ),
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           letterSpacing: -1,
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
@@ -30722,7 +30722,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                 ),
                                 Text(
                                   'line ',
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                       fontSize: 14,
                                       letterSpacing: -1,
                                       color: defaultPalette.extras[0]),
@@ -30735,14 +30735,14 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                               children: [
                                 Text(
                                   ' side',
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                       fontSize: 12,
                                       letterSpacing: -1,
                                       color: defaultPalette.extras[0]),
                                 ),
                                 Text(
                                   'width',
-                                  style: GoogleFonts.lexend(
+                                  style: TextStyle( fontFamily: 'Lexend',
                                       fontSize: 12,
                                       letterSpacing: -1,
                                       color: defaultPalette.extras[0]),
@@ -30851,7 +30851,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           scrollDirection: Axis.horizontal,
                           child: Text(
                             ' ${(ColorTools.nameThatColor(currentBorder.top.color)).toLowerCase()}',
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: 14,
                                 letterSpacing: -1,
                                 color: defaultPalette.extras[0]),
@@ -31098,7 +31098,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             },
             child: Text(
               ' $name ',
-              style: GoogleFonts.lexend(
+              style: TextStyle( fontFamily: 'Lexend',
                   fontSize: 12,
                   letterSpacing: -1,
                   color: defaultPalette.extras[0]),
@@ -31122,7 +31122,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             textAlign: TextAlign.end,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.all(0),
-              labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+              labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
               fillColor: defaultPalette.transparent,
               border: InputBorder.none,
               enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -31218,7 +31218,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     scrollDirection: Axis.horizontal,
                     child: Text(
                       ' shadow ',
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           fontSize: 15,
                           letterSpacing: -1,
                           color: defaultPalette.extras[0]),
@@ -31361,7 +31361,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           ),
                           Text(
                             ' layers',
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: 14,
                                 letterSpacing: -1,
                                 color: defaultPalette.extras[0]),
@@ -31411,7 +31411,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             Expanded(
                                               child: Text(
                                                 ' color ',
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                     fontSize: 12,
                                                     letterSpacing: -1,
                                                     color: defaultPalette
@@ -31475,7 +31475,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                               contentPadding:
                                                   const EdgeInsets.only(
                                                       left: 2),
-                                              labelStyle: GoogleFonts.lexend(
+                                              labelStyle: TextStyle( fontFamily: 'Lexend',
                                                   color: defaultPalette.black),
                                               hoverColor:
                                                   defaultPalette.transparent,
@@ -31492,7 +31492,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     BorderRadius.circular(5.0),
                                               ),
                                             ),
-                                            style: GoogleFonts.lexend(
+                                            style: TextStyle( fontFamily: 'Lexend',
                                                 letterSpacing: -1,
                                                 fontWeight: FontWeight.w500,
                                                 fontSize: 14,
@@ -31654,7 +31654,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                             5)),
                                                             child: Text(
                                                               ' ${i + 1}',
-                                                              style: GoogleFonts.lexend(
+                                                              style: TextStyle( fontFamily: 'Lexend',
                                                                   fontSize: 14,
                                                                   letterSpacing:
                                                                       -1,
@@ -31820,7 +31820,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                               scrollDirection: Axis.horizontal,
                               child: Text(
                                 ' ${(ColorTools.nameThatColor(currentShadow[shadowLayerIndex].color)).toLowerCase()}',
-                                style: GoogleFonts.lexend(
+                                style: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 14,
                                     letterSpacing: -1,
                                     color: defaultPalette.extras[0]),
@@ -32073,7 +32073,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             },
             child: Text(
               ' $name ',
-              style: GoogleFonts.lexend(
+              style: TextStyle( fontFamily: 'Lexend',
                   fontSize: 12,
                   letterSpacing: -1,
                   color: defaultPalette.extras[0]),
@@ -32097,7 +32097,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             textAlign: TextAlign.end,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.all(0),
-              labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+              labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
               fillColor: defaultPalette.transparent,
               border: InputBorder.none,
               enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -32193,7 +32193,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     scrollDirection: Axis.horizontal,
                     child: Text(
                       ' shadow ',
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           fontSize: 15,
                           letterSpacing: -1,
                           color: defaultPalette.extras[0]),
@@ -32363,7 +32363,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           ),
                           Text(
                             ' layers',
-                            style: GoogleFonts.lexend(
+                            style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: 14,
                                 letterSpacing: -1,
                                 color: defaultPalette.extras[0]),
@@ -32413,7 +32413,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             Expanded(
                                               child: Text(
                                                 ' color ',
-                                                style: GoogleFonts.lexend(
+                                                style: TextStyle( fontFamily: 'Lexend',
                                                     fontSize: 12,
                                                     letterSpacing: -1,
                                                     color: defaultPalette
@@ -32477,7 +32477,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                               contentPadding:
                                                   const EdgeInsets.only(
                                                       left: 2),
-                                              labelStyle: GoogleFonts.lexend(
+                                              labelStyle: TextStyle( fontFamily: 'Lexend',
                                                   color: defaultPalette.black),
                                               hoverColor:
                                                   defaultPalette.transparent,
@@ -32494,7 +32494,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                     BorderRadius.circular(5.0),
                                               ),
                                             ),
-                                            style: GoogleFonts.lexend(
+                                            style: TextStyle( fontFamily: 'Lexend',
                                                 letterSpacing: -1,
                                                 fontWeight: FontWeight.w500,
                                                 fontSize: 14,
@@ -32656,7 +32656,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                                             5)),
                                                             child: Text(
                                                               ' ${i + 1}',
-                                                              style: GoogleFonts.lexend(
+                                                              style: TextStyle( fontFamily: 'Lexend',
                                                                   fontSize: 14,
                                                                   letterSpacing:
                                                                       -1,
@@ -32822,7 +32822,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                               scrollDirection: Axis.horizontal,
                               child: Text(
                                 ' ${(ColorTools.nameThatColor(currentShadow[shadowLayerIndex].color)).toLowerCase()}',
-                                style: GoogleFonts.lexend(
+                                style: TextStyle( fontFamily: 'Lexend',
                                     fontSize: 14,
                                     letterSpacing: -1,
                                     color: defaultPalette.extras[0]),
@@ -33051,7 +33051,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
           child: Text(
             name,
             maxLines: 1,
-            style: GoogleFonts.lexend(
+            style: TextStyle( fontFamily: 'Lexend',
                 fontSize: fontSize,
                 letterSpacing: -1,
                 fontWeight: FontWeight.w500),
@@ -33382,7 +33382,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               textAlign: TextAlign.end,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.all(0),
-                labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                 fillColor: defaultPalette.transparent,
                 border: InputBorder.none,
                 enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -33548,7 +33548,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                 ),
                 Text(
                   s == 0 ? ' scale ' : ' opacity ',
-                  style: GoogleFonts.lexend(
+                  style: TextStyle( fontFamily: 'Lexend',
                       fontSize: 14,
                       letterSpacing: -1,
                       color: defaultPalette.extras[0]),
@@ -33573,7 +33573,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               textAlign: TextAlign.end,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.all(0),
-                labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                 fillColor: defaultPalette.transparent,
                 border: InputBorder.none,
                 enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -33673,7 +33673,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     scrollDirection: Axis.horizontal,
                     child: Text(
                       ' image ',
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           fontSize: 15,
                           letterSpacing: -1,
                           color: defaultPalette.extras[0]),
@@ -34040,7 +34040,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       textBuilder: (value) {
                         return Text(
                           value == false ? 'unInverted' : 'inverted',
-                          style: GoogleFonts.lexend(
+                          style: TextStyle( fontFamily: 'Lexend',
                               letterSpacing: -1, fontSize: 14),
                         );
                       },
@@ -34152,7 +34152,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
           child: Text(
             name,
             maxLines: 1,
-            style: GoogleFonts.lexend(
+            style: TextStyle( fontFamily: 'Lexend',
                 fontSize: fontSize,
                 letterSpacing: -1,
                 fontWeight: FontWeight.w500),
@@ -34483,7 +34483,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               textAlign: TextAlign.end,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.all(0),
-                labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                 fillColor: defaultPalette.transparent,
                 border: InputBorder.none,
                 enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -34649,7 +34649,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                 ),
                 Text(
                   s == 0 ? ' scale ' : ' opacity ',
-                  style: GoogleFonts.lexend(
+                  style: TextStyle( fontFamily: 'Lexend',
                       fontSize: 14,
                       letterSpacing: -1,
                       color: defaultPalette.extras[0]),
@@ -34674,7 +34674,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               textAlign: TextAlign.end,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.all(0),
-                labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                 fillColor: defaultPalette.transparent,
                 border: InputBorder.none,
                 enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -34775,7 +34775,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     scrollDirection: Axis.horizontal,
                     child: Text(
                       ' image ',
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           fontSize: 15,
                           letterSpacing: -1,
                           color: defaultPalette.extras[0]),
@@ -35189,7 +35189,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                       textBuilder: (value) {
                         return Text(
                           value == false ? 'unInverted' : 'inverted',
-                          style: GoogleFonts.lexend(
+                          style: TextStyle( fontFamily: 'Lexend',
                               letterSpacing: -1, fontSize: 14),
                         );
                       },
@@ -35345,7 +35345,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                 SizedBox(width: 2),
                 Text(
                   _getTransformLabel(s),
-                  style: GoogleFonts.lexend(
+                  style: TextStyle( fontFamily: 'Lexend',
                       fontSize: 14,
                       letterSpacing: -1,
                       color: defaultPalette.extras[0]),
@@ -35370,7 +35370,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               textAlign: TextAlign.end,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.all(0),
-                labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                 fillColor: defaultPalette.transparent,
                 border: InputBorder.none,
                 enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -35433,7 +35433,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     scrollDirection: Axis.horizontal,
                     child: Text(
                       ' transform ',
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           fontSize: 15,
                           letterSpacing: -1,
                           color: defaultPalette.extras[0]),
@@ -35650,7 +35650,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                 SizedBox(width: 2),
                 Text(
                   _getTransformLabel(s),
-                  style: GoogleFonts.lexend(
+                  style: TextStyle( fontFamily: 'Lexend',
                       fontSize: 14,
                       letterSpacing: -1,
                       color: defaultPalette.extras[0]),
@@ -35675,7 +35675,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               textAlign: TextAlign.end,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.all(0),
-                labelStyle: GoogleFonts.lexend(color: defaultPalette.black),
+                labelStyle: TextStyle( fontFamily: 'Lexend',color: defaultPalette.black),
                 fillColor: defaultPalette.transparent,
                 border: InputBorder.none,
                 enabledBorder: OutlineInputBorder(borderSide: BorderSide.none),
@@ -35733,7 +35733,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     scrollDirection: Axis.horizontal,
                     child: Text(
                       ' transform ',
-                      style: GoogleFonts.lexend(
+                      style: TextStyle( fontFamily: 'Lexend',
                           fontSize: 15,
                           letterSpacing: -1,
                           color: defaultPalette.extras[0]),
@@ -35865,7 +35865,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             SizedBox(width: 3),
             Text(
               s.runtimeType.toString(),
-              style: GoogleFonts.lexend(
+              style: TextStyle( fontFamily: 'Lexend',
                 color: defaultPalette.extras[0],
                 letterSpacing: -1,
                 fontSize: 10,
@@ -36423,15 +36423,15 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
       return Theme(
         data: Theme.of(context).copyWith(
           inputDecorationTheme: InputDecorationTheme(
-            labelStyle: GoogleFonts.lexend(
+            labelStyle: TextStyle( fontFamily: 'Lexend',
               fontSize: 24,
               color: defaultPalette.extras[0],
             ),
-            hintStyle: GoogleFonts.lexend(
+            hintStyle: TextStyle( fontFamily: 'Lexend',
               fontSize: 15,
               color: defaultPalette.extras[0].withOpacity(0.6),
             ),
-            errorStyle: GoogleFonts.lexend(
+            errorStyle: TextStyle( fontFamily: 'Lexend',
               fontSize: 15,
               color: defaultPalette.extras[0].withOpacity(0.6),
             ),
@@ -36441,42 +36441,42 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             ),
           ),
           textTheme: Theme.of(context).textTheme.copyWith(
-            titleLarge: GoogleFonts.lexend(
+            titleLarge: TextStyle( fontFamily: 'Lexend',
               fontSize: 24,
               fontWeight: FontWeight.w600,
               color: defaultPalette.black,
             ),
-            titleMedium: GoogleFonts.lexend(
+            titleMedium: TextStyle( fontFamily: 'Lexend',
               fontSize: 48,
               fontWeight: FontWeight.w600,
               color: defaultPalette.black,
             ),
-            titleSmall: GoogleFonts.lexend(
+            titleSmall: TextStyle( fontFamily: 'Lexend',
               fontSize: 48,
               fontWeight: FontWeight.w600,
               color: defaultPalette.black,
             ),
-            headlineSmall: GoogleFonts.lexend(
+            headlineSmall: TextStyle( fontFamily: 'Lexend',
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: defaultPalette.black,
             ),
-            headlineMedium: GoogleFonts.lexend(
+            headlineMedium: TextStyle( fontFamily: 'Lexend',
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: defaultPalette.black,
             ),
-            bodyLarge: GoogleFonts.lexend(
+            bodyLarge: TextStyle( fontFamily: 'Lexend',
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: defaultPalette.black,
             ),
-            displayLarge: GoogleFonts.lexend(
+            displayLarge: TextStyle( fontFamily: 'Lexend',
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: defaultPalette.black,
             ),
-            headlineLarge: GoogleFonts.lexend(
+            headlineLarge: TextStyle( fontFamily: 'Lexend',
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: defaultPalette.black,
@@ -36485,7 +36485,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
           textButtonTheme: TextButtonThemeData(
             style: ButtonStyle(
               textStyle: WidgetStateProperty.all(
-                GoogleFonts.lexend(
+                TextStyle( fontFamily: 'Lexend',
                   fontSize: 15,
                   letterSpacing: -1,
                 ),
@@ -36495,19 +36495,19 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
           ),
           timePickerTheme: TimePickerThemeData(
             backgroundColor: defaultPalette.primary,
-            hourMinuteTextStyle: GoogleFonts.lexend(
+            hourMinuteTextStyle: TextStyle( fontFamily: 'Lexend',
               fontSize: 48,
               fontWeight: FontWeight.w600,
               color: defaultPalette.extras[0],
               letterSpacing: -1,
             ),
-            dayPeriodTextStyle: GoogleFonts.lexend(
+            dayPeriodTextStyle: TextStyle( fontFamily: 'Lexend',
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: defaultPalette.extras[0],
               letterSpacing: -1,
             ),
-            helpTextStyle: GoogleFonts.lexend(
+            helpTextStyle: TextStyle( fontFamily: 'Lexend',
               fontSize: 15,
               fontWeight: FontWeight.w400,
               color: defaultPalette.extras[0],
@@ -36518,7 +36518,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             dialBackgroundColor: defaultPalette.primary,
             hourMinuteColor: defaultPalette.primary,
             timeSelectorSeparatorTextStyle: WidgetStatePropertyAll(
-              GoogleFonts.lexend(
+              TextStyle( fontFamily: 'Lexend',
                 fontSize: 48,
                 fontWeight: FontWeight.w400,
                 color: defaultPalette.extras[0],
@@ -36638,15 +36638,15 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
         return Theme(
           data: Theme.of(context).copyWith(
             inputDecorationTheme: InputDecorationTheme(
-              labelStyle: GoogleFonts.lexend(
+              labelStyle: TextStyle( fontFamily: 'Lexend',
                 fontSize: 12,
                 color: defaultPalette.extras[0],
               ),
-              hintStyle: GoogleFonts.lexend(
+              hintStyle: TextStyle( fontFamily: 'Lexend',
                 fontSize: 15,
                 color: defaultPalette.extras[0].withOpacity(0.6),
               ),
-              errorStyle: GoogleFonts.lexend(
+              errorStyle: TextStyle( fontFamily: 'Lexend',
                 fontSize: 15,
                 color: defaultPalette.extras[0].withOpacity(0.6),
               ),
@@ -36656,17 +36656,17 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               ),
             ),
             textTheme: Theme.of(context).textTheme.copyWith(
-              titleLarge: GoogleFonts.lexend(
+              titleLarge: TextStyle( fontFamily: 'Lexend',
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
                 color: defaultPalette.black,
               ),
-              headlineSmall: GoogleFonts.lexend(
+              headlineSmall: TextStyle( fontFamily: 'Lexend',
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 color: defaultPalette.black,
               ),
-              headlineMedium: GoogleFonts.lexend(
+              headlineMedium: TextStyle( fontFamily: 'Lexend',
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 color: defaultPalette.black,
@@ -36675,7 +36675,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             textButtonTheme: TextButtonThemeData(
               style: ButtonStyle(
                 textStyle: WidgetStateProperty.all(
-                  GoogleFonts.lexend(fontSize: 15, letterSpacing: -1),
+                  TextStyle( fontFamily: 'Lexend',fontSize: 15, letterSpacing: -1),
                 ),
                 foregroundColor: WidgetStateProperty.all(defaultPalette.tertiary),
               ),
@@ -36722,7 +36722,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               dividerColor: defaultPalette.extras[0].withOpacity(0.4),
               confirmButtonStyle: ButtonStyle(
                 textStyle: WidgetStateProperty.all(
-                  GoogleFonts.lexend(
+                  TextStyle( fontFamily: 'Lexend',
                     fontSize: 15,
                     letterSpacing: -1,
                     color: defaultPalette.tertiary,
@@ -36732,7 +36732,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               ),
               cancelButtonStyle: ButtonStyle(
                 textStyle: WidgetStateProperty.all(
-                  GoogleFonts.lexend(
+                  TextStyle( fontFamily: 'Lexend',
                     fontSize: 15,
                     letterSpacing: -1,
                     color: defaultPalette.tertiary,
@@ -36740,40 +36740,40 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                   ),
                 ),
               ),
-              yearStyle: GoogleFonts.lexend(
+              yearStyle: TextStyle( fontFamily: 'Lexend',
                 fontSize: 15,
                 color: defaultPalette.tertiary,
                 letterSpacing: -1,
               ),
-              dayStyle: GoogleFonts.lexend(
+              dayStyle: TextStyle( fontFamily: 'Lexend',
                 fontSize: 15,
                 color: defaultPalette.tertiary,
                 letterSpacing: -1,
               ),
-              weekdayStyle: GoogleFonts.lexend(
+              weekdayStyle: TextStyle( fontFamily: 'Lexend',
                 fontSize: 14,
                 letterSpacing: -1,
                 color: defaultPalette.tertiary,
                 fontWeight: FontWeight.w600,
               ),
-              headerHeadlineStyle: GoogleFonts.lexend(
+              headerHeadlineStyle: TextStyle( fontFamily: 'Lexend',
                 fontSize: 30,
                 letterSpacing: -1,
                 color: defaultPalette.tertiary,
                 fontWeight: FontWeight.w600,
               ),
-              rangePickerHeaderHeadlineStyle: GoogleFonts.lexend(
+              rangePickerHeaderHeadlineStyle: TextStyle( fontFamily: 'Lexend',
                 fontSize: 14,
                 letterSpacing: -1,
                 color: defaultPalette.tertiary,
               ),
-              rangePickerHeaderHelpStyle: GoogleFonts.lexend(
+              rangePickerHeaderHelpStyle: TextStyle( fontFamily: 'Lexend',
                 fontSize: 14,
                 letterSpacing: -1,
                 color: defaultPalette.tertiary,
                 fontWeight: FontWeight.w600,
               ),
-            headerHelpStyle: GoogleFonts.lexend(
+            headerHelpStyle: TextStyle( fontFamily: 'Lexend',
               fontSize: 14,
               letterSpacing: -1,
               color: defaultPalette.tertiary,
@@ -36913,34 +36913,34 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
         showFlag: true,
         showDropDownButton: false,
         dialogBackgroundColor: defaultPalette.primary,
-        dialogTextStyle: GoogleFonts.lexend(
+        dialogTextStyle: TextStyle( fontFamily: 'Lexend',
           fontSize: 15,
           letterSpacing: -1,
           color: defaultPalette.extras[0],
           fontWeight: FontWeight.w400,
         ),
-        textStyle: GoogleFonts.lexend(
+        textStyle: TextStyle( fontFamily: 'Lexend',
           fontSize: 12,
           letterSpacing: -1,
           color: defaultPalette.extras[0],
           fontWeight: FontWeight.w600,
         ),
-        searchStyle: GoogleFonts.lexend(
+        searchStyle: TextStyle( fontFamily: 'Lexend',
           fontSize: 15,
           letterSpacing: -1,
           color: defaultPalette.extras[0],
           fontWeight: FontWeight.w400,
         ),
         searchDecoration: InputDecoration(
-          labelStyle: GoogleFonts.lexend(
+          labelStyle: TextStyle( fontFamily: 'Lexend',
             fontSize: 24,
             color: defaultPalette.extras[0],
           ),
-          hintStyle: GoogleFonts.lexend(
+          hintStyle: TextStyle( fontFamily: 'Lexend',
             fontSize: 15,
             color: defaultPalette.extras[0].withOpacity(0.6),
           ),
-          errorStyle: GoogleFonts.lexend(
+          errorStyle: TextStyle( fontFamily: 'Lexend',
             fontSize: 15,
             color: defaultPalette.extras[0].withOpacity(0.6),
           ),
@@ -37005,12 +37005,12 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
       favorite: ['USD', 'EUR', 'INR'],
       theme: CurrencyPickerThemeData(
       flagSize: 24,
-      titleTextStyle: GoogleFonts.lexend(
+      titleTextStyle: TextStyle( fontFamily: 'Lexend',
         fontSize: 22,
         fontWeight: FontWeight.w600,
         color: defaultPalette.black,
       ),
-      subtitleTextStyle: GoogleFonts.lexend(
+      subtitleTextStyle: TextStyle( fontFamily: 'Lexend',
         fontSize: 16,
         fontWeight: FontWeight.w400,
         color: defaultPalette.extras[0],
@@ -37019,7 +37019,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
       backgroundColor: defaultPalette.primary,
       inputDecoration: InputDecoration(
         hintText: 'Search currency',
-        hintStyle: GoogleFonts.lexend(
+        hintStyle: TextStyle( fontFamily: 'Lexend',
           fontSize: 16,
           color: defaultPalette.extras[0].withOpacity(0.6),
         ),
@@ -37036,7 +37036,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
         filled: true,
         fillColor: defaultPalette.primary.withOpacity(0.8),
       ),
-      currencySignTextStyle:   GoogleFonts.lexend(
+      currencySignTextStyle:   TextStyle( fontFamily: 'Lexend',
           fontSize: 16,
           color: defaultPalette.extras[0].withOpacity(0.6),
         ),
