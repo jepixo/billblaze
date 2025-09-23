@@ -1,21 +1,21 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 import 'package:billblaze/models/index_path.dart';
 
-part 'required_text.g.dart';
+// // part  'required_text.g.dart';
 
-@HiveType(typeId: 18)
+// @HiveType(typeId: 18)
 class RequiredText {
-  @HiveField(0)
+  // @HiveField(0)
   final String name;
-  @HiveField(1)
+  // @HiveField(1)
   final int sheetTextType;
-  @HiveField(2)
+  // @HiveField(2)
   IndexPath indexPath;
-  @HiveField(3)
+  // @HiveField(3)
   final bool isOptional;
   
   RequiredText({

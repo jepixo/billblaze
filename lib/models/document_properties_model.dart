@@ -2,33 +2,33 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw; 
 
-part 'document_properties_model.g.dart';
+// part  'document_properties_model.g.dart';
 
-@HiveType(typeId: 0)
+// @HiveType(typeId: 0)
 class DocumentPropertiesBox extends HiveObject {
-  @HiveField(0)
+  // @HiveField(0)
   String pageNumberController;
-  @HiveField(1)
+  // @HiveField(1)
   String marginAllController;
-  @HiveField(2)
+  // @HiveField(2)
   String marginLeftController;
-  @HiveField(3)
+  // @HiveField(3)
   String marginRightController;
-  @HiveField(4)
+  // @HiveField(4)
   String marginBottomController;
-  @HiveField(5)
+  // @HiveField(5)
   String marginTopController;
-  @HiveField(6)
+  // @HiveField(6)
   bool orientationController;
-  @HiveField(7)
-  Map<String, dynamic> pageFormatController;
-  @HiveField(8)
+  // @HiveField(7)
+  Map<String, double> pageFormatController;
+  // @HiveField(8)
   bool useIndividualMargins;
-  @HiveField(9)
+  // @HiveField(9)
   String pageColor;
 
   DocumentPropertiesBox({
@@ -80,7 +80,7 @@ class DocumentPropertiesBox extends HiveObject {
     String? marginBottomController,
     String? marginTopController,
     bool? orientationController,
-    Map<String, dynamic>? pageFormatController,
+    Map<String, double>? pageFormatController,
     bool? useIndividualMargins,
     String? pageColor,
   }) {
@@ -156,7 +156,8 @@ class DocumentPropertiesBox extends HiveObject {
       marginBottomController: map['marginBottomController'] as String,
       marginTopController: map['marginTopController'] as String,
       orientationController: map['orientationController'] as bool,
-      pageFormatController: map['pageFormatController'] as Map<String, dynamic>,
+      pageFormatController: (map['pageFormatController'] as Map<String, dynamic>)
+        .map((key, value) => MapEntry(key, (value as num).toDouble())),
       useIndividualMargins: map['useIndividualMargins'] as bool,
       pageColor: map['pageColor'] as String,
     );
@@ -210,7 +211,7 @@ class DocumentProperties {
     );
   }
 
-  Map<String, dynamic> _getMapFromPageFormat(PdfPageFormat format) {
+  Map<String, double> _getMapFromPageFormat(PdfPageFormat format) {
     return {
       'width': format.width,
       'height': format.height,

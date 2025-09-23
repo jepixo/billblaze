@@ -125,7 +125,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                   animatedTexts: [
                     TypewriterAnimatedText(
                       "Bill\nBlaze.",
-                      textStyle: GoogleFonts.abrilFatface(
+                      textStyle: TextStyle( fontFamily: 'AbrilFatface',
                           fontSize: titleFontSize,
                           color: defaultPalette.extras[0],
                           height: 0.9),
@@ -211,7 +211,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                               maxLines:1,
                               overflow:TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.lexend(
+                              style: TextStyle( fontFamily: 'Lexend',
                                 fontSize: mapValueDimensionBased(12, 25, sWidth, sHeight, ),
                                 color: defaultPalette.extras[0],
                                 letterSpacing: mapValueDimensionBased(5, 15, sWidth, sHeight,),
@@ -227,7 +227,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 controller: emailFieldController,
                                 keyboardType: TextInputType.emailAddress,
                                 focusNode: emailFieldFocusNode,
-                                style: GoogleFonts.lexend(
+                                style: TextStyle( fontFamily: 'Lexend',
                                   color: defaultPalette.extras[0],
                                   letterSpacing: -1,
                                   fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
@@ -246,7 +246,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                   contentPadding: EdgeInsets.only(left: 10),
                                   hintText: 'Email',
                                   focusColor: defaultPalette.extras[0],
-                                  hintStyle: GoogleFonts.lexend(
+                                  hintStyle: TextStyle( fontFamily: 'Lexend',
                                     color: defaultPalette.extras[0].withOpacity(0.3),
                                     letterSpacing: -1,
                                     fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
@@ -256,7 +256,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                     size: mapValueDimensionBasedLockOnDesync(25, 35, sWidth, sHeight),
                                     color: defaultPalette.extras[0],
                                   ),
-                                  errorStyle:GoogleFonts.lexend(
+                                  errorStyle:TextStyle( fontFamily: 'Lexend',
                                     color: defaultPalette.extras[0],
                                     letterSpacing: -1,
                                     fontSize: mapValueDimensionBasedLockOnDesync(12, 25, sWidth, sHeight),
@@ -299,7 +299,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                   contentPadding: EdgeInsets.all(0).copyWith(left: 10,),
                                   hintText: 'Popcorn',
                                   focusColor: defaultPalette.extras[0],
-                                  hintStyle: GoogleFonts.lexend(
+                                  hintStyle: TextStyle( fontFamily: 'Lexend',
                                     color: defaultPalette.extras[0].withOpacity(0.3),
                                     letterSpacing:-1,
                                     fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight)),
@@ -322,7 +322,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                 maxLines:1,
                                 overflow:TextOverflow.ellipsis,
                                 textAlign: TextAlign.end,
-                                style: GoogleFonts.lexend(
+                                style: TextStyle( fontFamily: 'Lexend',
                                   fontSize: mapValueDimensionBased(12, 25, sWidth, sHeight, ),
                                   color: defaultPalette.extras[0],
                                   letterSpacing: mapValueDimensionBased(5, 15, sWidth, sHeight,),
@@ -561,7 +561,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                             textAlign: TextAlign.center,
                                             // overflow: TextOverflow.ellipsis,
                                             text: TextSpan(
-                                              style: GoogleFonts.lexend(
+                                              style: TextStyle( fontFamily: 'Lexend',
                                                 fontSize:
                                                     mapValueDimensionBasedLockOnDesync(
                                                   12,
@@ -578,7 +578,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                               children: [
                                                 TextSpan(
                                                   text: ' FLUX',
-                                                  style: GoogleFonts.lexend(
+                                                  style: TextStyle( fontFamily: 'Lexend',
                                                       color: defaultPalette.extras[0]),
                                                 ),
                                                 TextSpan(
@@ -747,7 +747,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                                     maxLines:1,
                                                     overflow:TextOverflow.ellipsis,
                                                     textAlign: TextAlign.center,
-                                                    style: GoogleFonts.lexend(
+                                                    style: TextStyle( fontFamily: 'Lexend',
                                                       fontSize: mapValueDimensionBased(8, 25, sWidth, sHeight, ),
                                                       color: defaultPalette.primary,
                                                       letterSpacing:-1,
@@ -776,7 +776,7 @@ class _LoginSignUpState extends State<LoginSignUp> {
                                       ),
                                         Tooltip(
                                             message:'FluxTV showcases cool websites made by cool creators. \nAll content belongs to its original owners.',
-                                            textStyle: GoogleFonts.lexend(
+                                            textStyle: TextStyle( fontFamily: 'Lexend',
                                               fontSize: mapValueDimensionBasedLockOnDesync(10,20, sWidth, sHeight),
                                               color:defaultPalette.primary,
                                               fontWeight: FontWeight.w500,

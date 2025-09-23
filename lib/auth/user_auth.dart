@@ -11,7 +11,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:platform/platform.dart';
 import 'package:billblaze/providers/auth_provider.dart';
@@ -92,7 +92,7 @@ class AuthRepository {
 
       // Sign in with Firebase using the Google credentials
       final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-      await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
+      await Hive.openBox<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts');
       ref.read(folderPathProvider.notifier).state = Boxes.getFolderPaths().get(userCredential.user!.email??'default');
       final directory = await getApplicationSupportDirectory();
       final billBlazeDir = Directory('${directory.path}\\BillBlaze');

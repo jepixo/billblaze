@@ -4,13 +4,13 @@ import 'package:billblaze/models/layout_model.dart';
 import 'package:billblaze/models/spread_sheet_lib/sheet_decoration.dart';
 import 'package:billblaze/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; 
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:uuid/uuid.dart';
 
 class Boxes {
-  static Box<LayoutModel> getLayouts(WidgetRef ref) => Hive.box<LayoutModel>(ref.read(authPr).currentUser?.email??'layouts');
+  static Box<LayoutModel> getLayouts(WidgetRef ref) => Hive.box<LayoutModel>(ref.read(authPr).currentUser?.uid??'layouts');
   static Box<String> getFolderPaths() => Hive.box<String>('folderPaths');
-  static void setFolderPath(WidgetRef ref, String path) => getFolderPaths().put(ref.read(authPr).currentUser?.email??'default', path);
+  static void setFolderPath(WidgetRef ref, String path) => getFolderPaths().put(ref.read(authPr).currentUser?.uid??'default', path);
   static String getLayoutName(WidgetRef ref) {
     int highestNumber = -1; 
     final regex = RegExp(r'^Untitled-(\d+)\.bbc$'); // match Untitled-N.bbc
