@@ -2924,10 +2924,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                               width: 50,
                                                                               height: 50,
                                                                             ),
-                                                                            'linkedin.com/in/jepixo - Let\'s Connect!',
+                                                                            'linkedin.com/in/jepixo',
                                                                             '''
-                                                                            \nCheck out my Work, Projects, Education, Certifications,
-                                                                            \nand Skills on LinkedIn. Connect and let's collaborate'''
+                                                                            \nExplore my work, projects, education, certifications, and skills on LinkedIn. 
+                                                                            \nLet's connect and discover opportunities to collaborate.'''
                                                                           ),
                                                                           );});
                                                                   },);
