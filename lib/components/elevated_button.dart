@@ -124,7 +124,7 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
               // Base decoration layer
               Positioned(
                 bottom: 0,
-                right: 0,
+                right:widget.extrudeLeft? 0:widget.depth,
                 child: widget.isNavigation?
                 ClipRRect(
                   borderRadius: widget.borderRadius??BorderRadius.circular(0),
@@ -171,9 +171,9 @@ class _ElevatedLayerButtonState extends State<ElevatedLayerButton> {
                     : widget
                         .depth:null,
                 top:!widget.extrudeLeft?  isDown
-                    ? 0
-                    : widget
-                        .depth:null,
+                    ? widget
+                        .depth
+                    : 0:null,
                 child: Container(
                   width: widget.buttonWidth! - subfac,
                   height: widget.buttonHeight! - subfac,

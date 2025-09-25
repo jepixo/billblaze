@@ -40,6 +40,8 @@ import 'package:flutter_svgl/flutter_svgl.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
+import 'package:iconify_flutter_plus/iconify_flutter_plus.dart';
+import 'package:iconify_flutter_plus/icons/majesticons.dart';
 import 'package:intl/intl.dart';
 import 'package:billblaze/colors.dart';
 import 'package:billblaze/components/elevated_button.dart';
@@ -189,6 +191,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   Map<double, double> dayRevenueMap = {};
   String result = 'Loading AI';
   InAppWebViewController? _controller;
+  InAppWebViewController? _controller2;
   List<FocusNode> fontFocusNodes = List.generate( 4, (index) => FocusNode(),);
   Key titleMainKey = GlobalKey();
   var monthNames = [
@@ -216,6 +219,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     (index) => FocusNode(),
   );
   OverlayEntry? sheetTypeBrowserEntry;
+  OverlayEntry? infoOverlayEntry;
   TextEditingController textFieldSearchController = TextEditingController();
   LayoutModel tempLayoutModel = LayoutModel(
     name: 'New Layout',
@@ -478,12 +482,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   //
   //
   //
-  TypewriterAnimatedText typewriterText(bool isHomeTab, double sWidth, double sHeight, String text){
+  TypewriterAnimatedText typewriterText(bool isHomeTab, double sWidth, double sHeight, String text, [double fontSize =0]){
+    if(fontSize==0){ fontSize = mapValueDimensionBasedLockOnDesync( 12, 30, sWidth, sHeight);}
     return TypewriterAnimatedText(text,
-      textStyle: TextStyle(                                fontFamily: 'Lexend',
-          fontSize: (isHomeTab) ? mapValueDimensionBasedLockOnDesync( 12, 30, sWidth, sHeight) : 20,
-          color: defaultPalette.extras[0].withOpacity(0.4),
-          height: 1.7),
+      textStyle: TextStyle(                                
+        fontFamily: 'Lexend',
+        fontSize: (isHomeTab) ? mapValueDimensionBasedLockOnDesync( 12, 30, sWidth, sHeight) : fontSize,
+        color: defaultPalette.extras[0].withOpacity(0.4),
+        height: 1.7),
       speed: Duration(milliseconds: 100));
   }
   
@@ -508,27 +514,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         appinioMinTabChanged = _dataPoints[0].first.x;
         appinioMaxTabChanged = _dataPoints[0].last.x;
       });
-      // for (int i = 0; i < 2; i++) {
-      //   recentsCardController
-      //       .swipeDefault()
-      //       .then((n) => recentsCardController.swipeLeft().then((n) {
-      //             if (recentsCardController.cardIndex! <= 9) {
-      //               // print(recentsCardController.cardIndex);
-      //               recentsCardController.setCardIndex(9);
-      //             }
-      //             setState(() {
-      //               _cardPosition = 0;
-      //             });
-      //             recentsCardController.swipeDefault().then((n) => setState(() {
-      //                   _cardPosition = 0;
-      //                   ref
-      //                       .read(cCardIndexProvider.notifier)
-      //                       .update((s) => s = 0);
-      //                 }));
-      //             // print(recentsCardController.cardIndex);
-      //           }));
-      // }
-      // //Handling Squiggle
+      
 
       // _updateGraphLineSpeed(20);
       setState(() {
@@ -660,9 +646,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 },
                   child: Center(
                     child: SvgPicture.asset(
-                      'assets/logos/Asset7.svg',
+                      'assets/logos/billblazeLogoSplashTM.svg',
                       // allowDrawingOutsideViewBox: true,
                       // theme: SvgTheme(currentColor: defaultPalette.primary),
+                      // width: sWidth/2,
+                      height: sHeight/2,
                     )
                   ),
                 )),
@@ -889,16 +877,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                     typewriterText(isHomeTab, sWidth, sHeight, "Decorate & Style Your Text, Lists and Tables."),
                                                     typewriterText(isHomeTab, sWidth, sHeight, "Track Your Revenue and Profits."),
                                                     
-                                                    // TypewriterAnimatedText("Bill\nBlaze.",
-                                                    //     textStyle: GoogleFonts.nabla(
-                                                    //         fontSize: isHomeTab
-                                                    //             ? titleFontSize
-                                                    //             : titleFontSize / 3,
-                                                    //         color: isHomeTab
-                                                    //             ? Colors.black
-                                                    //             : Color(0xFF000000).withOpacity(0.8),
-                                                    //         height: 0.9),
-                                                    //     speed: Duration(milliseconds: 100)),
                                                   ],
                                                   // totalRepeatCount: 1,
                                                   repeatForever: true,
@@ -2570,7 +2548,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           decoration: BoxDecoration(
                                             color: Colors.white,
                                             border: Border.all(width: 1),
-                                            borderRadius: BorderRadius.circular(30),
+                                            borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync(30, 50, sWidth, sHeight)),
                                           ),
                                         ),
                                       ),
@@ -2597,88 +2575,1003 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       ? defaultPalette.extras[0]
                                                       : defaultPalette.extras[0],
                                               border: Border.all(width: 2),
-                                              borderRadius: BorderRadius.circular(30),
+                                              borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync(30, 50, sWidth, sHeight)),
                                             ),
                                           ),
                                         ),
                                       ),
                                       
-                                      if(index==0)
-                                      //AI CHAT INTERFACE
+                                      if(index==1)
+                                      //MWL INTERFACE
                                       Positioned.fill(
                                           left: 15+mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
                                           right: 15+mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
-                                          top: 15+10,
+                                          top: 15+5,
                                           bottom: 15+5,
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.circular(0),
                                           child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              //The name of the model and switch button
+                                              //The made with love and socials
                                               SizedBox(
+                                              height: mapValueDimensionBasedLockOnDesync(80, 200, sWidth, sHeight),
                                               child: Row(
                                                 children: [
-                                                  SizedBox(width: 30,),
-                                                  Expanded(
-                                                    child: Text(
-                                                      'Made\nWith\nLove',
-                                                      maxLines: 3,
-                                                      overflow:TextOverflow.ellipsis,
-                                                      textAlign: TextAlign.center,
-                                                      style: TextStyle(
-                                                        fontFamily: 'PressStart2P',
-                                                        height: 0.85,
-                                                        fontSize: mapValueDimensionBasedLockOnDesync(
-                                                                15,
-                                                                22,
-                                                                sWidth,
-                                                                sHeight),
-                                                        color: defaultPalette
-                                                            .extras[0],
-                                                        fontWeight:
-                                                            FontWeight.w500,
+                                                  SizedBox(width: 15+mapValueDimensionBasedLockOnDesync(1, 25, sWidth, sHeight),),
+                                                  Stack(
+                                                    children: [
+                                                      Padding(
+                                                        padding: EdgeInsets.only(
+                                                          top:mapValueDimensionBasedLockOnDesync(
+                                                                    10,
+                                                                    20,
+                                                                    sWidth,
+                                                                    sHeight)+mapValueDimensionBasedLockOnDesync(
+                                                                    5,
+                                                                    45,
+                                                                    sWidth,
+                                                                    sHeight),
+                                                          right:mapValueDimensionBasedLockOnDesync(
+                                                                    12,
+                                                                    32,
+                                                                    sWidth,
+                                                                    sHeight)),
+                                                        child: Text(
+                                                          'Made\nWith\nLove',
+                                                          maxLines: 3,
+                                                          overflow:TextOverflow.ellipsis,
+                                                          textAlign: TextAlign.start,
+                                                          style: TextStyle( fontFamily: 'PressStart2P',
+                                                            height:0.95,
+                                                            fontSize: mapValueDimensionBasedLockOnDesync(
+                                                                    18,
+                                                                    45,
+                                                                    sWidth,
+                                                                    sHeight),
+                                                            color: defaultPalette.extras[0],
+                                                            fontWeight: FontWeight.w500,
+                                                          ),
+                                                        ),
                                                       ),
+                                                      Positioned(
+                                                        right:0,
+                                                        top:mapValueDimensionBasedLockOnDesync(
+                                                                    5,
+                                                                    45,
+                                                                    sWidth,
+                                                                    sHeight),
+                                                        child: ElevatedLayerButton(
+                                                          onClick: () async {
+                                                          },
+                                                          buttonHeight: mapValueDimensionBasedLockOnDesync(
+                                                                  30, 70, sWidth, sHeight),
+                                                          buttonWidth: mapValueDimensionBasedLockOnDesync(
+                                                                  30, 70, sWidth, sHeight),
+                                                          borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync(
+                                                                  16, 30, sWidth, sHeight)),
+                                                          animationDuration: const Duration(milliseconds: 200),
+                                                          animationCurve: Curves.ease,
+                                                          subfac: mapValueDimensionBasedLockOnDesync(
+                                                              2, 4, sWidth, sHeight),
+                                                          depth: mapValueDimensionBasedLockOnDesync(
+                                                              2, 4, sWidth, sHeight),
+                                                          topDecoration: BoxDecoration(
+                                                            color: defaultPalette.transparent,
+                                                          ),
+                                                          topLayerChild: Stack(
+                                                            alignment: Alignment.center,
+                                                            children: [
+                                                              Icon(TablerIcons.heart_filled,size:mapValueDimensionBasedLockOnDesync(
+                                                                  30, 70, sWidth, sHeight),color: defaultPalette.extras[0],),
+                                                              Icon(TablerIcons.heart_filled,size:mapValueDimensionBasedLockOnDesync(
+                                                                  25, 62, sWidth, sHeight),color: defaultPalette.extras[4],),
+                                                            ],
+                                                          ),
+                                                          baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.transparent,
+                                                            // border: Border.all(),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(width: mapValueDimensionBasedLockOnDesync(1, 15, sWidth, sHeight),),
+                                                  Expanded(
+                                                    child: Padding(
+                                                      padding: EdgeInsets.all(0).copyWith(
+                                                        top: mapValueDimensionBasedLockOnDesync(20, 75, sWidth, sHeight),
+                                                        left: mapValueDimensionBasedLockOnDesync(1, 25, sWidth, sHeight),
+                                                        bottom: mapValueDimensionBasedLockOnDesync(3, 10, sWidth, sHeight),
+                                                        right: mapValueDimensionBasedLockOnDesync(1, 25, sWidth, sHeight),
+                                                      ),
+                                                      child: FittedBox(
+                                                        fit:BoxFit.scaleDown,
+                                                        alignment: Alignment.centerRight,
+                                                          child: Column(
+                                                          mainAxisAlignment: MainAxisAlignment.start,
+                                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                                          children: [
+                                                              Row(
+                                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                                children:[
+                                                                  Text('made by: ',
+                                                                  maxLines:1,
+                                                                  overflow:TextOverflow.ellipsis,
+                                                                  style: TextStyle( fontFamily: 'Lexend',
+                                                                  fontSize: 20,
+                                                                  height: 0.8,
+                                                                  color: defaultPalette.extras[0],
+                                                                  fontWeight: FontWeight.w300,
+                                                                  ),
+                                                                ),
+                                                                SizedBox(width: 60,),
+                                                                //jepixoColor
+                                                                MouseRegion(
+                                                                cursor: SystemMouseCursors.click,
+                                                                onEnter: (event) async {
+                                                                  if (infoOverlayEntry!=null) {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  }
+                                                                  infoOverlayEntry = OverlayEntry(
+                                                                    builder: (context) {
+                                                                      return StatefulBuilder(builder: (context, updateState) {
+                                                                        return Positioned(
+                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                          top: topPadPosDistance + 50,
+                                                                          child:GestureDetector(
+                                                                            onTap:(){
+                                                                              if (infoOverlayEntry != null) {
+                                                                                setState(() {
+                                                                                  infoOverlayEntry?.remove();
+                                                                                  infoOverlayEntry = null;
+                                                                                });
+                                                                              }
+                                                                            },
+                                                                            child: Container(
+                                                                              padding:EdgeInsets.all(12),
+                                                                              decoration: BoxDecoration(
+                                                                              color: defaultPalette.primary.withOpacity(1),
+                                                                              boxShadow: [
+                                                                                BoxShadow(blurRadius: 15,spreadRadius: 2,color: defaultPalette.extras[0].withOpacity(0.2))
+                                                                              ],
+                                                                              border: Border.all(),
+                                                                              borderRadius: BorderRadius.circular(15)),
+                                                                              child: Column(
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                children: [
+                                                                                  Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                    children: [
+                                                                                      Image.asset(
+                                                                                        'assets/images/pixeldance.gif',
+                                                                                        width: 33,
+                                                                                        gaplessPlayback: true, // prevents flickering on rebuild
+                                                                                      ),
+                                                                                      SizedBox(width: 10,),
+                                                                                      Column(
+                                                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                        children: [
+                                                                                          RichText(
+                                                                                            text: TextSpan(
+                                                                                              children: [
+                                                                                                TextSpan(
+                                                                                                  text: 'Jepixo',
+                                                                                                  style: TextStyle(
+                                                                                                    fontFamily: 'Lexend',
+                                                                                                    fontSize: 25,
+                                                                                                    color: defaultPalette.extras[0],
+                                                                                                    fontWeight: FontWeight.w600,
+                                                                                                    decoration: TextDecoration.none,
+                                                                                                  ),
+                                                                                                ),
+                                                                                                WidgetSpan(
+                                                                                                  child: Transform.translate(
+                                                                                                    offset: const Offset(2, -8), // adjust vertical position
+                                                                                                    child: Text(
+                                                                                                      'TM',// make it smaller
+                                                                                                      style: TextStyle(
+                                                                                                        fontFamily: 'Lexend',
+                                                                                                        fontSize: 12,
+                                                                                                        fontWeight: FontWeight.w600,
+                                                                                                        color: defaultPalette.extras[0],
+                                                                                                        decoration: TextDecoration.none, 
+                                                                                                      ),
+                                                                                                    ),
+                                                                                                  ),
+                                                                                                ),
+                                                                                              ],
+                                                                                            ),
+                                                                                            maxLines: 1,
+                                                                                            overflow: TextOverflow.ellipsis,
+                                                                                            textAlign: TextAlign.start,
+                                                                                          ),
+                                                                                          SizedBox(height: 10,),
+                                                                                          Text('Adapt, Adept. ',
+                                                                                            overflow: TextOverflow.ellipsis,
+                                                                                            textAlign: TextAlign.start,
+                                                                                            style: TextStyle( fontFamily: 'Lexend',
+                                                                                            fontSize: 18,
+                                                                                            color: defaultPalette.extras[0],
+                                                                                            fontWeight: FontWeight.w500,
+                                                                                            decoration: TextDecoration.none, 
+                                                                                            ),
+                                                                                          ),
+                                                                                        ],
+                                                                                      ),
+                                                                                    ],
+                                                                                  ),
+                                                                                  
+                                                                                  SizedBox(height: 5,),
+                                                                                  Text('''
+                                                                                    \nCode a blunt sword and design rebellion. Sharpen them both on failure.
+                                                                                    \nIn other words, I develop and design apps among other things. 
+                                                                                    \nFeel free to learn more about me on LinkedIn, etc.
+                                                                                    \nI go by @jepixo almost everywhere online.
+                                                                                    \nAwful dance btw. Yup, Veo3 is awesome.
+                                                                                    \nAnyway, wishing you the best!🤗✨''',
+                                                                            
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                  textAlign: TextAlign.start,
+                                                                                  style: TextStyle( fontFamily: 'Lexend',
+                                                                                  fontSize: 15,
+                                                                                  height: 0.8,
+                                                                                  color: defaultPalette.extras[0],
+                                                                                  fontWeight: FontWeight.w400,
+                                                                                  decoration: TextDecoration.none, 
+                                                                                  ),
+                                                                                ),
+                                                                                SizedBox(height: 5,),
+                                                                              ],
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      );
+                                                                    });
+                                                                  },);
+                                                                  
+                                                                  setState(() {
+                                                                    Overlay.of(context).insert(infoOverlayEntry!);
+                                                                  });
+                                                                },
+                                                                onExit: (event) {
+                                                                  setState(() {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  });
+                                                                },
+                                                                child: Text('@jepixo',
+                                                                    maxLines:1,
+                                                                    overflow:TextOverflow.ellipsis,
+                                                                    textAlign: TextAlign.end,
+                                                                    style: TextStyle( fontFamily: 'Lexend',
+                                                                    fontSize: 30,
+                                                                    height: 0.8,
+                                                                    color: defaultPalette.extras[0],
+                                                                    fontWeight: FontWeight.w600,
+                                                                  ),
+                                                                  ),
+                                                                ),
+                                                              ]
+                                                              ),
+                                                            SizedBox(height: 8,),
+                                                            Row(
+                                                              mainAxisAlignment: MainAxisAlignment.end,
+                                                              children: [
+                                                                //find me follow me
+                                                                Column(
+                                                                  mainAxisAlignment: MainAxisAlignment.start,
+                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                  children: [
+                                                                    Row(
+                                                                      children: [
+                                                                        Text(
+                                                                          'Follow me.',
+                                                                          maxLines: 1,
+                                                                          overflow:TextOverflow.ellipsis,
+                                                                          textAlign: TextAlign.start,
+                                                                          style: TextStyle( fontFamily: 'Lexend',
+                                                                            fontSize: 20,
+                                                                            height: 0.8,
+                                                                            color: defaultPalette.extras[0],
+                                                                            fontWeight: FontWeight.w400,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    SizedBox(height: 8),
+                                                                    Row(
+                                                                      children: [
+                                                                        Text(
+                                                                          'Find me.',
+                                                                          maxLines: 1,
+                                                                          overflow:TextOverflow.ellipsis,
+                                                                          textAlign: TextAlign.start,
+                                                                          style: TextStyle( fontFamily: 'Lexend',
+                                                                            fontSize: 20,
+                                                                            color: defaultPalette.extras[0],
+                                                                            fontWeight: FontWeight.w400,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                SizedBox(width: 14,),
+                                                                //linkedincolor
+                                                                MouseRegion(
+                                                                cursor: SystemMouseCursors.click,
+                                                                onEnter: (event) async {
+                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=11) {
+                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[11];
+                                                                  }
+                                                                  
+                                                                  if (infoOverlayEntry!=null) {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  }
+                                                                  infoOverlayEntry = OverlayEntry(
+                                                                    builder: (context) {
+                                                                      return StatefulBuilder(builder: (context, updateState) {
+                                                                        return Positioned(
+                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                          top: topPadPosDistance + 50,
+                                                                          child: infoOverlayPanel(
+                                                                            'LinkedIn.',
+                                                                            SvgPicture.asset(
+                                                                              'assets/logos/linkedin.svg',
+                                                                              width: 50,
+                                                                              height: 50,
+                                                                            ),
+                                                                            'linkedin.com/in/jepixo - Let\'s Connect!',
+                                                                            '''
+                                                                            \nCheck out my Work, Projects, Education, Certifications,
+                                                                            \nand Skills on LinkedIn. Connect and let's collaborate'''
+                                                                          ),
+                                                                          );});
+                                                                  },);
+                                                                  setState(() {
+                                                                    Overlay.of(context).insert(infoOverlayEntry!);
+                                                                  });
+                                                                  await changeTvChannel(true);
+                                                                },
+                                                                onExit: (event) {
+                                                                  setState(() {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  });
+                                                                },
+                                                                child: SvgPicture.asset(
+                                                                  'assets/logos/linkedin.svg',
+                                                                  width: 50,
+                                                                  height: 50,
+                                                                ),
+                                                                ),SizedBox(width: 5,),
+                                                                //instagramcolor
+                                                                MouseRegion(
+                                                                cursor: SystemMouseCursors.click,
+                                                                onEnter: (event) async {
+                                                                  
+                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=5
+                                                                  && homePageUrls.indexOf(ref.read(homePageUrlProvider))!=6) {
+                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[5];
+                                                                  }
+                                                                  
+                                                                  if (infoOverlayEntry!=null) {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  }
+                                                                  infoOverlayEntry = OverlayEntry(
+                                                                    builder: (context) {
+                                                                      return StatefulBuilder(builder: (context, updateState) {
+                                                                        return Positioned(
+                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                          top: topPadPosDistance + 50,
+                                                                          child:infoOverlayPanel(
+                                                                            'Instagram.',
+                                                                            SvgPicture.asset(
+                                                                              'assets/logos/instagramcolor.svg',
+                                                                              width: 50,
+                                                                              height: 50,
+                                                                            ),
+                                                                            '@jepixo, @jovoxel, @billblazex - slide in DMs',
+                                                                            '''
+                                                                            \nI actually had the link for these handles loaded down there
+                                                                            \nbut Zuccy Boy keeps redirecting it to the sign up page.
+                                                                            \nAnd I'm not dealing with phishing allegations.
+                                                                            \nSo be a darling and scan those.✨'''
+                                                                          ),
+                                                                    );
+                                                                    });
+                                                                  },);
+                                                                  
+                                                                  setState(() {
+                                                                    Overlay.of(context).insert(infoOverlayEntry!);
+                                                                  });
+                                                                  await changeTvChannel(true);
+                                                                },
+                                                                onExit: (event) {
+                                                                  setState(() {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  });
+                                                                },
+                                                                child: SvgPicture.asset(
+                                                                  'assets/logos/instagram.svg',
+                                                                  width: 50,
+                                                                  height: 50,
+                                                                ),
+                                                                ),SizedBox(width: 5,),
+                                                                //youtubecolor
+                                                                MouseRegion(
+                                                                cursor: SystemMouseCursors.click,
+                                                                onEnter: (event) async {
+                                                                  
+                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=8
+                                                                  && homePageUrls.indexOf(ref.read(homePageUrlProvider))!=7) {
+                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[8];
+                                                                  }
+                                                                  await changeTvChannel(true);
+                                                                  if (infoOverlayEntry!=null) {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  }
+                                                                  infoOverlayEntry = OverlayEntry(
+                                                                    builder: (context) {
+                                                                      return StatefulBuilder(builder: (context, updateState) {
+                                                                        return Positioned(
+                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                          top: topPadPosDistance + 50,
+                                                                          child:infoOverlayPanel(
+                                                                            'Youtube.',
+                                                                            SvgPicture.asset(
+                                                                              'assets/logos/youtubecolor.svg',
+                                                                              width: 50,
+                                                                              height: 50,
+                                                                            ),
+                                                                            '@jepixo, @billblazex - feel free to indulge.',
+                                                                            '''
+                                                                            \nTutorials and updates on Billblaze.
+                                                                            \nOther projects and videos on Jepixo.
+                                                                            \nSubscribe and spread the word, but only if you like it.'''
+                                                                          ),
+                                                                    );
+                                                                    });
+                                                                  },);
+                                                                  
+                                                                  setState(() {
+                                                                    Overlay.of(context).insert(infoOverlayEntry!);
+                                                                  });
+                                                                },
+                                                                onExit: (event) {
+                                                                  setState(() {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  });
+                                                                },
+                                                                  child: SvgPicture.asset(
+                                                                    'assets/logos/youtube.svg',
+                                                                    width: 50,
+                                                                    height: 50,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            SizedBox(height: 2,),
+                                                            Row(
+                                                              mainAxisAlignment: MainAxisAlignment.end,
+                                                              children: [
+                                                                Row(
+                                                                  children: [
+                                                                    Text(
+                                                                      'Feed me.',
+                                                                      maxLines: 1,
+                                                                      overflow:TextOverflow.ellipsis,
+                                                                      textAlign: TextAlign.start,
+                                                                      style: TextStyle( fontFamily: 'Lexend',
+                                                                        fontSize: 35,
+                                                                        height: 0.8,
+                                                                        letterSpacing: -1,
+                                                                        color: defaultPalette.extras[0],
+                                                                        fontWeight: FontWeight.w600,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                SizedBox(width: 2,),
+                                                                //gumroad
+                                                                MouseRegion(
+                                                                cursor: SystemMouseCursors.click,
+                                                                onEnter: (event) async {
+                                                                  
+                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=0) {
+                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[0];
+                                                                  }
+                                                                  
+                                                                  if (infoOverlayEntry!=null) {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  }
+                                                                  infoOverlayEntry = OverlayEntry(
+                                                                    builder: (context) {
+                                                                      return StatefulBuilder(builder: (context, updateState) {
+                                                                        return Positioned(
+                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                          top: topPadPosDistance + 50,
+                                                                          child:infoOverlayPanel(
+                                                                            'Gumroad.',
+                                                                            SvgPicture.asset(
+                                                                              'assets/logos/gumroad.svg',
+                                                                              width: 40,
+                                                                              height: 40,
+                                                                            ),
+                                                                            'jepixo.gumroad.com',
+                                                                            '''
+                                                                            \nYou want a piece of my work? Happy to oblige.
+                                                                            \nMy workshop open to you!'''
+                                                                          ),
+                                                                    );
+                                                                    });
+                                                                  },);
+                                                                  
+                                                                  setState(() {
+                                                                    Overlay.of(context).insert(infoOverlayEntry!);
+                                                                  });
+                                                                  await changeTvChannel(true);
+                                                                },
+                                                                onExit: (event) {
+                                                                  setState(() {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  });
+                                                                },
+                                                                  child: SvgPicture.asset(
+                                                                    'assets/logos/gumroad.svg',
+                                                                    width: 30,
+                                                                    height: 30,
+                                                                  ),
+                                                                ),
+                                                                //ko fi
+                                                                MouseRegion(
+                                                                cursor: SystemMouseCursors.click,
+                                                                onEnter: (event) async {
+                                                                  
+                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=4) {
+                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[4];
+                                                                  }
+                                                                  
+                                                                  if (infoOverlayEntry!=null) {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  }
+                                                                  infoOverlayEntry = OverlayEntry(
+                                                                    builder: (context) {
+                                                                      return StatefulBuilder(builder: (context, updateState) {
+                                                                        return Positioned(
+                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                          top: topPadPosDistance + 50,
+                                                                          child:infoOverlayPanel(
+                                                                            'Ko-Fi.',
+                                                                            SvgPicture.asset(
+                                                                              'assets/logos/kofi.svg',
+                                                                              width: 50,
+                                                                              height: 50,
+                                                                            ),
+                                                                            'ko-fi.com/jepixo',
+                                                                            '''
+                                                                            \nSupport my journey, snag exclusive products, 
+                                                                            \nor commission me to make something unique for you.'''
+                                                                          ),
+                                                                    );
+                                                                    });
+                                                                  },);
+                                                                  
+                                                                  setState(() {
+                                                                    Overlay.of(context).insert(infoOverlayEntry!);
+                                                                  });
+                                                                  await changeTvChannel(true);
+                                                                },
+                                                                onExit: (event) {
+                                                                  setState(() {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  });
+                                                                },
+                                                                  child: SvgPicture.asset(
+                                                                    'assets/logos/kofi.svg',
+                                                                    width: 35,
+                                                                    height: 35,
+                                                                  ),
+                                                                ),
+                                                                //patreon
+                                                                MouseRegion(
+                                                                cursor: SystemMouseCursors.click,
+                                                                onEnter: (event) async {
+                                                                  
+                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=1) {
+                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[1];
+                                                                  }
+                                                                  
+                                                                  if (infoOverlayEntry!=null) {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  }
+                                                                  infoOverlayEntry = OverlayEntry(
+                                                                    builder: (context) {
+                                                                      return StatefulBuilder(builder: (context, updateState) {
+                                                                        return Positioned(
+                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                          top: topPadPosDistance + 50,
+                                                                          child:infoOverlayPanel(
+                                                                            'Patreon.',
+                                                                            SvgPicture.asset(
+                                                                              'assets/logos/patreon.svg',
+                                                                              width: 40,
+                                                                              height: 40,
+                                                                            ),
+                                                                            'patreon.com/Jepixo',
+                                                                            '''
+                                                                            \nBehind-the-scenes work, early drops, and the raw process.
+                                                                            \nUnpolished, sometimes messy, but always genuine. 
+                                                                            \nIf you want to breathe down my neck alongside the build, 
+                                                                            \nthe break, and the rebuild then Patreon's the place.'''
+                                                                          ),
+                                                                    );
+                                                                    });
+                                                                  },);
+                                                                  
+                                                                  setState(() {
+                                                                    Overlay.of(context).insert(infoOverlayEntry!);
+                                                                  });
+                                                                  await changeTvChannel(true);
+                                                                },
+                                                                onExit: (event) {
+                                                                  setState(() {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  });
+                                                                },
+                                                                  child: SvgPicture.asset(
+                                                                    'assets/logos/patreon.svg',
+                                                                    width: 25,
+                                                                    height: 25,
+                                                                  ),
+                                                                ),
+                                                                SizedBox(width: 5,),
+                                                                Row(
+                                                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                                                  children: [
+                                                                    Padding(
+                                                                      padding: const EdgeInsets.only(bottom:4.0),
+                                                                      child: Text(
+                                                                          'Finger me.',
+                                                                            maxLines: 1,
+                                                                            overflow:TextOverflow.ellipsis,
+                                                                            textAlign: TextAlign.start,
+                                                                            style: TextStyle( fontFamily: 'Lexend',
+                                                                              fontSize: 18,
+                                                                              height: 0.8,
+                                                                              color: defaultPalette.extras[0],
+                                                                              fontWeight: FontWeight.w400,
+                                                                            ),
+                                                                          ),
+                                                                    ),
+                                                                    Icon(TablerIcons.thumb_up_filled, size:30)
+                                                                  ],
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            SizedBox(height: 2,),
+                                                            Row(
+                                                              mainAxisAlignment: MainAxisAlignment.end,
+                                                              children: [
+                                                                
+                                                                SizedBox(width: 2,),
+                                                                //github
+                                                                MouseRegion(
+                                                                cursor: SystemMouseCursors.click,
+                                                                onEnter: (event) async {
+                                                                  
+                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=10) {
+                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[10];
+                                                                  }
+                                                                  
+                                                                  if (infoOverlayEntry!=null) {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  }
+                                                                  infoOverlayEntry = OverlayEntry(
+                                                                    builder: (context) {
+                                                                      return StatefulBuilder(builder: (context, updateState) {
+                                                                        return Positioned(
+                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                          top: topPadPosDistance + 50,
+                                                                          child:infoOverlayPanel(
+                                                                            'Github.',
+                                                                            SvgPicture.asset(
+                                                                              'assets/logos/github.svg',
+                                                                              width: 40,
+                                                                              height: 40,
+                                                                              
+                                                                            ),
+                                                                            'github.com/jepixo',
+                                                                            '''
+                                                                            \nContribute, fork, or just get inspired.'''
+                                                                          ),
+                                                                    );
+                                                                    });
+                                                                  },);
+                                                                  
+                                                                  setState(() {
+                                                                    Overlay.of(context).insert(infoOverlayEntry!);
+                                                                  });
+                                                                  await changeTvChannel(true);
+                                                                },
+                                                                onExit: (event) {
+                                                                  setState(() {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  });
+                                                                },
+                                                                  child: SvgPicture.asset(
+                                                                    'assets/logos/github.svg',
+                                                                    width: 22,
+                                                                    height: 22,
+                                                                    colorFilter: ColorFilter.mode(defaultPalette.black, BlendMode.srcIn),
+                                                                  ),
+                                                                ),SizedBox(width: 2,),
+                                                                //onlyfans
+                                                                MouseRegion(
+                                                                cursor: SystemMouseCursors.click,
+                                                                onEnter: (event) async {
+                                                                  
+                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=2) {
+                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[2];
+                                                                  }
+                                                                  
+                                                                  if (infoOverlayEntry!=null) {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  }
+                                                                  infoOverlayEntry = OverlayEntry(
+                                                                    builder: (context) {
+                                                                      return StatefulBuilder(builder: (context, updateState) {
+                                                                        return Positioned(
+                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                          top: topPadPosDistance + 50,
+                                                                          child:infoOverlayPanel(
+                                                                            'OnlyFans',
+                                                                            SvgPicture.asset(
+                                                                              'assets/logos/onlyfans.svg',
+                                                                              width: 30,
+                                                                              height: 30,
+                                                                              colorFilter: ColorFilter.mode(defaultPalette.extras[3], BlendMode.srcIn),
+                                                                            ),
+                                                                            'Don\'t even get me started.',
+                                                                            '\nKernels of wisdom: maybe ease up on the corn, champ.'
+                                                                          ),
+                                                                    );
+                                                                    });
+                                                                  },);
+                                                                  
+                                                                  setState(() {
+                                                                    Overlay.of(context).insert(infoOverlayEntry!);
+                                                                  });
+                                                                  
+                                                                  await changeTvChannel(true);
+                                                                },
+                                                                onExit: (event) {
+                                                                  setState(() {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  });
+                                                                },
+                                                                  child: SvgPicture.asset(
+                                                                    'assets/logos/onlyfans.svg',
+                                                                    width: 18,
+                                                                    height: 18,
+                                                                    colorFilter: ColorFilter.mode(defaultPalette.extras[3], BlendMode.srcIn),
+                                                                  ),
+                                                                ),SizedBox(width: 2,),
+                                                                //home
+                                                                MouseRegion(
+                                                                cursor: SystemMouseCursors.click,
+                                                                onEnter: (event) async {
+                                                                  
+                                                                  if (infoOverlayEntry!=null) {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  }
+                                                                  infoOverlayEntry = OverlayEntry(
+                                                                    builder: (context) {
+                                                                        var clickText = 'Click here to get my home address.';
+                                                                      return StatefulBuilder(builder: (context, updateState) {
+                                                                        return Positioned(
+                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                          top: topPadPosDistance + 50,
+                                                                          child:GestureDetector(
+                                                                            onTap:(){
+                                                                              if (infoOverlayEntry!=null) {
+                                                                                infoOverlayEntry?.remove();
+                                                                                infoOverlayEntry =null;
+                                                                              }
+                                                                            },
+                                                                            child: Container(
+                                                                              padding:EdgeInsets.all(12),
+                                                                              decoration: BoxDecoration(
+                                                                              color: defaultPalette.primary.withOpacity(1),
+                                                                              boxShadow: [
+                                                                                BoxShadow(blurRadius: 15,spreadRadius: 2,color: defaultPalette.extras[0].withOpacity(0.2))
+                                                                              ],
+                                                                              border: Border.all(),
+                                                                              borderRadius: BorderRadius.circular(15)),
+                                                                              child: Column(
+                                                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                children: [
+                                                                                  Row(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                    children: [
+                                                                                        Icon(clickText.startsWith('Wow')?TablerIcons.prison:TablerIcons.home, size:30),
+                                                                                      SizedBox(width: 10,),
+                                                                                      Text(
+                                                                                        clickText.startsWith('Wow')?'Jail':'Home.',
+                                                                                        maxLines: 1,
+                                                                                        overflow: TextOverflow.ellipsis,
+                                                                                        textAlign: TextAlign.start,
+                                                                                        style: TextStyle( fontFamily: 'Lexend',
+                                                                                          fontSize: 25,
+                                                                                          color: defaultPalette.extras[0],
+                                                                                          fontWeight: FontWeight.w600,
+                                                                                          decoration: TextDecoration.none, 
+                                                                                        ),
+                                                                                      ),
+                                                                                    ],
+                                                                                  ),
+                                                                                  SizedBox(height: 10,),
+                                                                                  Text(clickText.startsWith('Wow')? clickText:'My Literal Address.',
+                                                                                    overflow: TextOverflow.ellipsis,
+                                                                                    textAlign: TextAlign.start,
+                                                                                    style: TextStyle( fontFamily: 'Lexend',
+                                                                                    fontSize: 18,
+                                                                                    color: defaultPalette.extras[0],
+                                                                                    fontWeight: FontWeight.w500,
+                                                                                    decoration: TextDecoration.none, 
+                                                                                    ),
+                                                                                  ),
+                                                                                  if(!clickText.startsWith('Wow'))
+                                                                                  ...[SizedBox(height: 10,),
+                                                                                  MouseRegion(
+                                                                                    cursor: SystemMouseCursors.click,
+                                                                                    child: GestureDetector(
+                                                                                      onTap:(){
+                                                                                        updateState((){
+                                                                                          clickText = 'Wow creep, why do you want my address huh?';
+                                                                                        });
+                                                                                      },
+                                                                                      child: Text(clickText,
+                                                                                        overflow: TextOverflow.ellipsis,
+                                                                                        textAlign: TextAlign.start,
+                                                                                        style: TextStyle( fontFamily: 'Lexend',
+                                                                                        fontSize: 14,
+                                                                                        height: 0.8,
+                                                                                        color: defaultPalette.extras[0],
+                                                                                        fontWeight: FontWeight.w700,
+                                                                                        decoration: TextDecoration.none, 
+                                                                                        fontStyle:  FontStyle.italic
+                                                                                        ),
+                                                                                      ),
+                                                                                    ),
+                                                                                  ),],
+                                                                                  SizedBox(height: 5,),
+                                                                                ],
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                    );
+                                                                    });
+                                                                  },);
+                                                                  
+                                                                  setState(() {
+                                                                    Overlay.of(context).insert(infoOverlayEntry!);
+                                                                  });
+                                                                },
+                                                                onExit: (event) {
+                                                                  // setState(() {
+                                                                  //   infoOverlayEntry?.remove();
+                                                                  //   infoOverlayEntry =null;
+                                                                  // });
+                                                                },
+                                                                child: Icon(TablerIcons.home, size:23)),SizedBox(width: 4,),
+                                                                //gmail
+                                                                MouseRegion(
+                                                                cursor: SystemMouseCursors.click,
+                                                                onEnter: (event) async {
+                                                                  
+                                                                  if (infoOverlayEntry!=null) {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  }
+                                                                  infoOverlayEntry = OverlayEntry(
+                                                                    builder: (context) {
+                                                                      return StatefulBuilder(builder: (context, updateState) {
+                                                                        return Positioned(
+                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                          top: topPadPosDistance + 50,
+                                                                          child:infoOverlayPanel(
+                                                                            'Gmail.',
+                                                                            SvgPicture.asset(
+                                                                              'assets/logos/gmail.svg',
+                                                                              width: 40,
+                                                                              height: 40,
+                                                                            ),
+                                                                            '''billblazex@gmail.com
+                                                                            \njoelsanjay7@gmail.com''',
+                                                                            '''
+                                                                            \nReach me through mail. Queries or requests regarding billblaze
+                                                                            \non billblazex@gmail.com. Other official or general things like
+                                                                            \nasking for a date can be done on the other one.
+                                                                            \nAnd it's a shame jepixo@gmail.com wasn't available 
+                                                                            \nbut I do have jepixoo@gmail.com.'''
+                                                                          ),
+                                                                    );
+                                                                    });
+                                                                  },);
+                                                                  
+                                                                  setState(() {
+                                                                    Overlay.of(context).insert(infoOverlayEntry!);
+                                                                  });
+                                                                },
+                                                                onExit: (event) {
+                                                                  setState(() {
+                                                                    infoOverlayEntry?.remove();
+                                                                    infoOverlayEntry =null;
+                                                                  });
+                                                                },
+                                                                  child: SvgPicture.asset(
+                                                                    'assets/logos/gmail.svg',
+                                                                    width: 23,
+                                                                    height: 23,
+                                                                  ),
+                                                                ),
+                                                                SizedBox(width: 5,),
+                                                                Row(
+                                                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                                                  children: [
+                                                                    Padding(
+                                                                      padding: const EdgeInsets.only(bottom:6.0),
+                                                                      child: Text(
+                                                                          'Pass me around.',
+                                                                            maxLines: 1,
+                                                                            overflow:TextOverflow.ellipsis,
+                                                                            textAlign: TextAlign.start,
+                                                                            style: TextStyle( fontFamily: 'Lexend',
+                                                                              fontSize: 18,
+                                                                              height: 0.8,
+                                                                              color: defaultPalette.extras[0],
+                                                                              fontWeight: FontWeight.w400,
+                                                                            ),
+                                                                          ),
+                                                                    ),
+                                                                    Iconify(Majesticons.share, size:28)
+                                                                  ],
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          
+                                                          ],
+                                                        ),
+                                                        ),
                                                     ),
                                                   ),
-                                                  SizedBox(width: 15,),
-                                                  ElevatedLayerButton(
-                                                    onClick: () async {
-                                                    },
-                                                    buttonHeight: mapValueDimensionBasedLockOnDesync( 30, 55, sWidth, sHeight),
-                                                    buttonWidth:mapValueDimensionBasedLockOnDesync( 30, 55, sWidth, sHeight),
-                                                    borderRadius: BorderRadius.circular(
-                                                        mapValueDimensionBasedLockOnDesync( 16, 30, sWidth, sHeight)),
-                                                    animationDuration: const Duration(milliseconds: 200),
-                                                    animationCurve: Curves.ease,
-                                                    subfac: mapValueDimensionBasedLockOnDesync(
-                                                        2, 4, sWidth, sHeight),
-                                                    depth: mapValueDimensionBasedLockOnDesync(
-                                                        2, 4, sWidth, sHeight),
-                                                    topDecoration: BoxDecoration(
-                                                      color: defaultPalette.extras[4],
-                                                      border: Border.all(),
-                                                    ),
-                                                    topLayerChild: Column(
-                                                      mainAxisAlignment: MainAxisAlignment.center,
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Icon(TablerIcons.replace,size:mapValueDimensionBasedLockOnDesync(
-                                                            12, 22, sWidth, sHeight),color: defaultPalette.primary,)
-                                                      ],
-                                                    ),
-                                                    baseDecoration: BoxDecoration(
-                                                      color: defaultPalette.extras[0],
-                                                      // border: Border.all(),
-                                                    ),
-                                                  ),
-                                                  SizedBox(width: 15,),
-                                                ],
+                                                  SizedBox(width: mapValueDimensionBasedLockOnDesync(5, 12, sWidth, sHeight),),
+                                                ]
                                               ),
                                               ),
-                                              SizedBox(height: 8,),
-                                              //Chat interfacee
+                                              
+
+                                              SizedBox(height: mapValueDimensionBasedLockOnDesync(15, 50, sWidth, sHeight),),
+                                              //TIPS AND TRICKS interfacee
                                               Expanded(
                                                 child: ClipRRect(
                                                   borderRadius:BorderRadius.circular(35),
@@ -2688,373 +3581,243 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       borderRadius:BorderRadius.circular(35),
                                                       border: Border.all()
                                                     ),
-                                                    child: SingleChildScrollView(
-                                                        padding: EdgeInsets.all(10),
-                                                        child: Column(
-                                                          children: [
-                                                          SizedBox(height: 8,),
-                                                          //USER PROMPT CHAT BUBBLE
-                                                          if(ref.watch(aiPromptProvider).isNotEmpty)
-                                                          Row(
-                                                            mainAxisAlignment: MainAxisAlignment.end,
-                                                            children: [
-                                                              SizedBox(width:22),
-                                                              Expanded(
-                                                                child: Stack(
-                                                                  alignment: Alignment.topRight,
-                                                                  children: [
-                                                                    Container(
-                                                                      margin: EdgeInsets.only(left:2,top: 2),
-                                                                      padding:EdgeInsets.all(8).copyWith(bottom:8,) ,
-                                                                      decoration:BoxDecoration(
-                                                                        color:defaultPalette.extras[0],
-                                                                        borderRadius:BorderRadius.circular(20),
-                                                                        border: Border.all()
-                                                                      ),
-                                                                      child:Text(
-                                                                      ref.watch(aiPromptProvider),
-                                                                      style: TextStyle(                                fontFamily: 'Lexend',
-                                                                          fontSize:
-                                                                              mapValueDimensionBasedLockOnDesync(
-                                                                                  15,
-                                                                                  22,
-                                                                                  sWidth,
-                                                                                  sHeight),
-                                                                          color: defaultPalette
-                                                                              .extras[0],
-                                                                          fontWeight:
-                                                                              FontWeight.w500,
-                                                                          letterSpacing: -0.8),
-                                                                    ),),
-                                                                    Container(
-                                                                      margin:EdgeInsets.only(right: 2),
-                                                                      padding:EdgeInsets.all(8),
-                                                                      decoration:BoxDecoration(
-                                                                        color:defaultPalette.primary,
-                                                                        borderRadius:BorderRadius.circular(20),
-                                                                        border: Border.all()
-                                                                      ),
-                                                                      child:Text(
-                                                                      ref.watch(aiPromptProvider),
-                                                                      style: TextStyle(                                fontFamily: 'Lexend',
-                                                                          fontSize:
-                                                                              mapValueDimensionBasedLockOnDesync(
-                                                                                  15,
-                                                                                  22,
-                                                                                  sWidth,
-                                                                                  sHeight),
-                                                                          color: defaultPalette
-                                                                              .extras[0],
-                                                                          fontWeight:
-                                                                              FontWeight.w500,
-                                                                          letterSpacing: -0.8),
-                                                                    ),)
-                                                                  ],
-                                                                ),
+                                                    child: Column(
+                                                      children: [
+                                                      Expanded(
+                                                        child: Container(
+                                                          margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(15, 50, sWidth, sHeight)),
+                                                          decoration: BoxDecoration(
+                                                            color:defaultPalette.primary,
+                                                            border:Border.all(),
+                                                            boxShadow: [
+                                                              BoxShadow(
+                                                                blurRadius: 2,
+                                                                spreadRadius: 2,
+                                                                offset: Offset(2, 2),
+                                                                color: defaultPalette.black.withOpacity(0.1)
                                                               )
                                                             ],
+                                                            borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(30, 60, sWidth, sHeight))
                                                           ),
-                                                          SizedBox(height: 12,),
-                                                          //AI RESPONSE CHAT BUBBLE
-                                                          Row(
-                                                            mainAxisAlignment: MainAxisAlignment.end,
-                                                            children: [
-                                                              Expanded(
-                                                                child: Stack(
-                                                                  children: [
-                                                                    Container(
-                                                                      margin:EdgeInsets.only(right:22,left: 2,top: 2),
-                                                                      padding:EdgeInsets.all(10) ,
-                                                                      decoration:BoxDecoration(
-                                                                        color:defaultPalette.extras[0],
-                                                                        borderRadius:BorderRadius.circular(20),
-                                                                        border: Border.all()
+                                                          child: ClipRRect(
+                                                             borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(29, 59, sWidth, sHeight)),
+                                                            child: InAppWebView(
+                                                              initialUrlRequest: URLRequest(
+                                                                  url: WebUri.uri(Uri.parse(ref
+                                                                      .watch(homePageUrlProvider))),
+                                                                  headers: {
+                                                                    "User-Agent":
+                                                                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+                                                                  },    
                                                                       ),
-                                                                      child:Text(
-                                                                      ref.watch(aiTokenProvider).trimLeft(),
-                                                                      style: TextStyle(                                fontFamily: 'Lexend',
-                                                                          fontSize:
-                                                                              mapValueDimensionBasedLockOnDesync(
-                                                                                  15,
-                                                                                  22,
-                                                                                  sWidth,
-                                                                                  sHeight),
-                                                                          color: defaultPalette
-                                                                              .extras[0],
-                                                                          fontWeight:
-                                                                              FontWeight.w500,
-                                                                          letterSpacing: -0.8),
-                                                                    ),),
-                                                                    Container(
-                                                                      margin:EdgeInsets.only(right:24),
-                                                                      padding:EdgeInsets.all(10),
-                                                                      decoration:BoxDecoration(
-                                                                        color:defaultPalette.tertiary,
-                                                                        borderRadius:BorderRadius.circular(20),
-                                                                        border: Border.all()
-                                                                      ),
-                                                                      child:Text(
-                                                                      ref.watch(aiTokenProvider).trimLeft(),
-                                                                      style: TextStyle(                                fontFamily: 'Lexend',
-                                                                          fontSize:
-                                                                              mapValueDimensionBasedLockOnDesync(
-                                                                                  15,
-                                                                                  22,
-                                                                                  sWidth,
-                                                                                  sHeight),
-                                                                          color: defaultPalette
-                                                                              .primary,
-                                                                          fontWeight:
-                                                                              FontWeight.w500,
-                                                                          letterSpacing: -0.8),
-                                                                    ),)
-                                                                  ],
-                                                                ),
-                                                              )
-                                                            ],
+                                                              onWebViewCreated: (controller) async {
+                                                                _controller2 = controller;
+                                                            
+                                                            print("WebView created");
+                                                            },
+                                                              onLoadStop: (controller, url) async {
+                                                            print("Loaded: $url");
+                                                            print("Loaded: ${homePageUrls.indexOf(ref.read(homePageUrlProvider))}");
+                                                            try {
+                                                              if(homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 5
+                                                              && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 6
+                                                              && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 9
+                                                              && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 0
+                                                              && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != -1
+                                                              ) {
+                                                                await controller.evaluateJavascript(
+                                                                    source: """
+                                                                    // Hide scrollbars visually but keep scroll functionality
+                                                                    // document.documentElement.style.overflow = 'scroll';
+                                                                    // document.body.style.overflow = 'scroll';
+                                                                    
+                                                                    // Apply zoom
+                                                                    document.documentElement.style.zoom = '60%';
+                                                                    
+                                                                    // Hide scrollbars via CSS
+                                                                    const style = document.createElement('style');
+                                                                    style.innerHTML = `
+                                                                      ::-webkit-scrollbar { 
+                                                                        width: 0px; 
+                                                                        background: transparent; 
+                                                                      }
+                                                                    `;
+                                                                    document.head.appendChild(style);
+                                                                  """
+                                                                  );
+                                                              } 
+                                                              
+                                                              
+                                                            } on Exception catch (e,st) {
+                                                              print('Nooo NOTION: '+st.toString());
+                                                            }
+                                                            },
+                                                              // initialSettings: InAppWebViewSettings(
+                                                              //     textZoom: 50,
+                                                              //     horizontalScrollBarEnabled: false,
+                                                              //     verticalScrollBarEnabled: false,
+                                                              //     builtInZoomControls: true,
+                                                              //     pageZoom: 10,
+                                                              //     supportZoom: true,
+                                                              //     displayZoomControls: true,
+                                                              //     maximumZoomScale: 0.5),
+                                                            ),
                                                           ),
-                                                          ],
-                                                        )),
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(height:5),
-                                              
-                                              SizedBox(height:5),
-                                              //SEND PROMPT BUTTON
-                                              Row(
-                                                children: [
-                                                  ElevatedLayerButton(
-                                                  onClick: () async {
-                                                    // ref.read(aiPromptProvider.notifier).state = chatTextController.text;
-                                                    // if (!isLlmProcessing) {
-                                                    //   setState(() {
-                                                    //     isLlmProcessing = true;
-                                                    //   });
-                                                    //   try{
-                                                    //     final receivePort =
-                                                    //         ReceivePort();
-                                                    //     final errorPort = ReceivePort();                                                 
-                                                    //     final prompt =
-                                                    //         ChatHistory()
-                                                    //           ..addMessage(
-                                                    //               role:
-                                                    //                   Role.system,
-                                                    //               content:
-                                                    //             """"" You are a concise, analytical assistant.
-                                                    //                 Always focus directly on asnwering the user's prompt, 
-                                                    //                 keep responses short and precise. 
-                                                    //                 Only generate the answer and stop.
-                                                    //                 Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. If you can't answer something just say so but don't remain silent to a question.
-                                                    //                 Do not generate questions or mention unrelated topics. Keep your responses strictly bound to the BillBlaze data and decorate linguistically for the user. 
-                                                    //                 Here's the BillBlaze Data: $typeStats, Selected year: $selectedYear, Selected Month: $selectedMonth, YearStats: $monthRevenueMap, MonthStats: $dayRevenueMap Current Date: ${DateFormat('dd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
-                                                    //                   Total Revenue: $totalRevenue, Total Profit: $totalProfit, Total bills: $totalBills.
-                                                    //               Payable means our total revenue.
-                                                    //               Count means number of bills made by the user.
-                                                    //             """)
-                                                    //           ..addMessage(
-                                                    //               role: Role.user,
-                                                    //               content:
-                                                    //                   chatTextController
-                                                    //                       .text)
-                                                    //           ..addMessage(
-                                                    //               role: Role
-                                                    //                   .assistant,
-                                                    //               content: "");
-                                                    //     final modelPath = ref.read(aiModelPathProvider);
-                                                    //     // final modelPath =
-                                                    //     //     "C:/Users/ANTEC/Downloads/Compressed/Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf";
-                                                    //     // ✅ Pass only data, not Flutter state
-                                                    //     await Isolate.spawn(
-                                                    //         runLlamaModel, {
-                                                    //       'sendPort': receivePort
-                                                    //           .sendPort,
-                                                    //       'prompt':
-                                                    //           prompt.exportFormat(
-                                                    //               ChatFormat.chatml,
-                                                    //               leaveLastAssistantOpen: true),
-                                                    //       'modelPath': modelPath,
-                                                    //     },
-                                                    //     onError: errorPort.sendPort,
-                                                    //     );
-                                                    //     ref.read(aiTokenProvider
-                                                    //             .notifier).state = '';
-                                                    //     errorPort.listen((err) {
-                                                    //       // err is [error, stackTrace]
-                                                    //       ref.read(aiTokenProvider.notifier).state = "Error: ${err[0]}";
-                                                    //       setState(() {
-                                                    //         isLlmProcessing = false;
-                                                    //       });
-                                                    //       return;
-                                                    //     });                                                  
-                                                    //     final buffer =
-                                                    //         StringBuffer();
-                                                    //     await for (final token
-                                                    //         in receivePort) {
-                                                    //       if (token == null)
-                                                    //         break;
-                                                    //       buffer.write(token);
-                                                    //       ref.read(aiTokenProvider.notifier).state += (token);
-                                                    //       ref.read(aiTokenProvider.notifier).state = ref.read(
-                                                    //               aiTokenProvider.notifier).state
-                                                    //               .replaceAll('<|im_start|> assistant\n', '')
-                                                    //               .replaceAll('<|im_start|>assistant\n', '')
-                                                    //               .replaceAll('<|im_end|>', '')
-                                                    //               ;
-                                                    //     }
-                                                    //     print( "✅ Final Response: ${buffer.toString()}");
-                                                    //   } finally{
-                                                    //   setState(() {
-                                                    //     isLlmProcessing = false;
-                                                    //   });}
-                                                    // }
-                                                  },
-                                                  
-                                                  buttonHeight: mapValueDimensionBasedLockOnDesync( 45, 85, sWidth, sHeight),
-                                                  buttonWidth:mapValueDimensionBasedLockOnDesync( 45, 85, sWidth, sHeight),
-                                                  borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
-                                                  animationDuration: const Duration(milliseconds: 200),
-                                                  animationCurve: Curves.ease,
-                                                  subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                                  depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                                  topDecoration: BoxDecoration(
-                                                    color: defaultPalette.extras[3],
-                                                    border: Border.all(),
-                                                  ),
-                                                  topLayerChild:Container(
-                                                      
-                                                  child: isLlmProcessing
-                                                      ? Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(8.0),
-                                                          child: LoadingIndicator(
-                                                              colors: [
-                                                                defaultPalette
-                                                                    .primary
-                                                              ],
-                                                              indicatorType:
-                                                                  Indicator.values[
-                                                                    // 0 + math.Random().nextInt((Indicator.values.length - 1) - 0 +1)
-                                                                    31
-                                                                    ]),
-                                                        )
-                                                      : Transform.rotate(
-                                                          angle: -pi / 2,
-                                                          child: Icon(
-                                                            TablerIcons.send_2,
-                                                            color: defaultPalette.primary,
-                                                            size: mapValueDimensionBasedLockOnDesync( 22, 38, sWidth, sHeight),
-                                                          ))),
-                                                                                                  
-                                                  baseDecoration: BoxDecoration(
-                                                  color: defaultPalette.extras[0],
-                                                  // border: Border.all(),
-                                                    ),
-                                                  ),
-                                                  SizedBox(width: 5),
-                                                  Expanded(
-                                                    child: Container(
-                                                      alignment: Alignment(-1, 0),
-                                                      height: mapValueDimensionBasedLockOnDesync(45, 80, sWidth, sHeight),
-                                                      decoration: BoxDecoration(
-                                                          color: defaultPalette
-                                                              .secondary,
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                  20),
-                                                          border:
-                                                              Border.all(width: 2)),
-                                                      child: TextFormField(
-                                                        onTapOutside: (event) =>
-                                                            chatFocusNode.unfocus(),
-                                                        onTap: () {
-                                                          FocusManager.instance.primaryFocus?.unfocus();
-                                                          keyboardFocusNode.unfocus();
-                                                          chatFocusNode.requestFocus();
-                                                          chatFocusNode.requestFocus();
-                                                          Future.delayed(Durations.short2).then((value) => chatFocusNode.requestFocus(),);
-                                                        },
-                                                        focusNode: chatFocusNode,
-                                                        controller:
-                                                            chatTextController,
-                                                        cursorColor:
-                                                            defaultPalette.tertiary,
-                                                        keyboardType:
-                                                            TextInputType.multiline,
-                                                        textInputAction:
-                                                            TextInputAction.newline,
-                                                        selectionControls:
-                                                            NoMenuTextSelectionControls(),
-                                                        textAlign: TextAlign.start,
-                                                        textAlignVertical:
-                                                            TextAlignVertical(
-                                                                y: -1),
-                                                        maxLines: 2,
-                                                        minLines: 1,
-                                                        decoration: InputDecoration(
-                                                          contentPadding:
-                                                              const EdgeInsets.only(
-                                                                  left: 15,
-                                                                  top: 5,
-                                                                  bottom: 5),
-                                                          labelStyle:
-                                                              TextStyle(                                fontFamily: 'Lexend',
-                                                                  color:
-                                                                      defaultPalette
-                                                                          .black),
-                                                          fillColor: defaultPalette
-                                                              .transparent,
-                                                          border: InputBorder.none,
-                                                          enabledBorder:
-                                                              OutlineInputBorder(
-                                                                  borderSide:
-                                                                      BorderSide
-                                                                          .none),
-                                                          focusedBorder:
-                                                              OutlineInputBorder(
-                                                                  borderSide:
-                                                                      BorderSide
-                                                                          .none),
                                                         ),
-                                                        style: TextStyle(                                fontFamily: 'Lexend',
-                                                            fontSize:
-                                                                mapValueDimensionBasedLockOnDesync(
-                                                                    15,
-                                                                    30,
-                                                                    sWidth,
-                                                                    sHeight),
-                                                            color: defaultPalette
-                                                                .extras[0],
-                                                            fontWeight:
-                                                                FontWeight.w400,
-                                                            letterSpacing: -1),
-                                                        onFieldSubmitted:
-                                                            (value) {},
                                                       ),
+                                                       Row(
+                                                        children: [
+                                                          SizedBox(width:  mapValueDimensionBasedLockOnDesync( 15, 25, sWidth, sHeight)),
+                                                          ElevatedLayerButton(
+                                                            onClick: () async {
+                                                              ref.read(homePageUrlProvider.notifier).state = url(6);
+
+                                                              await changeTvChannel(true);
+                                                            },
+                                                            
+                                                            buttonHeight: mapValueDimensionBasedLockOnDesync( 30, 85, sWidth, sHeight),
+                                                            buttonWidth:mapValueDimensionBasedLockOnDesync( 30, 85, sWidth, sHeight),
+                                                            borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
+                                                            animationDuration: const Duration(milliseconds: 200),
+                                                            animationCurve: Curves.ease,
+                                                            subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                            depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                            topDecoration: BoxDecoration(
+                                                              color: defaultPalette.tertiary,
+                                                              border: Border.all(),
+                                                            ),
+                                                            topLayerChild:Container(
+                                                                
+                                                            child: Icon(
+                                                              TablerIcons.vocabulary,
+                                                              color: defaultPalette.primary,
+                                                              size: mapValueDimensionBasedLockOnDesync( 15, 38, sWidth, sHeight), )),
+                                                                                                            
+                                                            baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                            // border: Border.all(),
+                                                              ),
+                                                            ),
+                                                          SizedBox(width: 10),
+                                                          Expanded(
+                                                            child: FittedBox(
+                                                              fit:BoxFit.scaleDown,
+                                                              alignment: Alignment.centerLeft,
+                                                              child: Text(homePageUrls.indexOf(ref.watch(homePageUrlProvider))==-1?'Documentation.':homePageUrltitles[homePageUrls.indexOf(ref.watch(homePageUrlProvider))],
+                                                                maxLines:2,
+                                                                overflow:TextOverflow.ellipsis,
+                                                                style: TextStyle( fontFamily: 'Lexend',
+                                                                fontSize: 20,
+                                                                height: 0.8,
+                                                                color: defaultPalette.extras[0],
+                                                                fontWeight: FontWeight.w600,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 15),
+                                                          Row(
+                                                            children: [
+                                                            ElevatedLayerButton(
+                                                            onClick: () async {
+                                                              final currentUrl = await _controller2?.getUrl()??WebUri.uri(Uri.parse(ref
+                                                                      .watch(homePageUrlProvider))); // get current URL from WebViewController
+                                                              final currentIndex = homePageUrls.indexOf(ref
+                                                                      .watch(homePageUrlProvider));
+                                                              print(currentIndex);
+                                                              // If currentUrl not in the list, default to 0
+                                                              final newIndex = currentIndex != -1
+                                                              ? currentIndex == 0 
+                                                                ? homePageUrls.length - 1 
+                                                                : currentIndex - 1
+                                                              : 0;
+
+                                                              ref.read(homePageUrlProvider.notifier).state = homePageUrls[newIndex];
+
+                                                              await changeTvChannel(true);
+                                                            },
+                                                            buttonHeight: mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
+                                                            buttonWidth:mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
+                                                            borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
+                                                            animationDuration: const Duration(milliseconds: 200),
+                                                            animationCurve: Curves.ease,
+                                                            subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                            depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                            topDecoration: BoxDecoration(
+                                                              color: defaultPalette.extras[3],
+                                                              border: Border.all(),
+                                                            ),
+                                                            topLayerChild: Container(
+                                                            child: Icon(
+                                                              TablerIcons.caret_left_filled,
+                                                              color: defaultPalette.primary,
+                                                              size: mapValueDimensionBasedLockOnDesync( 18, 38, sWidth, sHeight),
+                                                                                                                        )),            
+                                                            baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                            // border: Border.all(),
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 5),
+                                                          ElevatedLayerButton(
+                                                            onClick: () async {
+                                                              final currentUrl = await _controller2?.getUrl()??WebUri.uri(Uri.parse(ref
+                                                                      .watch(homePageUrlProvider))); // get current URL from WebViewController
+                                                              final currentIndex = homePageUrls.indexOf(ref
+                                                                      .watch(homePageUrlProvider));
+                                                              // If currentUrl not in the list, default to 0
+                                                              final newIndex = currentIndex != -1
+                                                              ? currentIndex == homePageUrls.length - 1 
+                                                                ? 0
+                                                                : currentIndex + 1
+                                                              : 0;
+
+                                                              ref.read(homePageUrlProvider.notifier).state = homePageUrls[newIndex];
+
+                                                              await changeTvChannel(true);
+                                                            },
+                                                            
+                                                            buttonHeight: mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
+                                                            buttonWidth:mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
+                                                            borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
+                                                            animationDuration: const Duration(milliseconds: 200),
+                                                            animationCurve: Curves.ease,
+                                                            subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                            depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                            topDecoration: BoxDecoration(
+                                                              color: defaultPalette.extras[3],
+                                                              border: Border.all(),
+                                                            ),
+                                                            topLayerChild:Container(
+                                                                
+                                                            child: Icon(
+                                                              TablerIcons.caret_right_filled,
+                                                              color: defaultPalette.primary,
+                                                              size: mapValueDimensionBasedLockOnDesync( 18, 38, sWidth, sHeight),
+                                                                                                                        )),
+                                                                                                            
+                                                            baseDecoration: BoxDecoration(
+                                                            color: defaultPalette.extras[0],
+                                                            // border: Border.all(),
+                                                              ),
+                                                            ),
+                                                          
+                                                          ],),
+                                                          SizedBox(width:  mapValueDimensionBasedLockOnDesync( 15, 25, sWidth, sHeight)),
+                                                          ],
+                                                        ),
+                                                        SizedBox(height:  mapValueDimensionBasedLockOnDesync( 15, 25, sWidth, sHeight)),
+                                                      ],
                                                     ),
                                                   ),
-                                                ],
-                                              ),
-                                                SizedBox(height:5),
-                                                Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal:12.0),
-                                                child: Text(
-                                                'LLMs can make mistakes, or hallucinate. Fact check important stuff.',
-                                                maxLines: 1,
-                                                overflow:TextOverflow.ellipsis,
-                                                style: TextStyle(                                fontFamily: 'Lexend',
-                                                  fontSize: mapValueDimensionBasedLockOnDesync( 6, 12, sWidth, sHeight),
-                                                    color: defaultPalette.extras[0],
-                                                    fontWeight: FontWeight.w500,),
                                                 ),
                                               ),
+                                              SizedBox(height:mapValueDimensionBasedLockOnDesync(5, 20, sWidth, sHeight)),
                                             ],
                                           ),
                                         )),
-                                      
                                       //RECENTSS CARDD
-                                      if(index==1)
+                                      if(index==0)
                                       Positioned.fill(
                                         child: //the layout tiles
                                         Padding(
@@ -3592,7 +4355,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 ),
                               ),
                               Tooltip(
-                                message: "Profile",
+                                message: "About",
                                 preferBelow: true,
                                 margin: EdgeInsets.only(left: 45),
                                 padding: EdgeInsets.symmetric(horizontal: 15,vertical: 8),
@@ -3616,7 +4379,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 ),
                                 // verticalOffset: -20,
                                 child: Icon(
-                                  IconsaxPlusLinear.user_square,
+                                  IconsaxPlusLinear.information,
                                   size: 25,
                                   color: defaultPalette.primary,
                                 ),
@@ -4051,9 +4814,8 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         label: s.replaceAll('Letter', 'LT').replaceAll('Legal', 'LG'),
         onSelected: () {
           setState(() {
-            tempLayoutModel.docPropsList[0].pageFormatController =
-                getMapFromPageFormat(getPageFormatFromString(s));
-         print( tempLayoutModel.docPropsList[0].pageFormatController);
+            tempLayoutModel.docPropsList[0].pageFormatController = getMapFromPageFormat(getPageFormatFromString(s));
+            print(tempLayoutModel.docPropsList[0].pageFormatController);
             reassignPageFormatControllers();
           });
         },
@@ -4062,6 +4824,93 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         style: TextStyle(                                fontFamily: 'Lexend',
           fontWeight: FontWeight.w500,
           color: defaultPalette.primary,
+          fontSize: mapValueDimensionBasedLockOnDesync(12, 24, sWidth, sHeight),
+        ),
+      );
+    }).toList();
+  }
+  void showLegalsMenu(BuildContext context, Offset position, double sWidth, double sHeight) {
+  final entries = buildLegalsContextMenuEntries(sWidth, sHeight);
+  var menu = cm.ContextMenu(
+    entries: entries,
+    boxDecoration: BoxDecoration(
+      boxShadow: [
+        BoxShadow(
+          color: defaultPalette.black.withOpacity(0.3),
+          blurRadius: 2,
+        )
+      ],
+      color: defaultPalette.primary,
+      borderRadius: BorderRadius.circular(10),
+    ),
+    position: position,
+  );
+  menu.show(context);
+}
+  
+  List<cm.ContextMenuEntry> buildLegalsContextMenuEntries(double sWidth, double sHeight) {
+    final formats = ['Terms Of Service', 'Privacy Policy', 'EULA','Licenses'];
+
+    return formats.map((s) {
+      return cm.MenuItem(
+        label: s,
+        onSelected: () async {
+          switch (s) {
+            case 'Terms Of Service':
+              ref.read(loginPageUrlProvider.notifier).state = termsOfServiceUrl;
+              await changeTvChannel();
+              break;
+            case 'Privacy Policy':
+              ref.read(loginPageUrlProvider.notifier).state = privacyPolicyUrl;
+              await changeTvChannel();
+              break;
+            case 'EULA':
+              ref.read(loginPageUrlProvider.notifier).state = eulaUrl;
+              await changeTvChannel();
+              break;
+            case 'Licenses':
+              final licenses = await rootBundle.loadString('assets/oss_licenses.dart');
+              final html = """
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <meta charset="utf-8">
+                    <style>
+                      body {
+                        font-family: monospace;
+                        white-space: pre-wrap;
+                        padding: 16px;
+                        margin: 0;
+                        background: #fafafa;
+                        color: #222;
+                      }
+                      h2 {
+                        text-align: center;
+                      }
+                    </style>
+                  </head>
+                  <body>
+                    <h2>Licenses</h2>
+                    <div>$licenses</div>
+                  </body>
+                </html>
+                """;
+
+                ref.read(loginPageUrlProvider.notifier).state = Uri.dataFromString(
+                  html,
+                  mimeType: 'text/html',
+                  encoding: Encoding.getByName('utf-8'),
+                ).toString();
+                await changeTvChannel();
+              break;
+            default:
+          }
+        },
+        hoverColor: defaultPalette.extras[0].withOpacity(0.02),
+        unfocusedColor: defaultPalette.extras[0].withOpacity(0.2),
+        style: TextStyle(                                fontFamily: 'Lexend',
+          fontWeight: FontWeight.w500,
+          color: defaultPalette.extras[0],
           fontSize: mapValueDimensionBasedLockOnDesync(12, 24, sWidth, sHeight),
         ),
       );
@@ -4097,7 +4946,116 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
 
     return Size(newWidth, newHeight);
   }
-  
+  Future<void> changeTvChannel([bool isHome = false]) async {
+    var controller = isHome? _controller2:_controller;
+    var url = isHome? ref.read(homePageUrlProvider):ref.read(loginPageUrlProvider);
+    if (controller != null && url.isNotEmpty) {
+      // startWhiteNoise();
+      if (!isHome) {
+        final htmlString = await rootBundle.loadString('assets/static.html');
+        
+        await (controller!.loadData(data: htmlString, mimeType: 'text/html', encoding: 'utf8'));
+        
+        await Future.delayed(
+            const Duration(
+                milliseconds: 100));
+        startWhiteNoise();
+        await Future.delayed( const Duration( milliseconds: 400));
+      }
+      controller!.loadUrl(
+        urlRequest: URLRequest(
+            url: WebUri.uri(Uri
+                .parse(url))),
+      );
+      await Future.delayed( const Duration( milliseconds: 100));
+      stopWhiteNoise();
+    }
+    setState(() {});
+  }
+  Widget infoOverlayPanel(String heading, Widget img, String subheading, String body, [String body2='']){
+    return  GestureDetector(
+      onTap:(){
+        if (infoOverlayEntry != null) {
+          setState(() {
+            infoOverlayEntry?.remove();
+            infoOverlayEntry = null;
+          });
+        }
+      },
+      child: Container(
+        padding:EdgeInsets.all(12),
+        decoration: BoxDecoration(
+        color: defaultPalette.primary.withOpacity(1),
+        boxShadow: [
+          BoxShadow(blurRadius: 15,spreadRadius: 2,color: defaultPalette.extras[0].withOpacity(0.2))
+        ],
+        border: Border.all(),
+        borderRadius: BorderRadius.circular(15)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                img,
+                SizedBox(width: 10,),
+                Text(
+                  heading,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.start,
+                  style: TextStyle(
+                    fontFamily: 'Lexend',
+                    fontSize: 25,
+                    color: defaultPalette.extras[0],
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.none, 
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 10,),
+            Text(subheading,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.start,
+              style: TextStyle(
+                    fontFamily: 'Lexend',
+              fontSize: 18,
+              height: 0.8,
+              color: defaultPalette.extras[0],
+              fontWeight: FontWeight.w500,
+              decoration: TextDecoration.none, 
+              ),
+            ),
+            SizedBox(height: 5,),
+            Text(body,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.start,
+              style: TextStyle( fontFamily: 'Lexend',
+              fontSize: 15,
+              height: 0.8,
+              color: defaultPalette.extras[0],
+              fontWeight: FontWeight.w400,
+              decoration: TextDecoration.none, 
+              ),
+            ),
+            Text(body2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.start,
+              style: TextStyle( fontFamily: 'Lexend',
+              fontSize: 8,
+              height: 0.8,
+              color: defaultPalette.extras[0],
+              fontWeight: FontWeight.w400,
+              decoration: TextDecoration.none, 
+              ),
+            ),
+            SizedBox(height: 5,),
+          ],
+        ),
+      ),
+    );
+  }
 
   Future<void> saveFile(LayoutModel newLayout) async {
     final payload = newLayout.toJson();
@@ -4130,140 +5088,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
    print(st);
     }
   }
-  
-  // Stream<List<LayoutModel>> layoutStream() async* {
-  //   if (!await dir.exists()) {
-  //     yield [];
-  //     return;
-  //   }
-  //   // --- Watch for changes ---
-  //   await for (final event in dir.watch(recursive: false)) {
-  //     // await syncLayoutsBoxAndFolder(dir);
-  //     if (event.type != FileSystemEvent.modify) {
-  //       yield [];
-  //     }
-  //   }
-  // }
-  // Future<bool> syncLayoutsBoxAndFolder(Directory dir) async{
-  //   if (dir.path=='@@@@@') {
-  //     return false;
-  //   }
-  //   if (!await dir.exists()) {
-  //     return false;
-  //   }
-  //   // --- Helper: extract metadata only ---
-  //   Map<String, dynamic>? parseMeta(File file) {
-  //     try {
-  //       final content = file.readAsStringSync();
-  //       final meta = LayoutModel.toMetaDataFromJson(content);
-  //       print(meta);
-  //       return {
-  //         ...meta,
-  //         'file': file,
-  //       };
-  //     } catch (e) {
-  //       print('Error parsing ${file.path}: $e');
-  //       return null;
-  //     }
-  //   }
-
-  //   // --- Helper: parse full LayoutModel ---
-  //   LayoutModel? parseFull(File file) {
-  //     try {
-  //       final content = file.readAsStringSync();
-  //       final model = LayoutModel.fromJson(content);
-  //       model.name = file.uri.pathSegments.last.replaceAll(RegExp(r'\.bbc$'), '');
-  //       return model;
-  //     } catch (e) {
-  //       print('Error parsing ${file.path}: $e');
-  //       return null;
-  //     }
-  //   }
-  //   Future<bool> syncLayouts() async {
-  //     final box = Boxes.getLayouts(ref);
-  //     // Snapshot Hive + Files
-  //     final boxLayouts = box.values.toList();
-  //     final fileMetas = dir
-  //         .listSync()
-  //         .whereType<File>()
-  //         .where((f) => f.path.endsWith('.bbc'))
-  //         .map(parseMeta)
-  //         .whereType<Map<String, dynamic>>()
-  //        .toList(); // your existing logic
-  //     // Build lookup maps
-  //     final boxMap = {for (var lm in boxLayouts) lm.id: lm};
-  //     final fileMap = {for (var m in fileMetas) m['id'] as String: m};
-  //     // Union of all IDs
-  //     final allIds = {...boxMap.keys, ...fileMap.keys};
-  //     // print('allids: $allIds');
-  //     for (final id in allIds) {
-  //       final lm = boxMap[id];
-  //       final meta = fileMap[id];
-  //       // print('file: $id');
-  //       // print('lm: $lm');
-  //       // print('meta: $meta');
-  //       if (lm != null && meta == null) {
-  //         // Exists in Hive only → write to file
-  //         if(lm.deleted??false){
-  //           await lm.delete();
-  //         } else{
-  //         saveFile(lm);}
-  //       } else if (lm == null && meta != null) {
-  //         if(meta['deleted']??false){
-  //           print('fileExists not Hive: $id');
-  //           (meta['file'] as File)?.delete();
-  //         } else {
-  //         // Exists in file only → write to Hive
-  //         var newId = id;
-  //         // print('fileExists not Hive: $id');
-  //         // if (newId.isEmpty || boxMap.containsKey(newId)) {
-  //         //   final prefix = id.startsWith('BI') ? 'BI' : 'LY';
-  //         //   newId = '$prefix-${Uuid().v4()}';
-  //         // }
-  //         final fm = parseFull(meta['file'] as File)?..name = (meta['file'] as File).path.split('\\').last;
-  //         if (fm != null) {
-  //           fm.id = newId;
-  //           await box.put(fm.id, fm);
-  //         }}
-  //       } else if (lm != null && meta != null) { 
-  //         // Exists in both → compare modifiedAt
-  //         if(lm.deleted??false){
-  //           print('Exists in both → compare modifiedAt: $id');
-  //           (meta['file'] as File)?.delete();
-  //         }
-  //         else {
-  //         final fileModifiedAt = meta['modifiedAt'] as DateTime;
-  //         final diff = lm.modifiedAt.difference(fileModifiedAt).inSeconds;
-  //         if (diff>10) {
-  //           // Hive newer → overwrite file
-  //           saveFile(lm);
-  //         } else if (diff<-10) {
-  //           // File newer → overwrite Hive
-  //           final fm = parseFull(meta['file'] as File)?..name = (meta['file'] as File).path.split('\\').last;
-  //           if (fm != null) {
-  //            await box.put(fm.id, fm);
-  //           }
-  //         } else {
-  //           // Same timestamp → keep Hive (or just trust either side)
-  //           box.get(id)?..name = (meta['file'] as File).path.split('\\').last..save();
-  //         }}
-  //         // return false;
-  //       } else {
-  //           // Same timestamp → keep Hive (or just trust either side)
-  //           if(lm?.deleted??false){
-  //             print('Exists in both → compare modifiedAt: $id');
-  //             (meta?['file'] as File).delete();
-  //           }else {
-  //             box.get(id)?..name = (meta?['file'] as File).path.split('\\').last..save();}
-  //           // return false;
-  //         }
-  //     }
-  //     print("Synced layouts");
-  //     return false;
-  //   }
-  //   // --- Initial sync ---
-  //   return syncLayouts();
-  // }
 
   Future<void> forceDelete(String path) async {
     final result = await Process.run(
@@ -11486,6 +12310,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     bool isBillTab = homeScreenTabIndex == 2;
     bool isProfileTab = homeScreenTabIndex == 3;
     double dotSize = sHeight / 35;
+    double fontSize = mapValueDimensionBasedLockOnDesyncWeb(
+      10,15,sWidth,sHeight
+    );
     // print(sWidth);
     return AnimatedPositioned(
       duration: Durations.short2,
@@ -11513,264 +12340,402 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   child: GraphWindow(sWidth: sWidth, sHeight: sHeight, s: 2)
                 ),
               ),
-              //Profile$€₹
-              AnimatedPositioned(
-                duration: Durations.medium2,
-                height: mapValueDimensionBasedLockOnDesync(
-                    205, 405, sWidth, sHeight),
-                top: mapValueDimensionBasedLockOnDesync(
-                          75, 120, sWidth, sHeight),
-                right: isProfileTab
-                    ? mapValueDimensionBased(15, 15, sWidth, sHeight,
-                        useWidth: true)
-                    : -sWidth / 2,
-                child: Container(
-                  padding: EdgeInsets.only(left: 5, right: 20, top: 10),
-                  // width: sWidth,
-                  decoration: BoxDecoration(
-                    // color:defaultPalette.secondary,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text('PROFILE'.toUpperCase(),
-                    textAlign: TextAlign.end,
-                    style: GoogleFonts.micro5(
-                      color: defaultPalette.extras[0],
-                      // fontSize: mapValueDimensionBasedLockOnDesync(
-                      //     35, 110, sWidth, sHeight),
-                      fontSize: mapValueDimensionBased(
-                        130,
-                        130 + (mapValueDimensionBased( 0, 120, sWidth, sHeight, useWidth: true)),
-                        sWidth,
-                        sHeight,
-                        b: false,
-                      ),
-                      letterSpacing: -2,
-                      fontWeight: FontWeight.w400,
-                      height: 0.6)),
-                ),
-              ),
               //leftSideButtons and elevated
               AnimatedPositioned(
                 duration: Durations.medium2,
-                bottom: isProfileTab ? -90 : -150,
-                right: isProfileTab
-                    ? mapValueDimensionBased(40, 50, sWidth, sHeight, useWidth: true)
-                    : -sWidth / 2,
+                bottom: isProfileTab ? 20 : -150,
+                left:90,
+                // right: isProfileTab
+                //     ? mapValueDimensionBased(40, 50, sWidth, sHeight, useWidth: true)
+                //     : -sWidth / 2,
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: Align(
-                        alignment: Alignment(0.8, -0.8),
-                        child: Username(
-                          text: user?.email?.split('@')[0] ?? '',
-                          sHeight: sHeight,
-                          sWidth: sWidth,
-                        ))),
+                      child: Container(
+                        decoration:BoxDecoration(
+                          borderRadius: BorderRadius.circular(45),
+                          color:Color(0xffd5d5d5),)
+                        
+                      )),
+                    //secondary colored ground substitute
+                    Positioned(
+                    bottom:0,
+                    child: Container(
+                        width:(15 + 65 + 15 + 65 + 15 + 65 + 15 + 45) +
+                          mapValueDimensionBasedLockOnDesync(-30, 250, sWidth, sHeight,
+                        baseHeight: 150,
+                        baseWidth: 250,
+                        ),
+                        alignment: Alignment(0,0.8),
+                        height:mapValueDimensionBasedLockOnDesync(60, 120, sWidth, sHeight),
+                        decoration:BoxDecoration(
+                          borderRadius: BorderRadius.circular(45).copyWith(
+                            topLeft: Radius.circular(0),
+                            topRight: Radius.circular(0),
+                          ),
+                          color:defaultPalette.secondary,),
+                        
+                      )),
+                    //thanks gif
+                    Positioned(
+                      right:mapValueDimensionBasedLockOnDesync(5, 30, sWidth, sHeight,
+                        baseHeight: 150,
+                        baseWidth: 250,
+                        ),
+                      bottom:mapValueDimensionBasedLockOnDesync(20, 60, sWidth, sHeight,
+                        baseHeight: 150,
+                        baseWidth: 250,
+                        ),
+                      child: Image.asset(
+                        'assets/images/pixelthanks.gif',
+                        width: mapValueDimensionBasedLockOnDesync(60, 220, sWidth, sHeight,
+                        baseHeight: 150,
+                        baseWidth: 250,
+                        ),
+
+                        gaplessPlayback: true, // prevents flickering on rebuild
+                      ),
+                    ),
+                    //billblaze svg and text
+                    Positioned(
+                      left:20 + mapValueDimensionBasedLockOnDesync( 5, 10, sWidth, sHeight),
+                      bottom:mapValueDimensionBasedLockOnDesyncWeb(120, 400, sWidth, sHeight,)-
+                      mapValueDimensionBasedLockOnDesync(20, 60, sWidth, sHeight,
+                        baseHeight: 150,
+                        baseWidth: 250,
+                        ),
+                      child: Stack(
+                        children: [
+                          SizedBox(
+                            height:mapValueDimensionBasedLockOnDesyncWeb(60, 120, sWidth, sHeight,),
+                            width:2*mapValueDimensionBasedLockOnDesyncWeb(60, 120, sWidth, sHeight,),
+                            ),
+                          SizedBox(
+                            height:mapValueDimensionBasedLockOnDesyncWeb(60, 120, sWidth, sHeight,),
+                            child: FittedBox(
+                              fit:BoxFit.scaleDown,
+                              child: SvgPicture.asset(
+                                'assets/logos/billblazeLogoSplashTM.svg',
+                                // height: 300,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom:0,
+                            left: 0,
+                            child: Container(
+                              margin: EdgeInsets.only(left:mapValueDimensionBasedLockOnDesyncWeb(40, 80, sWidth, sHeight,)),
+                              alignment: Alignment.bottomRight,
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'Billblaze',
+                                      style: GoogleFonts.alexBrush(
+                                        fontSize: mapValueDimensionBasedLockOnDesyncWeb(20, 40, sWidth, sHeight),
+                                        color: defaultPalette.extras[0],
+                                        letterSpacing: -1,
+                                        fontWeight: FontWeight.w400,
+                                        decoration: TextDecoration.none,
+                                      ),
+                                    ),
+                                    WidgetSpan(
+                                      child: Transform.translate(
+                                        offset: Offset(2, mapValueDimensionBasedLockOnDesyncWeb(-10, -25, sWidth, sHeight)), // adjust vertical position
+                                        child: Text(
+                                          'TM',// make it smaller
+                                          style: TextStyle(
+                                            fontFamily: 'Lexend',
+                                            fontSize: mapValueDimensionBasedLockOnDesyncWeb(6, 8, sWidth, sHeight),
+                                            fontWeight: FontWeight.w500,
+                                            color: defaultPalette.extras[0],
+                                            decoration: TextDecoration.none, 
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.start,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    //brought to you by
+                    Positioned(
+                      left:20 + mapValueDimensionBasedLockOnDesync( 5, 10, sWidth, sHeight),
+                      bottom:mapValueDimensionBasedLockOnDesyncWeb(120, 400, sWidth, sHeight,)-
+                      mapValueDimensionBasedLockOnDesyncWeb(40, 80, sWidth, sHeight,),
+                      child: Stack(
+                        children: [
+                          SizedBox(
+                            height:mapValueDimensionBasedLockOnDesyncWeb(60, 120, sWidth, sHeight,),
+                            width:2*mapValueDimensionBasedLockOnDesyncWeb(60, 120, sWidth, sHeight,),
+                            ),
+                          Positioned(
+                            bottom:0,
+                            left: 0,
+                            child: Container(
+                              alignment: Alignment.bottomRight,
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'brought to you by:   ',
+                                      style: TextStyle(
+                                            fontFamily: 'Lexend',
+                                        fontSize: mapValueDimensionBasedLockOnDesyncWeb(8, 13.6, sWidth, sHeight),
+                                        color: defaultPalette.extras[0],
+                                        letterSpacing: -0.5,
+                                        fontWeight: FontWeight.w400,
+                                        decoration: TextDecoration.none,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: 'Jepixo',
+                                      style: TextStyle(
+                                            fontFamily: 'Lexend',
+                                        fontSize: mapValueDimensionBasedLockOnDesyncWeb(10, 25, sWidth, sHeight),
+                                        color: defaultPalette.extras[0],
+                                        letterSpacing: -1,
+                                        fontWeight: FontWeight.w500,
+                                        decoration: TextDecoration.none,
+                                      ),
+                                    ),
+                                    WidgetSpan(
+                                      child: Transform.translate(
+                                        offset: Offset(2, mapValueDimensionBasedLockOnDesyncWeb(-10, -15, sWidth, sHeight)), // adjust vertical position
+                                        child: Text(
+                                          'TM',// make it smaller
+                                          style: TextStyle(
+                                            fontFamily: 'Lexend',
+                                            fontSize: mapValueDimensionBasedLockOnDesyncWeb(6, 8, sWidth, sHeight),
+                                            fontWeight: FontWeight.w500,
+                                            color: defaultPalette.extras[0],
+                                            decoration: TextDecoration.none, 
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.start,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    //Message
+                    Positioned(
+                      left:mapValueDimensionBasedLockOnDesync(5, 30, sWidth, sHeight,
+                        baseHeight: 150,
+                        baseWidth: 250,
+                        ),
+                      bottom:mapValueDimensionBasedLockOnDesyncWeb(20, 90, sWidth, sHeight,
+                        ),
+                      child:  AnimatedTextKit(
+                        key: ValueKey((isProfileTab) ? sHeight * sWidth : (isProfileTab)),
+                        animatedTexts: [
+                          typewriterText(isHomeTab, sWidth, sHeight, '(どうもありがとう, Dōmo arigatō),', fontSize),
+                          typewriterText(isHomeTab, sWidth, sHeight, "which means 'Thank you very much.'", fontSize),
+                          typewriterText(isHomeTab, sWidth, sHeight, "Grateful you spent a moment here.", fontSize),
+                          typewriterText(isHomeTab, sWidth, sHeight, "This app is as much yours as it is mine.", fontSize),
+                          typewriterText(isHomeTab, sWidth, sHeight, "If there's something you'd like added,", fontSize),
+                          typewriterText(isHomeTab, sWidth, sHeight, "or if you run into any issues,", fontSize),
+                          typewriterText(isHomeTab, sWidth, sHeight, "please reach me anytime at billblazex@gmail.com.", fontSize),
+                          typewriterText(isHomeTab, sWidth, sHeight, "Your thoughts and support mean the world.", fontSize),
+                          typewriterText(isHomeTab, sWidth, sHeight, "From the bottom of my heart — Grazie mille.", fontSize),
+                          typewriterText(isHomeTab, sWidth, sHeight, "A gentle bow, as a sign of respect.", fontSize),
+                          typewriterText(isHomeTab, sWidth, sHeight, "Keep being awesome!.", fontSize),
+                        ],
+                        // totalRepeatCount: 1,
+                        repeatForever: true,
+                        pause: const Duration(milliseconds: 2000),
+                        displayFullTextOnTap: true,
+                        stopPauseOnTap: true,
+
+                      ),
+                    ),
+                    //corner button
                     Container(
-                      height: sHeight - (2 * titleFontSize),
+                      height: sHeight - (1.5 * titleFontSize),
                       width: (15 + 65 + 15 + 65 + 15 + 65 + 15 + 45) +
-                          mapValueDimensionBased(0, 200, sWidth, sHeight,
-                              useWidth: true),
+                          mapValueDimensionBasedLockOnDesync(-30, 250, sWidth, sHeight,
+                        baseHeight: 150,
+                        baseWidth: 250,
+                        ),
                       decoration: BoxDecoration(
                         color: defaultPalette.transparent,
                         borderRadius: BorderRadius.circular(45),
-                        border: Border.all(
-                          width: 1.5,
-                          color: defaultPalette.extras[0],
-                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(
-                            width: 15 +
-                                mapValueDimensionBasedLockOnDesync(
-                                    0, 5, sWidth, sHeight),
+                            width: 15 + mapValueDimensionBasedLockOnDesync( 0, 5, sWidth, sHeight),
                           ),
                           Column(
                             children: [
                               SizedBox(
-                                height: 15 +
-                                    mapValueDimensionBasedLockOnDesync(
-                                        0, 5, sWidth, sHeight),
+                                height: 15 + mapValueDimensionBasedLockOnDesync( 0, 5, sWidth, sHeight),
                               ),
-                              //LogOUT
+                              //Corner button
                               ElevatedLayerButton(
                                 depth: 3,
                                 subfac: 3,
-                                onClick: () async {
-                                  // await syncLayoutsBoxAndFolder(dir);
-                                  ref.read(homeScreenTabIndexProvider.notifier).state = 0;
-                                  await ref.read(authRepositoryProvider).googleLogOut(ref);
-                                  ref.read(revIndexProvider.notifier).state = 0;
-                                  ref.read(qtyIndexProvider.notifier).state = 0;
-                                  ref.read(profitsIndexProvider.notifier).state = 0;
+                                extrudeLeft: false,
+                                isNavigation: true,
+                                onTapDown: (d) async {
+                                  showLegalsMenu(context, d.globalPosition, sWidth, sHeight);
                                 },
-                                buttonHeight: mapValueDimensionBasedLockOnDesync( 75, 130, sWidth, sHeight),
-                                buttonWidth: mapValueDimensionBasedLockOnDesync( 75, 130, sWidth, sHeight),
-                                borderRadius: BorderRadius.circular(450000),
-                                animationDuration:
-                                    const Duration(milliseconds: 100),
+                                buttonHeight: mapValueDimensionBasedLockOnDesync( 75, 120, sWidth, sHeight),
+                                buttonWidth: mapValueDimensionBasedLockOnDesync( 75, 120, sWidth, sHeight),
+                                borderRadius: BorderRadius.circular(450).copyWith(
+                                  bottomRight: Radius.circular(100),
+                                ),
+                                animationDuration: const Duration(milliseconds: 100),
                                 animationCurve: Curves.ease,
                                 topDecoration: BoxDecoration(
                                   color: Colors.white,
                                   border: Border.all(),
                                 ),
-                                topLayerChild: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      IconsaxPlusLinear.logout_1,
-                                      size: mapValueDimensionBasedLockOnDesync(
-                                          55, 100, sWidth, sHeight),
-                                      color: defaultPalette.extras[0],
-                                    )
-                                  ],
+                                topLayerChild: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    TablerIcons.rosette_discount_check_filled,
+                                    size: mapValueDimensionBasedLockOnDesync( 35, 60, sWidth, sHeight),
+                                    color: defaultPalette.extras[0],
+                                  ),
                                 ),
                                 baseDecoration: BoxDecoration(
                                   color: defaultPalette.extras[0],
                                   border: Border.all(),
-                                ),
-                              ),
-                              SizedBox(
-                                height: 15 +
-                                    mapValueDimensionBasedLockOnDesync(
-                                        0, 5, sWidth, sHeight),
-                              ),
-                              //Github
-                              ElevatedLayerButton(
-                                // isTapped: false,
-                                // toggleOnTap: true,
-                                depth: 3, subfac: 3,
-                                onClick: () async {
-                                  ref
-                                      .read(loginPageUrlProvider.notifier)
-                                      .state = "https://github.com/jepixo";
-                                  if (_controller != null &&
-                                      ref
-                                          .read(loginPageUrlProvider)
-                                          .isNotEmpty) {
-                                    // startWhiteNoise();
-                                    // await _controller!.loadUrl(
-                                    //   urlRequest: URLRequest(
-                                    //       url: WebUri(
-                                    //           "D:/Jepixo/CurrYaar/App/billblaze/assets/static.html")),
-                                    // );
-                                    final htmlString = await rootBundle.loadString('assets/static.html');
-                                    
-                                    await _controller!.loadData(data: htmlString, mimeType: 'text/html', encoding: 'utf8');
-                                    await Future.delayed(
-                                        const Duration(milliseconds: 100));
-                                    startWhiteNoise();
-                                    await Future.delayed(
-                                        const Duration(milliseconds: 400));
-                                    _controller!.loadUrl(
-                                      urlRequest: URLRequest(
-                                          url: WebUri.uri(Uri.parse(
-                                              ref.read(loginPageUrlProvider)))),
-                                    );
-                                    stopWhiteNoise();
-                                    await Future.delayed(
-                                        const Duration(milliseconds: 100));
-                                  }
-                                  setState(() {});
-                                },
-                                buttonHeight:
-                                    mapValueDimensionBasedLockOnDesync(
-                                        75, 130, sWidth, sHeight),
-                                buttonWidth: mapValueDimensionBasedLockOnDesync(
-                                    75, 130, sWidth, sHeight),
-                                borderRadius: BorderRadius.circular(450000),
-                                animationDuration:
-                                    const Duration(milliseconds: 100),
-                                animationCurve: Curves.ease,
-                                topDecoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(),
-                                ),
-                                topLayerChild: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SVGL.software.githubLight(
-                                        width:
-                                            mapValueDimensionBasedLockOnDesync(
-                                                55, 100, sWidth, sHeight),
-                                        height:
-                                            mapValueDimensionBasedLockOnDesync(
-                                                55, 100, sWidth, sHeight))
-                                  ],
-                                ),
-                                baseDecoration: BoxDecoration(
-                                  color: defaultPalette.extras[0],
-                                  border: Border.all(),
-                                ),
-                              ),
-                              SizedBox(
-                                height: 15 +
-                                    mapValueDimensionBasedLockOnDesync(
-                                        0, 5, sWidth, sHeight),
+                                ), onClick: () {  },
                               ),
                               Expanded(child: SizedBox())
                             ],
                           ),
-                          SizedBox(
-                            width: mapValueDimensionBasedLockOnDesync(
-                                25, 35, sWidth, sHeight),
-                          ),
-                          Expanded(
-                            child: Container(
-                              margin: EdgeInsets.all(0).copyWith(
-                                  top: 15 +
-                                      mapValueDimensionBasedLockOnDesync(
-                                          0, 5, sWidth, sHeight)),
-                              child: Column(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      ' ${user?.email ?? ''}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.start,
-                                      style: TextStyle(                                fontFamily: 'Lexend',
-                                        fontSize: mapValueDimensionBased(
-                                          12,
-                                          25,
-                                          sWidth,
-                                          sHeight,
-                                        ),
-                                        color: defaultPalette.extras[0],
-                                        letterSpacing: mapValueDimensionBased(
-                                          3,
-                                          10,
-                                          sWidth,
-                                          sHeight,
-                                        ),
-                                        height: 1,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 15 +
-                                mapValueDimensionBasedLockOnDesync(
-                                    0, 5, sWidth, sHeight),
-                          ),
+                          Expanded(child: SizedBox())
                         ],
                       ),
                     ),
+                    // ToS, Privacy Policy, EULA
+                    Positioned(
+                      bottom:0,
+                      child: Container(
+                        width:(15 + 65 + 15 + 65 + 15 + 65 + 15 + 45) +
+                          mapValueDimensionBasedLockOnDesync(-30, 250, sWidth, sHeight,
+                        baseHeight: 150,
+                        baseWidth: 250,
+                        ),
+                        alignment: Alignment(0,0.8),
+                        height:mapValueDimensionBasedLockOnDesync(60, 120, sWidth, sHeight),
+                        decoration:BoxDecoration(
+                          borderRadius: BorderRadius.circular(45).copyWith(
+                            topLeft: Radius.circular(0),
+                            topRight: Radius.circular(0),
+                          ),
+                          color:defaultPalette.transparent,),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            SizedBox(width:3),
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child:GestureDetector(
+                                onTap: () async {
+                                  ref.read(loginPageUrlProvider.notifier).state = termsOfServiceUrl;
+                                  await changeTvChannel();
+                                },
+                                child:Container(
+                                  child: Text(
+                                    'Terms Of Service',
+                                    maxLines:1,
+                                    overflow:TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontFamily: 'Lexend',
+                                    fontSize: mapValueDimensionBasedLockOnDesyncWeb(8, 13.6, sWidth, sHeight),
+                                    color: defaultPalette.extras[0].withOpacity(0.4),
+                                    letterSpacing: -0.5,
+                                    fontWeight: FontWeight.w400,
+                                    decoration: TextDecoration.none,
+                                  ),
+                                  ),
+                                )
+                              )
+                            ),
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child:GestureDetector(
+                                onTap: () async {
+                                  ref.read(loginPageUrlProvider.notifier).state = privacyPolicyUrl;
+                                  await changeTvChannel();
+                                },
+                                child:Container(
+                                  child: Text(
+                                    'Privacy Policy',
+                                    maxLines:1,
+                                    overflow:TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontFamily: 'Lexend',
+                                    fontSize: mapValueDimensionBasedLockOnDesyncWeb(8, 13.6, sWidth, sHeight),
+                                    color: defaultPalette.extras[0].withOpacity(0.4),
+                                    letterSpacing: -0.5,
+                                    fontWeight: FontWeight.w400,
+                                    decoration: TextDecoration.none,
+                                  ),
+                                  ),
+                                )
+                              )
+                            ),
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child:GestureDetector(
+                                onTap: () async {
+                                  ref.read(loginPageUrlProvider.notifier).state = eulaUrl;
+                                  await changeTvChannel();
+                                },
+                                child:Container(
+                                  child: Text(
+                                    'EULA',
+                                    maxLines:1,
+                                    overflow:TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontFamily: 'Lexend',
+                                    fontSize: mapValueDimensionBasedLockOnDesyncWeb(8, 13.6, sWidth, sHeight),
+                                    color: defaultPalette.extras[0].withOpacity(0.4),
+                                    letterSpacing: -0.5,
+                                    fontWeight: FontWeight.w400,
+                                    decoration: TextDecoration.none,
+                                  ),
+                                  ),
+                                )
+                              )
+                            ),
+                            SizedBox(width:3),
+                        ],)
+                        
+                      )),
+                    
                   ],
                 ),
               ),
               //TVTV
               AnimatedPositioned(
                 duration: Durations.medium2,
-                bottom: isProfileTab ? -90 : -400,
-                left: 90,
+                bottom: isProfileTab ? 20 : -400,
+                // left: 90,
+                right: isProfileTab
+                    ? mapValueDimensionBased(20, 50, sWidth, sHeight, useWidth: true)
+                    : -sWidth / 2,
                 child: AnimatedRotation(
                   duration: Durations.medium2,
                   turns: isProfileTab ? 0 : -0.1,
@@ -11785,7 +12750,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                             mapValueDimensionBased(0, 250, sWidth, sHeight,
                                 useWidth: true))
                         .clamp(0, double.infinity),
-                    buttonHeight: sHeight - (2 * titleFontSize),
+                    buttonHeight: sHeight - (4 * titleFontSize),
                     borderRadius: BorderRadius.circular(35),
                     animationDuration: const Duration(milliseconds: 100),
                     animationCurve: Curves.ease,
@@ -11799,15 +12764,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       child: Row(
                         children: [
                           Expanded(
-                            flex: 70,
+                            flex:70,
                             child: Column(
                               children: [
                                 Expanded(
                                   child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(30).copyWith(
-                                      bottomLeft: Radius.circular(0),
-                                      bottomRight: Radius.circular(0),
-                                    ),
+                                    borderRadius: BorderRadius.circular(30),
                                     child: InAppWebView(
                                       initialUrlRequest: URLRequest(
                                           url: WebUri.uri(Uri.parse(ref
@@ -11836,26 +12798,24 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                     ),
                                   ),
                                 ),
-                                SizedBox(
-                                  height: 77,
-                                )
                               ],
                             ),
                           ),
                           Expanded(
-                              flex: 30,
+                              // width: mapValueDimensionBasedLockOnDesync(30, 500, sWidth, sHeight,
+                              // baseHeight: 150,
+                              // baseWidth: 250,
+                              // ),
+                              flex:30,
                               child: Stack(
                                 children: [
                                   //speaker graph of the TV
                                   Container(
-                                    margin:
-                                        EdgeInsets.all(0).copyWith(left: 10),
+                                    margin:  EdgeInsets.all(0).copyWith(left: 10),
                                     decoration: BoxDecoration(
-                                        color: defaultPalette.secondary
-                                            .withAlpha(50),
+                                        color: defaultPalette.secondary.withAlpha(50),
                                         border: Border.all(width: 0.2),
-                                        borderRadius:
-                                            BorderRadius.circular(30)),
+                                        borderRadius:  BorderRadius.circular(30)),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(30),
                                       child: Opacity(
@@ -11907,12 +12867,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       Row(
                                         children: [
                                           SizedBox(
-                                            width: mapValueDimensionBased(
-                                              5,
-                                              1,
-                                              sWidth,
-                                              sHeight,
-                                            ),
+                                            width:5
                                           ),
                                           Expanded(
                                             child:  RichText(
@@ -11973,10 +12928,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 // toggleOnTap: true,
                                                 depth: 3, subfac: 3,
                                                 onClick: () async {
-                                                  ref
-                                                          .read(
-                                                              loginPageUrlProvider
-                                                                  .notifier)
+                                                  ref.read(loginPageUrlProvider.notifier)
                                                           .state =
                                                       loginPageUrls[Random()
                                                           .nextInt(loginPageUrls
@@ -12040,8 +12992,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       MainAxisAlignment.center,
                                                   children: [
                                                     Icon(
-                                                      TablerIcons
-                                                          .rosette_filled,
+                                                      TablerIcons .rosette_filled,
                                                       size:
                                                           mapValueDimensionBasedLockOnDesync(
                                                               15,
@@ -12129,9 +13080,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         80,
                                                         sWidth,
                                                         sHeight),
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                        450000),
+                                                borderRadius: BorderRadius.circular( 450000),
                                                 animationDuration:
                                                     const Duration(
                                                         milliseconds: 100),
@@ -12187,6 +13136,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         },
                                         child: Row(
                                           children: [
+                                            SizedBox(
+                                              width:mapValueDimensionBasedLockOnDesync(
+                                                            6, 20, sWidth, sHeight),
+                                            ),
                                             Expanded(
                                               child: Container(
                                                 height:
@@ -12278,12 +13231,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         ),
                                       ),
                                       SizedBox(
-                                        height: 90,
+                                        height: 20,
                                       ),
                                     ],
                                   ),
                                 ],
-                              ))
+                            )
+                          )
+                        
                         ],
                       ),
                     ),
@@ -12294,61 +13249,189 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              //BIG PFP BUTTON
+              //ThankYou
               AnimatedPositioned(
-                duration: Durations.extralong4,
-                curve: Curves.bounceOut,
-                bottom: -40,
-                right: isProfileTab ? 5 : 400,
-                child: AnimatedRotation(
-                  duration: Durations.extralong4,
-                  turns: isProfileTab ? 0 : -1,
-                  curve: Curves.bounceOut,
-                  child: ElevatedLayerButton(
-                    // isTapped: false,
-                    // toggleOnTap: true,
-                    depth: 3, subfac: 3,
-                    onClick: () async {},
-                    buttonHeight: mapValueDimensionBasedLockOnDesync(
-                        200, 350, sWidth, sHeight),
-                    buttonWidth: mapValueDimensionBasedLockOnDesync(
-                        200, 350, sWidth, sHeight),
-                    borderRadius: BorderRadius.circular(450000000),
-                    animationDuration: const Duration(milliseconds: 100),
-                    animationCurve: Curves.ease,
-                    topDecoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(),
+                duration: Durations.medium2,
+                height: mapValueDimensionBasedLockOnDesync(30, 305, sWidth, sHeight,
+                  baseHeight: 150,
+                  baseWidth: 250,
+                ),
+                top: mapValueDimensionBased( 40, 110, sWidth, sHeight,b: false),
+                width: sWidth,
+                left: isProfileTab
+                    ? 0
+                    : -sWidth / 2,
+                child: IgnorePointer(
+                  ignoring: true,
+                  child: Container(
+                    padding: EdgeInsets.only(left: 5, right: 20, top: 10),
+                    // width: sWidth,
+                    decoration: BoxDecoration(
+                      // color:defaultPalette.secondary,
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    topLayerChild: ClipRRect(
-                        borderRadius: BorderRadius.circular(45),
-                        child: Stack(
-                          children: [
-                            Container(
-                              width: mapValueDimensionBasedLockOnDesync(
-                                  150, 280, sWidth, sHeight),
-                              height: mapValueDimensionBasedLockOnDesync(
-                                  150, 280, sWidth, sHeight),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                image: DecorationImage(
-                                  //
-                                  // Background Blurred Image
-                                  //
-                                  image: NetworkImage(user?.photoURL ?? ''),
-                                  fit: BoxFit.cover,
-                                ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        SizedBox(
+                          width: mapValueDimensionBasedLockOnDesyncWeb(230, 420, sWidth, sHeight,),
+                        ),
+                        Text('THANK YOU'.toUpperCase(),
+                          textAlign: TextAlign.end,
+                          style: GoogleFonts.micro5(
+                            color: defaultPalette.extras[0],
+                            // fontSize: mapValueDimensionBasedLockOnDesync(
+                            //     35, 110, sWidth, sHeight),
+                            fontSize: mapValueDimensionBasedLockOnDesync(60, 250, sWidth, sHeight,
+                              baseHeight: 150,
+                              baseWidth: 250,
                               ),
-                            )
-                          ],
-                        )),
-                    baseDecoration: BoxDecoration(
-                      color: defaultPalette.extras[0],
-                      border: Border.all(),
+                            letterSpacing: -2,
+                            fontWeight: FontWeight.w400,
+                            height: 0.6)),
+                        Expanded(
+                          child:FittedBox(
+                            fit:BoxFit.scaleDown,
+                            alignment: Alignment.center,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom:4.0),
+                              child: Text('You\'re a legend',
+                              maxLines:1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.alexBrush(
+                              color: defaultPalette.extras[0],
+                              // fontSize: mapValueDimensionBasedLockOnDesync(
+                              //     35, 110, sWidth, sHeight),
+                              fontSize: mapValueDimensionBasedLockOnDesync(20, 120, sWidth, sHeight,
+                                baseHeight: 150,
+                                baseWidth: 250,
+                                ),
+                              letterSpacing: -2,
+                              fontWeight: FontWeight.w400,
+                              height: 0.6)),
+                            ),
+                          ),
+                        )
+                      ],
                     ),
                   ),
                 ),
               ),
+              //PFP BUTTONs 3
+              AnimatedPositioned(
+                duration: Durations.extralong4,
+                top: mapValueDimensionBasedLockOnDesyncWeb( 40, 140, sWidth, sHeight, ),
+                right: isProfileTab
+                    ? mapValueDimensionBased(40, 80, sWidth, sHeight, useWidth: true)
+                    : -sWidth / 2,
+                child: Row(
+                  children: [
+                    ElevatedLayerButton(
+                      // isTapped: false,
+                      // toggleOnTap: true,
+                      depth: 2, subfac: 2,
+                      onClick: () async {
+                        ref.read(loginPageUrlProvider.notifier).state= url(4);
+                        await changeTvChannel();
+                      },
+                      buttonHeight: mapValueDimensionBasedLockOnDesync( 35, 80, sWidth, sHeight),
+                      buttonWidth: mapValueDimensionBasedLockOnDesync( 35, 80, sWidth, sHeight),
+                      borderRadius: BorderRadius.circular(450000000),
+                      animationDuration: const Duration(milliseconds: 100),
+                      animationCurve: Curves.ease,
+                      topDecoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(),
+                      ),
+                      topLayerChild: Padding(
+                        padding: EdgeInsets.all(mapValueDimensionBasedLockOnDesyncWeb( 5, 10, sWidth, sHeight)),
+                        child: FittedBox(
+                          fit:BoxFit.fitHeight,
+                          child: SvgPicture.asset(
+                            'assets/logos/github.svg',
+                            colorFilter: ColorFilter.mode(defaultPalette.extras[0], BlendMode.srcIn),
+                            height: 300,
+                          ),
+                        ),
+                      ),
+                      baseDecoration: BoxDecoration(
+                        color: defaultPalette.extras[0],
+                        border: Border.all(),
+                      ),
+                    ),
+                    SizedBox(width:5),
+                    ElevatedLayerButton(
+                      // isTapped: false,
+                      // toggleOnTap: true,
+                      depth: 2, subfac: 2,
+                      onClick: () async {
+                        ref.read(loginPageUrlProvider.notifier).state= homePageUrls[3];
+                        await changeTvChannel();
+                      },
+                      buttonHeight: mapValueDimensionBasedLockOnDesync( 35, 80, sWidth, sHeight),
+                      buttonWidth: mapValueDimensionBasedLockOnDesync( 35, 80, sWidth, sHeight),
+                      borderRadius: BorderRadius.circular(450000000),
+                      animationDuration: const Duration(milliseconds: 100),
+                      animationCurve: Curves.ease,
+                      topDecoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(),
+                      ),
+                      topLayerChild:Padding(
+                        padding: EdgeInsets.all(mapValueDimensionBasedLockOnDesyncWeb( 5, 10, sWidth, sHeight)),
+                        child: FittedBox(
+                          fit:BoxFit.fitHeight,
+                          child: SvgPicture.asset(
+                            'assets/logos/bmc-logo.svg',
+                            colorFilter: ColorFilter.mode(defaultPalette.extras[0], BlendMode.srcIn),
+                          ),
+                        ),
+                      ),
+                      baseDecoration: BoxDecoration(
+                        color: defaultPalette.extras[0],
+                        border: Border.all(),
+                      ),
+                    ),
+                    SizedBox(width:5),
+                    ElevatedLayerButton(
+                      // isTapped: false,
+                      // toggleOnTap: true,
+                      depth: 2, subfac: 2,
+                      onClick: () async {
+                        ref.read(loginPageUrlProvider.notifier).state= homePageUrls[4];
+                        await changeTvChannel();
+                      },
+                      buttonHeight: mapValueDimensionBasedLockOnDesync( 35, 80, sWidth, sHeight),
+                      buttonWidth: mapValueDimensionBasedLockOnDesync( 35, 80, sWidth, sHeight),
+                      borderRadius: BorderRadius.circular(450000000),
+                      animationDuration: const Duration(milliseconds: 100),
+                      animationCurve: Curves.ease,
+                      topDecoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(),
+                      ),
+                      topLayerChild: Padding(
+                        padding: EdgeInsets.all(mapValueDimensionBasedLockOnDesyncWeb( 3, 8, sWidth, sHeight)).copyWith(left: mapValueDimensionBasedLockOnDesyncWeb( 6, 12, sWidth, sHeight)),
+                        child: FittedBox(
+                          fit:BoxFit.fitHeight,
+                          child: SvgPicture.asset(
+                            'assets/logos/kofibw.svg',
+                            colorFilter: ColorFilter.mode(defaultPalette.extras[0], BlendMode.srcIn),
+                            height: 300,
+                          ),
+                        ),
+                      ),
+                      baseDecoration: BoxDecoration(
+                        color: defaultPalette.extras[0],
+                        border: Border.all(),
+                      ),
+                    ),
+                  
+                  ],
+                ),
+              ),
+            
             ],
           ),
         ),
@@ -13040,6 +14123,23 @@ double mapValueDimensionBasedLockOnDesync(
   // Desync: freeze at the value where sync broke (based on last common progress)
   final frozenProgress = math.min(widthProgress, heightProgress);
   return outMin + (outMax - outMin) * frozenProgress;
+}
+
+double mapValueDimensionBasedLockOnDesyncWeb(double outMin,
+  double outMax,
+  double sWidth,
+  double sHeight, {
+  double baseWidth = 400,
+  double baseHeight = 250,
+  double maxWidth = 2194,
+  double maxHeight = 1187,
+}){
+  return mapValueDimensionBasedLockOnDesync(outMin, outMax, sWidth, sHeight,
+  baseHeight: baseHeight,
+  baseWidth: baseWidth,
+  maxHeight: maxHeight,
+  maxWidth: maxWidth,
+  );
 }
 
 String buildCombinedTextFromBlocks(

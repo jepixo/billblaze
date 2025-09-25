@@ -220,9 +220,10 @@ class MainAppState extends ConsumerState<MainApp> {
                 },
                   child: Center(
                     child: SvgPicture.asset(
-                      'assets/logos/Asset6.svg',
+                      'assets/logos/billblazeLogoSplashTM.svg',
                       // allowDrawingOutsideViewBox: true,
                       // theme: SvgTheme(currentColor: defaultPalette.primary),
+                      height: sHeight/2,
                     )
                   ),
                 )),
@@ -269,9 +270,10 @@ class MainAppState extends ConsumerState<MainApp> {
                 },
                   child: Center(
                     child: SvgPicture.asset(
-                      'assets/logos/Asset6.svg',
+                      'assets/logos/billblazeLogoSplashTM.svg',
                       // allowDrawingOutsideViewBox: true,
                       // theme: SvgTheme(currentColor: defaultPalette.primary),
+                      height: sHeight/2,
                     )
                   ),
                 )),
