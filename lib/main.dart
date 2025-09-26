@@ -189,6 +189,7 @@ class MainAppState extends ConsumerState<MainApp> {
     if(pendingFilePath != null) {
       print('Hello There!');
       return MaterialApp(
+      title: 'Billblaze™',
       debugShowCheckedModeBanner: false,
       locale: const Locale('en', 'GB'),
       theme: ThemeData(
@@ -237,6 +238,7 @@ class MainAppState extends ConsumerState<MainApp> {
     }
 
     return MaterialApp(
+      title: 'Billblaze™',
       debugShowCheckedModeBanner: false,
       locale: const Locale('en', 'GB'),
       theme: ThemeData(
@@ -310,6 +312,7 @@ class _ErrorAppState extends ConsumerState<ErrorApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Billblaze™',
       debugShowCheckedModeBanner: false,
       locale: const Locale('en', 'GB'),
       theme: ThemeData(
