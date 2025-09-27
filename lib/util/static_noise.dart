@@ -6,7 +6,7 @@ AudioPlayer? _whiteNoisePlayer;
 
 Future<void> startWhiteNoise() async {
   final sampleRate = 44100;
-  final durationSeconds = 10; // One second loop
+  final durationSeconds = 3; // One second loop
   final totalSamples = (sampleRate * durationSeconds).toInt();
 
   final buffer = BytesBuilder();
