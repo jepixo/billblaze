@@ -9155,9 +9155,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           borderRadius:
                                               BorderRadius.circular(12),
                                           child: ListView.builder(
-                                            padding: EdgeInsets.only(
-                                                right:
-                                                    isLayoutTileView ? 6 : 3),
                                             controller: controller,
                                             physics: physics,
                                             itemCount: layoutSearchController.text == ''
@@ -9616,7 +9613,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   height: 5),
                                                             ],
                                                           ),
-                                                          SizedBox(width: 5),
+                                                          SizedBox(width: 7),
                                                         ],
                                                       ),
                                                     ),
@@ -9882,7 +9879,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               ),
                                                             ],
                                                           ),
-                                                          SizedBox(width: 5),
+                                                          SizedBox(width: 10),
                                                         ],
                                                       ),
                                                     ),
