@@ -546,10 +546,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
   //
   //
   //
-  TypewriterAnimatedText typewriterText(bool isHomeTab, double sWidth, double sHeight, String text){
+  TypewriterAnimatedText typewriterText(bool isHomeTab, double sWidth, double sHeight, String text, [double fontSize =0]){
+    if(fontSize==0){ fontSize = mapValueDimensionBasedLockOnDesync( 12, 30, sWidth, sHeight);}
     return TypewriterAnimatedText(text,
       textStyle: TextStyle( fontFamily: 'Lexend',
-          fontSize: (isHomeTab) ? mapValueDimensionBasedLockOnDesync( 12, 30, sWidth, sHeight) : 20,
+          fontSize: (isHomeTab) ? mapValueDimensionBasedLockOnDesync( 12, 30, sWidth, sHeight) : fontSize,
           color: defaultPalette.extras[0].withOpacity(0.4),
           height: 1.7),
       speed: Duration(milliseconds: 100));
@@ -3169,9 +3170,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                     Only provide brief, direct answers to user queries strictly related to statistical data from BillBlaze. If you can't answer something just say so but don't remain silent to a question.
                                                                     Do not generate questions or mention unrelated topics. Keep your responses strictly bound to the BillBlaze data and decorate linguistically for the user. 
                                                                     Here's the BillBlaze Data: $typeStats, Selected year: $selectedYear, Selected Month: $selectedMonth, YearStats: $monthRevenueMap, MonthStats: $dayRevenueMap Current Date: ${DateFormat('dd MMMM yyyy, EEEE').format(DateTime.now())}, Current Time: ${DateFormat('h:mma').format(DateTime.now())}.
-                                                                      Total Revenue: $totalRevenue, Total Profit: $totalProfit, Total bills: $totalBills.
-                                                                  Payable means our total revenue.
-                                                                  Count means number of bills made by the user.
+                                                                    Total Revenue: $totalRevenue, Total Profit: $totalProfit, Total bills: $totalBills, Total Unpaid Bills: $totalUnpaid, Total Unpaid Revenue: $totalUnpaidRevenue.
+                                                                    Payable means our revenue.
+                                                                    Count means number of bills made by the user.
                                                                 """)
                                                               ..addMessage(
                                                                   role: Role.user,
@@ -4292,7 +4293,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                     ),
                                                                                     'ko-fi.com/jepixo',
                                                                                     '''
-                                                                                    \nSupport my work, snag exclusive products, 
+                                                                                    \nSupport my journey, snag exclusive products, 
                                                                                     \nor commission me to make something unique for you.'''
                                                                                   ),
                                                                             );
@@ -5594,6 +5595,93 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
         style: TextStyle( fontFamily: 'Lexend',
           fontWeight: FontWeight.w500,
           color: defaultPalette.primary,
+          fontSize: mapValueDimensionBasedLockOnDesync(12, 24, sWidth, sHeight),
+        ),
+      );
+    }).toList();
+  }
+  void showLegalsMenu(BuildContext context, Offset position, double sWidth, double sHeight) {
+  final entries = buildLegalsContextMenuEntries(sWidth, sHeight);
+  var menu = cm.ContextMenu(
+    entries: entries,
+    boxDecoration: BoxDecoration(
+      boxShadow: [
+        BoxShadow(
+          color: defaultPalette.black.withOpacity(0.3),
+          blurRadius: 2,
+        )
+      ],
+      color: defaultPalette.primary,
+      borderRadius: BorderRadius.circular(10),
+    ),
+    position: position,
+  );
+  menu.show(context);
+}
+  
+  List<cm.ContextMenuEntry> buildLegalsContextMenuEntries(double sWidth, double sHeight) {
+    final formats = ['Terms Of Service', 'Privacy Policy', 'EULA','Licenses'];
+
+    return formats.map((s) {
+      return cm.MenuItem(
+        label: s,
+        onSelected: () async {
+          switch (s) {
+            case 'Terms Of Service':
+              ref.read(loginPageUrlProvider.notifier).state = termsOfServiceUrl;
+              await changeTvChannel();
+              break;
+            case 'Privacy Policy':
+              ref.read(loginPageUrlProvider.notifier).state = privacyPolicyUrl;
+              await changeTvChannel();
+              break;
+            case 'EULA':
+              ref.read(loginPageUrlProvider.notifier).state = eulaUrl;
+              await changeTvChannel();
+              break;
+            case 'Licenses':
+              final licenses = await rootBundle.loadString('assets/oss_licenses.dart');
+              final html = """
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <meta charset="utf-8">
+                    <style>
+                      body {
+                        font-family: monospace;
+                        white-space: pre-wrap;
+                        padding: 16px;
+                        margin: 0;
+                        background: #fafafa;
+                        color: #222;
+                      }
+                      h2 {
+                        text-align: center;
+                      }
+                    </style>
+                  </head>
+                  <body>
+                    <h2>Licenses</h2>
+                    <div>$licenses</div>
+                  </body>
+                </html>
+                """;
+
+                ref.read(loginPageUrlProvider.notifier).state = Uri.dataFromString(
+                  html,
+                  mimeType: 'text/html',
+                  encoding: Encoding.getByName('utf-8'),
+                ).toString();
+                await changeTvChannel();
+              break;
+            default:
+          }
+        },
+        hoverColor: defaultPalette.extras[0].withOpacity(0.02),
+        unfocusedColor: defaultPalette.extras[0].withOpacity(0.2),
+        style: TextStyle(                                fontFamily: 'Lexend',
+          fontWeight: FontWeight.w500,
+          color: defaultPalette.extras[0],
           fontSize: mapValueDimensionBasedLockOnDesync(12, 24, sWidth, sHeight),
         ),
       );
@@ -9976,13 +10064,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         thumbBuilder:
                                             (context, animation, widgetStates) {
                                           return Container(
-                                            margin: EdgeInsets.only(
-                                                right: 3, top: 8, bottom: 8),
+                                            margin: EdgeInsets.only( right: 3, top: 8, bottom: 8),
                                             decoration: BoxDecoration(
-                                                color: defaultPalette.primary,
-                                                border: Border.all(),
-                                                borderRadius:
-                                                    BorderRadius.circular(15)),
+                                              color: defaultPalette.primary,
+                                              border: Border.all(),
+                                              borderRadius: BorderRadius.circular(15)),
                                             width: isLayoutTileView ? 4 : 6,
                                           );
                                         },
@@ -9990,9 +10076,6 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           borderRadius:
                                               BorderRadius.circular(12),
                                           child: ListView.builder(
-                                            padding: EdgeInsets.only(
-                                                right:
-                                                    isLayoutTileView ? 6 : 3),
                                             controller: controller,
                                             physics: physics,
                                             itemCount: layoutSearchController.text == ''
@@ -10451,7 +10534,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   height: 5),
                                                             ],
                                                           ),
-                                                          SizedBox(width: 5),
+                                                          SizedBox(width: 7),
                                                         ],
                                                       ),
                                                     ),
@@ -10717,7 +10800,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                               ),
                                                             ],
                                                           ),
-                                                          SizedBox(width: 5),
+                                                          SizedBox(width: 10),
                                                         ],
                                                       ),
                                                     ),
@@ -13145,6 +13228,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
     bool isBillTab = homeScreenTabIndex == 2;
     bool isProfileTab = homeScreenTabIndex == 3;
     double dotSize = sHeight / 35;
+    double fontSize = mapValueDimensionBasedLockOnDesync(
+      10,15,sWidth,sHeight
+    );
     // print(sWidth);
     return AnimatedPositioned(
       duration: Durations.short2,
@@ -13179,10 +13265,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     205, 405, sWidth, sHeight),
                 top: mapValueDimensionBasedLockOnDesync(
                           75, 120, sWidth, sHeight),
-                right: isProfileTab
-                    ? mapValueDimensionBased(15, 15, sWidth, sHeight,
-                        useWidth: true)
-                    : -sWidth / 2,
+                left:mapValueDimensionBasedLockOnDesync(
+                          105, 140, sWidth, sHeight),
+                // right: isProfileTab
+                //     ? mapValueDimensionBased(15, 15, sWidth, sHeight,
+                //         useWidth: true)
+                //     : -sWidth / 2,
                 child: Container(
                   padding: EdgeInsets.only(left: 5, right: 20, top: 10),
                   // width: sWidth,
@@ -13198,7 +13286,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       //     35, 110, sWidth, sHeight),
                       fontSize: mapValueDimensionBased(
                         130,
-                        130 + (mapValueDimensionBased( 0, 120, sWidth, sHeight, useWidth: true)),
+                        130 + (mapValueDimensionBased( 0, 60, sWidth, sHeight, useWidth: true)),
                         sWidth,
                         sHeight,
                         b: false,
@@ -13212,9 +13300,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               AnimatedPositioned(
                 duration: Durations.medium2,
                 bottom: isProfileTab ? -90 : -150,
-                right: isProfileTab
-                    ? mapValueDimensionBased(40, 50, sWidth, sHeight, useWidth: true)
-                    : -sWidth / 2,
+                left: 90,
+                // right: isProfileTab
+                //     ? mapValueDimensionBased(40, 50, sWidth, sHeight, useWidth: true)
+                //     : -sWidth / 2,
                 child: Stack(
                   children: [
                     Positioned.fill(
@@ -13428,8 +13517,13 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               //TVTV
               AnimatedPositioned(
                 duration: Durations.medium2,
-                bottom: isProfileTab ? -90 : -400,
-                left: 90,
+                // bottom: isProfileTab ? 20 : -400,
+                top: mapValueDimensionBasedLockOnDesync(
+                          75, 120, sWidth, sHeight),
+                // left: 90,
+                right: isProfileTab
+                    ? mapValueDimensionBased(20, 50, sWidth, sHeight, useWidth: true)
+                    : -sWidth / 2,
                 child: AnimatedRotation(
                   duration: Durations.medium2,
                   turns: isProfileTab ? 0 : -0.1,
@@ -13439,12 +13533,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     depth: 4, subfac: 4,
                     onClick: () {},
                     buttonWidth: (sWidth -
-                            (15 + 65 + 15 + 65 + 15 + 65 + 15 + 65 + 65) -
+                            (15 + 65 + 15 + 65 + 15 + 65 + 15 + 65 + 45) -
                             80 -
-                            mapValueDimensionBased(0, 250, sWidth, sHeight,
+                            mapValueDimensionBased(0, 280, sWidth, sHeight,
                                 useWidth: true))
                         .clamp(0, double.infinity),
-                    buttonHeight: sHeight - (2 * titleFontSize),
+                    buttonHeight: sHeight - (4 * titleFontSize),
                     borderRadius: BorderRadius.circular(35),
                     animationDuration: const Duration(milliseconds: 100),
                     animationCurve: Curves.ease,
@@ -13458,15 +13552,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                       child: Row(
                         children: [
                           Expanded(
-                            flex: 70,
+                            flex:70,
                             child: Column(
                               children: [
                                 Expanded(
                                   child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(30).copyWith(
-                                      bottomLeft: Radius.circular(0),
-                                      bottomRight: Radius.circular(0),
-                                    ),
+                                    borderRadius: BorderRadius.circular(30),
                                     child: InAppWebView(
                                       initialUrlRequest: URLRequest(
                                           url: WebUri.uri(Uri.parse(ref
@@ -13490,30 +13581,29 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           pageZoom: 10,
                                           supportZoom: true,
                                           displayZoomControls: true,
-                                          maximumZoomScale: 0.5),
+                                          minimumZoomScale: 0.8,
+                                          maximumZoomScale: 1.5),
                                     ),
                                   ),
                                 ),
-                                SizedBox(
-                                  height: 77,
-                                )
                               ],
                             ),
                           ),
                           Expanded(
-                              flex: 30,
+                              // width: mapValueDimensionBasedLockOnDesync(30, 500, sWidth, sHeight,
+                              // baseHeight: 150,
+                              // baseWidth: 250,
+                              // ),
+                              flex:30,
                               child: Stack(
                                 children: [
                                   //speaker graph of the TV
                                   Container(
-                                    margin:
-                                        EdgeInsets.all(0).copyWith(left: 10),
+                                    margin:  EdgeInsets.all(0).copyWith(left: 10),
                                     decoration: BoxDecoration(
-                                        color: defaultPalette.secondary
-                                            .withAlpha(50),
+                                        color: defaultPalette.secondary.withAlpha(50),
                                         border: Border.all(width: 0.2),
-                                        borderRadius:
-                                            BorderRadius.circular(30)),
+                                        borderRadius:  BorderRadius.circular(30)),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(30),
                                       child: Opacity(
@@ -13565,12 +13655,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                       Row(
                                         children: [
                                           SizedBox(
-                                            width: mapValueDimensionBased(
-                                              5,
-                                              1,
-                                              sWidth,
-                                              sHeight,
-                                            ),
+                                            width:5
                                           ),
                                           Expanded(
                                             child:  RichText(
@@ -13579,7 +13664,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             textAlign: TextAlign.center,
                                             // overflow: TextOverflow.ellipsis,
                                             text: TextSpan(
-                                              style: TextStyle( fontFamily: 'Lexend',
+                                              style: TextStyle(                                fontFamily: 'Lexend',
                                                 fontSize:
                                                     mapValueDimensionBasedLockOnDesync(
                                                   12,
@@ -13596,7 +13681,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                               children: [
                                                 TextSpan(
                                                   text: ' FLUX',
-                                                  style: TextStyle( fontFamily: 'Lexend',
+                                                  style: TextStyle(                                fontFamily: 'Lexend',
                                                       color: defaultPalette.extras[0]),
                                                 ),
                                                 TextSpan(
@@ -13631,16 +13716,17 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 // toggleOnTap: true,
                                                 depth: 3, subfac: 3,
                                                 onClick: () async {
-                                                  ref
-                                                          .read(
-                                                              loginPageUrlProvider
-                                                                  .notifier)
+                                                  ref.read(loginPageUrlProvider.notifier)
                                                           .state =
                                                       loginPageUrls[Random()
                                                           .nextInt(loginPageUrls
                                                                   .length -
                                                               1)];
-                                                  if (_controller != null && ref.read( loginPageUrlProvider).isNotEmpty) {
+                                                  if (_controller != null &&
+                                                      ref
+                                                          .read(
+                                                              loginPageUrlProvider)
+                                                          .isNotEmpty) {
                                                     // startWhiteNoise();
                                                     final htmlString = await rootBundle.loadString('assets/static.html');
                                     
@@ -13694,8 +13780,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       MainAxisAlignment.center,
                                                   children: [
                                                     Icon(
-                                                      TablerIcons
-                                                          .rosette_filled,
+                                                      TablerIcons .rosette_filled,
                                                       size:
                                                           mapValueDimensionBasedLockOnDesync(
                                                               15,
@@ -13783,9 +13868,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         80,
                                                         sWidth,
                                                         sHeight),
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                        450000),
+                                                borderRadius: BorderRadius.circular( 450000),
                                                 animationDuration:
                                                     const Duration(
                                                         milliseconds: 100),
@@ -13841,6 +13924,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         },
                                         child: Row(
                                           children: [
+                                            SizedBox(
+                                              width:mapValueDimensionBasedLockOnDesync(
+                                                            6, 20, sWidth, sHeight),
+                                            ),
                                             Expanded(
                                               child: Container(
                                                 height:
@@ -13867,7 +13954,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                       maxLines: 1,
                                                       overflow: TextOverflow.ellipsis,
                                                       textAlign: TextAlign.center,
-                                                      style: TextStyle( fontFamily: 'Lexend',
+                                                      style: TextStyle(                                fontFamily: 'Lexend',
                                                         fontSize:
                                                             mapValueDimensionBased(
                                                           8,
@@ -13912,7 +13999,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                             ),
                                             Tooltip(
                                               message:'FluxTV showcases cool websites made by cool creators. \nAll content belongs to its original owners.',
-                                              textStyle: TextStyle( fontFamily: 'Lexend',
+                                              textStyle: TextStyle(                                fontFamily: 'Lexend',
                                                 fontSize: mapValueDimensionBasedLockOnDesync(10,20, sWidth, sHeight),
                                                 color:defaultPalette.primary,
                                                 fontWeight: FontWeight.w500,
@@ -13932,12 +14019,14 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         ),
                                       ),
                                       SizedBox(
-                                        height: 90,
+                                        height: 20,
                                       ),
                                     ],
                                   ),
                                 ],
-                              ))
+                            )
+                          )
+                        
                         ],
                       ),
                     ),
@@ -13953,7 +14042,11 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                 duration: Durations.extralong4,
                 curve: Curves.bounceOut,
                 bottom: -40,
-                right: isProfileTab ? 5 : 400,
+                left:isProfileTab 
+                ? (15 + 65 + 15 + 65 + 15 + 65 + 15 + 45) + mapValueDimensionBased(0, 100, sWidth, sHeight,useWidth: true) -(mapValueDimensionBasedLockOnDesync(
+                        180, 350, sWidth, sHeight)/3)
+                :-400,
+                // right: isProfileTab ? 5 : 400,
                 child: AnimatedRotation(
                   duration: Durations.extralong4,
                   turns: isProfileTab ? 0 : -1,
@@ -13964,9 +14057,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                     depth: 3, subfac: 3,
                     onClick: () async {},
                     buttonHeight: mapValueDimensionBasedLockOnDesync(
-                        200, 350, sWidth, sHeight),
+                        180, 350, sWidth, sHeight),
                     buttonWidth: mapValueDimensionBasedLockOnDesync(
-                        200, 350, sWidth, sHeight),
+                        180, 350, sWidth, sHeight),
                     borderRadius: BorderRadius.circular(450000000),
                     animationDuration: const Duration(milliseconds: 100),
                     animationCurve: Curves.ease,
@@ -13980,9 +14073,9 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           children: [
                             Container(
                               width: mapValueDimensionBasedLockOnDesync(
-                                  150, 280, sWidth, sHeight),
+                                  140, 280, sWidth, sHeight),
                               height: mapValueDimensionBasedLockOnDesync(
-                                  150, 280, sWidth, sHeight),
+                                  140, 280, sWidth, sHeight),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 image: DecorationImage(
@@ -14003,6 +14096,357 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+              //Thankyou
+              AnimatedPositioned(
+                duration: Durations.medium2,
+                bottom: isProfileTab ? 20 : -150,
+                // left:90,
+                right: isProfileTab
+                    ? mapValueDimensionBased(20, 50, sWidth, sHeight, useWidth: true)
+                    : -sWidth / 2,
+                height: mapValueDimensionBasedLockOnDesync(80, 200, sWidth, sHeight,),
+                width: (sWidth -
+                            (15 + 65 + 15 + 65 + 15 + 65 + 15 + 65 + 45) -
+                            80 -
+                            mapValueDimensionBased(0, 280, sWidth, sHeight,
+                                useWidth: true))
+                        .clamp(0, double.infinity),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Container(
+                        decoration:BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color:Color(0xffd5d5d5),)
+                        
+                      )),
+                    //secondary colored ground substitute
+                    Positioned(
+                    bottom:0,
+                    child: Container(
+                        width:(sWidth -
+                            (15 + 65 + 15 + 65 + 15 + 65 + 15 + 65 + 45) -
+                            80 -
+                            mapValueDimensionBased(0, 280, sWidth, sHeight,
+                                useWidth: true))
+                        .clamp(0, double.infinity),
+                        alignment: Alignment(0,0),
+                        height:mapValueDimensionBasedLockOnDesync(20, 50, sWidth, sHeight),
+                        decoration:BoxDecoration(
+                          borderRadius: BorderRadius.circular(20).copyWith(
+                            topLeft: Radius.circular(0),
+                            topRight: Radius.circular(0),
+                          ),
+                          color:defaultPalette.secondary,),
+                        child:  Row(
+                        children: [
+                          SizedBox(width:mapValueDimensionBasedLockOnDesync(20, 30, sWidth, sHeight)),
+                          AnimatedTextKit(
+                            key: ValueKey((isProfileTab) ? sHeight * sWidth : (isProfileTab)),
+                            animatedTexts: [
+                              typewriterText(isHomeTab, sWidth, sHeight, '(どうもありがとう, Dōmo arigatō),', fontSize),
+                              typewriterText(isHomeTab, sWidth, sHeight, "which means 'Thank you very much.'", fontSize),
+                              typewriterText(isHomeTab, sWidth, sHeight, "Grateful you spent a moment here.", fontSize),
+                              typewriterText(isHomeTab, sWidth, sHeight, "This app is as much yours as it is mine.", fontSize),
+                              typewriterText(isHomeTab, sWidth, sHeight, "If there's something you'd like added,", fontSize),
+                              typewriterText(isHomeTab, sWidth, sHeight, "or if you run into any issues,", fontSize),
+                              typewriterText(isHomeTab, sWidth, sHeight, "please reach me anytime at billblazex@gmail.com.", fontSize),
+                              typewriterText(isHomeTab, sWidth, sHeight, "Your thoughts and support mean the world.", fontSize),
+                              typewriterText(isHomeTab, sWidth, sHeight, "From the bottom of my heart — Grazie mille.", fontSize),
+                              typewriterText(isHomeTab, sWidth, sHeight, "A gentle bow, as a sign of respect.", fontSize),
+                              typewriterText(isHomeTab, sWidth, sHeight, "Keep being awesome!.", fontSize),
+                            ],
+                            // totalRepeatCount: 1,
+                            repeatForever: true,
+                            pause: const Duration(milliseconds: 2000),
+                            displayFullTextOnTap: true,
+                            stopPauseOnTap: true,
+                          
+                          ),
+                          
+                        ],
+                      ),
+                      )),
+                    
+                    
+                  ],
+                ),
+              ),
+              //billblaze svg and text
+              Positioned(
+                right:mapValueDimensionBasedLockOnDesync(10, 45, sWidth, sHeight,)+ mapValueDimensionBasedLockOnDesync(52, 180, sWidth, sHeight,),
+                bottom: mapValueDimensionBasedLockOnDesync(60, 140, sWidth, sHeight,),
+                child: Stack(
+                  children: [
+                    SizedBox(
+                      height:mapValueDimensionBasedLockOnDesync(60, 120, sWidth, sHeight,),
+                      width:2*mapValueDimensionBasedLockOnDesync(60, 120, sWidth, sHeight,),
+                      ),
+                    SizedBox(
+                      height:mapValueDimensionBasedLockOnDesync(60, 120, sWidth, sHeight,),
+                      child: FittedBox(
+                        fit:BoxFit.scaleDown,
+                        child: SvgPicture.asset(
+                          'assets/logos/billblazeLogoSplashTM.svg',
+                          // height: 300,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom:0,
+                      left: 0,
+                      child: Container(
+                        margin: EdgeInsets.only(left:mapValueDimensionBasedLockOnDesync(40, 80, sWidth, sHeight,)),
+                        alignment: Alignment.bottomRight,
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Billblaze',
+                                style: GoogleFonts.alexBrush(
+                                  fontSize: mapValueDimensionBasedLockOnDesync(20, 40, sWidth, sHeight),
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1,
+                                  fontWeight: FontWeight.w400,
+                                  decoration: TextDecoration.none,
+                                ),
+                              ),
+                              WidgetSpan(
+                                child: Transform.translate(
+                                  offset: Offset(2, mapValueDimensionBasedLockOnDesync(-10, -25, sWidth, sHeight)), // adjust vertical position
+                                  child: Text(
+                                    'TM',// make it smaller
+                                    style: TextStyle(
+                                      fontFamily: 'Lexend',
+                                      fontSize: mapValueDimensionBasedLockOnDesync(6, 8, sWidth, sHeight),
+                                      fontWeight: FontWeight.w500,
+                                      color: defaultPalette.extras[0],
+                                      decoration: TextDecoration.none, 
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.start,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              //brought to you by
+              Positioned(
+                right:mapValueDimensionBasedLockOnDesync(10, 45, sWidth, sHeight,)+ mapValueDimensionBasedLockOnDesync(52, 180, sWidth, sHeight,),
+                bottom: mapValueDimensionBasedLockOnDesync(50, 120, sWidth, sHeight,),
+                child: Stack(
+                  children: [
+                    SizedBox(
+                      height:mapValueDimensionBasedLockOnDesync(60, 120, sWidth, sHeight,),
+                      width:2*mapValueDimensionBasedLockOnDesync(60, 120, sWidth, sHeight,),
+                      ),
+                    Positioned(
+                      bottom:0,
+                      left: 0,
+                      child: Container(
+                        alignment: Alignment.bottomRight,
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'brought to you by:   ',
+                                style: TextStyle(
+                                      fontFamily: 'Lexend',
+                                  fontSize: mapValueDimensionBasedLockOnDesync(8, 13.6, sWidth, sHeight),
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -0.5,
+                                  fontWeight: FontWeight.w400,
+                                  decoration: TextDecoration.none,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'Jepixo',
+                                style: TextStyle(
+                                      fontFamily: 'Lexend',
+                                  fontSize: mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
+                                  color: defaultPalette.extras[0],
+                                  letterSpacing: -1,
+                                  fontWeight: FontWeight.w500,
+                                  decoration: TextDecoration.none,
+                                ),
+                              ),
+                              WidgetSpan(
+                                child: Transform.translate(
+                                  offset: Offset(2, mapValueDimensionBasedLockOnDesync(-10, -15, sWidth, sHeight)), // adjust vertical position
+                                  child: Text(
+                                    'TM',// make it smaller
+                                    style: TextStyle(
+                                      fontFamily: 'Lexend',
+                                      fontSize: mapValueDimensionBasedLockOnDesync(6, 8, sWidth, sHeight),
+                                      fontWeight: FontWeight.w500,
+                                      color: defaultPalette.extras[0],
+                                      decoration: TextDecoration.none, 
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.start,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+                    
+              //thanks gif
+              Positioned(
+                right:mapValueDimensionBasedLockOnDesync(20, 45, sWidth, sHeight,),
+                bottom:mapValueDimensionBasedLockOnDesync(30, 40, sWidth, sHeight,),
+                child: Image.asset(
+                  'assets/images/pixelthanks.gif',
+                  width: mapValueDimensionBasedLockOnDesync(52, 180, sWidth, sHeight,),
+
+                  gaplessPlayback: true, // prevents flickering on rebuild
+                ),
+              ),
+
+              Positioned(
+                right: isProfileTab
+                    ? mapValueDimensionBased(20, 50, sWidth, sHeight, useWidth: true)
+                    : -sWidth / 2,
+                bottom:mapValueDimensionBasedLockOnDesync(43, 80, sWidth, sHeight,),
+                child:GestureDetector(
+                        onTap: () async {
+                          ref.read(loginPageUrlProvider.notifier).state ="https://jepixo.notion.site/Billblaze-Legal-279812a5614d805da209d355972e1c23";
+                          await changeTvChannel();
+                        },
+                  child: Container(
+                    width: (sWidth -
+                    (15 + 65 + 15 + 65 + 15 + 65 + 15 + 65 + 45) -
+                    80 - mapValueDimensionBased(0, 280, sWidth, sHeight, useWidth: true)).clamp(0, double.infinity),
+                    alignment: Alignment(-0.9,0),
+                    decoration: BoxDecoration(
+                      // color:defaultPalette.secondary,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('THANK YOU'.toUpperCase(),
+                          textAlign: TextAlign.end,
+                          style: GoogleFonts.micro5(
+                            color: defaultPalette.extras[0],
+                            // fontSize: mapValueDimensionBasedLockOnDesync(
+                            //     35, 110, sWidth, sHeight),
+                            fontSize: mapValueDimensionBasedLockOnDesync(55, 150, sWidth, sHeight,),
+                            letterSpacing: -2,
+                            fontWeight: FontWeight.w400,
+                            height: 0.6)),
+                        SizedBox(height:2),
+                        Text('You\'re a legend',
+                        maxLines:1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.alexBrush(
+                        color: defaultPalette.extras[0],
+                        // fontSize: mapValueDimensionBasedLockOnDesync( 35, 110, sWidth, sHeight),
+                        fontSize: mapValueDimensionBasedLockOnDesync(25, 60, sWidth, sHeight,),
+                        letterSpacing: -1,
+                        fontWeight: FontWeight.w400,
+                        height: 0.6)),
+                        SizedBox(height:mapValueDimensionBased(12, 35, sWidth, sHeight, useWidth: true)),
+                        SizedBox(
+                          width: ( mapValueDimensionBased(160, 480, sWidth, sHeight,)),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child:GestureDetector(
+                                  onTap: () async {
+                                    ref.read(loginPageUrlProvider.notifier).state = termsOfServiceUrl;
+                                    await changeTvChannel();
+                                  },
+                                  child:Container(
+                                    child: Text(
+                                      'Terms Of Service',
+                                      maxLines:1,
+                                      overflow:TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          fontFamily: 'Lexend',
+                                      fontSize: mapValueDimensionBasedLockOnDesync(8, 13.6, sWidth, sHeight),
+                                      color: defaultPalette.extras[0].withOpacity(0.4),
+                                      letterSpacing: -0.5,
+                                      fontWeight: FontWeight.w400,
+                                      decoration: TextDecoration.none,
+                                    ),
+                                    ),
+                                  )
+                                )
+                              ),
+                              MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child:GestureDetector(
+                                  onTap: () async {
+                                    ref.read(loginPageUrlProvider.notifier).state = privacyPolicyUrl;
+                                    await changeTvChannel();
+                                  },
+                                  child:Container(
+                                    child: Text(
+                                      'Privacy Policy',
+                                      maxLines:1,
+                                      overflow:TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          fontFamily: 'Lexend',
+                                      fontSize: mapValueDimensionBasedLockOnDesync(8, 13.6, sWidth, sHeight),
+                                      color: defaultPalette.extras[0].withOpacity(0.4),
+                                      letterSpacing: -0.5,
+                                      fontWeight: FontWeight.w400,
+                                      decoration: TextDecoration.none,
+                                    ),
+                                    ),
+                                  )
+                                )
+                              ),
+                              MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child:GestureDetector(
+                                  onTap: () async {
+                                    ref.read(loginPageUrlProvider.notifier).state = eulaUrl;
+                                    await changeTvChannel();
+                                  },
+                                  child:Container(
+                                    child: Text(
+                                      'EULA',
+                                      maxLines:1,
+                                      overflow:TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                          fontFamily: 'Lexend',
+                                      fontSize: mapValueDimensionBasedLockOnDesync(8, 13.6, sWidth, sHeight),
+                                      color: defaultPalette.extras[0].withOpacity(0.4),
+                                      letterSpacing: -0.5,
+                                      fontWeight: FontWeight.w400,
+                                      decoration: TextDecoration.none,
+                                    ),
+                                    ),
+                                  )
+                                )
+                              ),
+                              
+                          ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
             ],
           ),
         ),

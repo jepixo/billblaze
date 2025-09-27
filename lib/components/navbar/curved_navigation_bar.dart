@@ -224,6 +224,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                           onTap: _buttonTap,
                           position: _pos,
                           length: _length,
+                          selectedIndex:_endingIndex,
                           index: widget.items.indexOf(item),
                           child: Center(child: Transform.rotate(
                             angle: 3 * pi / 2,
