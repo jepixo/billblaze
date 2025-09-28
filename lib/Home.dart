@@ -2588,1232 +2588,1235 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                           right: 15+mapValueDimensionBasedLockOnDesync(10, 25, sWidth, sHeight),
                                           top: 15+5,
                                           bottom: 15+5,
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(0),
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              //The made with love and socials
-                                              SizedBox(
-                                              height: mapValueDimensionBasedLockOnDesync(80, 200, sWidth, sHeight),
-                                              child: Row(
-                                                children: [
-                                                  SizedBox(width: 15+mapValueDimensionBasedLockOnDesync(1, 25, sWidth, sHeight),),
-                                                  Stack(
-                                                    children: [
-                                                      Padding(
-                                                        padding: EdgeInsets.only(
+                                        child: IgnorePointer(
+                                          ignoring: index!=1,
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(0),
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                //The made with love and socials
+                                                SizedBox(
+                                                height: mapValueDimensionBasedLockOnDesync(80, 200, sWidth, sHeight),
+                                                child: Row(
+                                                  children: [
+                                                    SizedBox(width: 15+mapValueDimensionBasedLockOnDesync(1, 25, sWidth, sHeight),),
+                                                    Stack(
+                                                      children: [
+                                                        Padding(
+                                                          padding: EdgeInsets.only(
+                                                            top:mapValueDimensionBasedLockOnDesync(
+                                                                      10,
+                                                                      20,
+                                                                      sWidth,
+                                                                      sHeight)+mapValueDimensionBasedLockOnDesync(
+                                                                      5,
+                                                                      45,
+                                                                      sWidth,
+                                                                      sHeight),
+                                                            right:mapValueDimensionBasedLockOnDesync(
+                                                                      12,
+                                                                      32,
+                                                                      sWidth,
+                                                                      sHeight)),
+                                                          child: Text(
+                                                            'Made\nWith\nLove',
+                                                            maxLines: 3,
+                                                            overflow:TextOverflow.ellipsis,
+                                                            textAlign: TextAlign.start,
+                                                            style: TextStyle( fontFamily: 'PressStart2P',
+                                                              height:0.95,
+                                                              fontSize: mapValueDimensionBasedLockOnDesync(
+                                                                      18,
+                                                                      45,
+                                                                      sWidth,
+                                                                      sHeight),
+                                                              color: defaultPalette.extras[0],
+                                                              fontWeight: FontWeight.w500,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        Positioned(
+                                                          right:0,
                                                           top:mapValueDimensionBasedLockOnDesync(
-                                                                    10,
-                                                                    20,
-                                                                    sWidth,
-                                                                    sHeight)+mapValueDimensionBasedLockOnDesync(
-                                                                    5,
-                                                                    45,
-                                                                    sWidth,
-                                                                    sHeight),
-                                                          right:mapValueDimensionBasedLockOnDesync(
-                                                                    12,
-                                                                    32,
-                                                                    sWidth,
-                                                                    sHeight)),
-                                                        child: Text(
-                                                          'Made\nWith\nLove',
-                                                          maxLines: 3,
-                                                          overflow:TextOverflow.ellipsis,
-                                                          textAlign: TextAlign.start,
-                                                          style: TextStyle( fontFamily: 'PressStart2P',
-                                                            height:0.95,
-                                                            fontSize: mapValueDimensionBasedLockOnDesync(
-                                                                    18,
-                                                                    45,
-                                                                    sWidth,
-                                                                    sHeight),
-                                                            color: defaultPalette.extras[0],
-                                                            fontWeight: FontWeight.w500,
+                                                                      5,
+                                                                      45,
+                                                                      sWidth,
+                                                                      sHeight),
+                                                          child: ElevatedLayerButton(
+                                                            onClick: () async {
+                                                            },
+                                                            buttonHeight: mapValueDimensionBasedLockOnDesync(
+                                                                    30, 70, sWidth, sHeight),
+                                                            buttonWidth: mapValueDimensionBasedLockOnDesync(
+                                                                    30, 70, sWidth, sHeight),
+                                                            borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync(
+                                                                    16, 30, sWidth, sHeight)),
+                                                            animationDuration: const Duration(milliseconds: 200),
+                                                            animationCurve: Curves.ease,
+                                                            subfac: mapValueDimensionBasedLockOnDesync(
+                                                                2, 4, sWidth, sHeight),
+                                                            depth: mapValueDimensionBasedLockOnDesync(
+                                                                2, 4, sWidth, sHeight),
+                                                            topDecoration: BoxDecoration(
+                                                              color: defaultPalette.transparent,
+                                                            ),
+                                                            topLayerChild: Stack(
+                                                              alignment: Alignment.center,
+                                                              children: [
+                                                                Icon(TablerIcons.heart_filled,size:mapValueDimensionBasedLockOnDesync(
+                                                                    30, 70, sWidth, sHeight),color: defaultPalette.extras[0],),
+                                                                Icon(TablerIcons.heart_filled,size:mapValueDimensionBasedLockOnDesync(
+                                                                    25, 62, sWidth, sHeight),color: defaultPalette.extras[4],),
+                                                              ],
+                                                            ),
+                                                            baseDecoration: BoxDecoration(
+                                                              color: defaultPalette.transparent,
+                                                              // border: Border.all(),
+                                                            ),
                                                           ),
                                                         ),
-                                                      ),
-                                                      Positioned(
-                                                        right:0,
-                                                        top:mapValueDimensionBasedLockOnDesync(
-                                                                    5,
-                                                                    45,
-                                                                    sWidth,
-                                                                    sHeight),
-                                                        child: ElevatedLayerButton(
-                                                          onClick: () async {
-                                                          },
-                                                          buttonHeight: mapValueDimensionBasedLockOnDesync(
-                                                                  30, 70, sWidth, sHeight),
-                                                          buttonWidth: mapValueDimensionBasedLockOnDesync(
-                                                                  30, 70, sWidth, sHeight),
-                                                          borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync(
-                                                                  16, 30, sWidth, sHeight)),
-                                                          animationDuration: const Duration(milliseconds: 200),
-                                                          animationCurve: Curves.ease,
-                                                          subfac: mapValueDimensionBasedLockOnDesync(
-                                                              2, 4, sWidth, sHeight),
-                                                          depth: mapValueDimensionBasedLockOnDesync(
-                                                              2, 4, sWidth, sHeight),
-                                                          topDecoration: BoxDecoration(
-                                                            color: defaultPalette.transparent,
-                                                          ),
-                                                          topLayerChild: Stack(
-                                                            alignment: Alignment.center,
+                                                      ],
+                                                    ),
+                                                    SizedBox(width: mapValueDimensionBasedLockOnDesync(1, 15, sWidth, sHeight),),
+                                                    Expanded(
+                                                      child: Padding(
+                                                        padding: EdgeInsets.all(0).copyWith(
+                                                          top: mapValueDimensionBasedLockOnDesync(20, 75, sWidth, sHeight),
+                                                          left: mapValueDimensionBasedLockOnDesync(1, 25, sWidth, sHeight),
+                                                          bottom: mapValueDimensionBasedLockOnDesync(3, 10, sWidth, sHeight),
+                                                          right: mapValueDimensionBasedLockOnDesync(1, 25, sWidth, sHeight),
+                                                        ),
+                                                        child: FittedBox(
+                                                          fit:BoxFit.scaleDown,
+                                                          alignment: Alignment.centerRight,
+                                                            child: Column(
+                                                            mainAxisAlignment: MainAxisAlignment.start,
+                                                            crossAxisAlignment: CrossAxisAlignment.end,
                                                             children: [
-                                                              Icon(TablerIcons.heart_filled,size:mapValueDimensionBasedLockOnDesync(
-                                                                  30, 70, sWidth, sHeight),color: defaultPalette.extras[0],),
-                                                              Icon(TablerIcons.heart_filled,size:mapValueDimensionBasedLockOnDesync(
-                                                                  25, 62, sWidth, sHeight),color: defaultPalette.extras[4],),
-                                                            ],
-                                                          ),
-                                                          baseDecoration: BoxDecoration(
-                                                            color: defaultPalette.transparent,
-                                                            // border: Border.all(),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(width: mapValueDimensionBasedLockOnDesync(1, 15, sWidth, sHeight),),
-                                                  Expanded(
-                                                    child: Padding(
-                                                      padding: EdgeInsets.all(0).copyWith(
-                                                        top: mapValueDimensionBasedLockOnDesync(20, 75, sWidth, sHeight),
-                                                        left: mapValueDimensionBasedLockOnDesync(1, 25, sWidth, sHeight),
-                                                        bottom: mapValueDimensionBasedLockOnDesync(3, 10, sWidth, sHeight),
-                                                        right: mapValueDimensionBasedLockOnDesync(1, 25, sWidth, sHeight),
-                                                      ),
-                                                      child: FittedBox(
-                                                        fit:BoxFit.scaleDown,
-                                                        alignment: Alignment.centerRight,
-                                                          child: Column(
-                                                          mainAxisAlignment: MainAxisAlignment.start,
-                                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                                          children: [
-                                                              Row(
-                                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                                children:[
-                                                                  Text('made by: ',
-                                                                  maxLines:1,
-                                                                  overflow:TextOverflow.ellipsis,
-                                                                  style: TextStyle( fontFamily: 'Lexend',
-                                                                  fontSize: 20,
-                                                                  height: 0.8,
-                                                                  color: defaultPalette.extras[0],
-                                                                  fontWeight: FontWeight.w300,
+                                                                Row(
+                                                                  mainAxisAlignment: MainAxisAlignment.end,
+                                                                  children:[
+                                                                    Text('made by: ',
+                                                                    maxLines:1,
+                                                                    overflow:TextOverflow.ellipsis,
+                                                                    style: TextStyle( fontFamily: 'Lexend',
+                                                                    fontSize: 20,
+                                                                    height: 0.8,
+                                                                    color: defaultPalette.extras[0],
+                                                                    fontWeight: FontWeight.w300,
+                                                                    ),
                                                                   ),
-                                                                ),
-                                                                SizedBox(width: 60,),
-                                                                //jepixoColor
-                                                                MouseRegion(
-                                                                cursor: SystemMouseCursors.click,
-                                                                onEnter: (event) async {
-                                                                  if (infoOverlayEntry!=null) {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  }
-                                                                  infoOverlayEntry = OverlayEntry(
-                                                                    builder: (context) {
-                                                                      return StatefulBuilder(builder: (context, updateState) {
-                                                                        return Positioned(
-                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
-                                                                          top: topPadPosDistance + 50,
-                                                                          child:GestureDetector(
-                                                                            onTap:(){
-                                                                              if (infoOverlayEntry != null) {
-                                                                                setState(() {
-                                                                                  infoOverlayEntry?.remove();
-                                                                                  infoOverlayEntry = null;
-                                                                                });
-                                                                              }
-                                                                            },
-                                                                            child: Container(
-                                                                              padding:EdgeInsets.all(12),
-                                                                              decoration: BoxDecoration(
-                                                                              color: defaultPalette.primary.withOpacity(1),
-                                                                              boxShadow: [
-                                                                                BoxShadow(blurRadius: 15,spreadRadius: 2,color: defaultPalette.extras[0].withOpacity(0.2))
-                                                                              ],
-                                                                              border: Border.all(),
-                                                                              borderRadius: BorderRadius.circular(15)),
-                                                                              child: Column(
-                                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                children: [
-                                                                                  Row(
-                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                    children: [
-                                                                                      Image.asset(
-                                                                                        'assets/images/pixeldance.gif',
-                                                                                        width: 33,
-                                                                                        gaplessPlayback: true, // prevents flickering on rebuild
-                                                                                      ),
-                                                                                      SizedBox(width: 10,),
-                                                                                      Column(
-                                                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                        children: [
-                                                                                          RichText(
-                                                                                            text: TextSpan(
-                                                                                              children: [
-                                                                                                TextSpan(
-                                                                                                  text: 'Jepixo',
-                                                                                                  style: TextStyle(
-                                                                                                    fontFamily: 'Lexend',
-                                                                                                    fontSize: 25,
-                                                                                                    color: defaultPalette.extras[0],
-                                                                                                    fontWeight: FontWeight.w600,
-                                                                                                    decoration: TextDecoration.none,
+                                                                  SizedBox(width: 60,),
+                                                                  //jepixoColor
+                                                                  MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (event) async {
+                                                                    if (infoOverlayEntry!=null) {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    }
+                                                                    infoOverlayEntry = OverlayEntry(
+                                                                      builder: (context) {
+                                                                        return StatefulBuilder(builder: (context, updateState) {
+                                                                          return Positioned(
+                                                                            right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                            top: topPadPosDistance + 50,
+                                                                            child:GestureDetector(
+                                                                              onTap:(){
+                                                                                if (infoOverlayEntry != null) {
+                                                                                  setState(() {
+                                                                                    infoOverlayEntry?.remove();
+                                                                                    infoOverlayEntry = null;
+                                                                                  });
+                                                                                }
+                                                                              },
+                                                                              child: Container(
+                                                                                padding:EdgeInsets.all(12),
+                                                                                decoration: BoxDecoration(
+                                                                                color: defaultPalette.primary.withOpacity(1),
+                                                                                boxShadow: [
+                                                                                  BoxShadow(blurRadius: 15,spreadRadius: 2,color: defaultPalette.extras[0].withOpacity(0.2))
+                                                                                ],
+                                                                                border: Border.all(),
+                                                                                borderRadius: BorderRadius.circular(15)),
+                                                                                child: Column(
+                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                  children: [
+                                                                                    Row(
+                                                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                      children: [
+                                                                                        Image.asset(
+                                                                                          'assets/images/pixeldance.gif',
+                                                                                          width: 33,
+                                                                                          gaplessPlayback: true, // prevents flickering on rebuild
+                                                                                        ),
+                                                                                        SizedBox(width: 10,),
+                                                                                        Column(
+                                                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                          children: [
+                                                                                            RichText(
+                                                                                              text: TextSpan(
+                                                                                                children: [
+                                                                                                  TextSpan(
+                                                                                                    text: 'Jepixo',
+                                                                                                    style: TextStyle(
+                                                                                                      fontFamily: 'Lexend',
+                                                                                                      fontSize: 25,
+                                                                                                      color: defaultPalette.extras[0],
+                                                                                                      fontWeight: FontWeight.w600,
+                                                                                                      decoration: TextDecoration.none,
+                                                                                                    ),
                                                                                                   ),
-                                                                                                ),
-                                                                                                WidgetSpan(
-                                                                                                  child: Transform.translate(
-                                                                                                    offset: const Offset(2, -8), // adjust vertical position
-                                                                                                    child: Text(
-                                                                                                      'TM',// make it smaller
-                                                                                                      style: TextStyle(
-                                                                                                        fontFamily: 'Lexend',
-                                                                                                        fontSize: 12,
-                                                                                                        fontWeight: FontWeight.w600,
-                                                                                                        color: defaultPalette.extras[0],
-                                                                                                        decoration: TextDecoration.none, 
+                                                                                                  WidgetSpan(
+                                                                                                    child: Transform.translate(
+                                                                                                      offset: const Offset(2, -8), // adjust vertical position
+                                                                                                      child: Text(
+                                                                                                        'TM',// make it smaller
+                                                                                                        style: TextStyle(
+                                                                                                          fontFamily: 'Lexend',
+                                                                                                          fontSize: 12,
+                                                                                                          fontWeight: FontWeight.w600,
+                                                                                                          color: defaultPalette.extras[0],
+                                                                                                          decoration: TextDecoration.none, 
+                                                                                                        ),
                                                                                                       ),
                                                                                                     ),
                                                                                                   ),
-                                                                                                ),
-                                                                                              ],
+                                                                                                ],
+                                                                                              ),
+                                                                                              maxLines: 1,
+                                                                                              overflow: TextOverflow.ellipsis,
+                                                                                              textAlign: TextAlign.start,
                                                                                             ),
-                                                                                            maxLines: 1,
-                                                                                            overflow: TextOverflow.ellipsis,
-                                                                                            textAlign: TextAlign.start,
-                                                                                          ),
-                                                                                          SizedBox(height: 10,),
-                                                                                          Text('Adapt, Adept. ',
-                                                                                            overflow: TextOverflow.ellipsis,
-                                                                                            textAlign: TextAlign.start,
-                                                                                            style: TextStyle( fontFamily: 'Lexend',
-                                                                                            fontSize: 18,
-                                                                                            color: defaultPalette.extras[0],
-                                                                                            fontWeight: FontWeight.w500,
-                                                                                            decoration: TextDecoration.none, 
+                                                                                            SizedBox(height: 10,),
+                                                                                            Text('Adapt, Adept. ',
+                                                                                              overflow: TextOverflow.ellipsis,
+                                                                                              textAlign: TextAlign.start,
+                                                                                              style: TextStyle( fontFamily: 'Lexend',
+                                                                                              fontSize: 18,
+                                                                                              color: defaultPalette.extras[0],
+                                                                                              fontWeight: FontWeight.w500,
+                                                                                              decoration: TextDecoration.none, 
+                                                                                              ),
                                                                                             ),
-                                                                                          ),
-                                                                                        ],
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                                  
-                                                                                  SizedBox(height: 5,),
-                                                                                  Text('''
-                                                                                    \nCode a blunt sword and design rebellion. Sharpen them both on failure.
-                                                                                    \nIn other words, I develop and design apps among other things. 
-                                                                                    \nFeel free to learn more about me on LinkedIn, etc.
-                                                                                    \nI go by @jepixo almost everywhere online.
-                                                                                    \nAwful dance btw. Yup, Veo3 is awesome.
-                                                                                    \nAnyway, wishing you the best!🤗✨''',
-                                                                            
-                                                                                  overflow: TextOverflow.ellipsis,
-                                                                                  textAlign: TextAlign.start,
-                                                                                  style: TextStyle( fontFamily: 'Lexend',
-                                                                                  fontSize: 15,
-                                                                                  height: 0.8,
-                                                                                  color: defaultPalette.extras[0],
-                                                                                  fontWeight: FontWeight.w400,
-                                                                                  decoration: TextDecoration.none, 
-                                                                                  ),
-                                                                                ),
-                                                                                SizedBox(height: 5,),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      );
-                                                                    });
-                                                                  },);
-                                                                  
-                                                                  setState(() {
-                                                                    Overlay.of(context).insert(infoOverlayEntry!);
-                                                                  });
-                                                                },
-                                                                onExit: (event) {
-                                                                  setState(() {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  });
-                                                                },
-                                                                child: Text('@jepixo',
-                                                                    maxLines:1,
-                                                                    overflow:TextOverflow.ellipsis,
-                                                                    textAlign: TextAlign.end,
-                                                                    style: TextStyle( fontFamily: 'Lexend',
-                                                                    fontSize: 30,
-                                                                    height: 0.8,
-                                                                    color: defaultPalette.extras[0],
-                                                                    fontWeight: FontWeight.w600,
-                                                                  ),
-                                                                  ),
-                                                                ),
-                                                              ]
-                                                              ),
-                                                            SizedBox(height: 8,),
-                                                            Row(
-                                                              mainAxisAlignment: MainAxisAlignment.end,
-                                                              children: [
-                                                                //find me follow me
-                                                                Column(
-                                                                  mainAxisAlignment: MainAxisAlignment.start,
-                                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                                  children: [
-                                                                    Row(
-                                                                      children: [
-                                                                        Text(
-                                                                          'Follow me.',
-                                                                          maxLines: 1,
-                                                                          overflow:TextOverflow.ellipsis,
-                                                                          textAlign: TextAlign.start,
-                                                                          style: TextStyle( fontFamily: 'Lexend',
-                                                                            fontSize: 20,
-                                                                            height: 0.8,
-                                                                            color: defaultPalette.extras[0],
-                                                                            fontWeight: FontWeight.w400,
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                    SizedBox(height: 8),
-                                                                    Row(
-                                                                      children: [
-                                                                        Text(
-                                                                          'Find me.',
-                                                                          maxLines: 1,
-                                                                          overflow:TextOverflow.ellipsis,
-                                                                          textAlign: TextAlign.start,
-                                                                          style: TextStyle( fontFamily: 'Lexend',
-                                                                            fontSize: 20,
-                                                                            color: defaultPalette.extras[0],
-                                                                            fontWeight: FontWeight.w400,
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                                SizedBox(width: 14,),
-                                                                //linkedincolor
-                                                                MouseRegion(
-                                                                cursor: SystemMouseCursors.click,
-                                                                onEnter: (event) async {
-                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=11) {
-                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[11];
-                                                                  }
-                                                                  
-                                                                  if (infoOverlayEntry!=null) {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  }
-                                                                  infoOverlayEntry = OverlayEntry(
-                                                                    builder: (context) {
-                                                                      return StatefulBuilder(builder: (context, updateState) {
-                                                                        return Positioned(
-                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
-                                                                          top: topPadPosDistance + 50,
-                                                                          child: infoOverlayPanel(
-                                                                            'LinkedIn.',
-                                                                            SvgPicture.asset(
-                                                                              'assets/logos/linkedin.svg',
-                                                                              width: 50,
-                                                                              height: 50,
-                                                                            ),
-                                                                            'linkedin.com/in/jepixo',
-                                                                            '''
-                                                                            \nExplore my work, projects, education, certifications, and skills on LinkedIn. 
-                                                                            \nLet's connect and discover opportunities to collaborate.'''
-                                                                          ),
-                                                                          );});
-                                                                  },);
-                                                                  setState(() {
-                                                                    Overlay.of(context).insert(infoOverlayEntry!);
-                                                                  });
-                                                                  await changeTvChannel(true);
-                                                                },
-                                                                onExit: (event) {
-                                                                  setState(() {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  });
-                                                                },
-                                                                child: SvgPicture.asset(
-                                                                  'assets/logos/linkedin.svg',
-                                                                  width: 50,
-                                                                  height: 50,
-                                                                ),
-                                                                ),SizedBox(width: 5,),
-                                                                //instagramcolor
-                                                                MouseRegion(
-                                                                cursor: SystemMouseCursors.click,
-                                                                onEnter: (event) async {
-                                                                  
-                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=5
-                                                                  && homePageUrls.indexOf(ref.read(homePageUrlProvider))!=6) {
-                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[5];
-                                                                  }
-                                                                  
-                                                                  if (infoOverlayEntry!=null) {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  }
-                                                                  infoOverlayEntry = OverlayEntry(
-                                                                    builder: (context) {
-                                                                      return StatefulBuilder(builder: (context, updateState) {
-                                                                        return Positioned(
-                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
-                                                                          top: topPadPosDistance + 50,
-                                                                          child:infoOverlayPanel(
-                                                                            'Instagram.',
-                                                                            SvgPicture.asset(
-                                                                              'assets/logos/instagramcolor.svg',
-                                                                              width: 50,
-                                                                              height: 50,
-                                                                            ),
-                                                                            '@jepixo, @jovoxel, @billblazex - slide in DMs',
-                                                                            '''
-                                                                            \nI actually had the link for these handles loaded down there
-                                                                            \nbut Zuccy Boy keeps redirecting it to the sign up page.
-                                                                            \nAnd I'm not dealing with phishing allegations.
-                                                                            \nSo be a darling and scan those.✨'''
-                                                                          ),
-                                                                    );
-                                                                    });
-                                                                  },);
-                                                                  
-                                                                  setState(() {
-                                                                    Overlay.of(context).insert(infoOverlayEntry!);
-                                                                  });
-                                                                  await changeTvChannel(true);
-                                                                },
-                                                                onExit: (event) {
-                                                                  setState(() {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  });
-                                                                },
-                                                                child: SvgPicture.asset(
-                                                                  'assets/logos/instagram.svg',
-                                                                  width: 50,
-                                                                  height: 50,
-                                                                ),
-                                                                ),SizedBox(width: 5,),
-                                                                //youtubecolor
-                                                                MouseRegion(
-                                                                cursor: SystemMouseCursors.click,
-                                                                onEnter: (event) async {
-                                                                  
-                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=8
-                                                                  && homePageUrls.indexOf(ref.read(homePageUrlProvider))!=7) {
-                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[8];
-                                                                  }
-                                                                  await changeTvChannel(true);
-                                                                  if (infoOverlayEntry!=null) {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  }
-                                                                  infoOverlayEntry = OverlayEntry(
-                                                                    builder: (context) {
-                                                                      return StatefulBuilder(builder: (context, updateState) {
-                                                                        return Positioned(
-                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
-                                                                          top: topPadPosDistance + 50,
-                                                                          child:infoOverlayPanel(
-                                                                            'Youtube.',
-                                                                            SvgPicture.asset(
-                                                                              'assets/logos/youtubecolor.svg',
-                                                                              width: 50,
-                                                                              height: 50,
-                                                                            ),
-                                                                            '@jepixo, @billblazex - feel free to indulge.',
-                                                                            '''
-                                                                            \nTutorials and updates on Billblaze.
-                                                                            \nOther projects and videos on Jepixo.
-                                                                            \nSubscribe and spread the word, but only if you like it.'''
-                                                                          ),
-                                                                    );
-                                                                    });
-                                                                  },);
-                                                                  
-                                                                  setState(() {
-                                                                    Overlay.of(context).insert(infoOverlayEntry!);
-                                                                  });
-                                                                },
-                                                                onExit: (event) {
-                                                                  setState(() {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  });
-                                                                },
-                                                                  child: SvgPicture.asset(
-                                                                    'assets/logos/youtube.svg',
-                                                                    width: 50,
-                                                                    height: 50,
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            SizedBox(height: 2,),
-                                                            Row(
-                                                              mainAxisAlignment: MainAxisAlignment.end,
-                                                              children: [
-                                                                Row(
-                                                                  children: [
-                                                                    Text(
-                                                                      'Feed me.',
-                                                                      maxLines: 1,
-                                                                      overflow:TextOverflow.ellipsis,
-                                                                      textAlign: TextAlign.start,
-                                                                      style: TextStyle( fontFamily: 'Lexend',
-                                                                        fontSize: 35,
-                                                                        height: 0.8,
-                                                                        letterSpacing: -1,
-                                                                        color: defaultPalette.extras[0],
-                                                                        fontWeight: FontWeight.w600,
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                                SizedBox(width: 2,),
-                                                                //gumroad
-                                                                MouseRegion(
-                                                                cursor: SystemMouseCursors.click,
-                                                                onEnter: (event) async {
-                                                                  
-                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=0) {
-                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[0];
-                                                                  }
-                                                                  
-                                                                  if (infoOverlayEntry!=null) {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  }
-                                                                  infoOverlayEntry = OverlayEntry(
-                                                                    builder: (context) {
-                                                                      return StatefulBuilder(builder: (context, updateState) {
-                                                                        return Positioned(
-                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
-                                                                          top: topPadPosDistance + 50,
-                                                                          child:infoOverlayPanel(
-                                                                            'Gumroad.',
-                                                                            SvgPicture.asset(
-                                                                              'assets/logos/gumroad.svg',
-                                                                              width: 40,
-                                                                              height: 40,
-                                                                            ),
-                                                                            'jepixo.gumroad.com',
-                                                                            '''
-                                                                            \nYou want a piece of my work? Happy to oblige.
-                                                                            \nMy workshop open to you!'''
-                                                                          ),
-                                                                    );
-                                                                    });
-                                                                  },);
-                                                                  
-                                                                  setState(() {
-                                                                    Overlay.of(context).insert(infoOverlayEntry!);
-                                                                  });
-                                                                  await changeTvChannel(true);
-                                                                },
-                                                                onExit: (event) {
-                                                                  setState(() {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  });
-                                                                },
-                                                                  child: SvgPicture.asset(
-                                                                    'assets/logos/gumroad.svg',
-                                                                    width: 30,
-                                                                    height: 30,
-                                                                  ),
-                                                                ),
-                                                                //ko fi
-                                                                MouseRegion(
-                                                                cursor: SystemMouseCursors.click,
-                                                                onEnter: (event) async {
-                                                                  
-                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=4) {
-                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[4];
-                                                                  }
-                                                                  
-                                                                  if (infoOverlayEntry!=null) {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  }
-                                                                  infoOverlayEntry = OverlayEntry(
-                                                                    builder: (context) {
-                                                                      return StatefulBuilder(builder: (context, updateState) {
-                                                                        return Positioned(
-                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
-                                                                          top: topPadPosDistance + 50,
-                                                                          child:infoOverlayPanel(
-                                                                            'Ko-Fi.',
-                                                                            SvgPicture.asset(
-                                                                              'assets/logos/kofi.svg',
-                                                                              width: 50,
-                                                                              height: 50,
-                                                                            ),
-                                                                            'ko-fi.com/jepixo',
-                                                                            '''
-                                                                            \nSupport my journey, snag exclusive products, 
-                                                                            \nor commission me to make something unique for you.'''
-                                                                          ),
-                                                                    );
-                                                                    });
-                                                                  },);
-                                                                  
-                                                                  setState(() {
-                                                                    Overlay.of(context).insert(infoOverlayEntry!);
-                                                                  });
-                                                                  await changeTvChannel(true);
-                                                                },
-                                                                onExit: (event) {
-                                                                  setState(() {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  });
-                                                                },
-                                                                  child: SvgPicture.asset(
-                                                                    'assets/logos/kofi.svg',
-                                                                    width: 35,
-                                                                    height: 35,
-                                                                  ),
-                                                                ),
-                                                                //patreon
-                                                                MouseRegion(
-                                                                cursor: SystemMouseCursors.click,
-                                                                onEnter: (event) async {
-                                                                  
-                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=1) {
-                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[1];
-                                                                  }
-                                                                  
-                                                                  if (infoOverlayEntry!=null) {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  }
-                                                                  infoOverlayEntry = OverlayEntry(
-                                                                    builder: (context) {
-                                                                      return StatefulBuilder(builder: (context, updateState) {
-                                                                        return Positioned(
-                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
-                                                                          top: topPadPosDistance + 50,
-                                                                          child:infoOverlayPanel(
-                                                                            'Patreon.',
-                                                                            SvgPicture.asset(
-                                                                              'assets/logos/patreon.svg',
-                                                                              width: 40,
-                                                                              height: 40,
-                                                                            ),
-                                                                            'patreon.com/Jepixo',
-                                                                            '''
-                                                                            \nBehind-the-scenes work, early drops, and the raw process.
-                                                                            \nUnpolished, sometimes messy, but always genuine. 
-                                                                            \nIf you want to breathe down my neck alongside the build, 
-                                                                            \nthe break, and the rebuild then Patreon's the place.'''
-                                                                          ),
-                                                                    );
-                                                                    });
-                                                                  },);
-                                                                  
-                                                                  setState(() {
-                                                                    Overlay.of(context).insert(infoOverlayEntry!);
-                                                                  });
-                                                                  await changeTvChannel(true);
-                                                                },
-                                                                onExit: (event) {
-                                                                  setState(() {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  });
-                                                                },
-                                                                  child: SvgPicture.asset(
-                                                                    'assets/logos/patreon.svg',
-                                                                    width: 25,
-                                                                    height: 25,
-                                                                  ),
-                                                                ),
-                                                                SizedBox(width: 5,),
-                                                                Row(
-                                                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                                                  children: [
-                                                                    Padding(
-                                                                      padding: const EdgeInsets.only(bottom:4.0),
-                                                                      child: Text(
-                                                                          'Finger me.',
-                                                                            maxLines: 1,
-                                                                            overflow:TextOverflow.ellipsis,
-                                                                            textAlign: TextAlign.start,
-                                                                            style: TextStyle( fontFamily: 'Lexend',
-                                                                              fontSize: 18,
-                                                                              height: 0.8,
-                                                                              color: defaultPalette.extras[0],
-                                                                              fontWeight: FontWeight.w400,
-                                                                            ),
-                                                                          ),
-                                                                    ),
-                                                                    Icon(TablerIcons.thumb_up_filled, size:30)
-                                                                  ],
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            SizedBox(height: 2,),
-                                                            Row(
-                                                              mainAxisAlignment: MainAxisAlignment.end,
-                                                              children: [
-                                                                
-                                                                SizedBox(width: 2,),
-                                                                //github
-                                                                MouseRegion(
-                                                                cursor: SystemMouseCursors.click,
-                                                                onEnter: (event) async {
-                                                                  
-                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=10) {
-                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[10];
-                                                                  }
-                                                                  
-                                                                  if (infoOverlayEntry!=null) {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  }
-                                                                  infoOverlayEntry = OverlayEntry(
-                                                                    builder: (context) {
-                                                                      return StatefulBuilder(builder: (context, updateState) {
-                                                                        return Positioned(
-                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
-                                                                          top: topPadPosDistance + 50,
-                                                                          child:infoOverlayPanel(
-                                                                            'Github.',
-                                                                            SvgPicture.asset(
-                                                                              'assets/logos/github.svg',
-                                                                              width: 40,
-                                                                              height: 40,
-                                                                              
-                                                                            ),
-                                                                            'github.com/jepixo',
-                                                                            '''
-                                                                            \nContribute, fork, or just get inspired.'''
-                                                                          ),
-                                                                    );
-                                                                    });
-                                                                  },);
-                                                                  
-                                                                  setState(() {
-                                                                    Overlay.of(context).insert(infoOverlayEntry!);
-                                                                  });
-                                                                  await changeTvChannel(true);
-                                                                },
-                                                                onExit: (event) {
-                                                                  setState(() {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  });
-                                                                },
-                                                                  child: SvgPicture.asset(
-                                                                    'assets/logos/github.svg',
-                                                                    width: 22,
-                                                                    height: 22,
-                                                                    colorFilter: ColorFilter.mode(defaultPalette.black, BlendMode.srcIn),
-                                                                  ),
-                                                                ),SizedBox(width: 2,),
-                                                                //onlyfans
-                                                                MouseRegion(
-                                                                cursor: SystemMouseCursors.click,
-                                                                onEnter: (event) async {
-                                                                  
-                                                                  if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=2) {
-                                                                    ref.read(homePageUrlProvider.notifier).state = homePageUrls[2];
-                                                                  }
-                                                                  
-                                                                  if (infoOverlayEntry!=null) {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  }
-                                                                  infoOverlayEntry = OverlayEntry(
-                                                                    builder: (context) {
-                                                                      return StatefulBuilder(builder: (context, updateState) {
-                                                                        return Positioned(
-                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
-                                                                          top: topPadPosDistance + 50,
-                                                                          child:infoOverlayPanel(
-                                                                            'OnlyFans',
-                                                                            SvgPicture.asset(
-                                                                              'assets/logos/onlyfans.svg',
-                                                                              width: 30,
-                                                                              height: 30,
-                                                                              colorFilter: ColorFilter.mode(defaultPalette.extras[3], BlendMode.srcIn),
-                                                                            ),
-                                                                            'Don\'t even get me started.',
-                                                                            '\nKernels of wisdom: maybe ease up on the corn, champ.'
-                                                                          ),
-                                                                    );
-                                                                    });
-                                                                  },);
-                                                                  
-                                                                  setState(() {
-                                                                    Overlay.of(context).insert(infoOverlayEntry!);
-                                                                  });
-                                                                  
-                                                                  await changeTvChannel(true);
-                                                                },
-                                                                onExit: (event) {
-                                                                  setState(() {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  });
-                                                                },
-                                                                  child: SvgPicture.asset(
-                                                                    'assets/logos/onlyfans.svg',
-                                                                    width: 18,
-                                                                    height: 18,
-                                                                    colorFilter: ColorFilter.mode(defaultPalette.extras[3], BlendMode.srcIn),
-                                                                  ),
-                                                                ),SizedBox(width: 2,),
-                                                                //home
-                                                                MouseRegion(
-                                                                cursor: SystemMouseCursors.click,
-                                                                onEnter: (event) async {
-                                                                  
-                                                                  if (infoOverlayEntry!=null) {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  }
-                                                                  infoOverlayEntry = OverlayEntry(
-                                                                    builder: (context) {
-                                                                        var clickText = 'Click here to get my home address.';
-                                                                      return StatefulBuilder(builder: (context, updateState) {
-                                                                        return Positioned(
-                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
-                                                                          top: topPadPosDistance + 50,
-                                                                          child:GestureDetector(
-                                                                            onTap:(){
-                                                                              if (infoOverlayEntry!=null) {
-                                                                                infoOverlayEntry?.remove();
-                                                                                infoOverlayEntry =null;
-                                                                              }
-                                                                            },
-                                                                            child: Container(
-                                                                              padding:EdgeInsets.all(12),
-                                                                              decoration: BoxDecoration(
-                                                                              color: defaultPalette.primary.withOpacity(1),
-                                                                              boxShadow: [
-                                                                                BoxShadow(blurRadius: 15,spreadRadius: 2,color: defaultPalette.extras[0].withOpacity(0.2))
-                                                                              ],
-                                                                              border: Border.all(),
-                                                                              borderRadius: BorderRadius.circular(15)),
-                                                                              child: Column(
-                                                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                children: [
-                                                                                  Row(
-                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                    children: [
-                                                                                        Icon(clickText.startsWith('Wow')?TablerIcons.prison:TablerIcons.home, size:30),
-                                                                                      SizedBox(width: 10,),
-                                                                                      Text(
-                                                                                        clickText.startsWith('Wow')?'Jail':'Home.',
-                                                                                        maxLines: 1,
-                                                                                        overflow: TextOverflow.ellipsis,
-                                                                                        textAlign: TextAlign.start,
-                                                                                        style: TextStyle( fontFamily: 'Lexend',
-                                                                                          fontSize: 25,
-                                                                                          color: defaultPalette.extras[0],
-                                                                                          fontWeight: FontWeight.w600,
-                                                                                          decoration: TextDecoration.none, 
+                                                                                          ],
                                                                                         ),
-                                                                                      ),
-                                                                                    ],
-                                                                                  ),
-                                                                                  SizedBox(height: 10,),
-                                                                                  Text(clickText.startsWith('Wow')? clickText:'My Literal Address.',
+                                                                                      ],
+                                                                                    ),
+                                                                                    
+                                                                                    SizedBox(height: 5,),
+                                                                                    Text('''
+                                                                                      \nCode a blunt sword and design rebellion. Sharpen them both on failure.
+                                                                                      \nIn other words, I develop and design apps among other things. 
+                                                                                      \nFeel free to learn more about me on LinkedIn, etc.
+                                                                                      \nI go by @jepixo almost everywhere online.
+                                                                                      \nAwful dance btw. Yup, Veo3 is awesome.
+                                                                                      \nAnyway, wishing you the best!🤗✨''',
+                                                                              
                                                                                     overflow: TextOverflow.ellipsis,
                                                                                     textAlign: TextAlign.start,
                                                                                     style: TextStyle( fontFamily: 'Lexend',
-                                                                                    fontSize: 18,
+                                                                                    fontSize: 15,
+                                                                                    height: 0.8,
                                                                                     color: defaultPalette.extras[0],
-                                                                                    fontWeight: FontWeight.w500,
+                                                                                    fontWeight: FontWeight.w400,
                                                                                     decoration: TextDecoration.none, 
                                                                                     ),
                                                                                   ),
-                                                                                  if(!clickText.startsWith('Wow'))
-                                                                                  ...[SizedBox(height: 10,),
-                                                                                  MouseRegion(
-                                                                                    cursor: SystemMouseCursors.click,
-                                                                                    child: GestureDetector(
-                                                                                      onTap:(){
-                                                                                        updateState((){
-                                                                                          clickText = 'Wow creep, why do you want my address huh?';
-                                                                                        });
-                                                                                      },
-                                                                                      child: Text(clickText,
-                                                                                        overflow: TextOverflow.ellipsis,
-                                                                                        textAlign: TextAlign.start,
-                                                                                        style: TextStyle( fontFamily: 'Lexend',
-                                                                                        fontSize: 14,
-                                                                                        height: 0.8,
-                                                                                        color: defaultPalette.extras[0],
-                                                                                        fontWeight: FontWeight.w700,
-                                                                                        decoration: TextDecoration.none, 
-                                                                                        fontStyle:  FontStyle.italic
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                  ),],
                                                                                   SizedBox(height: 5,),
                                                                                 ],
                                                                               ),
                                                                             ),
                                                                           ),
-                                                                    );
+                                                                        );
+                                                                      });
+                                                                    },);
+                                                                    
+                                                                    setState(() {
+                                                                      Overlay.of(context).insert(infoOverlayEntry!);
                                                                     });
-                                                                  },);
-                                                                  
-                                                                  setState(() {
-                                                                    Overlay.of(context).insert(infoOverlayEntry!);
-                                                                  });
-                                                                },
-                                                                onExit: (event) {
-                                                                  // setState(() {
-                                                                  //   infoOverlayEntry?.remove();
-                                                                  //   infoOverlayEntry =null;
-                                                                  // });
-                                                                },
-                                                                child: Icon(TablerIcons.home, size:23)),SizedBox(width: 4,),
-                                                                //gmail
-                                                                MouseRegion(
-                                                                cursor: SystemMouseCursors.click,
-                                                                onEnter: (event) async {
-                                                                  
-                                                                  if (infoOverlayEntry!=null) {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  }
-                                                                  infoOverlayEntry = OverlayEntry(
-                                                                    builder: (context) {
-                                                                      return StatefulBuilder(builder: (context, updateState) {
-                                                                        return Positioned(
-                                                                          right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
-                                                                          top: topPadPosDistance + 50,
-                                                                          child:infoOverlayPanel(
-                                                                            'Gmail.',
-                                                                            SvgPicture.asset(
-                                                                              'assets/logos/gmail.svg',
-                                                                              width: 40,
-                                                                              height: 40,
-                                                                            ),
-                                                                            '''billblazex@gmail.com
-                                                                            \njoelsanjay7@gmail.com''',
-                                                                            '''
-                                                                            \nReach me through mail. Queries or requests regarding billblaze
-                                                                            \non billblazex@gmail.com. Other official or general things like
-                                                                            \nasking for a date can be done on the other one.
-                                                                            \nAnd it's a shame jepixo@gmail.com wasn't available 
-                                                                            \nbut I do have jepixoo@gmail.com.'''
-                                                                          ),
-                                                                    );
+                                                                  },
+                                                                  onExit: (event) {
+                                                                    setState(() {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
                                                                     });
-                                                                  },);
-                                                                  
-                                                                  setState(() {
-                                                                    Overlay.of(context).insert(infoOverlayEntry!);
-                                                                  });
-                                                                },
-                                                                onExit: (event) {
-                                                                  setState(() {
-                                                                    infoOverlayEntry?.remove();
-                                                                    infoOverlayEntry =null;
-                                                                  });
-                                                                },
-                                                                  child: SvgPicture.asset(
-                                                                    'assets/logos/gmail.svg',
-                                                                    width: 23,
-                                                                    height: 23,
+                                                                  },
+                                                                  child: Text('@jepixo',
+                                                                      maxLines:1,
+                                                                      overflow:TextOverflow.ellipsis,
+                                                                      textAlign: TextAlign.end,
+                                                                      style: TextStyle( fontFamily: 'Lexend',
+                                                                      fontSize: 30,
+                                                                      height: 0.8,
+                                                                      color: defaultPalette.extras[0],
+                                                                      fontWeight: FontWeight.w600,
+                                                                    ),
+                                                                    ),
                                                                   ),
+                                                                ]
                                                                 ),
-                                                                SizedBox(width: 5,),
-                                                                Row(
-                                                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                                                  children: [
-                                                                    Padding(
-                                                                      padding: const EdgeInsets.only(bottom:6.0),
-                                                                      child: Text(
-                                                                          'Pass me around.',
+                                                              SizedBox(height: 8,),
+                                                              Row(
+                                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                                children: [
+                                                                  //find me follow me
+                                                                  Column(
+                                                                    mainAxisAlignment: MainAxisAlignment.start,
+                                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                                    children: [
+                                                                      Row(
+                                                                        children: [
+                                                                          Text(
+                                                                            'Follow me.',
                                                                             maxLines: 1,
                                                                             overflow:TextOverflow.ellipsis,
                                                                             textAlign: TextAlign.start,
                                                                             style: TextStyle( fontFamily: 'Lexend',
-                                                                              fontSize: 18,
+                                                                              fontSize: 20,
                                                                               height: 0.8,
                                                                               color: defaultPalette.extras[0],
                                                                               fontWeight: FontWeight.w400,
                                                                             ),
                                                                           ),
-                                                                    ),
-                                                                    Iconify(Majesticons.share, size:28)
-                                                                  ],
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          
-                                                          ],
-                                                        ),
-                                                        ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(width: mapValueDimensionBasedLockOnDesync(5, 12, sWidth, sHeight),),
-                                                ]
-                                              ),
-                                              ),
-                                              
-
-                                              SizedBox(height: mapValueDimensionBasedLockOnDesync(15, 50, sWidth, sHeight),),
-                                              //TIPS AND TRICKS interfacee
-                                              Expanded(
-                                                child: ClipRRect(
-                                                  borderRadius:BorderRadius.circular(35),
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      color:defaultPalette.secondary,
-                                                      borderRadius:BorderRadius.circular(35),
-                                                      border: Border.all()
-                                                    ),
-                                                    child: Column(
-                                                      children: [
-                                                      Expanded(
-                                                        child: Container(
-                                                          margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(15, 50, sWidth, sHeight)),
-                                                          decoration: BoxDecoration(
-                                                            color:defaultPalette.primary,
-                                                            border:Border.all(),
-                                                            boxShadow: [
-                                                              BoxShadow(
-                                                                blurRadius: 2,
-                                                                spreadRadius: 2,
-                                                                offset: Offset(2, 2),
-                                                                color: defaultPalette.black.withOpacity(0.1)
-                                                              )
-                                                            ],
-                                                            borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(30, 60, sWidth, sHeight))
-                                                          ),
-                                                          child: ClipRRect(
-                                                             borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(29, 59, sWidth, sHeight)),
-                                                            child: InAppWebView(
-                                                              initialUrlRequest: URLRequest(
-                                                                  url: WebUri.uri(Uri.parse(ref
-                                                                      .watch(homePageUrlProvider))),
-                                                                  headers: {
-                                                                    "User-Agent":
-                                                                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-                                                                  },    
+                                                                        ],
                                                                       ),
-                                                              onWebViewCreated: (controller) async {
-                                                                _controller2 = controller;
+                                                                      SizedBox(height: 8),
+                                                                      Row(
+                                                                        children: [
+                                                                          Text(
+                                                                            'Find me.',
+                                                                            maxLines: 1,
+                                                                            overflow:TextOverflow.ellipsis,
+                                                                            textAlign: TextAlign.start,
+                                                                            style: TextStyle( fontFamily: 'Lexend',
+                                                                              fontSize: 20,
+                                                                              color: defaultPalette.extras[0],
+                                                                              fontWeight: FontWeight.w400,
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  SizedBox(width: 14,),
+                                                                  //linkedincolor
+                                                                  MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (event) async {
+                                                                    if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=11) {
+                                                                      ref.read(homePageUrlProvider.notifier).state = homePageUrls[11];
+                                                                    }
+                                                                    
+                                                                    if (infoOverlayEntry!=null) {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    }
+                                                                    infoOverlayEntry = OverlayEntry(
+                                                                      builder: (context) {
+                                                                        return StatefulBuilder(builder: (context, updateState) {
+                                                                          return Positioned(
+                                                                            right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                            top: topPadPosDistance + 50,
+                                                                            child: infoOverlayPanel(
+                                                                              'LinkedIn.',
+                                                                              SvgPicture.asset(
+                                                                                'assets/logos/linkedin.svg',
+                                                                                width: 50,
+                                                                                height: 50,
+                                                                              ),
+                                                                              'linkedin.com/in/jepixo',
+                                                                              '''
+                                                                              \nExplore my work, projects, education, certifications, and skills on LinkedIn. 
+                                                                              \nLet's connect and discover opportunities to collaborate.'''
+                                                                            ),
+                                                                            );});
+                                                                    },);
+                                                                    setState(() {
+                                                                      Overlay.of(context).insert(infoOverlayEntry!);
+                                                                    });
+                                                                    await changeTvChannel(true);
+                                                                  },
+                                                                  onExit: (event) {
+                                                                    setState(() {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    });
+                                                                  },
+                                                                  child: SvgPicture.asset(
+                                                                    'assets/logos/linkedin.svg',
+                                                                    width: 50,
+                                                                    height: 50,
+                                                                  ),
+                                                                  ),SizedBox(width: 5,),
+                                                                  //instagramcolor
+                                                                  MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (event) async {
+                                                                    
+                                                                    if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=5
+                                                                    && homePageUrls.indexOf(ref.read(homePageUrlProvider))!=6) {
+                                                                      ref.read(homePageUrlProvider.notifier).state = homePageUrls[5];
+                                                                    }
+                                                                    
+                                                                    if (infoOverlayEntry!=null) {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    }
+                                                                    infoOverlayEntry = OverlayEntry(
+                                                                      builder: (context) {
+                                                                        return StatefulBuilder(builder: (context, updateState) {
+                                                                          return Positioned(
+                                                                            right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                            top: topPadPosDistance + 50,
+                                                                            child:infoOverlayPanel(
+                                                                              'Instagram.',
+                                                                              SvgPicture.asset(
+                                                                                'assets/logos/instagramcolor.svg',
+                                                                                width: 50,
+                                                                                height: 50,
+                                                                              ),
+                                                                              '@jepixo, @jovoxel, @billblazex - slide in DMs',
+                                                                              '''
+                                                                              \nI actually had the link for these handles loaded down there
+                                                                              \nbut Zuccy Boy keeps redirecting it to the sign up page.
+                                                                              \nAnd I'm not dealing with phishing allegations.
+                                                                              \nSo be a darling and scan those.✨'''
+                                                                            ),
+                                                                      );
+                                                                      });
+                                                                    },);
+                                                                    
+                                                                    setState(() {
+                                                                      Overlay.of(context).insert(infoOverlayEntry!);
+                                                                    });
+                                                                    await changeTvChannel(true);
+                                                                  },
+                                                                  onExit: (event) {
+                                                                    setState(() {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    });
+                                                                  },
+                                                                  child: SvgPicture.asset(
+                                                                    'assets/logos/instagram.svg',
+                                                                    width: 50,
+                                                                    height: 50,
+                                                                  ),
+                                                                  ),SizedBox(width: 5,),
+                                                                  //youtubecolor
+                                                                  MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (event) async {
+                                                                    
+                                                                    if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=8
+                                                                    && homePageUrls.indexOf(ref.read(homePageUrlProvider))!=7) {
+                                                                      ref.read(homePageUrlProvider.notifier).state = homePageUrls[8];
+                                                                    }
+                                                                    await changeTvChannel(true);
+                                                                    if (infoOverlayEntry!=null) {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    }
+                                                                    infoOverlayEntry = OverlayEntry(
+                                                                      builder: (context) {
+                                                                        return StatefulBuilder(builder: (context, updateState) {
+                                                                          return Positioned(
+                                                                            right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                            top: topPadPosDistance + 50,
+                                                                            child:infoOverlayPanel(
+                                                                              'Youtube.',
+                                                                              SvgPicture.asset(
+                                                                                'assets/logos/youtubecolor.svg',
+                                                                                width: 50,
+                                                                                height: 50,
+                                                                              ),
+                                                                              '@jepixo, @billblazex - feel free to indulge.',
+                                                                              '''
+                                                                              \nTutorials and updates on Billblaze.
+                                                                              \nOther projects and videos on Jepixo.
+                                                                              \nSubscribe and spread the word, but only if you like it.'''
+                                                                            ),
+                                                                      );
+                                                                      });
+                                                                    },);
+                                                                    
+                                                                    setState(() {
+                                                                      Overlay.of(context).insert(infoOverlayEntry!);
+                                                                    });
+                                                                  },
+                                                                  onExit: (event) {
+                                                                    setState(() {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    });
+                                                                  },
+                                                                    child: SvgPicture.asset(
+                                                                      'assets/logos/youtube.svg',
+                                                                      width: 50,
+                                                                      height: 50,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              SizedBox(height: 2,),
+                                                              Row(
+                                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                                children: [
+                                                                  Row(
+                                                                    children: [
+                                                                      Text(
+                                                                        'Feed me.',
+                                                                        maxLines: 1,
+                                                                        overflow:TextOverflow.ellipsis,
+                                                                        textAlign: TextAlign.start,
+                                                                        style: TextStyle( fontFamily: 'Lexend',
+                                                                          fontSize: 35,
+                                                                          height: 0.8,
+                                                                          letterSpacing: -1,
+                                                                          color: defaultPalette.extras[0],
+                                                                          fontWeight: FontWeight.w600,
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  SizedBox(width: 2,),
+                                                                  //gumroad
+                                                                  MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (event) async {
+                                                                    
+                                                                    if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=0) {
+                                                                      ref.read(homePageUrlProvider.notifier).state = homePageUrls[0];
+                                                                    }
+                                                                    
+                                                                    if (infoOverlayEntry!=null) {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    }
+                                                                    infoOverlayEntry = OverlayEntry(
+                                                                      builder: (context) {
+                                                                        return StatefulBuilder(builder: (context, updateState) {
+                                                                          return Positioned(
+                                                                            right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                            top: topPadPosDistance + 50,
+                                                                            child:infoOverlayPanel(
+                                                                              'Gumroad.',
+                                                                              SvgPicture.asset(
+                                                                                'assets/logos/gumroad.svg',
+                                                                                width: 40,
+                                                                                height: 40,
+                                                                              ),
+                                                                              'jepixo.gumroad.com',
+                                                                              '''
+                                                                              \nYou want a piece of my work? Happy to oblige.
+                                                                              \nMy workshop open to you!'''
+                                                                            ),
+                                                                      );
+                                                                      });
+                                                                    },);
+                                                                    
+                                                                    setState(() {
+                                                                      Overlay.of(context).insert(infoOverlayEntry!);
+                                                                    });
+                                                                    await changeTvChannel(true);
+                                                                  },
+                                                                  onExit: (event) {
+                                                                    setState(() {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    });
+                                                                  },
+                                                                    child: SvgPicture.asset(
+                                                                      'assets/logos/gumroad.svg',
+                                                                      width: 30,
+                                                                      height: 30,
+                                                                    ),
+                                                                  ),
+                                                                  //ko fi
+                                                                  MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (event) async {
+                                                                    
+                                                                    if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=4) {
+                                                                      ref.read(homePageUrlProvider.notifier).state = homePageUrls[4];
+                                                                    }
+                                                                    
+                                                                    if (infoOverlayEntry!=null) {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    }
+                                                                    infoOverlayEntry = OverlayEntry(
+                                                                      builder: (context) {
+                                                                        return StatefulBuilder(builder: (context, updateState) {
+                                                                          return Positioned(
+                                                                            right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                            top: topPadPosDistance + 50,
+                                                                            child:infoOverlayPanel(
+                                                                              'Ko-Fi.',
+                                                                              SvgPicture.asset(
+                                                                                'assets/logos/kofi.svg',
+                                                                                width: 50,
+                                                                                height: 50,
+                                                                              ),
+                                                                              'ko-fi.com/jepixo',
+                                                                              '''
+                                                                              \nSupport my journey, snag exclusive products, 
+                                                                              \nor commission me to make something unique for you.'''
+                                                                            ),
+                                                                      );
+                                                                      });
+                                                                    },);
+                                                                    
+                                                                    setState(() {
+                                                                      Overlay.of(context).insert(infoOverlayEntry!);
+                                                                    });
+                                                                    await changeTvChannel(true);
+                                                                  },
+                                                                  onExit: (event) {
+                                                                    setState(() {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    });
+                                                                  },
+                                                                    child: SvgPicture.asset(
+                                                                      'assets/logos/kofi.svg',
+                                                                      width: 35,
+                                                                      height: 35,
+                                                                    ),
+                                                                  ),
+                                                                  //patreon
+                                                                  MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (event) async {
+                                                                    
+                                                                    if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=1) {
+                                                                      ref.read(homePageUrlProvider.notifier).state = homePageUrls[1];
+                                                                    }
+                                                                    
+                                                                    if (infoOverlayEntry!=null) {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    }
+                                                                    infoOverlayEntry = OverlayEntry(
+                                                                      builder: (context) {
+                                                                        return StatefulBuilder(builder: (context, updateState) {
+                                                                          return Positioned(
+                                                                            right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                            top: topPadPosDistance + 50,
+                                                                            child:infoOverlayPanel(
+                                                                              'Patreon.',
+                                                                              SvgPicture.asset(
+                                                                                'assets/logos/patreon.svg',
+                                                                                width: 40,
+                                                                                height: 40,
+                                                                              ),
+                                                                              'patreon.com/Jepixo',
+                                                                              '''
+                                                                              \nBehind-the-scenes work, early drops, and the raw process.
+                                                                              \nUnpolished, sometimes messy, but always genuine. 
+                                                                              \nIf you want to breathe down my neck alongside the build, 
+                                                                              \nthe break, and the rebuild then Patreon's the place.'''
+                                                                            ),
+                                                                      );
+                                                                      });
+                                                                    },);
+                                                                    
+                                                                    setState(() {
+                                                                      Overlay.of(context).insert(infoOverlayEntry!);
+                                                                    });
+                                                                    await changeTvChannel(true);
+                                                                  },
+                                                                  onExit: (event) {
+                                                                    setState(() {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    });
+                                                                  },
+                                                                    child: SvgPicture.asset(
+                                                                      'assets/logos/patreon.svg',
+                                                                      width: 25,
+                                                                      height: 25,
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(width: 5,),
+                                                                  Row(
+                                                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                                                    children: [
+                                                                      Padding(
+                                                                        padding: const EdgeInsets.only(bottom:4.0),
+                                                                        child: Text(
+                                                                            'Finger me.',
+                                                                              maxLines: 1,
+                                                                              overflow:TextOverflow.ellipsis,
+                                                                              textAlign: TextAlign.start,
+                                                                              style: TextStyle( fontFamily: 'Lexend',
+                                                                                fontSize: 18,
+                                                                                height: 0.8,
+                                                                                color: defaultPalette.extras[0],
+                                                                                fontWeight: FontWeight.w400,
+                                                                              ),
+                                                                            ),
+                                                                      ),
+                                                                      Icon(TablerIcons.thumb_up_filled, size:30)
+                                                                    ],
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              SizedBox(height: 2,),
+                                                              Row(
+                                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                                children: [
+                                                                  
+                                                                  SizedBox(width: 2,),
+                                                                  //github
+                                                                  MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (event) async {
+                                                                    
+                                                                    if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=10) {
+                                                                      ref.read(homePageUrlProvider.notifier).state = homePageUrls[10];
+                                                                    }
+                                                                    
+                                                                    if (infoOverlayEntry!=null) {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    }
+                                                                    infoOverlayEntry = OverlayEntry(
+                                                                      builder: (context) {
+                                                                        return StatefulBuilder(builder: (context, updateState) {
+                                                                          return Positioned(
+                                                                            right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                            top: topPadPosDistance + 50,
+                                                                            child:infoOverlayPanel(
+                                                                              'Github.',
+                                                                              SvgPicture.asset(
+                                                                                'assets/logos/github.svg',
+                                                                                width: 40,
+                                                                                height: 40,
+                                                                                
+                                                                              ),
+                                                                              'github.com/jepixo',
+                                                                              '''
+                                                                              \nContribute, fork, or just get inspired.'''
+                                                                            ),
+                                                                      );
+                                                                      });
+                                                                    },);
+                                                                    
+                                                                    setState(() {
+                                                                      Overlay.of(context).insert(infoOverlayEntry!);
+                                                                    });
+                                                                    await changeTvChannel(true);
+                                                                  },
+                                                                  onExit: (event) {
+                                                                    setState(() {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    });
+                                                                  },
+                                                                    child: SvgPicture.asset(
+                                                                      'assets/logos/github.svg',
+                                                                      width: 22,
+                                                                      height: 22,
+                                                                      colorFilter: ColorFilter.mode(defaultPalette.black, BlendMode.srcIn),
+                                                                    ),
+                                                                  ),SizedBox(width: 2,),
+                                                                  //onlyfans
+                                                                  MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (event) async {
+                                                                    
+                                                                    if(homePageUrls.indexOf(ref.read(homePageUrlProvider))!=2) {
+                                                                      ref.read(homePageUrlProvider.notifier).state = homePageUrls[2];
+                                                                    }
+                                                                    
+                                                                    if (infoOverlayEntry!=null) {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    }
+                                                                    infoOverlayEntry = OverlayEntry(
+                                                                      builder: (context) {
+                                                                        return StatefulBuilder(builder: (context, updateState) {
+                                                                          return Positioned(
+                                                                            right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                            top: topPadPosDistance + 50,
+                                                                            child:infoOverlayPanel(
+                                                                              'OnlyFans',
+                                                                              SvgPicture.asset(
+                                                                                'assets/logos/onlyfans.svg',
+                                                                                width: 30,
+                                                                                height: 30,
+                                                                                colorFilter: ColorFilter.mode(defaultPalette.extras[3], BlendMode.srcIn),
+                                                                              ),
+                                                                              'Don\'t even get me started.',
+                                                                              '\nKernels of wisdom: maybe ease up on the corn, champ.'
+                                                                            ),
+                                                                      );
+                                                                      });
+                                                                    },);
+                                                                    
+                                                                    setState(() {
+                                                                      Overlay.of(context).insert(infoOverlayEntry!);
+                                                                    });
+                                                                    
+                                                                    await changeTvChannel(true);
+                                                                  },
+                                                                  onExit: (event) {
+                                                                    setState(() {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    });
+                                                                  },
+                                                                    child: SvgPicture.asset(
+                                                                      'assets/logos/onlyfans.svg',
+                                                                      width: 18,
+                                                                      height: 18,
+                                                                      colorFilter: ColorFilter.mode(defaultPalette.extras[3], BlendMode.srcIn),
+                                                                    ),
+                                                                  ),SizedBox(width: 2,),
+                                                                  //home
+                                                                  MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (event) async {
+                                                                    
+                                                                    if (infoOverlayEntry!=null) {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    }
+                                                                    infoOverlayEntry = OverlayEntry(
+                                                                      builder: (context) {
+                                                                          var clickText = 'Click here to get my home address.';
+                                                                        return StatefulBuilder(builder: (context, updateState) {
+                                                                          return Positioned(
+                                                                            right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                            top: topPadPosDistance + 50,
+                                                                            child:GestureDetector(
+                                                                              onTap:(){
+                                                                                if (infoOverlayEntry!=null) {
+                                                                                  infoOverlayEntry?.remove();
+                                                                                  infoOverlayEntry =null;
+                                                                                }
+                                                                              },
+                                                                              child: Container(
+                                                                                padding:EdgeInsets.all(12),
+                                                                                decoration: BoxDecoration(
+                                                                                color: defaultPalette.primary.withOpacity(1),
+                                                                                boxShadow: [
+                                                                                  BoxShadow(blurRadius: 15,spreadRadius: 2,color: defaultPalette.extras[0].withOpacity(0.2))
+                                                                                ],
+                                                                                border: Border.all(),
+                                                                                borderRadius: BorderRadius.circular(15)),
+                                                                                child: Column(
+                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                  children: [
+                                                                                    Row(
+                                                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                      children: [
+                                                                                          Icon(clickText.startsWith('Wow')?TablerIcons.prison:TablerIcons.home, size:30),
+                                                                                        SizedBox(width: 10,),
+                                                                                        Text(
+                                                                                          clickText.startsWith('Wow')?'Jail':'Home.',
+                                                                                          maxLines: 1,
+                                                                                          overflow: TextOverflow.ellipsis,
+                                                                                          textAlign: TextAlign.start,
+                                                                                          style: TextStyle( fontFamily: 'Lexend',
+                                                                                            fontSize: 25,
+                                                                                            color: defaultPalette.extras[0],
+                                                                                            fontWeight: FontWeight.w600,
+                                                                                            decoration: TextDecoration.none, 
+                                                                                          ),
+                                                                                        ),
+                                                                                      ],
+                                                                                    ),
+                                                                                    SizedBox(height: 10,),
+                                                                                    Text(clickText.startsWith('Wow')? clickText:'My Literal Address.',
+                                                                                      overflow: TextOverflow.ellipsis,
+                                                                                      textAlign: TextAlign.start,
+                                                                                      style: TextStyle( fontFamily: 'Lexend',
+                                                                                      fontSize: 18,
+                                                                                      color: defaultPalette.extras[0],
+                                                                                      fontWeight: FontWeight.w500,
+                                                                                      decoration: TextDecoration.none, 
+                                                                                      ),
+                                                                                    ),
+                                                                                    if(!clickText.startsWith('Wow'))
+                                                                                    ...[SizedBox(height: 10,),
+                                                                                    MouseRegion(
+                                                                                      cursor: SystemMouseCursors.click,
+                                                                                      child: GestureDetector(
+                                                                                        onTap:(){
+                                                                                          updateState((){
+                                                                                            clickText = 'Wow creep, why do you want my address huh?';
+                                                                                          });
+                                                                                        },
+                                                                                        child: Text(clickText,
+                                                                                          overflow: TextOverflow.ellipsis,
+                                                                                          textAlign: TextAlign.start,
+                                                                                          style: TextStyle( fontFamily: 'Lexend',
+                                                                                          fontSize: 14,
+                                                                                          height: 0.8,
+                                                                                          color: defaultPalette.extras[0],
+                                                                                          fontWeight: FontWeight.w700,
+                                                                                          decoration: TextDecoration.none, 
+                                                                                          fontStyle:  FontStyle.italic
+                                                                                          ),
+                                                                                        ),
+                                                                                      ),
+                                                                                    ),],
+                                                                                    SizedBox(height: 5,),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                      );
+                                                                      });
+                                                                    },);
+                                                                    
+                                                                    setState(() {
+                                                                      Overlay.of(context).insert(infoOverlayEntry!);
+                                                                    });
+                                                                  },
+                                                                  onExit: (event) {
+                                                                    // setState(() {
+                                                                    //   infoOverlayEntry?.remove();
+                                                                    //   infoOverlayEntry =null;
+                                                                    // });
+                                                                  },
+                                                                  child: Icon(TablerIcons.home, size:23)),SizedBox(width: 4,),
+                                                                  //gmail
+                                                                  MouseRegion(
+                                                                  cursor: SystemMouseCursors.click,
+                                                                  onEnter: (event) async {
+                                                                    
+                                                                    if (infoOverlayEntry!=null) {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    }
+                                                                    infoOverlayEntry = OverlayEntry(
+                                                                      builder: (context) {
+                                                                        return StatefulBuilder(builder: (context, updateState) {
+                                                                          return Positioned(
+                                                                            right:sWidth / 3 +mapValueDimensionBasedLockOnDesync(10, 40, sWidth, sHeight),
+                                                                            top: topPadPosDistance + 50,
+                                                                            child:infoOverlayPanel(
+                                                                              'Gmail.',
+                                                                              SvgPicture.asset(
+                                                                                'assets/logos/gmail.svg',
+                                                                                width: 40,
+                                                                                height: 40,
+                                                                              ),
+                                                                              '''billblazex@gmail.com
+                                                                              \njoelsanjay7@gmail.com''',
+                                                                              '''
+                                                                              \nReach me through mail. Queries or requests regarding billblaze
+                                                                              \non billblazex@gmail.com. Other official or general things like
+                                                                              \nasking for a date can be done on the other one.
+                                                                              \nAnd it's a shame jepixo@gmail.com wasn't available 
+                                                                              \nbut I do have jepixoo@gmail.com.'''
+                                                                            ),
+                                                                      );
+                                                                      });
+                                                                    },);
+                                                                    
+                                                                    setState(() {
+                                                                      Overlay.of(context).insert(infoOverlayEntry!);
+                                                                    });
+                                                                  },
+                                                                  onExit: (event) {
+                                                                    setState(() {
+                                                                      infoOverlayEntry?.remove();
+                                                                      infoOverlayEntry =null;
+                                                                    });
+                                                                  },
+                                                                    child: SvgPicture.asset(
+                                                                      'assets/logos/gmail.svg',
+                                                                      width: 23,
+                                                                      height: 23,
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(width: 5,),
+                                                                  Row(
+                                                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                                                    children: [
+                                                                      Padding(
+                                                                        padding: const EdgeInsets.only(bottom:6.0),
+                                                                        child: Text(
+                                                                            'Pass me around.',
+                                                                              maxLines: 1,
+                                                                              overflow:TextOverflow.ellipsis,
+                                                                              textAlign: TextAlign.start,
+                                                                              style: TextStyle( fontFamily: 'Lexend',
+                                                                                fontSize: 18,
+                                                                                height: 0.8,
+                                                                                color: defaultPalette.extras[0],
+                                                                                fontWeight: FontWeight.w400,
+                                                                              ),
+                                                                            ),
+                                                                      ),
+                                                                      Iconify(Majesticons.share, size:28)
+                                                                    ],
+                                                                  ),
+                                                                ],
+                                                              ),
                                                             
-                                                            print("WebView created");
-                                                            },
-                                                              onLoadStop: (controller, url) async {
-                                                            print("Loaded: $url");
-                                                            print("Loaded: ${homePageUrls.indexOf(ref.read(homePageUrlProvider))}");
-                                                            try {
-                                                              if(homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 5
-                                                              && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 6
-                                                              && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 9
-                                                              && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 0
-                                                              && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != -1
-                                                              ) {
-                                                                await controller.evaluateJavascript(
-                                                                    source: """
-                                                                    // Hide scrollbars visually but keep scroll functionality
-                                                                    // document.documentElement.style.overflow = 'scroll';
-                                                                    // document.body.style.overflow = 'scroll';
-                                                                    
-                                                                    // Apply zoom
-                                                                    document.documentElement.style.zoom = '60%';
-                                                                    
-                                                                    // Hide scrollbars via CSS
-                                                                    const style = document.createElement('style');
-                                                                    style.innerHTML = `
-                                                                      ::-webkit-scrollbar { 
-                                                                        width: 0px; 
-                                                                        background: transparent; 
-                                                                      }
-                                                                    `;
-                                                                    document.head.appendChild(style);
-                                                                  """
-                                                                  );
-                                                              } 
+                                                            ],
+                                                          ),
+                                                          ),
+                                                      ),
+                                                    ),
+                                                    SizedBox(width: mapValueDimensionBasedLockOnDesync(5, 12, sWidth, sHeight),),
+                                                  ]
+                                                ),
+                                                ),
+                                                
+                                          
+                                                SizedBox(height: mapValueDimensionBasedLockOnDesync(15, 50, sWidth, sHeight),),
+                                                //TIPS AND TRICKS interfacee
+                                                Expanded(
+                                                  child: ClipRRect(
+                                                    borderRadius:BorderRadius.circular(35),
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        color:defaultPalette.secondary,
+                                                        borderRadius:BorderRadius.circular(35),
+                                                        border: Border.all()
+                                                      ),
+                                                      child: Column(
+                                                        children: [
+                                                        Expanded(
+                                                          child: Container(
+                                                            margin: EdgeInsets.all(mapValueDimensionBasedLockOnDesync(15, 50, sWidth, sHeight)),
+                                                            decoration: BoxDecoration(
+                                                              color:defaultPalette.primary,
+                                                              border:Border.all(),
+                                                              boxShadow: [
+                                                                BoxShadow(
+                                                                  blurRadius: 2,
+                                                                  spreadRadius: 2,
+                                                                  offset: Offset(2, 2),
+                                                                  color: defaultPalette.black.withOpacity(0.1)
+                                                                )
+                                                              ],
+                                                              borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(30, 60, sWidth, sHeight))
+                                                            ),
+                                                            child: ClipRRect(
+                                                               borderRadius: BorderRadius.circular(mapValueDimensionBasedLockOnDesync(29, 59, sWidth, sHeight)),
+                                                              child:currentCardIndex==1? InAppWebView(
+                                                                initialUrlRequest: URLRequest(
+                                                                    url: WebUri.uri(Uri.parse(ref
+                                                                        .watch(homePageUrlProvider))),
+                                                                    headers: {
+                                                                      "User-Agent":
+                                                                          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+                                                                    },    
+                                                                        ),
+                                                                onWebViewCreated: (controller) async {
+                                                                  _controller2 = controller;
                                                               
-                                                              
-                                                            } on Exception catch (e,st) {
-                                                              print('Nooo NOTION: '+st.toString());
-                                                            }
-                                                            },
-                                                              // initialSettings: InAppWebViewSettings(
-                                                              //     textZoom: 50,
-                                                              //     horizontalScrollBarEnabled: false,
-                                                              //     verticalScrollBarEnabled: false,
-                                                              //     builtInZoomControls: true,
-                                                              //     pageZoom: 10,
-                                                              //     supportZoom: true,
-                                                              //     displayZoomControls: true,
-                                                              //     maximumZoomScale: 0.5),
+                                                              print("WebView created");
+                                                              },
+                                                                onLoadStop: (controller, url) async {
+                                                              print("Loaded: $url");
+                                                              print("Loaded: ${homePageUrls.indexOf(ref.read(homePageUrlProvider))}");
+                                                              try {
+                                                                if(homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 5
+                                                                && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 6
+                                                                && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 9
+                                                                && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != 0
+                                                                && homePageUrls.indexOf(ref.read(homePageUrlProvider)) != -1
+                                                                ) {
+                                                                  await controller.evaluateJavascript(
+                                                                      source: """
+                                                                      // Hide scrollbars visually but keep scroll functionality
+                                                                      // document.documentElement.style.overflow = 'scroll';
+                                                                      // document.body.style.overflow = 'scroll';
+                                                                      
+                                                                      // Apply zoom
+                                                                      document.documentElement.style.zoom = '60%';
+                                                                      
+                                                                      // Hide scrollbars via CSS
+                                                                      const style = document.createElement('style');
+                                                                      style.innerHTML = `
+                                                                        ::-webkit-scrollbar { 
+                                                                          width: 0px; 
+                                                                          background: transparent; 
+                                                                        }
+                                                                      `;
+                                                                      document.head.appendChild(style);
+                                                                    """
+                                                                    );
+                                                                } 
+                                                                
+                                                                
+                                                              } on Exception catch (e,st) {
+                                                                print('Nooo NOTION: '+st.toString());
+                                                              }
+                                                              },
+                                                                // initialSettings: InAppWebViewSettings(
+                                                                //     textZoom: 50,
+                                                                //     horizontalScrollBarEnabled: false,
+                                                                //     verticalScrollBarEnabled: false,
+                                                                //     builtInZoomControls: true,
+                                                                //     pageZoom: 10,
+                                                                //     supportZoom: true,
+                                                                //     displayZoomControls: true,
+                                                                //     maximumZoomScale: 0.5),
+                                                              ):SizedBox.expand(),
                                                             ),
                                                           ),
                                                         ),
-                                                      ),
-                                                       Row(
-                                                        children: [
-                                                          SizedBox(width:  mapValueDimensionBasedLockOnDesync( 15, 25, sWidth, sHeight)),
-                                                          ElevatedLayerButton(
-                                                            onClick: () async {
-                                                              ref.read(homePageUrlProvider.notifier).state = url(6);
-
-                                                              await changeTvChannel(true);
-                                                            },
-                                                            
-                                                            buttonHeight: mapValueDimensionBasedLockOnDesync( 30, 85, sWidth, sHeight),
-                                                            buttonWidth:mapValueDimensionBasedLockOnDesync( 30, 85, sWidth, sHeight),
-                                                            borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
-                                                            animationDuration: const Duration(milliseconds: 200),
-                                                            animationCurve: Curves.ease,
-                                                            subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                                            depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                                            topDecoration: BoxDecoration(
-                                                              color: defaultPalette.tertiary,
-                                                              border: Border.all(),
-                                                            ),
-                                                            topLayerChild:Container(
-                                                                
-                                                            child: Icon(
-                                                              TablerIcons.vocabulary,
-                                                              color: defaultPalette.primary,
-                                                              size: mapValueDimensionBasedLockOnDesync( 15, 38, sWidth, sHeight), )),
-                                                                                                            
-                                                            baseDecoration: BoxDecoration(
-                                                            color: defaultPalette.extras[0],
-                                                            // border: Border.all(),
+                                                         Row(
+                                                          children: [
+                                                            SizedBox(width:  mapValueDimensionBasedLockOnDesync( 15, 25, sWidth, sHeight)),
+                                                            ElevatedLayerButton(
+                                                              onClick: () async {
+                                                                ref.read(homePageUrlProvider.notifier).state = url(6);
+                                          
+                                                                await changeTvChannel(true);
+                                                              },
+                                                              
+                                                              buttonHeight: mapValueDimensionBasedLockOnDesync( 30, 85, sWidth, sHeight),
+                                                              buttonWidth:mapValueDimensionBasedLockOnDesync( 30, 85, sWidth, sHeight),
+                                                              borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
+                                                              animationDuration: const Duration(milliseconds: 200),
+                                                              animationCurve: Curves.ease,
+                                                              subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                              depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                              topDecoration: BoxDecoration(
+                                                                color: defaultPalette.tertiary,
+                                                                border: Border.all(),
                                                               ),
-                                                            ),
-                                                          SizedBox(width: 10),
-                                                          Expanded(
-                                                            child: FittedBox(
-                                                              fit:BoxFit.scaleDown,
-                                                              alignment: Alignment.centerLeft,
-                                                              child: Text(homePageUrls.indexOf(ref.watch(homePageUrlProvider))==-1?'Documentation.':homePageUrltitles[homePageUrls.indexOf(ref.watch(homePageUrlProvider))],
-                                                                maxLines:2,
-                                                                overflow:TextOverflow.ellipsis,
-                                                                style: TextStyle( fontFamily: 'Lexend',
-                                                                fontSize: 20,
-                                                                height: 0.8,
-                                                                color: defaultPalette.extras[0],
-                                                                fontWeight: FontWeight.w600,
+                                                              topLayerChild:Container(
+                                                                  
+                                                              child: Icon(
+                                                                TablerIcons.vocabulary,
+                                                                color: defaultPalette.primary,
+                                                                size: mapValueDimensionBasedLockOnDesync( 15, 38, sWidth, sHeight), )),
+                                                                                                              
+                                                              baseDecoration: BoxDecoration(
+                                                              color: defaultPalette.extras[0],
+                                                              // border: Border.all(),
+                                                                ),
+                                                              ),
+                                                            SizedBox(width: 10),
+                                                            Expanded(
+                                                              child: FittedBox(
+                                                                fit:BoxFit.scaleDown,
+                                                                alignment: Alignment.centerLeft,
+                                                                child: Text(homePageUrls.indexOf(ref.watch(homePageUrlProvider))==-1?'Documentation.':homePageUrltitles[homePageUrls.indexOf(ref.watch(homePageUrlProvider))],
+                                                                  maxLines:2,
+                                                                  overflow:TextOverflow.ellipsis,
+                                                                  style: TextStyle( fontFamily: 'Lexend',
+                                                                  fontSize: 20,
+                                                                  height: 0.8,
+                                                                  color: defaultPalette.extras[0],
+                                                                  fontWeight: FontWeight.w600,
+                                                                  ),
                                                                 ),
                                                               ),
                                                             ),
-                                                          ),
-                                                          SizedBox(width: 15),
-                                                          Row(
-                                                            children: [
-                                                            ElevatedLayerButton(
-                                                            onClick: () async {
-                                                              final currentUrl = await _controller2?.getUrl()??WebUri.uri(Uri.parse(ref
-                                                                      .watch(homePageUrlProvider))); // get current URL from WebViewController
-                                                              final currentIndex = homePageUrls.indexOf(ref
-                                                                      .watch(homePageUrlProvider));
-                                                              print(currentIndex);
-                                                              // If currentUrl not in the list, default to 0
-                                                              final newIndex = currentIndex != -1
-                                                              ? currentIndex == 0 
-                                                                ? homePageUrls.length - 1 
-                                                                : currentIndex - 1
-                                                              : 0;
-
-                                                              ref.read(homePageUrlProvider.notifier).state = homePageUrls[newIndex];
-
-                                                              await changeTvChannel(true);
-                                                            },
-                                                            buttonHeight: mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
-                                                            buttonWidth:mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
-                                                            borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
-                                                            animationDuration: const Duration(milliseconds: 200),
-                                                            animationCurve: Curves.ease,
-                                                            subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                                            depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                                            topDecoration: BoxDecoration(
-                                                              color: defaultPalette.extras[3],
-                                                              border: Border.all(),
-                                                            ),
-                                                            topLayerChild: Container(
-                                                            child: Icon(
-                                                              TablerIcons.caret_left_filled,
-                                                              color: defaultPalette.primary,
-                                                              size: mapValueDimensionBasedLockOnDesync( 18, 38, sWidth, sHeight),
-                                                                                                                        )),            
-                                                            baseDecoration: BoxDecoration(
-                                                            color: defaultPalette.extras[0],
-                                                            // border: Border.all(),
-                                                            ),
-                                                          ),
-                                                          SizedBox(width: 5),
-                                                          ElevatedLayerButton(
-                                                            onClick: () async {
-                                                              final currentUrl = await _controller2?.getUrl()??WebUri.uri(Uri.parse(ref
-                                                                      .watch(homePageUrlProvider))); // get current URL from WebViewController
-                                                              final currentIndex = homePageUrls.indexOf(ref
-                                                                      .watch(homePageUrlProvider));
-                                                              // If currentUrl not in the list, default to 0
-                                                              final newIndex = currentIndex != -1
-                                                              ? currentIndex == homePageUrls.length - 1 
-                                                                ? 0
-                                                                : currentIndex + 1
-                                                              : 0;
-
-                                                              ref.read(homePageUrlProvider.notifier).state = homePageUrls[newIndex];
-
-                                                              await changeTvChannel(true);
-                                                            },
-                                                            
-                                                            buttonHeight: mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
-                                                            buttonWidth:mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
-                                                            borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
-                                                            animationDuration: const Duration(milliseconds: 200),
-                                                            animationCurve: Curves.ease,
-                                                            subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                                            depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
-                                                            topDecoration: BoxDecoration(
-                                                              color: defaultPalette.extras[3],
-                                                              border: Border.all(),
-                                                            ),
-                                                            topLayerChild:Container(
-                                                                
-                                                            child: Icon(
-                                                              TablerIcons.caret_right_filled,
-                                                              color: defaultPalette.primary,
-                                                              size: mapValueDimensionBasedLockOnDesync( 18, 38, sWidth, sHeight),
-                                                                                                                        )),
-                                                                                                            
-                                                            baseDecoration: BoxDecoration(
-                                                            color: defaultPalette.extras[0],
-                                                            // border: Border.all(),
+                                                            SizedBox(width: 15),
+                                                            Row(
+                                                              children: [
+                                                              ElevatedLayerButton(
+                                                              onClick: () async {
+                                                                final currentUrl = await _controller2?.getUrl()??WebUri.uri(Uri.parse(ref
+                                                                        .watch(homePageUrlProvider))); // get current URL from WebViewController
+                                                                final currentIndex = homePageUrls.indexOf(ref
+                                                                        .watch(homePageUrlProvider));
+                                                                print(currentIndex);
+                                                                // If currentUrl not in the list, default to 0
+                                                                final newIndex = currentIndex != -1
+                                                                ? currentIndex == 0 
+                                                                  ? homePageUrls.length - 1 
+                                                                  : currentIndex - 1
+                                                                : 0;
+                                          
+                                                                ref.read(homePageUrlProvider.notifier).state = homePageUrls[newIndex];
+                                          
+                                                                await changeTvChannel(true);
+                                                              },
+                                                              buttonHeight: mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
+                                                              buttonWidth:mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
+                                                              borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
+                                                              animationDuration: const Duration(milliseconds: 200),
+                                                              animationCurve: Curves.ease,
+                                                              subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                              depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                              topDecoration: BoxDecoration(
+                                                                color: defaultPalette.extras[3],
+                                                                border: Border.all(),
+                                                              ),
+                                                              topLayerChild: Container(
+                                                              child: Icon(
+                                                                TablerIcons.caret_left_filled,
+                                                                color: defaultPalette.primary,
+                                                                size: mapValueDimensionBasedLockOnDesync( 18, 38, sWidth, sHeight),
+                                                                                                                          )),            
+                                                              baseDecoration: BoxDecoration(
+                                                              color: defaultPalette.extras[0],
+                                                              // border: Border.all(),
                                                               ),
                                                             ),
-                                                          
-                                                          ],),
-                                                          SizedBox(width:  mapValueDimensionBasedLockOnDesync( 15, 25, sWidth, sHeight)),
-                                                          ],
-                                                        ),
-                                                        SizedBox(height:  mapValueDimensionBasedLockOnDesync( 15, 25, sWidth, sHeight)),
-                                                      ],
+                                                            SizedBox(width: 5),
+                                                            ElevatedLayerButton(
+                                                              onClick: () async {
+                                                                final currentUrl = await _controller2?.getUrl()??WebUri.uri(Uri.parse(ref
+                                                                        .watch(homePageUrlProvider))); // get current URL from WebViewController
+                                                                final currentIndex = homePageUrls.indexOf(ref
+                                                                        .watch(homePageUrlProvider));
+                                                                // If currentUrl not in the list, default to 0
+                                                                final newIndex = currentIndex != -1
+                                                                ? currentIndex == homePageUrls.length - 1 
+                                                                  ? 0
+                                                                  : currentIndex + 1
+                                                                : 0;
+                                          
+                                                                ref.read(homePageUrlProvider.notifier).state = homePageUrls[newIndex];
+                                          
+                                                                await changeTvChannel(true);
+                                                              },
+                                                              
+                                                              buttonHeight: mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
+                                                              buttonWidth:mapValueDimensionBasedLockOnDesync( 35, 85, sWidth, sHeight),
+                                                              borderRadius: BorderRadius.circular( mapValueDimensionBasedLockOnDesync( 500, 800, sWidth, sHeight)),
+                                                              animationDuration: const Duration(milliseconds: 200),
+                                                              animationCurve: Curves.ease,
+                                                              subfac: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                              depth: mapValueDimensionBasedLockOnDesync( 2, 4, sWidth, sHeight),
+                                                              topDecoration: BoxDecoration(
+                                                                color: defaultPalette.extras[3],
+                                                                border: Border.all(),
+                                                              ),
+                                                              topLayerChild:Container(
+                                                                  
+                                                              child: Icon(
+                                                                TablerIcons.caret_right_filled,
+                                                                color: defaultPalette.primary,
+                                                                size: mapValueDimensionBasedLockOnDesync( 18, 38, sWidth, sHeight),
+                                                                                                                          )),
+                                                                                                              
+                                                              baseDecoration: BoxDecoration(
+                                                              color: defaultPalette.extras[0],
+                                                              // border: Border.all(),
+                                                                ),
+                                                              ),
+                                                            
+                                                            ],),
+                                                            SizedBox(width:  mapValueDimensionBasedLockOnDesync( 15, 25, sWidth, sHeight)),
+                                                            ],
+                                                          ),
+                                                          SizedBox(height:  mapValueDimensionBasedLockOnDesync( 15, 25, sWidth, sHeight)),
+                                                        ],
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
-                                              ),
-                                              SizedBox(height:mapValueDimensionBasedLockOnDesync(5, 20, sWidth, sHeight)),
-                                            ],
+                                                SizedBox(height:mapValueDimensionBasedLockOnDesync(5, 20, sWidth, sHeight)),
+                                              ],
+                                            ),
                                           ),
                                         )),
                                       //RECENTSS CARDD
@@ -3822,216 +3825,246 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                         child: //the layout tiles
                                         Padding(
                                           padding: const EdgeInsets.all(12.0),
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(40),
-                                            child: Column(
-                                              children: [
-                                                //RECENTSS TITLE
-                                                Row(
+                                          child: IgnorePointer(
+                                            ignoring:index!=0,
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(40),
+                                              child: Column(
                                                 children: [
+                                                  //RECENTSS TITLE
+                                                  Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.all(15+8.0).copyWith(bottom: 0),
+                                                        child: Text('RECENT'.toUpperCase(),
+                                                            textAlign: TextAlign.left,
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          style: TextStyle(                                fontFamily: 'PressStart2P',
+                                                              color: defaultPalette.extras[0],
+                                                              fontSize: mapValueDimensionBasedLockOnDesync(25, 45, sWidth, sHeight),
+                                                              letterSpacing: -2,
+                                                              fontWeight: FontWeight.w600,
+                                                              height: 1.2)),
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(
+                                                  height: 0,
+                                                ),
                                                   Expanded(
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.all(15+8.0).copyWith(bottom: 0),
-                                                      child: Text('RECENT'.toUpperCase(),
-                                                          textAlign: TextAlign.left,
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
-                                                        style: TextStyle(                                fontFamily: 'PressStart2P',
-                                                            color: defaultPalette.extras[0],
-                                                            fontSize: mapValueDimensionBasedLockOnDesync(25, 45, sWidth, sHeight),
-                                                            letterSpacing: -2,
-                                                            fontWeight: FontWeight.w600,
-                                                            height: 1.2)),
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                    width: 5,
-                                                  ),
-                                                ],
-                                              ),
-                                              SizedBox(
-                                                height: 0,
-                                              ),
-                                                Expanded(
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      color: Color(0xffc0c0c0).withOpacity(0.5),
-                                                      // color:defaultPalette.primary,
-                                                      borderRadius: BorderRadius.circular(30),
-                                                    ),
-                                                    margin: EdgeInsets.all(15+mapValueDimensionBasedLockOnDesync(1, 10, sWidth, sHeight)),
-                                                    child: ScrollConfiguration(
-                                                      behavior:
-                                                          ScrollBehavior().copyWith(scrollbars: false),
-                                                      child: DynMouseScroll(
-                                                          durationMS: 500,
-                                                          scrollSpeed: 1,
-                                                          builder: (context, controller, physics) {
-                                                            return ScrollbarUltima(
-                                                              alwaysShowThumb: true,
-                                                              controller: controller,
-                                                              scrollbarPosition:
-                                                                  ScrollbarPosition.right,
-                                                              backgroundColor: defaultPalette.primary,
-                                                              isDraggable: true,
-                                                              maxDynamicThumbLength: 90,
-                                                              minDynamicThumbLength: 50,
-                                                              thumbBuilder:
-                                                                  (context, animation, widgetStates) {
-                                                                return Container(
-                                                                  margin: EdgeInsets.only(
-                                                                      right: 3, top: 8, bottom: 8),
-                                                                  decoration: BoxDecoration(
-                                                                      color: defaultPalette.primary,
-                                                                      border: Border.all(),
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(15)),
-                                                                  width: 6,
-                                                                );
-                                                              },
-                                                              child: ClipRRect(
-                                                                borderRadius: BorderRadius.circular(30),
-                                                                child: ListView.builder(
-                                                                  padding: EdgeInsets.only(right: 0,top: 0),
-                                                                  controller: controller,
-                                                                  physics: physics,
-                                                                  // itemCount: layouts.length+1,
-                                                                  itemCount:Boxes.getLayouts(ref).values.toList().length + 1,
-                                                                  itemBuilder:(BuildContext context, int i) {
-                                                                    final layouts = Boxes.getLayouts(ref).values.toList();
-                                                                    layouts.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
-                                                                                                
-                                                                    
-                                                                    if (i == layouts.length) {
-                                                                      return const SizedBox(height: 5);
-                                                                    }
-                                                                                                        
-                                                                    final layoutModel = layouts[i];
-                                                                    if ( (layoutModel.deleted??false)) {
-                                                                      return const SizedBox.shrink();
-                                                                    }
-
-                                                                    return Material(
-                                                                        color: defaultPalette.transparent,
-                                                                        child: InkWell(
-                                                                          hoverColor: defaultPalette.extras[0].withOpacity(0.4),
-                                                                          highlightColor: defaultPalette.extras[0].withOpacity(0.4),
-                                                                          splashColor: defaultPalette
-                                                                              .extras[0]
-                                                                              .withOpacity(0.4),
-                                                                          onTap: () {
-                                                                            Navigator.push(context,
-                                                                                MaterialPageRoute(
-                                                                              builder: (context) {
-                                                                                // _timer?.cancel();
-                                                                                return PopScope(
-                                                                                  canPop: false,
-                                                                                  child: LayoutDesigner(
-                                                                                    id: layoutModel.id,
-                                                                                    // layoutModel: layoutModel,
-                                                                                    onPop: (pdf) {
-                                                                                      setState(() {
-                                                                                        filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
-                                                                                      });
-                                                                                    },
-                                                                                  ),
-                                                                                );
-                                                                              },
-                                                                            ));
-                                                                          },
-                                                                          child: Container(
-                                                                            height: mapValueDimensionBasedLockOnDesync(75, 170, sWidth, sHeight),
-                                                                            width: 30,
-                                                                            margin: EdgeInsets.only(
-                                                                                bottom: 10, 
-                                                                                right: 8, 
-                                                                                top: mapValueDimensionBasedLockOnDesync(0+(i==0?8:1), 15, sWidth, sHeight),
-                                                                                left:mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
-                                                                            color: defaultPalette
-                                                                                .transparent,
-                                                                            child: Row(
-                                                                              children: [
-                                                                                
-                                                                                //layoutname and created modified
-                                                                                Expanded(
-                                                                                  child: Column(
-                                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                  children: [
-                                                                                    //layoutname
-                                                                                      Expanded(
-                                                                                        child: Padding(
-                                                                                          padding: const EdgeInsets.only(left: 8.0, top: 5),
-                                                                                          child: Tooltip(
-                                                                                            message:
-                                                                                            layoutModel.name,
-                                                                                            textStyle: TextStyle(                                fontFamily: 'Lexend',
-                                                                                              fontSize: mapValueDimensionBasedLockOnDesync(15,20, sWidth, sHeight),
-                                                                                              color:defaultPalette.primary,
-                                                                                              fontWeight: FontWeight.w600,
-                                                                                              letterSpacing:-0.2,
-                                                                                            ),
-                                                                                            decoration: BoxDecoration(
-                                                                                                color: defaultPalette.extras[0].withOpacity( 0.8),
-                                                                                                borderRadius: BorderRadius.circular( 50)),
-                                                                                            child: Text(
+                                                    child: Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Color(0xffc0c0c0).withOpacity(0.5),
+                                                        // color:defaultPalette.primary,
+                                                        borderRadius: BorderRadius.circular(30),
+                                                      ),
+                                                      margin: EdgeInsets.all(15+mapValueDimensionBasedLockOnDesync(1, 10, sWidth, sHeight)),
+                                                      child: ScrollConfiguration(
+                                                        behavior:
+                                                            ScrollBehavior().copyWith(scrollbars: false),
+                                                        child: DynMouseScroll(
+                                                            durationMS: 500,
+                                                            scrollSpeed: 1,
+                                                            builder: (context, controller, physics) {
+                                                              return ScrollbarUltima(
+                                                                alwaysShowThumb: true,
+                                                                controller: controller,
+                                                                scrollbarPosition:
+                                                                    ScrollbarPosition.right,
+                                                                backgroundColor: defaultPalette.primary,
+                                                                isDraggable: true,
+                                                                maxDynamicThumbLength: 90,
+                                                                minDynamicThumbLength: 50,
+                                                                thumbBuilder:
+                                                                    (context, animation, widgetStates) {
+                                                                  return Container(
+                                                                    margin: EdgeInsets.only(
+                                                                        right: 3, top: 8, bottom: 8),
+                                                                    decoration: BoxDecoration(
+                                                                        color: defaultPalette.primary,
+                                                                        border: Border.all(),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(15)),
+                                                                    width: 6,
+                                                                  );
+                                                                },
+                                                                child: ClipRRect(
+                                                                  borderRadius: BorderRadius.circular(30),
+                                                                  child: ListView.builder(
+                                                                    padding: EdgeInsets.only(right: 0,top: 0),
+                                                                    controller: controller,
+                                                                    physics: physics,
+                                                                    // itemCount: layouts.length+1,
+                                                                    itemCount:Boxes.getLayouts(ref).values.toList().length + 1,
+                                                                    itemBuilder:(BuildContext context, int i) {
+                                                                      final layouts = Boxes.getLayouts(ref).values.toList();
+                                                                      layouts.sort((a, b) => b.modifiedAt.compareTo(a.modifiedAt));
+                                                                                                  
+                                                                      
+                                                                      if (i == layouts.length) {
+                                                                        return const SizedBox(height: 5);
+                                                                      }
+                                                                                                          
+                                                                      final layoutModel = layouts[i];
+                                                                      if ( (layoutModel.deleted??false)) {
+                                                                        return const SizedBox.shrink();
+                                                                      }
+                                            
+                                                                      return Material(
+                                                                          color: defaultPalette.transparent,
+                                                                          child: InkWell(
+                                                                            hoverColor: defaultPalette.extras[0].withOpacity(0.4),
+                                                                            highlightColor: defaultPalette.extras[0].withOpacity(0.4),
+                                                                            splashColor: defaultPalette
+                                                                                .extras[0]
+                                                                                .withOpacity(0.4),
+                                                                            onTap: () {
+                                                                              Navigator.push(context,
+                                                                                  MaterialPageRoute(
+                                                                                builder: (context) {
+                                                                                  // _timer?.cancel();
+                                                                                  return PopScope(
+                                                                                    canPop: false,
+                                                                                    child: LayoutDesigner(
+                                                                                      id: layoutModel.id,
+                                                                                      // layoutModel: layoutModel,
+                                                                                      onPop: (pdf) {
+                                                                                        setState(() {
+                                                                                          filteredLayoutBox = Boxes.getLayouts(ref).values.toList();
+                                                                                        });
+                                                                                      },
+                                                                                    ),
+                                                                                  );
+                                                                                },
+                                                                              ));
+                                                                            },
+                                                                            child: Container(
+                                                                              height: mapValueDimensionBasedLockOnDesync(75, 170, sWidth, sHeight),
+                                                                              width: 30,
+                                                                              margin: EdgeInsets.only(
+                                                                                  bottom: 10, 
+                                                                                  right: 8, 
+                                                                                  top: mapValueDimensionBasedLockOnDesync(0+(i==0?8:1), 15, sWidth, sHeight),
+                                                                                  left:mapValueDimensionBasedLockOnDesync(5, 15, sWidth, sHeight)),
+                                                                              color: defaultPalette
+                                                                                  .transparent,
+                                                                              child: Row(
+                                                                                children: [
+                                                                                  
+                                                                                  //layoutname and created modified
+                                                                                  Expanded(
+                                                                                    child: Column(
+                                                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                    children: [
+                                                                                      //layoutname
+                                                                                        Expanded(
+                                                                                          child: Padding(
+                                                                                            padding: const EdgeInsets.only(left: 8.0, top: 5),
+                                                                                            child: Tooltip(
+                                                                                              message:
                                                                                               layoutModel.name,
-                                                                                              maxLines: 1,
-                                                                                              overflow: TextOverflow.ellipsis,
-                                                                                              textAlign: TextAlign.end,
-                                                                                              style: TextStyle(                                fontFamily: 'Lexend',
-                                                                                                fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
-                                                                                                color: defaultPalette.extras[0],
+                                                                                              textStyle: TextStyle(                                fontFamily: 'Lexend',
+                                                                                                fontSize: mapValueDimensionBasedLockOnDesync(15,20, sWidth, sHeight),
+                                                                                                color:defaultPalette.primary,
                                                                                                 fontWeight: FontWeight.w600,
-                                                                                                letterSpacing: -0.2,
+                                                                                                letterSpacing:-0.2,
+                                                                                              ),
+                                                                                              decoration: BoxDecoration(
+                                                                                                  color: defaultPalette.extras[0].withOpacity( 0.8),
+                                                                                                  borderRadius: BorderRadius.circular( 50)),
+                                                                                              child: Text(
+                                                                                                layoutModel.name,
+                                                                                                maxLines: 1,
+                                                                                                overflow: TextOverflow.ellipsis,
+                                                                                                textAlign: TextAlign.end,
+                                                                                                style: TextStyle(                                fontFamily: 'Lexend',
+                                                                                                  fontSize: mapValueDimensionBasedLockOnDesync(15, 35, sWidth, sHeight),
+                                                                                                  color: defaultPalette.extras[0],
+                                                                                                  fontWeight: FontWeight.w600,
+                                                                                                  letterSpacing: -0.2,
+                                                                                                ),
                                                                                               ),
                                                                                             ),
                                                                                           ),
                                                                                         ),
-                                                                                      ),
-                                                                                    //created modified and pages
-                                                                                    Container(
-                                                                                      decoration: BoxDecoration(
-                                                                                        // color:  defaultPalette.primary,
-                                                                                        borderRadius: BorderRadius.circular(12),
-                                                                                        // border: Border.all()
-                                                                                      ),
-                                                                                      padding: EdgeInsets.all( 3  ).copyWith(left: 8),
-                                                                                      child: Column(
-                                                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                        mainAxisAlignment: MainAxisAlignment.start,
-                                                                                        children: [
-                                                                                          SingleChildScrollView(
-                                                                                            scrollDirection: Axis.horizontal,
-                                                                                            child: RichText(
-                                                                                              textAlign: TextAlign.start,
-                                                                                              maxLines: 1,
-                                                                                              // overflow: TextOverflow.ellipsis,
-                                                                                              text: TextSpan(
-                                                                                                style: TextStyle(                                fontFamily: 'Lexend',
-                                                                                                  fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
-                                                                                                  fontWeight: FontWeight.w300,
-                                                                                                  letterSpacing: -0.2,
+                                                                                      //created modified and pages
+                                                                                      Container(
+                                                                                        decoration: BoxDecoration(
+                                                                                          // color:  defaultPalette.primary,
+                                                                                          borderRadius: BorderRadius.circular(12),
+                                                                                          // border: Border.all()
+                                                                                        ),
+                                                                                        padding: EdgeInsets.all( 3  ).copyWith(left: 8),
+                                                                                        child: Column(
+                                                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                          mainAxisAlignment: MainAxisAlignment.start,
+                                                                                          children: [
+                                                                                            SingleChildScrollView(
+                                                                                              scrollDirection: Axis.horizontal,
+                                                                                              child: RichText(
+                                                                                                textAlign: TextAlign.start,
+                                                                                                maxLines: 1,
+                                                                                                // overflow: TextOverflow.ellipsis,
+                                                                                                text: TextSpan(
+                                                                                                  style: TextStyle(                                fontFamily: 'Lexend',
+                                                                                                    fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                                    fontWeight: FontWeight.w300,
+                                                                                                    letterSpacing: -0.2,
+                                                                                                  ),
+                                                                                                  children: [
+                                                                                                    TextSpan(
+                                                                                                      text: 'Created: ',
+                                                                                                      style: TextStyle(                                fontFamily: 'Lexend',
+                                                                                                          color: defaultPalette.extras[0]),
+                                                                                                    ),
+                                                                                                    TextSpan(
+                                                                                                      text: DateFormat("MMM d, y 'at' h:mm a")
+                                                                                                          .format(layoutModel.createdAt),
+                                                                                                      style:
+                                                                                                          TextStyle(color: defaultPalette.extras[0]),
+                                                                                                    ),
+                                                                                                  ],
                                                                                                 ),
-                                                                                                children: [
-                                                                                                  TextSpan(
-                                                                                                    text: 'Created: ',
-                                                                                                    style: TextStyle(                                fontFamily: 'Lexend',
-                                                                                                        color: defaultPalette.extras[0]),
-                                                                                                  ),
-                                                                                                  TextSpan(
-                                                                                                    text: DateFormat("MMM d, y 'at' h:mm a")
-                                                                                                        .format(layoutModel.createdAt),
-                                                                                                    style:
-                                                                                                        TextStyle(color: defaultPalette.extras[0]),
-                                                                                                  ),
-                                                                                                ],
                                                                                               ),
                                                                                             ),
-                                                                                          ),
-                                                                                          SingleChildScrollView(
-                                                                                            scrollDirection: Axis.horizontal,
-                                                                                            child: RichText(
+                                                                                            SingleChildScrollView(
+                                                                                              scrollDirection: Axis.horizontal,
+                                                                                              child: RichText(
+                                                                                                textAlign: TextAlign.start,
+                                                                                                maxLines: 1,
+                                                                                                overflow: TextOverflow.ellipsis,
+                                                                                                text: TextSpan(
+                                                                                                  style: TextStyle(                                fontFamily: 'Lexend',
+                                                                                                    fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                                    fontWeight: FontWeight.w300,
+                                                                                                    letterSpacing: -0.2,
+                                                                                                  ),
+                                                                                                  children: [
+                                                                                                    TextSpan(
+                                                                                                      text: 'Modified: ',
+                                                                                                      style: TextStyle(                                fontFamily: 'Lexend',
+                                                                                                        color: defaultPalette.extras[0],
+                                                                                                        fontWeight: FontWeight.w400,
+                                                                                                      ),
+                                                                                                    ),
+                                                                                                    TextSpan(
+                                                                                                      text: DateFormat("MMM d, y 'at' h:mm a")
+                                                                                                          .format(layoutModel.modifiedAt),
+                                                                                                      style:
+                                                                                                          TextStyle(color: defaultPalette.extras[0]),
+                                                                                                    ),
+                                                                                                  ],
+                                                                                                ),
+                                                                                              ),
+                                                                                            ),
+                                                                                            RichText(
                                                                                               textAlign: TextAlign.start,
                                                                                               maxLines: 1,
                                                                                               overflow: TextOverflow.ellipsis,
@@ -4043,137 +4076,110 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                                 ),
                                                                                                 children: [
                                                                                                   TextSpan(
-                                                                                                    text: 'Modified: ',
+                                                                                                    text:
+                                                                                                        '${SheetType.values[layoutModel.type].name} · ',
                                                                                                     style: TextStyle(                                fontFamily: 'Lexend',
+                                                                                                      fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
                                                                                                       color: defaultPalette.extras[0],
-                                                                                                      fontWeight: FontWeight.w400,
+                                                                                                      fontWeight: FontWeight.w600,
+                                                                                                      letterSpacing: -0.2,
                                                                                                     ),
                                                                                                   ),
                                                                                                   TextSpan(
-                                                                                                    text: DateFormat("MMM d, y 'at' h:mm a")
-                                                                                                        .format(layoutModel.modifiedAt),
-                                                                                                    style:
-                                                                                                        TextStyle(color: defaultPalette.extras[0]),
+                                                                                                    text:
+                                                                                                        'Pages: ${layoutModel.spreadSheetList.isEmpty ? '1' : layoutModel.spreadSheetList.length.toString()}',
+                                                                                                    style: TextStyle(                                fontFamily: 'Lexend',
+                                                                                                      fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
+                                                                                                      color: defaultPalette.extras[0],
+                                                                                                      fontWeight: FontWeight.w400,
+                                                                                                      letterSpacing: -0.2,
+                                                                                                    ),
                                                                                                   ),
                                                                                                 ],
                                                                                               ),
                                                                                             ),
-                                                                                          ),
-                                                                                          RichText(
-                                                                                            textAlign: TextAlign.start,
-                                                                                            maxLines: 1,
-                                                                                            overflow: TextOverflow.ellipsis,
-                                                                                            text: TextSpan(
-                                                                                              style: TextStyle(                                fontFamily: 'Lexend',
-                                                                                                fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
-                                                                                                fontWeight: FontWeight.w300,
-                                                                                                letterSpacing: -0.2,
-                                                                                              ),
-                                                                                              children: [
-                                                                                                TextSpan(
-                                                                                                  text:
-                                                                                                      '${SheetType.values[layoutModel.type].name} · ',
-                                                                                                  style: TextStyle(                                fontFamily: 'Lexend',
-                                                                                                    fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
-                                                                                                    color: defaultPalette.extras[0],
-                                                                                                    fontWeight: FontWeight.w600,
-                                                                                                    letterSpacing: -0.2,
-                                                                                                  ),
-                                                                                                ),
-                                                                                                TextSpan(
-                                                                                                  text:
-                                                                                                      'Pages: ${layoutModel.spreadSheetList.isEmpty ? '1' : layoutModel.spreadSheetList.length.toString()}',
-                                                                                                  style: TextStyle(                                fontFamily: 'Lexend',
-                                                                                                    fontSize: mapValueDimensionBasedLockOnDesync(10, 18, sWidth, sHeight),
-                                                                                                    color: defaultPalette.extras[0],
-                                                                                                    fontWeight: FontWeight.w400,
-                                                                                                    letterSpacing: -0.2,
-                                                                                                  ),
-                                                                                                ),
-                                                                                              ],
-                                                                                            ),
-                                                                                          ),
-                                                                                          
-                                                                                        ],
+                                                                                            
+                                                                                          ],
+                                                                                        ),
                                                                                       ),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                                ),
-                                                                                SizedBox(width: 5),
-                                                                                //mini layout pdf pages swiper
-                                                                                SizedBox(
-                                                                                  height: mapValueDimensionBasedLockOnDesync(75, 170, sWidth, sHeight),
-                                                                                  width: mapValueDimensionBasedLockOnDesync(58, 125, sWidth, sHeight),
-                                                                                  child: AppinioSwiper(
-                                                                                    cardCount: (layoutModel.spreadSheetList.length.isNaN || layoutModel.docPropsList.isEmpty)
-                                                                                        ? 1
-                                                                                        : layoutModel.docPropsList.length,
-                                                                                    backgroundCardCount: 5,
-                                                                                    backgroundCardOffset: Offset( 0.8, 0.8),
-                                                                                    duration: Duration( milliseconds: 220),
-                                                                                    backgroundCardScale: 1,
-                                                                                    loop: true,
-                                                                                    allowUnSwipe: true,
-                                                                                    allowUnlimitedUnSwipe: true,
-                                                                                    initialIndex: 0,
-                                                                                    cardBuilder: (context, indx) {
-                                                                                      // print(layoutModel.pdf?.length);
-                                                                                      return Stack(
-                                                                                        children: [
-                                                                                          //The main bgCOLOR OF THE CARD
-                                                                                          Positioned.fill(
-                                                                                            child: AnimatedContainer(
-                                                                                              duration: Durations.short3,
-                                                                                              alignment: Alignment.center,
-                                                                                              margin: EdgeInsets.only(
-                                                                                                  left: 8,
-                                                                                                  top: 8,
-                                                                                                  bottom: 2),
-                                                                                              decoration: BoxDecoration(
-                                                                                                color: defaultPalette.primary,
-                                                                                                border: Border.all(
-                                                                                                    width: 1.2,
-                                                                                                    color: defaultPalette.extras[0],
-                                                                                                    strokeAlign: BorderSide.strokeAlignOutside),
-                                                                                                borderRadius: BorderRadius.circular(10),
-                                                                                                image:( layoutModel.pdf == null || layoutModel.pdf!.isEmpty)
-                                                                                                  ? null
-                                                                                                  : DecorationImage(
-                                                                                                      image: MemoryImage(
-                                                                                                        layoutModel.pdf![indx],
-                                                                                                      ),
-                                                                                                      fit: BoxFit.fitWidth),
-                                                                                              ),
-                                                                                              // foregroundDecoration: BoxDecoration(
-                                                                                              //   border: Border.all(width: 2, color:defaultPalette.extras[0]),
-                                                                                              //   borderRadius: BorderRadius.circular(10),
-                                                                                              // ),
-                                                                                            ),
-                                                                                          ),
-                                                                                        ],
-                                                                                      );
-                                                                                    },
+                                                                                    ],
                                                                                   ),
-                                                                                ),
-                                                                                SizedBox(
-                                                                                  width: 10,
-                                                                                ),
-                                                                              ],
+                                                                                  ),
+                                                                                  SizedBox(width: 5),
+                                                                                  //mini layout pdf pages swiper
+                                                                                  SizedBox(
+                                                                                    height: mapValueDimensionBasedLockOnDesync(75, 170, sWidth, sHeight),
+                                                                                    width: mapValueDimensionBasedLockOnDesync(58, 125, sWidth, sHeight),
+                                                                                    child: AppinioSwiper(
+                                                                                      cardCount: (layoutModel.spreadSheetList.length.isNaN || layoutModel.docPropsList.isEmpty)
+                                                                                          ? 1
+                                                                                          : layoutModel.docPropsList.length,
+                                                                                      backgroundCardCount: 5,
+                                                                                      backgroundCardOffset: Offset( 0.8, 0.8),
+                                                                                      duration: Duration( milliseconds: 220),
+                                                                                      backgroundCardScale: 1,
+                                                                                      loop: true,
+                                                                                      allowUnSwipe: true,
+                                                                                      allowUnlimitedUnSwipe: true,
+                                                                                      initialIndex: 0,
+                                                                                      cardBuilder: (context, indx) {
+                                                                                        // print(layoutModel.pdf?.length);
+                                                                                        return Stack(
+                                                                                          children: [
+                                                                                            //The main bgCOLOR OF THE CARD
+                                                                                            Positioned.fill(
+                                                                                              child: AnimatedContainer(
+                                                                                                duration: Durations.short3,
+                                                                                                alignment: Alignment.center,
+                                                                                                margin: EdgeInsets.only(
+                                                                                                    left: 8,
+                                                                                                    top: 8,
+                                                                                                    bottom: 2),
+                                                                                                decoration: BoxDecoration(
+                                                                                                  color: defaultPalette.primary,
+                                                                                                  border: Border.all(
+                                                                                                      width: 1.2,
+                                                                                                      color: defaultPalette.extras[0],
+                                                                                                      strokeAlign: BorderSide.strokeAlignOutside),
+                                                                                                  borderRadius: BorderRadius.circular(10),
+                                                                                                  image:( layoutModel.pdf == null || layoutModel.pdf!.isEmpty)
+                                                                                                    ? null
+                                                                                                    : DecorationImage(
+                                                                                                        image: MemoryImage(
+                                                                                                          layoutModel.pdf![indx],
+                                                                                                        ),
+                                                                                                        fit: BoxFit.fitWidth),
+                                                                                                ),
+                                                                                                // foregroundDecoration: BoxDecoration(
+                                                                                                //   border: Border.all(width: 2, color:defaultPalette.extras[0]),
+                                                                                                //   borderRadius: BorderRadius.circular(10),
+                                                                                                // ),
+                                                                                              ),
+                                                                                            ),
+                                                                                          ],
+                                                                                        );
+                                                                                      },
+                                                                                    ),
+                                                                                  ),
+                                                                                  SizedBox(
+                                                                                    width: 10,
+                                                                                  ),
+                                                                                ],
+                                                                              ),
                                                                             ),
                                                                           ),
-                                                                        ),
-                                                                      );
-                                                                    
-                                                                  },
-                                                                ), 
-                                                              ),
-                                                            );
-                                                          }),
+                                                                        );
+                                                                      
+                                                                    },
+                                                                  ), 
+                                                                ),
+                                                              );
+                                                            }),
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                              ],
+                                                ],
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -7951,28 +7957,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                           height: 0.9)),
                 ),
               ),
-              //quote
-              // AnimatedPositioned(
-              //   duration: Durations.medium2,
-              //   left: ((sWidth / 20).clamp(90, double.infinity) +
-              //       (sWidth / 20) / 1.5),
-              //   bottom: isLayoutTab
-              //       ? 1.6 * (sHeight / 18) +
-              //           (sHeight / 2.6) -
-              //           mapValueDimensionBased(85, 115, sWidth, sHeight)
-              //       : 0,
-              //   child: Text(
-              //     ' Pay up, \n buttercup!',
-              //     maxLines: 2,
-              //     overflow: TextOverflow.ellipsis,
-              //     // textAlign: TextAlign.end,
-              //     style: TextStyle(                                fontFamily: 'Lexend',
-              //         fontSize: mapValueDimensionBased(15, 30, sWidth, sHeight),
-              //         color: defaultPalette.extras[0].withOpacity(0.4),
-              //         letterSpacing: -0.2,
-              //         height: 1),
-              //   ),
-              // ),
+              
               
               //LayoutList backbgBLACKKK
               AnimatedPositioned(
@@ -8091,6 +8076,62 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                 child: SizedBox(
                               width: 3,
                             )),
+                            MouseRegion(
+                              cursor:SystemMouseCursors.click,
+                              child:GestureDetector(
+                                onTap:() async{
+                                  try {
+                                    // Open picker, restrict to .bbc
+                                    FilePickerResult? result = await FilePicker.platform.pickFiles(
+                                      type: FileType.custom,
+                                      allowedExtensions: ["bbc"],
+                                    );
+                                    var layout;
+
+                                    if (result != null) {
+                                      String content;
+
+                                      if (kIsWeb) {
+                                        // On web → read from bytes
+                                        final bytes = result.files.single.bytes;
+                                        if (bytes == null) throw "No bytes found";
+                                        content = utf8.decode(bytes);
+                                      } else {
+                                        // On desktop/mobile → read from path
+                                        final path = result.files.single.path;
+                                        if (path == null) throw "No path found";
+                                        final file = File(path);
+                                        content = await file.readAsString();
+                                      }
+
+                                      setState(() {
+                                        layout = LayoutModel.fromJson(content);
+                                      });
+
+                                      // Navigate into LayoutDesigner
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => LayoutDesigner(
+                                            layoutModel: layout!,
+                                            onPop: (_) {},
+                                            id: null,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    print("Error loading .bbc file: $e");
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Failed to load file")),
+                                    );
+                                  }
+                                },
+                                child: Icon(TablerIcons.upload, size:15),
+                              )
+                            ),
+                            SizedBox(
+                              width: 8,
+                            ),
                             AnimatedToggleSwitch<bool>.dual(
                               current: isLayoutTileView,
                               first: true,

@@ -10,6 +10,7 @@ import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:billblaze/components/blend_mask.dart';
 import 'package:billblaze/components/widgets/custom_toast.dart';
+import 'package:billblaze/components/widgets/cutom_toolbar_tooltip.dart';
 import 'package:billblaze/components/widgets/pickers/eye_dropper.dart';
 import 'package:billblaze/components/widgets/minimap_scrollbar_widget.dart';
 import 'package:billblaze/components/widgets/search_bar.dart';
@@ -465,7 +466,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     // ─── 6) Controllers & listeners ────────────────────────────────────────
     // tabcunt = TabController(length: 2, vsync: this);
     globalKeys = List.generate(10000, (_) => GlobalKey());
-    fetchFonts();
+    await fetchFonts();
     // _findItem();
     // _unfocusAll();
     // _findSheetListItem();
@@ -3108,19 +3109,9 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     String tooltip ='add item',
     Color hoverColor = const Color(0xff4caf50),
   } ) {
-    return  Tooltip(
+    return  CustomToolbarTooltip(
       message: tooltip,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color:defaultPalette.primary,
-        border: Border.all(),
-      ),
-      textStyle: TextStyle(                                fontFamily: 'Lexend',
-        color: defaultPalette.extras[0], 
-        fontSize: 14,
-        letterSpacing: letterSpacing,
-        fontWeight: FontWeight.w600,
-      ),
+      letterSpacing: letterSpacing,
       child: Material(
         color:defaultPalette.primary,
         child: InkWell(
@@ -35786,7 +35777,11 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             ),
             SizedBox(width: 3),
             Text(
-              s.runtimeType.toString(),
+              ((s is ItemDecoration) 
+              ? 'ItemDecoration'
+              : (s is SuperDecoration) 
+                ? 'SuperDecoration'
+                : 'Yo, This isn\'t right..'),
               style: TextStyle(                                fontFamily: 'Lexend',
                 color: defaultPalette.extras[0],
                 letterSpacing: -1,

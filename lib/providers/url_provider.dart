@@ -620,7 +620,8 @@ String privacyPolicyUrl = Uri.dataFromString('''<!DOCTYPE html>
 </head>
 <body>
 
-  <div class="content">Privacy Policy</h2>
+  <div class="content">
+    <h2>Privacy Policy</h2>
     <p><strong>Effective Date:</strong> September 24, 2025</p>
     <p>This Privacy Policy explains how <strong>Jepixo™</strong> (“we,” “us,” “our”) collects, uses, and protects information when you use our website, apps, or services.</p>
 

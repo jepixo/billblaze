@@ -92,7 +92,7 @@ Future<void> main(List<String> args) async {
   debugPaintSizeEnabled = false; // Disable size debug outlines.
   debugPaintBaselinesEnabled = false; // Disable baseline rendering.
   debugPaintPointersEnabled = false;
-  await dotenv.load(fileName: ".env");
+  // await dotenv.load(fileName: ".env");
   // Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
   // Llama.libraryPath = 'llama.dll';
   // InAppWebViewPlatform.instance = WebInAppWebViewPlatform();
@@ -190,6 +190,10 @@ class MainAppState extends ConsumerState<MainApp> {
       print('Hello There!');
       return MaterialApp(
       title: 'Billblaze™',
+      initialRoute: '/',
+      routes: {
+        '/editor': (context) => LayoutDesigner(onPop: (Uint8List pdf) {  },),
+      },
       debugShowCheckedModeBanner: false,
       locale: const Locale('en', 'GB'),
       theme: ThemeData(
@@ -239,6 +243,10 @@ class MainAppState extends ConsumerState<MainApp> {
 
     return MaterialApp(
       title: 'Billblaze™',
+      initialRoute: '/',
+      routes: {
+        '/editor': (context) => LayoutDesigner(onPop: (Uint8List pdf) {  },),
+      },
       debugShowCheckedModeBanner: false,
       locale: const Locale('en', 'GB'),
       theme: ThemeData(
