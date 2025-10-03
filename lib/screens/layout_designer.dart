@@ -2274,7 +2274,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     } else {
       // 🔽 DESKTOP: Use file_selector to open save dialog
       final FileSaveLocation? path = await getSaveLocation(
-        suggestedName: '${layoutName.text}.bbc',
+        suggestedName: '${layoutName.text.replaceAll('.bbc','')}.bbc',
         acceptedTypeGroups: [
           const XTypeGroup(
             label: 'BBC Layout files',
@@ -3596,7 +3596,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         SheetList(
                                                           id:newId, 
                                                           parentId: spreadSheetList[currentPageIndex].id, 
-                                                          direction: Axis.horizontal,
+                                                          direction: Axis.vertical,
                                                           indexPath: newIndexPath, 
                                                           sheetList: [], 
                                                           listDecoration: newDecoration.id),
@@ -6363,7 +6363,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     child(controller, physics) => ReorderableListView.builder(
     shrinkWrap: true,
     buildDefaultDragHandles: false,
-    scrollDirection: sheetList.direction,
+    scrollDirection:sheetList.id == spreadSheetList[currentPageIndex].id? Axis.vertical: sheetList.direction,
     scrollController:sheetList.id == spreadSheetList[currentPageIndex].id?null: controller,
     physics:sheetList.id == spreadSheetList[currentPageIndex].id?null: physics,
     itemCount: sheetList.length,
@@ -6629,7 +6629,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                 return ScrollbarUltima(
                   alwaysShowThumb: true,
                   controller: controller,
-                  scrollbarPosition: sheetList.direction == Axis.vertical?
+                  scrollbarPosition:sheetList.id == spreadSheetList[currentPageIndex].id? ScrollbarPosition.right: sheetList.direction == Axis.vertical?
                     ScrollbarPosition.right : ScrollbarPosition.bottom,
                   backgroundColor: defaultPalette.primary,
                   isDraggable: true,
@@ -12436,20 +12436,15 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
 
                 List<TextEditingController> fontTextControllers = [
                   TextEditingController()
-                  ..text =
-                      '${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes['size']?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
+                  ..text ='${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes['size']?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
-                      ..text =
-                          '${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
+                      ..text = '${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes[LetterSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
-                  ..text =
-                      '${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes[WordSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
+                  ..text = '${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes[WordSpacingAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
-                  ..text =
-                      '${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes[LineHeightAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
+                  ..text = '${((itemInputBlockIndex == -1?item.textEditorController:config!.controller).getSelectionStyle().attributes[LineHeightAttribute._key]?.value.toString().replaceAll(RegExp(r'(?<=\.\d*?)0+$'), '') ?? '0')}',
                   TextEditingController()
-                  ..text =
-                      '${item.name}',
+                  ..text = '${item.name}',
                 
                  ];
                 

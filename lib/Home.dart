@@ -103,11 +103,10 @@ final aiPromptProvider = StateProvider<String>((ref) {
 final currencyCodeProvider = StateProvider<Currency>((ref) {
   return CurrencyService().findByCode('INR')!;
 });
+
 final fxRatesStreamProvider = StreamProvider<Map<String, double>>((ref) async* {
   while (true) {
-    final response = await http.get(
-      Uri.parse('https://api.frankfurter.app/latest?from=USD'),
-    );
+    final response = await http.get( Uri.parse('https://api.frankfurter.app/latest?from=USD'), );
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       print('YOOOO::'+data['rates'].toString());
