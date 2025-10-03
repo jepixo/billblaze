@@ -10,6 +10,7 @@ import 'package:animated_toggle_switch/animated_toggle_switch.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:billblaze/components/blend_mask.dart';
 import 'package:billblaze/components/widgets/custom_toast.dart';
+import 'package:billblaze/components/widgets/cutom_toolbar_tooltip.dart';
 import 'package:billblaze/components/widgets/pickers/eye_dropper.dart';
 import 'package:billblaze/components/widgets/minimap_scrollbar_widget.dart';
 import 'package:billblaze/components/widgets/search_bar.dart';
@@ -1822,7 +1823,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     var id = 'LI-${ const Uuid().v4()}';
     var lm = lmBox.get(key);
     SuperDecoration newDecoration = newSuperDecoration();
- print('pageCount in addpage: $pageCount');
+    print('pageCount in addpage: $pageCount');
     DocumentProperties newdoc = DocumentProperties(
       pageNumberController:
           TextEditingController(text: (++pageCount).toString()),
@@ -1864,7 +1865,6 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     var id = 'LI-${ const Uuid().v4()}';
     var newDecoration = newSuperDecoration();
     
- print('pageCount in addPage: $pageCount');
 
     // Create a new DocumentProperties instance
     DocumentProperties newDoc = DocumentProperties(
@@ -2246,7 +2246,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     layout.labelList = labelList;// or whichever key you want to export
 
     if (layout == null) {
-   print("No layout found for key: ${widget.key}");
+      print("No layout found for key: ${widget.key}");
       return;
     }
 
@@ -2259,7 +2259,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
 
     // 🔽 Show native "Save As" dialog
     final FileSaveLocation? path = await getSaveLocation(
-      suggestedName: '${layoutName.text}.bbc',
+      suggestedName: '${layoutName.text.replaceAll('.bbc','')}.bbc',
       acceptedTypeGroups: [
         const XTypeGroup(
           label: 'BBC Layout files',
@@ -3101,19 +3101,20 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     String tooltip ='add item',
     Color hoverColor = const Color(0xff4caf50),
   } ) {
-    return  Tooltip(
+    return  CustomToolbarTooltip(
       message: tooltip,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color:defaultPalette.primary,
-        border: Border.all(),
-      ),
-      textStyle: TextStyle( fontFamily: 'Lexend',
-        color: defaultPalette.extras[0], 
-        fontSize: 14,
-        letterSpacing: letterSpacing,
-        fontWeight: FontWeight.w600,
-      ),
+      letterSpacing:letterSpacing,
+      // decoration: BoxDecoration(
+      //   borderRadius: BorderRadius.circular(8),
+      //   color:defaultPalette.primary,
+      //   border: Border.all(),
+      // ),
+      // textStyle: TextStyle( fontFamily: 'Lexend',
+      //   color: defaultPalette.extras[0], 
+      //   fontSize: 14,
+      //   letterSpacing: letterSpacing,
+      //   fontWeight: FontWeight.w600,
+      // ),
       child: Material(
         color:defaultPalette.primary,
         child: InkWell(
@@ -3599,7 +3600,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                                         SheetList(
                                                           id:newId, 
                                                           parentId: spreadSheetList[currentPageIndex].id, 
-                                                          direction: Axis.horizontal,
+                                                          direction: Axis.vertical,
                                                           indexPath: newIndexPath, 
                                                           sheetList: [], 
                                                           listDecoration: newDecoration.id),
@@ -6387,7 +6388,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     child(controller, physics) => ReorderableListView.builder(
     shrinkWrap: true,
     buildDefaultDragHandles: false,
-    scrollDirection: sheetList.direction,
+    scrollDirection:sheetList.id == spreadSheetList[currentPageIndex].id? Axis.vertical:sheetList.direction,
     scrollController:sheetList.id == spreadSheetList[currentPageIndex].id?null: controller,
     physics:sheetList.id == spreadSheetList[currentPageIndex].id?null: physics,
     itemCount: sheetList.length,

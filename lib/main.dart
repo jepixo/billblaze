@@ -85,8 +85,7 @@ Future<void> main(List<String> args) async {
   debugPaintSizeEnabled = false; // Disable size debug outlines.
   debugPaintBaselinesEnabled = false; // Disable baseline rendering.
   debugPaintPointersEnabled = false;
-  await dotenv.load(fileName: ".env");
-  // Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
+  // await dotenv.load(fileName: ".env");
   Llama.libraryPath = 'llama.dll';
   InAppWebViewPlatform.instance = WindowsInAppWebViewPlatform();
   // if (args.isEmpty && kDebugMode) {

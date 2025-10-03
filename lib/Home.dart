@@ -95,7 +95,7 @@ final aiPromptProvider = StateProvider<String>((ref) {
   return '';
 });
 final aiModelPathProvider = StateProvider<String>((ref) {
-  return "assets/models/LFM2-1.2B-Q4_K_M.gguf";
+  return "/Select A Model";
 });
 final folderPathProvider = StateProvider<String?>((ref) {
   final box = Boxes.getFolderPaths();
@@ -3148,6 +3148,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 children: [
                                                   ElevatedLayerButton(
                                                   onClick: () async {
+                                                    if(ref.read(aiModelPathProvider) == "/Select A Model"){
+                                                      ref.read(aiTokenProvider.notifier).state = "Pick a model first silly!";
+                                                      return;
+                                                    }
                                                     ref.read(aiPromptProvider.notifier).state = chatTextController.text;
                                                     if (!isLlmProcessing) {
                                                       setState(() {
@@ -3205,9 +3209,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         );
                                                         ref.read(aiTokenProvider
                                                                 .notifier).state = '';
-                                                        errorPort.listen((err) {
+                                                        errorPort.listen((err) async {
                                                           // err is [error, stackTrace]
-                                                          ref.read(aiTokenProvider.notifier).state = "Error: ${err[0]}";
+                                                          var exists = await File('llama.dll').exists();
+                                                          var modelExists =await File(modelPath).exists();
+                                                          ref.read(aiTokenProvider.notifier).state = 
+                                                          "Error: ${err[0]}\n${Llama.libraryPath.toString()} exists: $exists.\nModel exists: $modelExists.";
                                                           setState(() {
                                                             isLlmProcessing = false;
                                                           });
@@ -3225,8 +3232,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   aiTokenProvider.notifier).state
                                                                   .replaceAll('<|im_start|> assistant\n', '')
                                                                   .replaceAll('<|im_start|>assistant\n', '')
-                                                                  .replaceAll('<|im_end|>', '')
-                                                                  ;
+                                                                  .replaceAll('<|im_end|>', '');
                                                         }
                                                         print( "✅ Final Response: ${buffer.toString()}");
                                                       } finally{
