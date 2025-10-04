@@ -3968,7 +3968,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                               strokeWidth: 2,
                               dashPattern: [30, 10],
                               strokeCap: StrokeCap.butt,
-                              animateBorder: true,
+                              animateBorder: false,
                               dashRadius: Radius.circular(50),
                               animateDuration: Duration(milliseconds: 5500),
                               child: Container(
@@ -12370,42 +12370,10 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
           },
           from: 3,
           duration: Durations.short3,
-          child: AppinioSwiper(
-              backgroundCardCount: 1,
-              backgroundCardOffset: Offset(4, 4),
-              duration: Duration(milliseconds: 220),
-              backgroundCardScale: 1,
-              loop: true,
-              cardCount: 3,
-              allowUnSwipe: true,
-              allowUnlimitedUnSwipe: true,
-              initialIndex: whichTextPropertyTabIsClicked,
-              controller: textPropertyCardsController,
-              onCardPositionChanged: (position) {
-                setState(() {
-                  _cardPosition =
-                      position.offset.dx.abs() + position.offset.dy.abs();
-                  // print(_cardPosition);
-                });
-              },
-              onSwipeEnd: (a, b, direction) {
-                // print(direction.toString());
-                setState(() {
-                  // if (_cardPosition > 50) {
-                  //   currentPageIndex = (currentPageIndex + 1) % pageCount;
-                  //   _renderPagePreviewOnProperties();
-                  // }
-                  whichTextPropertyTabIsClicked = b;
-                  _cardPosition = 0;
-                });
-              },
-              onSwipeCancelled: (activity) {
-                setState(() {
-                  // currentPageIndex =
-                  //     (currentPageIndex - 1) % pageCount;
-                });
-              },
-              cardBuilder: (BuildContext context, int index) {
+          child: Builder(
+            key: ValueKey(whichTextPropertyTabIsClicked),
+              builder: (BuildContext context) {
+                var index = whichTextPropertyTabIsClicked;
                 var width = (sWidth * wH2DividerPosition - 30);
                 int currentCardIndex = whichTextPropertyTabIsClicked;
                 var ib;
@@ -16513,7 +16481,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                     Positioned.fill(
                       child: AnimatedContainer(
                         duration: Durations.short3,
-                        margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
+                        margin: EdgeInsets.all(10).copyWith(left: 5, right: 5),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color:index==2? defaultPalette.primary:index==1?defaultPalette.extras[0]: defaultPalette.secondary,
@@ -16523,33 +16491,6 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         ),
                       ),
                     ),
-                    //OPACITY OF BGCOLOR OF THE CARD
-                    Positioned.fill(
-                      child: AnimatedOpacity(
-                        opacity: currentCardIndex == index
-                            ? 0
-                            // : index >= (currentCardIndex + 2) % 10
-                            //     ? 1
-                            : (1 - (_cardPosition / 200).clamp(0.0, 1.0)),
-                        duration: Duration(milliseconds: 300),
-                        child: AnimatedContainer(
-                          duration: Duration(milliseconds: 300),
-                          margin:
-                              EdgeInsets.all(10).copyWith(left: 5, right: 8),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: index == (currentCardIndex + 1) % 10
-                                ? defaultPalette.extras[0]
-                                : index == (currentCardIndex + 2) % 10
-                                    ? defaultPalette.extras[0]
-                                    : defaultPalette.extras[0],
-                            border: Border.all(width: 2, color:defaultPalette.extras[0]),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                        ),
-                      ),
-                    ),
-                     
                     if (index == 0) ...[
                       //GRAPH BEHIND FORMAT CARD
                       Padding(
@@ -18809,40 +18750,42 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
           },
           from: 3,
           duration: Durations.short3,
-          child: AppinioSwiper(
-            controller: listPropertyCardsController,
-            backgroundCardCount: 1,
-            backgroundCardOffset: Offset(3, 3),
-            duration: Duration(milliseconds: 150),
-            backgroundCardScale: 1,
-            loop: true,
-            cardCount: 2,
-            allowUnSwipe: true,
-            allowUnlimitedUnSwipe: true,
-            initialIndex: whichListPropertyTabIsClicked,
-            maxAngle: 50,
-            threshold: 100,
-            onCardPositionChanged: (position) {
-              setState(() {
-                // isListDecorationLibraryToggled = true;
-                _cardPosition =
-                    position.offset.dx.abs() + position.offset.dy.abs();
-              });
-            },
-            onSwipeEnd: (a, b, direction) {
-              // print(direction.toString());
-              setState(() {
-                // ref.read(propertyCardIndexProvider.notifier).update((s) => s = b);
-                isListDecorationLibraryToggled = false;
-                whichListPropertyTabIsClicked = b;
-                _cardPosition = 0;
-                if (sheetListItem.id == 'yo') {
-                  _findSheetListItem();
-                }
-              });
-            },
-            onSwipeCancelled: (activity) {},
-            cardBuilder: (BuildContext context, int index) {
+          child: Builder(
+            key: ValueKey(whichListPropertyTabIsClicked),
+            // controller: listPropertyCardsController,
+            // backgroundCardCount: 1,
+            // backgroundCardOffset: Offset(3, 3),
+            // duration: Duration(milliseconds: 150),
+            // backgroundCardScale: 1,
+            // loop: true,
+            // cardCount: 2,
+            // allowUnSwipe: true,
+            // allowUnlimitedUnSwipe: true,
+            // initialIndex: whichListPropertyTabIsClicked,
+            // maxAngle: 50,
+            // threshold: 100,
+            // onCardPositionChanged: (position) {
+            //   setState(() {
+            //     // isListDecorationLibraryToggled = true;
+            //     _cardPosition =
+            //         position.offset.dx.abs() + position.offset.dy.abs();
+            //   });
+            // },
+            // onSwipeEnd: (a, b, direction) {
+            //   // print(direction.toString());
+            //   setState(() {
+            //     // ref.read(propertyCardIndexProvider.notifier).update((s) => s = b);
+            //     isListDecorationLibraryToggled = false;
+            //     whichListPropertyTabIsClicked = b;
+            //     _cardPosition = 0;
+            //     if (sheetListItem.id == 'yo') {
+            //       _findSheetListItem();
+            //     }
+            //   });
+            // },
+            // onSwipeCancelled: (activity) {},
+            builder: (BuildContext context) {
+              int index = whichListPropertyTabIsClicked;
               int currentCardIndex = whichListPropertyTabIsClicked;
               var width = (sWidth * wH2DividerPosition - 25);
               
@@ -18966,7 +18909,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                   Positioned.fill(
                     child: AnimatedContainer(
                       duration: Durations.short3,
-                      margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
+                      margin: EdgeInsets.all(10).copyWith(left: 5, right: 5),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color:index==0? defaultPalette.secondary: defaultPalette.primary,
@@ -19351,40 +19294,10 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
           },
           from: 3,
           duration: Durations.short3,
-          child: AppinioSwiper(
-            controller: tablePropertyCardsController,
-            backgroundCardCount: 1,
-            backgroundCardOffset: Offset(3, 3),
-            duration: Duration(milliseconds: 150),
-            backgroundCardScale: 1,
-            loop: true,
-            cardCount: 2,
-            allowUnSwipe: true,
-            allowUnlimitedUnSwipe: true,
-            initialIndex: whichTablePropertyTabIsClicked,
-            maxAngle: 50,
-            threshold: 100,
-            onCardPositionChanged: (position) {
-              setState(() {
-                // isListDecorationLibraryToggled = true;
-                _cardPosition =
-                    position.offset.dx.abs() + position.offset.dy.abs();
-              });
-            },
-            onSwipeEnd: (a, b, direction) {
-              // print(direction.toString());
-              setState(() {
-                // ref.read(propertyCardIndexProvider.notifier).update((s) => s = b);
-                isListDecorationLibraryToggled = false;
-                whichTablePropertyTabIsClicked = b;
-                _cardPosition = 0;
-                if (sheetTableItem.id == 'yo') {
-                  _findSheetListItem();
-                }
-              });
-            },
-            onSwipeCancelled: (activity) {},
-            cardBuilder: (context, index) {
+          child: Builder(
+            key: ValueKey(whichTablePropertyTabIsClicked),
+            builder: (context) {
+              int index = whichTablePropertyTabIsClicked;
               var width = (sWidth * wH2DividerPosition - 30);
               var sheetTableDecoration = sheetDecorationMap[sheetTableItem.sheetTableDecoration.id];
               var sheetTablebgDecoration = sheetDecorationMap[sheetTableItem.sheetTablebgDecoration.id];
@@ -20339,7 +20252,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                   Positioned.fill(
                     child: AnimatedContainer(
                       duration: Durations.short3,
-                      margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
+                      margin: EdgeInsets.all(10).copyWith(left: 5, right: 5),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color:whichTablePropertyTabIsClicked==1? defaultPalette.primary: defaultPalette.secondary,
@@ -21040,40 +20953,10 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
           },
           from: 3,
           duration: Durations.short3,
-          child: AppinioSwiper(
-            controller: sizedItemPropertyCardsController,
-            backgroundCardCount: 1,
-            backgroundCardOffset: Offset(3, 3),
-            duration: Duration(milliseconds: 150),
-            backgroundCardScale: 1,
-            loop: true,
-            cardCount: 2,
-            allowUnSwipe: true,
-            allowUnlimitedUnSwipe: true,
-            initialIndex: whichSizedItemPropertyTabIsClicked,
-            maxAngle: 50,
-            threshold: 100,
-            onCardPositionChanged: (position) {
-              setState(() {
-                // isListDecorationLibraryToggled = true;
-                _cardPosition =
-                    position.offset.dx.abs() + position.offset.dy.abs();
-              });
-            },
-            onSwipeEnd: (a, b, direction) {
-              // print(direction.toString());
-              setState(() {
-                // ref.read(propertyCardIndexProvider.notifier).update((s) => s = b);
-                isListDecorationLibraryToggled = false;
-                whichSizedItemPropertyTabIsClicked = b;
-                _cardPosition = 0;
-                if (sizedItem.id == 'yo') {
-                  _findSizedItem();
-                }
-              });
-            },
-            onSwipeCancelled: (activity) {},
-            cardBuilder: (BuildContext context, int index) {
+          child: Builder(
+            key: ValueKey(whichSizedItemPropertyTabIsClicked),
+            builder: (BuildContext context) {
+              int index = whichSizedItemPropertyTabIsClicked;
               int currentCardIndex = whichSizedItemPropertyTabIsClicked;
               var width = (sWidth * wH2DividerPosition - 25);
               
@@ -21208,7 +21091,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                   Positioned.fill(
                     child: AnimatedContainer(
                       duration: Durations.short3,
-                      margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
+                      margin: EdgeInsets.all(10).copyWith(left: 5, right: 5),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color:index==0? defaultPalette.secondary: defaultPalette.primary,
@@ -21445,36 +21328,11 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     return FadeInRight(
       from: 3,
       duration: Durations.short3,
-      child: AppinioSwiper(
-        backgroundCardCount: 1,
-        backgroundCardOffset: Offset(4, 4),
-        duration: Duration(milliseconds: 150),
-        backgroundCardScale: 1,
-        loop: true,
-        cardCount: spreadSheetList.length < 2 ? 2 : spreadSheetList.length,
-        allowUnSwipe: true,
-        allowUnlimitedUnSwipe: true,
-        initialIndex: currentPageIndex,
-        controller: propertyCardsController,
-        onCardPositionChanged: (position) {
-          setState(() {
-            _cardPosition = position.offset.dx.abs() + position.offset.dy.abs();
-          });
-        },
-        onSwipeEnd: (a, b, direction) {
-          // print(direction.toString());
-          setState(() {
-            ref.read(propertyCardIndexProvider.notifier).update((s) => s = b);
-            if (_cardPosition > 50) {
-              currentPageIndex = (currentPageIndex + 1) % pageCount;
-            }
-            // _currentCardIndex = b;
-            _cardPosition = 0;
-          });
-        },
-        onSwipeCancelled: (activity) {},
-        cardBuilder: (BuildContext context, int index) {
-          int currentCardIndex = ref.watch(propertyCardIndexProvider);
+      child: Builder(
+        key: ValueKey(currentPageIndex),
+        builder: (BuildContext context) {
+          int index = currentPageIndex;
+          int currentCardIndex = currentPageIndex;
           int ind = pageCount <= 1 ? 0 : index;
           List<TextEditingController> pageFormatControllers = [
             TextEditingController()
@@ -21823,7 +21681,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               Positioned.fill(
                 child: AnimatedContainer(
                   duration: Durations.short3,
-                  margin: EdgeInsets.all(10).copyWith(left: 5, right: 8),
+                  margin: EdgeInsets.all(10).copyWith(left: 5, right: 5),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.white,

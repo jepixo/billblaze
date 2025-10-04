@@ -2807,7 +2807,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                     SizedBox(height: 5,),
                                                                                     Text('''
                                                                                       \nCode a blunt sword and design rebellion. Sharpen them both on failure.
-                                                                                      \nIn other words, I develop and design apps among other things. 
+                                                                                      \nI develop and design apps among other things. 
                                                                                       \nFeel free to learn more about me on LinkedIn, etc.
                                                                                       \nI go by @jepixo almost everywhere online.
                                                                                       \nAwful dance btw. Yup, Veo3 is awesome.
