@@ -8287,7 +8287,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     icon: TablerIcons.clipboard_copy,
     style:  style,
     onSelected: () async {
-      // print((sheetItemClipBoard.sheetItem as SheetText).inputBlocks);
+      print('GoodMornin');
       if (!sheetItemClipBoard.isCut) {
         SheetItem getCopiedItems(SheetList sheetList, SheetItem sheetItem, { bool useAltAddText=false, IndexPath? itemIndexPath=null}){
           switch (sheetItem.runtimeType) {
@@ -8315,6 +8315,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               return sList;
             case SheetText:
               if(useAltAddText) {
+                //THIS IS PASTE FOR TABLE TEXT, for normal paste go after this "if" block
                 var newId = sheetItem.newId();
                 return addTextField(
                 id: newId, 
@@ -8355,19 +8356,32 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                 getReplaceTextFunctionForType: getReplaceTextFunctionForType,
               );
               }
-              return _addTextField(
-                id: sheetItem.newId(), 
+              var newId =sheetItem.newId();
+              var newIndexPath = IndexPath(parent: sheetList.indexPath,index: sheetList.length);
+              var newSheetText= _addTextField(
+                id: newId, 
                 textDecoration: (sheetItem as SheetText).textDecoration, 
-                indexPath:IndexPath(parent: sheetList.indexPath,index: sheetList.length), 
-                inputBlocks: List.from((sheetItem as SheetText).inputBlocks),
+                indexPath: newIndexPath, 
+                inputBlocks: (sheetItem as SheetText).inputBlocks.map((block) {
+                  if (block.id == sheetItem.id) {
+                    return block.copyWith(
+                      id: newId,
+                      indexPath: newIndexPath,
+                    );
+                  }
+                  return block;
+                }).toList(),
                 docString:  (sheetItem as SheetText).textEditorController.document.toDelta().toJson(),
                 hide:  (sheetItem as SheetText).hide,
                 locked:  (sheetItem as SheetText).locked,
-                name:  (sheetItem as SheetText).name+'-copy',
+                name:  labelList.any((e) => e.name == (sheetItem as SheetText).name)
+                  ? '${(sheetItem as SheetText).name}-copy'
+                  : (sheetItem as SheetText).name,
                 shouldReturn: true,
                 type:  (sheetItem as SheetText).type,
                 parentId: sheetList.id,
               );
+              return newSheetText;
             case SheetTable:
               var newId =sheetItem.newId();
               var newIndexPath = IndexPath(parent: sheetList.indexPath,index: sheetList.length);
@@ -25189,11 +25203,13 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         child: GestureDetector(
                           onTap:() {
                             setState(() {
-                              
-                              var itemDecoId = 'dITM-${ const Uuid().v4()}';
-                              var itemDecoration = ItemDecoration(id: itemDecoId);
-                              // var inx = int.tryParse(itemDecorationPath.last.substring(itemDecorationPath.last.indexOf('/') + 1))??-2;
                               var inx = itemDecorationPath.last;
+                              var itemDecoId = 'dITM-${ const Uuid().v4()}';
+                              var itemDecoration = ItemDecoration(id: itemDecoId, name:(sheetDecorationMap[inx] as SuperDecoration).name
+                              +'.L'
+                              +((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length).toString() );
+                              // var inx = int.tryParse(itemDecorationPath.last.substring(itemDecorationPath.last.indexOf('/') + 1))??-2;
+                              
                               if ((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length < 70) {
                                 // Add the new decoration to the main list
                                 sheetDecorationMap.addAll({itemDecoration.id:itemDecoration});
@@ -25260,17 +25276,9 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                         final itemList = (sheetDecorationMap[inx] as SuperDecoration)
                                             .itemDecorationList.reversed.toList();
                       
-                                        final elem = itemList
-                                              .removeAt(oldIndex);
-                                          if ((newIndex !=
-                                              itemList.length + 2)) {
-                                         print('hah' +
-                                                itemList.length
-                                                    .toString() +
-                                                ' ' +
-                                                newIndex.toString());
-                      
-                                            
+                                        final elem = itemList.removeAt(oldIndex);
+                                          if ((newIndex != itemList.length + 2)) {
+                                         print('hah' + itemList.length.toString() + ' ' + newIndex.toString());
                                             if (oldIndex < newIndex) {
                                               itemList.insert(newIndex-1,elem);
                                               // decorationIndex =
@@ -25298,6 +25306,8 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             .itemDecorationList = itemList.reversed.toList();
                                           
                                         updateSheetDecorationvariables((sheetDecorationMap[inx] as SuperDecoration));
+                                        itemDecorationNameController.text = sheetDecorationMap[(sheetDecorationMap[inx] as SuperDecoration)
+                                            .itemDecorationList[decorationIndex]]?.name??'yo';
                                       });
                                     },
                                     proxyDecorator:

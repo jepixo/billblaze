@@ -3954,7 +3954,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                           SizedBox(height: 5,),
                                                                                           Text('''
                                                                                             \nCode a blunt sword and design rebellion. Sharpen them both on failure.
-                                                                                            \nIn other words, I develop and design apps among other things. 
+                                                                                            \nI develop and design apps among other things. 
                                                                                             \nFeel free to learn more about me on LinkedIn, etc.
                                                                                             \nI go by @jepixo almost everywhere online.
                                                                                             \nAwful dance btw, blame Veo3 for that.
@@ -5437,24 +5437,25 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               letterSpacing: -1),
           onFieldSubmitted: (value) {
             setState(() {
-           print(value);
-            var parsedValue = (double.tryParse(value)??0.0)/pageUnit;
+            print(value);
+            double parsedValue = double.parse(value.toString());
             switch (s) {
               case 0:
                 tempLayoutModel.docPropsList[0].pageFormatController = {
-                  'width': parsedValue, 
+                  'width': parsedValue/pageUnit, 
                   'height': tempLayoutModel.docPropsList[0].pageFormatController['height']??0};
-                pageFormatControllers[s].text = parsedValue.toString();
+                pageFormatControllers[0].text = parsedValue.toString();
                 break;
               case 1:
                 tempLayoutModel.docPropsList[0].pageFormatController = {
                   'width': tempLayoutModel.docPropsList[0].pageFormatController['width']??0, 
-                  'height': parsedValue};
-                pageFormatControllers[s].text = parsedValue.toString();
-                break;   
+                  'height': parsedValue/pageUnit};
+                pageFormatControllers[1].text = parsedValue.toString();
+                break;
               case 2:
                 layoutPageCount = parsedValue.clamp(1, double.infinity).round();
-                pageFormatControllers[s].text = parsedValue.clamp(1, double.infinity).round().toString();
+                pageFormatControllers[2].text = parsedValue.clamp(1, double.infinity).round().toString();
+                break;   
               default:
             }
               
