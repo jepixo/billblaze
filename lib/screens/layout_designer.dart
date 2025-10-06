@@ -122,12 +122,11 @@ class PanelIndex {
     IndexPath? parentIndexPath,
   }) {
     return PanelIndex(
-        id: id ?? this.id,
-        parentId: parentId ?? this.parentId,
-        itemIndexPath: itemIndexPath ?? this.itemIndexPath,
-        parentIndexPath: parentIndexPath ?? this.parentIndexPath,
-
-        );
+      id: id ?? this.id,
+      parentId: parentId ?? this.parentId,
+      itemIndexPath: itemIndexPath ?? this.itemIndexPath,
+      parentIndexPath: parentIndexPath ?? this.parentIndexPath,
+    );
   }
   PanelIndex reset(){
     return PanelIndex(id: '', parentId: '', itemIndexPath: IndexPath(index: -1), parentIndexPath: IndexPath(index: -1),);
@@ -1102,17 +1101,33 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirm Delete'),
-        content: const Text('This will delete the current page. Are you sure?'),
+        title: Text('Confirm Delete', style: GoogleFonts
+          .lexend(
+            fontSize: mapValueDimensionBased( 18, 25, sWidth, sHeight),
+            color: defaultPalette.extras[0],
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+          ),),
+        content: Text('This will delete the current page. Are you sure?',style: GoogleFonts
+          .lexend(
+            fontSize: mapValueDimensionBased( 12, 20, sWidth, sHeight),
+            color: defaultPalette.extras[0],
+            fontWeight: FontWeight.w400,
+            letterSpacing: -0.2,
+          ),),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('No'),
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel',style: GoogleFonts
+            .lexend(
+              fontSize: mapValueDimensionBased( 15, 22, sWidth, sHeight),
+              color: defaultPalette.extras[0],
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.2,
+            ),),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () { 
               setState(() {
                 _deselectTextField();
 
@@ -1155,9 +1170,18 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               });
 
               Navigator.of(context).pop();
-            },
-            child: const Text('Yes'),
+              },
+            style: TextButton.styleFrom(foregroundColor: defaultPalette.extras[4]),
+            child: Text('Delete',
+            style: GoogleFonts.lexend(
+              fontSize: mapValueDimensionBased(
+                      15, 22, sWidth, sHeight),
+              color: defaultPalette.extras[4],
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.2,
+            )
           ),
+        ),
         ],
       ),
     );
@@ -6554,7 +6578,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             },
             child: Padding(
               padding: EdgeInsets.only(bottom:((sheetList.direction ==Axis.horizontal)?25:4.0)),
-              child: sheetList[index].buildWidget(panelIndex,selectedIndexPaths),
+              child: (sheetList[index] as SheetSizedItem).buildWidget(panelIndex,selectedIndexPaths, buildDecoratedContainer: buildDecoratedContainer, sheetDecorationMap: sheetDecorationMap),
             )),
         );
       }
@@ -7247,29 +7271,56 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           context: context,
                           builder: (context) {
                             return AlertDialog(
-                              title: const Text('Confirm Delete'),
-                              content: const Text('This will DELETE the current List with its contents. Are you sure?'),
+                              title: Text('Confirm Delete',style: GoogleFonts
+                              .lexend(
+                                fontSize: mapValueDimensionBased( 18, 25, sWidth, sHeight),
+                                color: defaultPalette.extras[0],
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -0.2,
+                              ),),
+                              content: Text('This will DELETE the current List with its contents. Are you sure?',style: GoogleFonts
+                              .lexend(
+                                fontSize: mapValueDimensionBased( 12, 20, sWidth, sHeight),
+                                color: defaultPalette.extras[0],
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: -0.2,
+                              ),),
                               actions: [
                                 TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        // sheetList.removeAt(index);
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text('Cancel',style: GoogleFonts
+                                  .lexend(
+                                    fontSize: mapValueDimensionBased( 15, 22, sWidth, sHeight),
+                                    color: defaultPalette.extras[0],
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: -0.2,
+                                  ),),
+                                ),
+                                TextButton(
+                                  onPressed: () { 
+                                    setState(() {
                                         panelIndex.id = '';
-                                        // panelIndex.runTimeType = null;
                                       });
                                       (getItemAtPath(sheetList.indexPath.parent!) as SheetList).removeAt(sheetList.indexPath.index);
                                       
                                       // });
                                       _reassignSheetListIndexPath(getItemAtPath(sheetList.indexPath.parent!) as SheetList);
                                       saveLayout();
+                                      panelIndex = panelIndex.reset();
+                                      whichPropertyTabIsClicked =1;
                                       Navigator.pop(context);
                                     },
-                                    child: const Text('Yes')),
-                                TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text('No')),
+                                  style: TextButton.styleFrom(foregroundColor: defaultPalette.extras[4]),
+                                  child: Text('Delete',
+                                  style: GoogleFonts.lexend(
+                                    fontSize: mapValueDimensionBased(
+                                            15, 22, sWidth, sHeight),
+                                    color: defaultPalette.extras[4],
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: -0.2,
+                                  )
+                                ),
+                              ),
                               ],
                             );
                           },
@@ -9211,35 +9262,54 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text(
-                'Confirm Delete'),
-            content: const Text(
-                'This will DELETE the current Text Field with its contents. Are you sure?'),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    setState(() {
-                      sheetList
-                          .removeAt(
-                              index);
-                      panelIndex.id =
-                          '';
+            title: Text( 'Confirm Delete',style: GoogleFonts
+            .lexend(
+              fontSize: mapValueDimensionBased( 18, 25, sWidth, sHeight),
+              color: defaultPalette.extras[0],
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.2,
+            ),),
+            content: Text(
+                'This will DELETE the current Text Field with its contents. Are you sure?',
+                style: GoogleFonts.lexend(
+                    fontSize: mapValueDimensionBased( 12, 20, sWidth, sHeight),
+                    color: defaultPalette.extras[0],
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel',style: GoogleFonts
+          .lexend(
+            fontSize: mapValueDimensionBased( 15, 22, sWidth, sHeight),
+            color: defaultPalette.extras[0],
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.2,
+          ),),
+            ),
+            TextButton(
+              onPressed: () { 
+                setState(() {
+                      sheetList.removeAt( index);
+                      panelIndex = panelIndex.reset();
+                      whichPropertyTabIsClicked =1;
                       _reassignSheetListIndexPath(sheetList);    
                       doubleCheckLabelList(labelList);
                     });
-                    Navigator.pop(
-                        context);
-                  },
-                  child: const Text(
-                      'Yes')),
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(
-                        context);
-                  },
-                  child:
-                      const Text('No')),
-            ],
+                    Navigator.pop( context);
+                
+                },
+              style: TextButton.styleFrom(foregroundColor: defaultPalette.extras[4]),
+              child: Text('Delete',
+              style: GoogleFonts.lexend( fontSize: mapValueDimensionBased( 15, 22, sWidth, sHeight),
+              color: defaultPalette.extras[4],
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.2,
+          )),
+          ),
+          ],
           );
         },
       );

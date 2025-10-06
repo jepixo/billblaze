@@ -89,7 +89,7 @@ Future<void> main(List<String> args) async {
   Llama.libraryPath = 'llama.dll';
   InAppWebViewPlatform.instance = WindowsInAppWebViewPlatform();
   // if (args.isEmpty && kDebugMode) {
-  //   args = ['C:\\Users\\ANTEC\\AppData\\Roaming\\com.jepixo\\billblaze\\BillBlaze\\1Idn8T7QbydncSOmqLv7yHYKztF2\\main\\Bill-0.bbc'];
+  //   args = ['C:\\Users\\ANTEC\\AppData\\Roaming\\com.jepixo\\billblaze\\BillBlaze\\37OyZKoF2CNoCsdJUlR99J7pmr23\\main\\gumroadPage.bbc'];
   // }
   if (args.isNotEmpty) {
     pendingFilePath = args.first;
