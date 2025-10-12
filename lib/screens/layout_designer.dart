@@ -6127,7 +6127,9 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                           subfac: 2,
                                           onClick: () {
                                             Future.delayed(Duration.zero)
-                                                .then((y) {
+                                                .then((y) async {
+                                              await saveLayout();
+                                              ref.read(propertyCardIndexProvider.notifier).update((s) => s = 0);
                                               appWindow.close();
                                             });
                                           },
