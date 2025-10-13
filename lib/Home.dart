@@ -95,7 +95,7 @@ final aiPromptProvider = StateProvider<String>((ref) {
   return '';
 });
 final aiModelPathProvider = StateProvider<String>((ref) {
-  return "assets/models/LFM2-1.2B-Q4_K_M.gguf";
+  return "/Select A Model";
 });
 final folderPathProvider = StateProvider<String?>((ref) {
   final box = Boxes.getFolderPaths();
@@ -3148,6 +3148,10 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                 children: [
                                                   ElevatedLayerButton(
                                                   onClick: () async {
+                                                    if(ref.read(aiModelPathProvider) == "/Select A Model"){
+                                                      ref.read(aiTokenProvider.notifier).state = "Pick a model first silly!";
+                                                      return;
+                                                    }
                                                     ref.read(aiPromptProvider.notifier).state = chatTextController.text;
                                                     if (!isLlmProcessing) {
                                                       setState(() {
@@ -3205,9 +3209,12 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                         );
                                                         ref.read(aiTokenProvider
                                                                 .notifier).state = '';
-                                                        errorPort.listen((err) {
+                                                        errorPort.listen((err) async {
                                                           // err is [error, stackTrace]
-                                                          ref.read(aiTokenProvider.notifier).state = "Error: ${err[0]}";
+                                                          var exists = await File('llama.dll').exists();
+                                                          var modelExists =await File(modelPath).exists();
+                                                          ref.read(aiTokenProvider.notifier).state = 
+                                                          "Error: ${err[0]}\n${Llama.libraryPath.toString()} exists: $exists.\nModel exists: $modelExists.";
                                                           setState(() {
                                                             isLlmProcessing = false;
                                                           });
@@ -3225,8 +3232,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                   aiTokenProvider.notifier).state
                                                                   .replaceAll('<|im_start|> assistant\n', '')
                                                                   .replaceAll('<|im_start|>assistant\n', '')
-                                                                  .replaceAll('<|im_end|>', '')
-                                                                  ;
+                                                                  .replaceAll('<|im_end|>', '');
                                                         }
                                                         print( "✅ Final Response: ${buffer.toString()}");
                                                       } finally{
@@ -3948,7 +3954,7 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
                                                                                           SizedBox(height: 5,),
                                                                                           Text('''
                                                                                             \nCode a blunt sword and design rebellion. Sharpen them both on failure.
-                                                                                            \nIn other words, I develop and design apps among other things. 
+                                                                                            \nI develop and design apps among other things. 
                                                                                             \nFeel free to learn more about me on LinkedIn, etc.
                                                                                             \nI go by @jepixo almost everywhere online.
                                                                                             \nAwful dance btw, blame Veo3 for that.
@@ -5431,24 +5437,25 @@ class _HomeState extends ConsumerState<Home> with TickerProviderStateMixin {
               letterSpacing: -1),
           onFieldSubmitted: (value) {
             setState(() {
-           print(value);
-            var parsedValue = (double.tryParse(value)??0.0)/pageUnit;
+            print(value);
+            double parsedValue = double.parse(value.toString());
             switch (s) {
               case 0:
                 tempLayoutModel.docPropsList[0].pageFormatController = {
-                  'width': parsedValue, 
+                  'width': parsedValue/pageUnit, 
                   'height': tempLayoutModel.docPropsList[0].pageFormatController['height']??0};
-                pageFormatControllers[s].text = parsedValue.toString();
+                pageFormatControllers[0].text = parsedValue.toString();
                 break;
               case 1:
                 tempLayoutModel.docPropsList[0].pageFormatController = {
                   'width': tempLayoutModel.docPropsList[0].pageFormatController['width']??0, 
-                  'height': parsedValue};
-                pageFormatControllers[s].text = parsedValue.toString();
-                break;   
+                  'height': parsedValue/pageUnit};
+                pageFormatControllers[1].text = parsedValue.toString();
+                break;
               case 2:
                 layoutPageCount = parsedValue.clamp(1, double.infinity).round();
-                pageFormatControllers[s].text = parsedValue.clamp(1, double.infinity).round().toString();
+                pageFormatControllers[2].text = parsedValue.clamp(1, double.infinity).round().toString();
+                break;   
               default:
             }
               

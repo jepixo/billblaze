@@ -85,12 +85,11 @@ Future<void> main(List<String> args) async {
   debugPaintSizeEnabled = false; // Disable size debug outlines.
   debugPaintBaselinesEnabled = false; // Disable baseline rendering.
   debugPaintPointersEnabled = false;
-  await dotenv.load(fileName: ".env");
-  // Llama.libraryPath = "D:/Jepixo/CurrYaar/App/billblaze/build/windows/x64/runner/Release/llama.dll";
+  // await dotenv.load(fileName: ".env");
   Llama.libraryPath = 'llama.dll';
   InAppWebViewPlatform.instance = WindowsInAppWebViewPlatform();
   // if (args.isEmpty && kDebugMode) {
-  //   args = ['C:\\Users\\ANTEC\\AppData\\Roaming\\com.jepixo\\billblaze\\BillBlaze\\1Idn8T7QbydncSOmqLv7yHYKztF2\\main\\Bill-0.bbc'];
+  //   args = ['C:\\Users\\ANTEC\\AppData\\Roaming\\com.jepixo\\billblaze\\BillBlaze\\37OyZKoF2CNoCsdJUlR99J7pmr23\\main\\gumroadPage.bbc'];
   // }
   if (args.isNotEmpty) {
     pendingFilePath = args.first;
