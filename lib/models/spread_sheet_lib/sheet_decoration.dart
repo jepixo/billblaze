@@ -184,23 +184,23 @@ class ItemDecoration extends SheetDecoration {
   factory ItemDecoration.fromJson(Map<dynamic, dynamic> json) {
     return ItemDecoration(
       padding: EdgeInsets.fromLTRB(
-        json['padding'][2] ?? 0.0, // left
-        json['padding'][0] ?? 0.0, // top
-        json['padding'][3] ?? 0.0, // right
-        json['padding'][1] ?? 0.0, // bottom
+        (json['padding'][2] as num).toDouble() ?? 0.0, // left
+        (json['padding'][0] as num).toDouble() ?? 0.0, // top
+        (json['padding'][3] as num).toDouble() ?? 0.0, // right
+        (json['padding'][1] as num).toDouble() ?? 0.0, // bottom
       ),
       margin: EdgeInsets.fromLTRB(
-        json['margin'][2] ?? 0.0, // left
-        json['margin'][0] ?? 0.0, // top
-        json['margin'][3] ?? 0.0, // right
-        json['margin'][1] ?? 0.0, // bottom
+        (json['margin'][2] as num).toDouble() ?? 0.0, // left
+        (json['margin'][0] as num).toDouble() ?? 0.0, // top
+        (json['margin'][3] as num).toDouble() ?? 0.0, // right
+        (json['margin'][1] as num).toDouble() ?? 0.0, // bottom
       ),
       decoration: _boxDecorationFromJson(
         json['decoration'],
       ),
       alignment: Alignment(
-        json['alignment'][0] ?? 0.0,
-        json['alignment'][1] ?? 0.0,
+        (json['alignment'][0] as num).toDouble() ?? 0.0,
+        (json['alignment'][1] as num).toDouble() ?? 0.0,
       ),
       transform: json['transform'] != null
           ? Matrix4.fromList(List<double>.from(json['transform']))
@@ -285,35 +285,34 @@ class ItemDecoration extends SheetDecoration {
       borderRadius: json['borderRadius'] != null
           ? BorderRadius.only(
               topLeft: Radius.elliptical(
-                json['borderRadius'][0] ?? 0.0,
-                json['borderRadius'][1] ?? 0.0,
+                (json['borderRadius'][0] as num).toDouble() ?? 0.0,
+                (json['borderRadius'][1] as num).toDouble() ?? 0.0,
               ),
               topRight: Radius.elliptical(
-                json['borderRadius'][2] ?? 0.0,
-                json['borderRadius'][3] ?? 0.0,
+                (json['borderRadius'][2] as num).toDouble() ?? 0.0,
+                (json['borderRadius'][3] as num).toDouble() ?? 0.0,
               ),
               bottomLeft: Radius.elliptical(
-                json['borderRadius'][4] ?? 0.0,
-                json['borderRadius'][5] ?? 0.0,
+                (json['borderRadius'][4] as num).toDouble() ?? 0.0,
+                (json['borderRadius'][5] as num).toDouble() ?? 0.0,
               ),
               bottomRight: Radius.elliptical(
-                json['borderRadius'][6] ?? 0.0,
-                json['borderRadius'][7] ?? 0.0,
+                (json['borderRadius'][6] as num).toDouble() ?? 0.0,
+                (json['borderRadius'][7] as num).toDouble() ?? 0.0,
               ),
             )
           : null,
       image: json['image'] != null
           ? DecorationImage(
-              image: MemoryImage(
-                  Uint8List.fromList(List<int>.from(json['image']['bytes']))),
+              image: MemoryImage( Uint8List.fromList(List<int>.from(json['image']['bytes']))),
               fit: BoxFit.values[json['image']['fit']],
               repeat: ImageRepeat.values[json['image']['repeat']],
               alignment: Alignment(
-                json['image']['alignment'][0],
-                json['image']['alignment'][1],
+                (json['image']['alignment'][0] as num).toDouble(),
+                (json['image']['alignment'][1] as num).toDouble(),
               ),
-              scale: json['image']['scale'],
-              opacity: json['image']['opacity'],
+              scale: (json['image']['scale'] as num).toDouble(),
+              opacity: (json['image']['opacity'] as num).toDouble(),
               filterQuality:
                   FilterQuality.values[json['image']['filterQuality']],
               invertColors: json['image']['invertColors'],
@@ -344,9 +343,9 @@ class ItemDecoration extends SheetDecoration {
   static BoxShadow _boxShadowFromJson(Map<dynamic, dynamic> json) {
     return BoxShadow(
       color: hexToColor(json['color']),
-      offset: Offset(json['offset'][0], json['offset'][1]),
-      blurRadius: json['blurRadius'],
-      spreadRadius: json['spreadRadius'],
+      offset: Offset((json['offset'][0] as num).toDouble(), (json['offset'][1] as num).toDouble()),
+      blurRadius: (json['blurRadius'] as num).toDouble(),
+      spreadRadius: (json['spreadRadius'] as num).toDouble(),
     );
   }
 
@@ -371,8 +370,8 @@ class ItemDecoration extends SheetDecoration {
     if (json['type'] == 'linear') {
       return LinearGradient(
         colors: (json['colors'] as List).map((c) => Color(c)).toList(),
-        begin: Alignment(json['begin'][0], json['begin'][1]),
-        end: Alignment(json['end'][0], json['end'][1]),
+        begin: Alignment((json['begin'][0] as num).toDouble(), (json['begin'][1] as num).toDouble()),
+        end: Alignment((json['end'][0] as num).toDouble(), (json['end'][1] as num).toDouble()),
       );
     }
     return null;
@@ -390,7 +389,7 @@ class ItemDecoration extends SheetDecoration {
   static BorderSide _borderSideFromJson(Map<dynamic, dynamic>? json) {
     if (json == null) return BorderSide.none;
     return BorderSide(
-      width: json['width'] ?? 0.0,
+      width: (json['width'] as num).toDouble() ?? 0.0,
       color: Color(json['color'] ?? 0x00000000),
     );
   }

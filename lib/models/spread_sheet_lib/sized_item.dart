@@ -61,8 +61,8 @@ class SheetSizedItem extends SheetItem {
       id: map['id'],
       parentId: map['parentId'],
       indexPath: IndexPath.fromJson(map['indexPath']),
-      width: map['width'] as double,
-      height: map['height'] as double,
+      width: (map['width'] as num).toDouble(),
+      height: (map['height'] as num).toDouble(),
       sizedItemDecoration: map['sizedItemDecoration'] as String,
       hide: map['hide'] as bool, 
     );
@@ -89,7 +89,10 @@ class SheetSizedItem extends SheetItem {
   }
 
   @override
-  Widget buildWidget(PanelIndex panelIndex, Map<String, PanelIndex> selectedIndexPaths){
+  Widget buildWidget(PanelIndex panelIndex, Map<String, PanelIndex> selectedIndexPaths, {
+    Function? buildDecoratedContainer,
+    Map? sheetDecorationMap,
+  }){
     return Container(
       width: width,
       height: height,
@@ -97,11 +100,6 @@ class SheetSizedItem extends SheetItem {
         left: 2,
         top: 4,
         right: 2),
-      padding: const EdgeInsets.only(
-          top: 4,
-          bottom: 4,
-          left: 0,
-          right: 4),
       decoration: BoxDecoration(
         color: defaultPalette.primary,
         border: Border.all(
@@ -112,14 +110,16 @@ class SheetSizedItem extends SheetItem {
               ? 2
               : 1.2,
     
-          color:( panelIndex.id ==
-                  super.id || selectedIndexPaths[super.id]!=null)
+          color:( panelIndex.id == super.id || selectedIndexPaths[super.id]!=null)
               ? defaultPalette.tertiary
               : defaultPalette.black,
         ),
         borderRadius:
             BorderRadius.circular(10),
       ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: buildDecoratedContainer!(sheetDecorationMap![sizedItemDecoration], const SizedBox(), false),),
     );
   }
   @override

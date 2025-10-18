@@ -1102,14 +1102,29 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirm Delete'),
-        content: const Text('This will delete the current page. Are you sure?'),
+        title: Text('Confirm Delete', style: GoogleFonts
+          .lexend(
+            fontSize: mapValueDimensionBased( 18, 25, sWidth, sHeight),
+            color: defaultPalette.extras[0],
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+          ),),
+        content: Text('This will delete the current page. Are you sure?',style: GoogleFonts
+          .lexend(
+            fontSize: mapValueDimensionBased( 12, 20, sWidth, sHeight),
+            color: defaultPalette.extras[0],
+            fontWeight: FontWeight.w400,
+            letterSpacing: -0.2,),),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('No'),
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel',style: GoogleFonts
+            .lexend(
+              fontSize: mapValueDimensionBased( 15, 22, sWidth, sHeight),
+              color: defaultPalette.extras[0],
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.2,
+            ),),
           ),
           TextButton(
             onPressed: () {
@@ -1134,7 +1149,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                   propertyCardsController.setCardIndex(currentPageIndex);
                   propertyCardsController.animateTo(Offset(1, 1),
                       duration: Durations.short1, curve: Curves.linear);
-
+                  whichPropertyTabIsClicked =1;
                   // Update panelIndex for the new current page
                   panelIndex = panelIndex.reset();
 
@@ -1153,10 +1168,16 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                 spreadSheetList[currentPageIndex].sheetList = [];
                 panelIndex = panelIndex.reset();
               });
-
               Navigator.of(context).pop();
             },
-            child: const Text('Yes'),
+            style: TextButton.styleFrom(foregroundColor: defaultPalette.extras[4]),
+            child: Text('Delete',
+            style: GoogleFonts.lexend(
+              fontSize: mapValueDimensionBased( 15, 22, sWidth, sHeight),
+              color: defaultPalette.extras[4],
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.2,
+            ))
           ),
         ],
       ),
@@ -6529,7 +6550,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
             },
             child: Padding(
               padding: EdgeInsets.only(bottom:((sheetList.direction ==Axis.horizontal)?25:4.0)),
-              child: sheetList[index].buildWidget(panelIndex,selectedIndexPaths),
+              child: (sheetList[index] as SheetSizedItem).buildWidget(panelIndex,selectedIndexPaths, buildDecoratedContainer: buildDecoratedContainer, sheetDecorationMap: sheetDecorationMap),
             )),
         );
       }
@@ -7222,9 +7243,33 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                           context: context,
                           builder: (context) {
                             return AlertDialog(
-                              title: const Text('Confirm Delete'),
-                              content: const Text('This will DELETE the current List with its contents. Are you sure?'),
+                              title:Text('Confirm Delete', style: GoogleFonts
+                                .lexend(
+                                  fontSize: mapValueDimensionBased( 18, 25, sWidth, sHeight),
+                                  color: defaultPalette.extras[0],
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.2,
+                                ),),
+                              content: Text('This will DELETE the current List with its contents. Are you sure?',
+                              style: GoogleFonts
+                              .lexend(
+                                fontSize: mapValueDimensionBased( 12, 20, sWidth, sHeight),
+                                color: defaultPalette.extras[0],
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: -0.2,),),
                               actions: [
+                                TextButton(
+                                  onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    
+                                    child: Text('Cancel',style: GoogleFonts
+                                      .lexend(
+                                        fontSize: mapValueDimensionBased( 15, 22, sWidth, sHeight),
+                                        color: defaultPalette.extras[0],
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: -0.2,
+                                      ),),),
                                 TextButton(
                                     onPressed: () {
                                       setState(() {
@@ -7237,14 +7282,18 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                       // });
                                       _reassignSheetListIndexPath(getItemAtPath(sheetList.indexPath.parent!) as SheetList);
                                       saveLayout();
+                                      panelIndex = panelIndex.reset();
+                                      whichPropertyTabIsClicked =1;
                                       Navigator.pop(context);
                                     },
-                                    child: const Text('Yes')),
-                                TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text('No')),
+                                    style: TextButton.styleFrom(foregroundColor: defaultPalette.extras[4]),
+                                    child: Text('Delete',
+                                    style: GoogleFonts.lexend(
+                                      fontSize: mapValueDimensionBased( 15, 22, sWidth, sHeight),
+                                      color: defaultPalette.extras[4],
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: -0.2,
+                                    ))),
                               ],
                             );
                           },
@@ -8290,6 +8339,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               return sList;
             case SheetText:
               if(useAltAddText) {
+                //THIS IS PASTE FOR TABLE TEXT, for normal paste go after this "if" block
                 var newId = sheetItem.newId();
                 return addTextField(
                 id: newId, 
@@ -8330,19 +8380,34 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                 getReplaceTextFunctionForType: getReplaceTextFunctionForType,
               );
               }
-              return _addTextField(
-                id: sheetItem.newId(), 
-                textDecoration: (sheetItem as SheetText).textDecoration, 
-                indexPath:IndexPath(parent: sheetList.indexPath,index: sheetList.length), 
-                inputBlocks: List.from((sheetItem as SheetText).inputBlocks),
+              var newId = sheetItem.newId();
+              var newIndexPath = IndexPath(parent: sheetList.indexPath,index: sheetList.length);
+              var newSheetText= _addTextField(
+                id: newId,
+                textDecoration: (sheetItem as SheetText).textDecoration,
+                indexPath: newIndexPath, 
+                inputBlocks: (sheetItem as SheetText).inputBlocks.map((block) {
+
+                  if (block.id == sheetItem.id) {
+                    return block.copyWith(
+                      id: newId,
+                      indexPath: newIndexPath,
+                    );
+                  }
+                  return block;
+
+                }).toList(),
                 docString:  (sheetItem as SheetText).textEditorController.document.toDelta().toJson(),
                 hide:  (sheetItem as SheetText).hide,
                 locked:  (sheetItem as SheetText).locked,
-                name:  (sheetItem as SheetText).name+'-copy',
+                name:  labelList.any((e) => e.name == (sheetItem as SheetText).name)
+                  ? '${(sheetItem as SheetText).name}-copy'
+                  : (sheetItem as SheetText).name,
                 shouldReturn: true,
                 type:  (sheetItem as SheetText).type,
                 parentId: sheetList.id,
               );
+              return newSheetText;
             case SheetTable:
               var newId =sheetItem.newId();
               var newIndexPath = IndexPath(parent: sheetList.indexPath,index: sheetList.length);
@@ -8484,25 +8549,19 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     var data = await Clipboard.getData(
         'text/plain');
     if (data != null) {
-      int baseOffset =
-          textEditorController
-              .selection.baseOffset;
+      int baseOffset = textEditorController.selection.baseOffset;
       if (textEditorController
           .selection.isCollapsed) {
-        textEditorController
-            .replaceText(
+        textEditorController.replaceText(
           baseOffset,
           0, // No text to replace
           data.text!,
           null,
         );
       } else {
-        textEditorController
-            .replaceText(
+        textEditorController.replaceText(
           baseOffset,
-          textEditorController.selection
-                  .extentOffset -
-              baseOffset,
+          textEditorController.selection.extentOffset - baseOffset,
           data.text!,
           null,
         );
@@ -9172,35 +9231,54 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text(
-                'Confirm Delete'),
-            content: const Text(
-                'This will DELETE the current Text Field with its contents. Are you sure?'),
+            title: Text(
+                'Confirm Delete',  style: GoogleFonts
+          .lexend(
+            fontSize: mapValueDimensionBased( 18, 25, sWidth, sHeight),
+            color: defaultPalette.extras[0],
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+          ),),
+            content: Text(
+                'This will DELETE the current Text Field with its contents. Are you sure?',style: GoogleFonts
+          .lexend(
+            fontSize: mapValueDimensionBased( 12, 20, sWidth, sHeight),
+            color: defaultPalette.extras[0],
+            fontWeight: FontWeight.w400,
+            letterSpacing: -0.2,),),
             actions: [
               TextButton(
-                  onPressed: () {
-                    setState(() {
-                      sheetList
-                          .removeAt(
-                              index);
-                      panelIndex.id =
-                          '';
-                      _reassignSheetListIndexPath(sheetList);    
-                      doubleCheckLabelList(labelList);
-                    });
-                    Navigator.pop(
-                        context);
-                  },
-                  child: const Text(
-                      'Yes')),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('Cancel',style: GoogleFonts
+              .lexend(
+                fontSize: mapValueDimensionBased( 15, 22, sWidth, sHeight),
+                color: defaultPalette.extras[0],
+                fontWeight: FontWeight.w500,
+                letterSpacing: -0.2,
+              ),),),
               TextButton(
-                  onPressed: () {
-                    Navigator.pop(
-                        context);
-                  },
-                  child:
-                      const Text('No')),
-            ],
+                onPressed: () {
+                  setState(() {
+                    sheetList.removeAt( index);
+                    panelIndex = panelIndex.reset();
+                    whichPropertyTabIsClicked =1;
+                    _reassignSheetListIndexPath(sheetList);    
+                    doubleCheckLabelList(labelList);
+                  });
+                  
+                  Navigator.pop( context);
+                },
+                style: TextButton.styleFrom(foregroundColor: defaultPalette.extras[4]),
+                child: Text('Delete',
+                style: GoogleFonts.lexend(
+                  fontSize: mapValueDimensionBased( 15, 22, sWidth, sHeight),
+                  color: defaultPalette.extras[4],
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.2,
+              ))),
+              ],
           );
         },
       );
@@ -20961,8 +21039,8 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
               var width = (sWidth * wH2DividerPosition - 25);
               
               List<TextEditingController> sizedItemControllers = [
-                TextEditingController()..text = sizedItem.width.toString().replaceAll(RegExp(r'.0$'),''),
-                TextEditingController()..text = sizedItem.height.toString().replaceAll(RegExp(r'.0$'),''),
+                TextEditingController()..text = sizedItem.width.toString(),
+                TextEditingController()..text = sizedItem.height.toString(),
               ];
               
               List<Widget> sizedItemPropertyTile(int s, String name, IconData icon) {
@@ -21026,9 +21104,6 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         // onTapOutside: (event) => fontFocusNodes[s].unfocus(),
                         // focusNode: fontFocusNodes[s],
                         controller: sizedItemControllers[s],
-                        inputFormatters: [
-                          NumericInputFormatter(),
-                        ],
                         cursorColor: defaultPalette.tertiary,
                         selectionControls: NoMenuTextSelectionControls(),
                         textAlign: TextAlign.end,
@@ -21046,6 +21121,15 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                             color: defaultPalette.extras[0],
                             letterSpacing: -1),
                         onFieldSubmitted: (value) {
+                          try {
+                            double.parse(value);
+                          } catch (e) {
+                            setState(() {
+                              sizedItemControllers[s].text = s == 0
+                                  ? sizedItem.width.toString()
+                                  : sizedItem.height.toString();
+                            });
+                          }
                           setState(() {
                             var parsedValue = double.parse(value);
                           switch (s) {
@@ -24954,11 +25038,13 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                         child: GestureDetector(
                           onTap:() {
                             setState(() {
-                              
-                              var itemDecoId = 'dITM-${ const Uuid().v4()}';
-                              var itemDecoration = ItemDecoration(id: itemDecoId);
-                              // var inx = int.tryParse(itemDecorationPath.last.substring(itemDecorationPath.last.indexOf('/') + 1))??-2;
                               var inx = itemDecorationPath.last;
+                              var itemDecoId = 'dITM-${ const Uuid().v4()}';
+                              var itemDecoration = ItemDecoration(id: itemDecoId, name:(sheetDecorationMap[inx] as SuperDecoration).name
+                              +'.L'
+                              +((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length).toString());
+                              // var inx = int.tryParse(itemDecorationPath.last.substring(itemDecorationPath.last.indexOf('/') + 1))??-2;
+                              // var inx = itemDecorationPath.last;
                               if ((sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.length < 70) {
                                 // Add the new decoration to the main list
                                 sheetDecorationMap.addAll({itemDecoration.id:itemDecoration});
@@ -25022,11 +25108,9 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                   child: ReorderableListView(
                                     onReorder: (oldIndex, newIndex) {
                                       setState(() {
-                                        final itemList = (sheetDecorationMap[inx] as SuperDecoration)
-                                            .itemDecorationList.reversed.toList();
+                                        final itemList = (sheetDecorationMap[inx] as SuperDecoration).itemDecorationList.reversed.toList();
                       
-                                        final elem = itemList
-                                              .removeAt(oldIndex);
+                                        final elem = itemList.removeAt(oldIndex);
                                           if ((newIndex !=
                                               itemList.length + 2)) {
                                          print('hah' +
@@ -25063,6 +25147,8 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
                                             .itemDecorationList = itemList.reversed.toList();
                                           
                                         updateSheetDecorationvariables((sheetDecorationMap[inx] as SuperDecoration));
+                                        itemDecorationNameController.text = sheetDecorationMap[(sheetDecorationMap[inx] as SuperDecoration)
+                                          .itemDecorationList[decorationIndex]]?.name??'yo';
                                       });
                                     },
                                     proxyDecorator:
