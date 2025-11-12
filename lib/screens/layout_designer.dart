@@ -212,7 +212,7 @@ class LayoutDesigner extends ConsumerStatefulWidget {
 
 class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProviderStateMixin {
   bool isLoading = true;
-  String selectedFontCategory = 'san-serif';
+  String selectedFontCategory = 'search';
   late List<RequiredText> labelList;
   late String initialLayoutName;
   final List<String> fonts = GoogleFonts.asMap().keys.toList();
@@ -472,7 +472,7 @@ class LayoutDesignerState extends ConsumerState<LayoutDesigner> with TickerProvi
     // _findSheetListItem();
     
     fontsTabContainerController = TabController(length: 6, vsync: this)
-      ..animateTo(1)
+      ..animateTo(0)
       ..addListener(_onFontsTabChanged);
     // ─── 7) Done ────────────────────────────────────────────────────────────
     if (!mounted) return;

@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "billblazex"
+  },
+  "targets": {
+    "billblazex": {
+      "hosting": {
+        "billblaze": [
+          "billblaze"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
